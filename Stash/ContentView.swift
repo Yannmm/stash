@@ -1,79 +1,29 @@
 import SwiftUI
+import AppKit
 
+// MARK: - Data Model
 struct Bookmark: Identifiable, Codable {
     let id: UUID
     let title: String
     let url: URL
 }
 
-struct ContentView: View {
-    @State private var bookmarks: [Bookmark] = []
-    @State private var dropHighlight = false
+// MARK: - State Management
+class BookmarkManager: ObservableObject {
+    static let shared = BookmarkManager()
+    @Published var bookmarks: [Bookmark] = []
     
-    var body: some View {
-        VStack {
-            Text("Drag files or URLs here")
-                .font(.title)
-                .foregroundColor(.secondary)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(dropHighlight ? Color.blue.opacity(0.2) : Color.clear)
-                .onDrop(of: [.url, .fileURL], isTargeted: $dropHighlight) { providers in
-                    handleDrop(providers: providers)
-                }
-            
-            List(bookmarks) { bookmark in
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(bookmark.title)
-                        Text(bookmark.url.absoluteString)
-                            .foregroundColor(.secondary)
-                            .font(.caption)
-                    }
-                    Spacer()
-                    Button(action: {
-                        let pasteboard = NSPasteboard.general
-                        pasteboard.clearContents()
-                        pasteboard.setString(bookmark.url.absoluteString, forType: .URL)
-                    }) {
-                        Image(systemName: "doc.on.doc")
-                    }
-                    Button(action: {
-                        NSWorkspace.shared.open(bookmark.url)
-                    }) {
-                        Image(systemName: "arrowshape.turn.up.right")
-                    }
-                }
-            }
-        }
-        .onAppear(perform: loadBookmarks)
+    init() {
+        loadBookmarks()
     }
     
-    private func handleDrop(providers: [NSItemProvider]) -> Bool {
-        for provider in providers {
-            if provider.canLoadObject(ofClass: URL.self) {
-                _ = provider.loadObject(ofClass: URL.self) { url, _ in
-                    if let url = url {
-                        addBookmark(url: url)
-                    }
-                }
-            } else {
-                _ = provider.loadItem(forTypeIdentifier: kUTTypeFileURL as String, options: nil) { data, _ in
-                    if let data = data as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
-                        addBookmark(url: url)
-                    }
-                }
-            }
-        }
-        return true
-    }
-    
-    private func addBookmark(url: URL) {
+    func addBookmark(url: URL) {
         let newBookmark = Bookmark(
             id: UUID(),
             title: url.lastPathComponent,
             url: url
         )
-        bookmarks.append(newBookmark)
+        bookmarks.insert(newBookmark, at: 0)
         saveBookmarks()
     }
     
@@ -91,13 +41,103 @@ struct ContentView: View {
     }
 }
 
-//@main
-//struct BookmarkCollectorApp: App {
-//    var body: some Scene {
-//        WindowGroup {
-//            ContentView()
-//                .frame(minWidth: 400, minHeight: 400)
-//        }
-//    }
-//}
+// MARK: - Drag & Drop Window
+struct DropWindowView: View {
+    @State private var dropHighlight = false
+    @EnvironmentObject var manager: BookmarkManager
+    
+    var body: some View {
+        VStack {
+            Text("Drag files or URLs here")
+                .font(.title)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(dropHighlight ? Color.blue.opacity(0.2) : Color.clear)
+                .onDrop(of: [.url, .fileURL], isTargeted: $dropHighlight) { providers in
+                    handleDrop(providers: providers)
+                    return true
+                }
+        }
+        .frame(width: 400, height: 400)
+    }
+    
+    private func handleDrop(providers: [NSItemProvider]) {
+        for provider in providers {
+            if provider.canLoadObject(ofClass: URL.self) {
+                _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                    if let url = url {
+                        DispatchQueue.main.async {
+                            manager.addBookmark(url: url)
+                        }
+                    }
+                }
+            } else {
+                _ = provider.loadItem(forTypeIdentifier: kUTTypeFileURL as String, options: nil) { data, _ in
+                    if let data = data as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
+                        DispatchQueue.main.async {
+                            manager.addBookmark(url: url)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
+// MARK: - Menu Bar List
+struct BookmarkListView: View {
+    @EnvironmentObject var manager: BookmarkManager
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Button("Show Drop Window") {
+                NSApp.activate(ignoringOtherApps: true)
+                AppDelegate.shared.showDropWindow()
+            }
+            .buttonStyle(PlainButtonStyle())
+            
+            Divider()
+            
+            List(manager.bookmarks) { bookmark in
+                HStack {
+                    VStack(alignment: .leading) {
+                        Text(bookmark.title)
+                        Text(bookmark.url.absoluteString)
+                            .foregroundColor(.secondary)
+                            .font(.caption)
+                    }
+                    Spacer()
+                    Button(action: { copyToClipboard(bookmark.url) }) {
+                        Image(systemName: "doc.on.doc")
+                    }
+                    Button(action: { openURL(bookmark.url) }) {
+                        Image(systemName: "arrowshape.turn.up.right")
+                    }
+                }
+            }
+            .listStyle(SidebarListStyle())
+        }
+        .frame(width: 300, height: 400)
+    }
+    
+    private func copyToClipboard(_ url: URL) {
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(url.absoluteString, forType: .URL)
+    }
+    
+    private func openURL(_ url: URL) {
+        NSWorkspace.shared.open(url)
+    }
+}
+
+// MARK: - App Main
+// @main
+// struct BookmarkCollectorApp: App {
+//     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    
+//     var body: some Scene {
+//         Settings {
+//             EmptyView()
+//         }
+//     }
+// }
