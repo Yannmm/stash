@@ -86,7 +86,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func showDropWindow() {
         dropWindow?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.activate(ignoringOtherApps: false)
     }
     
     @objc func togglePopover() {

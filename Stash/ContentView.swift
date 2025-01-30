@@ -89,14 +89,20 @@ struct BookmarkListView: View {
     @EnvironmentObject var manager: BookmarkManager
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .center, spacing: 0) {
             Button("Show Drop Window") {
                 NSApp.activate(ignoringOtherApps: true)
                 AppDelegate.shared.showDropWindow()
             }
-            .buttonStyle(PlainButtonStyle())
+            .buttonStyle(.plain) // Use the shorthand for PlainButtonStyle
+            .frame(minWidth: 100, maxWidth: .infinity, minHeight: 44)
+            .background(Color.green)
+            .contentShape(Rectangle()) // <-- This makes the entire area tappable
             
-            Divider()
+         Rectangle()
+            .fill(Color.red)
+            .frame(height: 5)
+            .edgesIgnoringSafeArea(.horizontal)
             
             List(manager.bookmarks) { bookmark in
                 HStack {
@@ -106,7 +112,7 @@ struct BookmarkListView: View {
                             .foregroundColor(.secondary)
                             .font(.caption)
                     }
-                    Spacer()
+                    
                     Button(action: { copyToClipboard(bookmark.url) }) {
                         Image(systemName: "doc.on.doc")
                     }
