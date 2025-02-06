@@ -135,15 +135,3 @@ struct BookmarkListView: View {
         NSWorkspace.shared.open(url)
     }
 }
-
-// MARK: - App Main
-// @main
-// struct BookmarkCollectorApp: App {
-//     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
-    
-//     var body: some Scene {
-//         Settings {
-//             EmptyView()
-//         }
-//     }
-// }
