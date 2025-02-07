@@ -8,6 +8,8 @@
 import Foundation
 import SwiftData
 
+// To be refactored.
+
 @Model
 final class Item {
     var timestamp: Date
