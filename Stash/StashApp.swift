@@ -34,7 +34,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
-        let contentView = BookmarkListView().environmentObject(BookmarkManager.shared)
+        let contentView = ContentView().environmentObject(BookmarkManager.shared)
         popover.contentSize = NSSize(width: 300, height: 400)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: contentView)
@@ -52,8 +52,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
-        dropWindow?.contentViewController = NSHostingController(rootView: DropWindowView().environmentObject(BookmarkManager.shared))
-        dropWindow?.title = "Drag and Drop"
+        dropWindow?.contentViewController = NSHostingController(rootView: DragAndDropView().environmentObject(BookmarkManager.shared))
+        dropWindow?.title = "Drag and Drop1111"
         dropWindow?.isReleasedWhenClosed = false
         dropWindow?.collectionBehavior = [.managed, .fullScreenNone]
     }
