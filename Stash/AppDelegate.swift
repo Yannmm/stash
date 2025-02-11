@@ -36,14 +36,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
-        let contentView = ContentView().environmentObject(BookmarkManager.shared)
-        popover.contentSize = NSSize(width: 300, height: 400)
-        popover.behavior = .transient
-        popover.contentViewController = NSHostingController(rootView: contentView)
+//        let contentView = ContentView().environmentObject(BookmarkManager.shared)
+//        popover.contentSize = NSSize(width: 300, height: 400)
+//        popover.behavior = .transient
+//        popover.contentViewController = NSHostingController(rootView: contentView)
         
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "bookmark.fill", accessibilityDescription: nil)
-            button.action = #selector(togglePopover)
+//            button.action = #selector(togglePopover)
         }
         
 //        let menu = NSMenu()

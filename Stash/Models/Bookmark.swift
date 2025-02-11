@@ -5,7 +5,7 @@
 //  Created by Rayman on 2025/2/10.
 //
 
-import Foundation
+import Cocoa
 
 // TODO: To support
 // 1. Open Web url with browser
@@ -24,7 +24,7 @@ extension Bookmark: Entry {
     }
     
     func open() {
-        print("打开文件 / 执行脚本")
+        NSWorkspace.shared.open(url)
     }
     
     func reveal() {
@@ -32,3 +32,4 @@ extension Bookmark: Entry {
     }
     
 }
+

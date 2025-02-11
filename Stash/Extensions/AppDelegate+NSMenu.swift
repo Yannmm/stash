@@ -59,7 +59,7 @@ extension AppDelegate {
     private func g(entries: [Entry], isRoot: Bool = true) -> NSMenu {
         let menu = NSMenu()
         entries.forEach { e in
-            let item = NSMenuItem(title: e.name, action: #selector(togglePopover), keyEquivalent: "")
+            let item = CustomMenuItem(title: e.name, action: #selector(action(_:)), keyEquivalent: "", with: e)
             if !e.entries.isEmpty {
                 let submenu = g(entries: e.entries, isRoot: false)
                 item.submenu = submenu
@@ -67,5 +67,9 @@ extension AppDelegate {
             menu.addItem(item)
         }
         return menu
+    }
+    
+    @objc private func action(_ sender: CustomMenuItem) {
+        sender.object?.open()
     }
 }
