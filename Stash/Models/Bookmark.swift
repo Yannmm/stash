@@ -1,8 +1,8 @@
 //
-//  Bookmark.swift
+//  Relic.swift
 //  Stash
 //
-//  Created by Yan Meng on 2025/2/9.
+//  Created by Rayman on 2025/2/10.
 //
 
 import Foundation
@@ -16,4 +16,19 @@ struct Bookmark: Identifiable, Codable {
     let id: UUID
     let title: String
     let url: URL
+}
+
+extension Bookmark: Entry {
+    var name: String {
+        return title
+    }
+    
+    func open() {
+        print("打开文件 / 执行脚本")
+    }
+    
+    func reveal() {
+        print("finder 中打开文件所在位置")
+    }
+    
 }

@@ -21,6 +21,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func setupStatusItem() {
+        let entries: [Entry] = [
+            Bookmark(id: UUID(), title: "百度", url: URL(string: "https://www.baidu.com")!),
+            Bookmark(id: UUID(), title: "Google", url: URL(string: "https://www.google.com/?client=safari")!),
+            Directory(title: "Group1", entries: [
+                Bookmark(id: UUID(), title: "百度", url: URL(string: "https://www.baidu.com")!),
+                Bookmark(id: UUID(), title: "Google", url: URL(string: "https://www.google.com/?client=safari")!),
+            ]),
+            Directory(title: "Group1", entries: [
+                Bookmark(id: UUID(), title: "百度", url: URL(string: "https://www.baidu.com")!),
+                Bookmark(id: UUID(), title: "Google", url: URL(string: "https://www.google.com/?client=safari")!),
+            ]),
+        ]
+        
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         let contentView = ContentView().environmentObject(BookmarkManager.shared)
@@ -33,30 +46,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             button.action = #selector(togglePopover)
         }
         
-        let menu = NSMenu()
-        let k1 = NSMenuItem(title: "History", action: nil, keyEquivalent: "")
-        let text = "History"
-        let attributedString = NSMutableAttributedString(string: "History")
-
-        // Define the attributes you want to apply
-        let boldAttributes: [NSAttributedString.Key: Any] = [
-            .font: NSFont.boldSystemFont(ofSize: 14),
-            .foregroundColor: NSColor.red
-        ]
-        
-        attributedString.addAttributes(boldAttributes, range: (text as NSString).range(of: "Hello"))
-        k1.attributedTitle = attributedString
-        menu.addItem(k1)
-        
-        let p = NSMenuItem(title: "Open Settings", action: #selector(openSettings), keyEquivalent: "S")
-        let n = NSMenuItem(title: "Secondary Level", action: #selector(togglePopover), keyEquivalent: "P")
-        let n1 = NSMenu()
-        n1.addItem(n)
-        p.submenu = n1
-        menu.addItem(p)
-        menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "Q"))
-        
-        statusItem?.menu = menu
+//        let menu = NSMenu()
+//        let k1 = NSMenuItem(title: "History", action: nil, keyEquivalent: "")
+//        let text = "History"
+//        let attributedString = NSMutableAttributedString(string: "History")
+//
+//        // Define the attributes you want to apply
+//        let boldAttributes: [NSAttributedString.Key: Any] = [
+//            .font: NSFont.boldSystemFont(ofSize: 14),
+//            .foregroundColor: NSColor.red
+//        ]
+//        
+//        attributedString.addAttributes(boldAttributes, range: (text as NSString).range(of: "Hello"))
+//        k1.attributedTitle = attributedString
+//        menu.addItem(k1)
+//        
+//        let p = NSMenuItem(title: "Open Settings", action: #selector(openSettings), keyEquivalent: "S")
+//        let n = NSMenuItem(title: "Secondary Level", action: #selector(togglePopover), keyEquivalent: "P")
+//        let n1 = NSMenu()
+//        n1.addItem(n)
+//        p.submenu = n1
+//        menu.addItem(p)
+//        menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "Q"))
+//        statusItem?.menu = menu
+        statusItem?.menu = generateMenu(from: entries)
     }
     
     @objc func openSettings() {
