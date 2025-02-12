@@ -10,56 +10,24 @@ import SwiftUI
 
 extension AppDelegate {
     func generateMenu(from entries: [Entry]) -> NSMenu {
-//        let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        
-//        let contentView = ContentView().environmentObject(BookmarkManager.shared)
-//        popover.contentSize = NSSize(width: 300, height: 400)
-//        popover.behavior = .transient
-//        popover.contentViewController = NSHostingController(rootView: contentView)
-        
-//        if let button = statusItem.button {
-//            button.image = NSImage(systemSymbolName: "bookmark.fill", accessibilityDescription: nil)
-////            button.action = #selector(togglePopover)
-//        }
-        
-//        let xxx = entries.map { entry in
-//            <#code#>
-//        }
-//        
-//        let menu = NSMenu()
-//        
-//        let k1 = NSMenuItem(title: "", action: nil, keyEquivalent: "")
-//        let text = "History"
-//        let attributedString = NSMutableAttributedString(string: "History")
-//
-//        // Define the attributes you want to apply
-//        let boldAttributes: [NSAttributedString.Key: Any] = [
-//            .font: NSFont.boldSystemFont(ofSize: 14),
-//            .foregroundColor: NSColor.red
-//        ]
-//        
-//        attributedString.addAttributes(boldAttributes, range: (text as NSString).range(of: "Hello"))
-//        k1.attributedTitle = attributedString
-//        menu.addItem(k1)
-//        
-//        let p = NSMenuItem(title: "Open Settings", action: #selector(openSettings), keyEquivalent: "S")
-//        let n = NSMenuItem(title: "Secondary Level", action: #selector(togglePopover), keyEquivalent: "P")
-//        let n1 = NSMenu()
-//        n1.addItem(n)
-//        p.submenu = n1
-//        menu.addItem(p)
-//        menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "Q"))
-//        
-//        statusItem.menu = menu
-        
-        let kkk1 = g(entries: entries)
-        return kkk1
+        return g(entries: entries)
     }
     
     private func g(entries: [Entry], isRoot: Bool = true) -> NSMenu {
         let menu = NSMenu()
         entries.forEach { e in
             let item = CustomMenuItem(title: e.name, action: #selector(action(_:)), keyEquivalent: "", with: e)
+            var image = NSImage(contentsOf: URL(string: "https://a0.muscache.com/airbnb/static/icons/apple-touch-icon-76x76-3b313d93b1b5823293524b9764352ac9.png")!)
+            
+//            http://icons.duckduckgo.com/ip2/www.stackoverflow.com.ico
+            //            http://icons.duckduckgo.com/ip2/www.baidu.com.ico
+            //            http://icons.duckduckgo.com/ip2/stackedit.io.ico
+            // https://stackoverflow.com/questions/5119041/how-can-i-get-a-web-sites-favicon
+            // http://icons.duckduckgo.com/ip2/10.133.110.49:8080.ico
+            
+            image?.size = NSSize(width: 16, height: 16)
+            image = image?.roundCorners(radius: 8)
+            item.image = image
             if !e.entries.isEmpty {
                 let submenu = g(entries: e.entries, isRoot: false)
                 item.submenu = submenu

@@ -24,9 +24,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let entries: [Entry] = [
             Bookmark(id: UUID(), title: "百度", url: URL(string: "https://www.baidu.com")!),
             Bookmark(id: UUID(), title: "Google", url: URL(string: "https://www.google.com/?client=safari")!),
-            Directory(title: "Group1", entries: [
-                Bookmark(id: UUID(), title: "百度", url: URL(string: "https://www.baidu.com")!),
-                Bookmark(id: UUID(), title: "Google", url: URL(string: "https://www.google.com/?client=safari")!),
+            Directory(title: "Files", entries: [
+                Bookmark(id: UUID(), title: "Pdf-8", url: URL(fileURLWithPath: "/Users/rayman/Downloads/report-7.pdf")),
             ]),
             Directory(title: "Group1", entries: [
                 Bookmark(id: UUID(), title: "百度", url: URL(string: "https://www.baidu.com")!),
