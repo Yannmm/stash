@@ -28,7 +28,7 @@ extension Bookmark: Entry {
     }
     
     func reveal() {
-        print("finder 中打开文件所在位置")
+        print("finder 中打开文件所在位置111")
     }
     
 }
