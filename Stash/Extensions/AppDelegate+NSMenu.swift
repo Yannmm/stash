@@ -34,6 +34,13 @@ extension AppDelegate {
             }
             menu.addItem(item)
         }
+        if (isRoot) {
+            menu.addItem(NSMenuItem.separator())
+            
+            let ooo = NSMenuItem(title: "Drag & Drop", action: #selector(togglePopover), keyEquivalent: "G")
+            
+            menu.addItem(ooo)
+        }
         return menu
     }
     

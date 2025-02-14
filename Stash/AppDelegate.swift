@@ -35,10 +35,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
-//        let contentView = ContentView().environmentObject(BookmarkManager.shared)
-//        popover.contentSize = NSSize(width: 300, height: 400)
-//        popover.behavior = .transient
-//        popover.contentViewController = NSHostingController(rootView: contentView)
+        let contentView = ContentView().environmentObject(BookmarkManager.shared)
+        popover.contentSize = NSSize(width: 600, height: 400)
+        popover.behavior = .transient
+        popover.contentViewController = NSHostingController(rootView: contentView)
         
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "bookmark.fill", accessibilityDescription: nil)
@@ -75,6 +75,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApplication.shared.terminate(self)
     }
     
+    func openNewWindow() {
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 300),
+            styleMask: [.titled, .closable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.center()
+        window.setFrameAutosaveName("NewWindow")
+        window.contentView = NSHostingView(rootView: ContentView())
+
+        let windowController = NSWindowController(window: window)
+//        windowControllers.append(windowController) // Keep a reference so it's not deallocated
+        windowController.showWindow(nil)
+    }
+    
     @objc private func quit() {}
     
     private func createDropWindow() {
@@ -96,12 +112,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func togglePopover() {
-        guard let button = statusItem?.button else { return }
-        
-        if popover.isShown {
-            popover.performClose(nil)
-        } else {
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-        }
+        openNewWindow()
     }
 }
