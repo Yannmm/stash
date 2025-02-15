@@ -17,131 +17,164 @@ import SwiftUI
 import AppKit
 import UniformTypeIdentifiers
 
-struct Home: View {
-    var numbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+import Cocoa
 
-    var body: some View {
-        GeometryReader { proxy in
-            GridView(self.numbers, proxy: proxy) { number in
-                Image("image\(number)")
-                    .resizable()
-                    .scaledToFill()
-            }
-        }
+import SwiftUI
+import Cocoa
+
+// MARK: - Data Model
+class ListItem: Identifiable {
+    let id = UUID()
+    let title: String
+    var children: [ListItem]?
+    weak var parent: ListItem? // Helps with reordering
+    
+    init(title: String, children: [ListItem]? = nil) {
+        self.title = title
+        self.children = children
+        self.children?.forEach { $0.parent = self }
     }
 }
 
-struct GridView<CellView: View>: NSViewRepresentable {
-    let cellView: (Int) -> CellView
-    let proxy: GeometryProxy
-    var numbers: [Int]
+// MARK: - NSOutlineView Wrapper
+struct OutlineView: NSViewRepresentable {
+    class Coordinator: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
+        var parent: OutlineView
 
-    init(_ numbers: [Int], proxy: GeometryProxy, @ViewBuilder cellView: @escaping (Int) -> CellView) {
-        self.proxy = proxy
-        self.cellView = cellView
-        self.numbers = numbers
-    }
-
-    func makeNSView(context: Context) -> NSCollectionView {
-        let layout = NSCollectionViewFlowLayout()
-        layout.minimumLineSpacing = 0
-        layout.minimumInteritemSpacing = 0
-        layout.itemSize = CGSize(width: (proxy.size.width - 8) / 3, height: (proxy.size.width - 8) / 3)
-
-        let collectionView = NSCollectionView()
-        collectionView.collectionViewLayout = layout
-        collectionView.register(GridCellView.self, forItemWithIdentifier: NSUserInterfaceItemIdentifier("CELL"))
-
-        collectionView.dataSource = context.coordinator
-        collectionView.delegate = context.coordinator
-
-        let scrollView = NSScrollView()
-        scrollView.documentView = collectionView
-        scrollView.hasVerticalScroller = true
-
-        collectionView.isSelectable = true
-        collectionView.allowsMultipleSelection = false
-        collectionView.registerForDraggedTypes([.string])
-
-        return collectionView
-    }
-
-    func updateNSView(_ nsView: NSCollectionView, context: Context) { }
-
-    func makeCoordinator() -> Coordinator {
-        Coordinator(self)
-    }
-
-    class Coordinator: NSObject, NSCollectionViewDelegateFlowLayout, NSCollectionViewDataSource {
-        var parent: GridView
-
-        init(_ parent: GridView) {
+        init(parent: OutlineView) {
             self.parent = parent
         }
 
-        func collectionView(_ collectionView: NSCollectionView, numberOfItemsInSection section: Int) -> Int {
-            return parent.numbers.count
+        // MARK: - NSOutlineViewDataSource
+
+        func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
+            (item as? ListItem)?.children?.count ?? parent.items.count
         }
 
-        func collectionView(_ collectionView: NSCollectionView, itemForRepresentedObjectAt indexPath: IndexPath) -> NSCollectionViewItem {
-            let item = collectionView.makeItem(withIdentifier: NSUserInterfaceItemIdentifier("CELL"), for: indexPath) as! GridCellView
-            item.view.layer?.backgroundColor = NSColor.clear.cgColor
-            item.cellView.rootView = AnyView(parent.cellView(parent.numbers[indexPath.item]).fixedSize())
-            return item
+        func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
+            (item as? ListItem)?.children != nil
+        }
+
+        func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
+            if let listItem = item as? ListItem {
+                return listItem.children?[index] ?? ListItem(title: "Unknown")
+            }
+            return parent.items[index]
+        }
+
+        // MARK: - NSOutlineViewDelegate
+
+        func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
+            guard let listItem = item as? ListItem else { return nil }
+            
+            let identifier = NSUserInterfaceItemIdentifier("Cell")
+            var cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView
+            
+            if cell == nil {
+                cell = NSTableCellView()
+                cell?.identifier = identifier
+                let tf = NSTextField(labelWithString: "")
+                cell?.textField = tf
+                cell?.textField?.frame = CGRect(x: 5, y: 2, width: 200, height: 20)
+                cell?.addSubview(cell!.textField!)
+            }
+            
+            cell?.textField?.stringValue = listItem.title
+            return cell
         }
 
         // MARK: - Drag & Drop
-        func collectionView(_ collectionView: NSCollectionView, pasteboardWriterForItemAt indexPath: IndexPath) -> NSPasteboardWriting? {
-            let item = parent.numbers[indexPath.item]
+
+        func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
+            guard let listItem = item as? ListItem else { return nil }
             let pasteboardItem = NSPasteboardItem()
-            pasteboardItem.setString("\(item)", forType: .string)
+            pasteboardItem.setString(listItem.id.uuidString, forType: .string)
             return pasteboardItem
         }
 
-        func collectionView(_ collectionView: NSCollectionView, draggingSession session: NSDraggingSession, willBeginAt screenPoint: NSPoint, forItemsAt indexPaths: Set<IndexPath>) {
-            session.draggingPasteboard.setData(Data(), forType: .string)
-        }
-
-        func collectionView(_ collectionView: NSCollectionView, validateDrop info: NSDraggingInfo, proposedIndexPath: AutoreleasingUnsafeMutablePointer<IndexPath>, dropOperation: UnsafeMutablePointer<NSCollectionView.DropOperation>) -> NSDragOperation {
+        func outlineView(_ outlineView: NSOutlineView, validateDrop info: NSDraggingInfo, proposedItem: Any?, proposedChildIndex: Int) -> NSDragOperation {
             return .move
         }
 
-        func collectionView(_ collectionView: NSCollectionView, acceptDrop info: NSDraggingInfo, indexPath: IndexPath, dropOperation: NSCollectionView.DropOperation) -> Bool {
-            guard let sourceIndex = info.draggingPasteboard.string(forType: .string).flatMap(Int.init),
-                  let sourceItemIndex = parent.numbers.firstIndex(of: sourceIndex) else { return false }
+        func outlineView(_ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex: Int) -> Bool {
+            guard let pasteboardItem = info.draggingPasteboard.pasteboardItems?.first,
+                  let itemID = pasteboardItem.string(forType: .string),
+                  let draggedItem = findItem(by: itemID, in: parent.items) else { return false }
 
-            collectionView.performBatchUpdates({
-                parent.numbers.remove(at: sourceItemIndex)
-                parent.numbers.insert(sourceIndex, at: indexPath.item)
-                collectionView.moveItem(at: IndexPath(item: sourceItemIndex, section: 0), to: indexPath)
-            }, completionHandler: nil)
+            let targetParent = item as? ListItem
+            
+            if let oldParent = draggedItem.parent {
+                oldParent.children?.removeAll { $0.id == draggedItem.id }
+            } else {
+                parent.items.removeAll { $0.id == draggedItem.id }
+            }
 
+            if let targetParent = targetParent {
+                if targetParent.children == nil {
+                    targetParent.children = []
+                }
+                if childIndex == -1 {
+                    targetParent.children?.append(draggedItem)
+                } else {
+                    targetParent.children?.insert(draggedItem, at: childIndex)
+                }
+                draggedItem.parent = targetParent
+            } else {
+                if childIndex == -1 {
+                    parent.items.append(draggedItem)
+                } else {
+                    parent.items.insert(draggedItem, at: childIndex)
+                }
+                draggedItem.parent = nil
+            }
+
+            outlineView.reloadData()
             return true
         }
+
+        private func findItem(by id: String, in items: [ListItem]) -> ListItem? {
+            for item in items {
+                if item.id.uuidString == id { return item }
+                if let found = findItem(by: id, in: item.children ?? []) {
+                    return found
+                }
+            }
+            return nil
+        }
     }
-}
 
-// MARK: - NSCollectionView Item (macOS Equivalent of UICollectionViewCell)
-class GridCellView: NSCollectionViewItem {
-    public var cellView = NSHostingController(rootView: AnyView(EmptyView()))
+    @Binding var items: [ListItem]
 
-    override func loadView() {
-        self.view = NSView()
-        configure()
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
     }
 
-    private func configure() {
-        view.addSubview(cellView.view)
-        cellView.view.translatesAutoresizingMaskIntoConstraints = false
+    func makeNSView(context: Context) -> NSScrollView {
+        let scrollView = NSScrollView()
+        scrollView.hasVerticalScroller = true
+        
+        let outlineView = NSOutlineView()
+        let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("Column"))
+        column.title = "Sections & Items"
+        outlineView.addTableColumn(column)
+        outlineView.outlineTableColumn = column
+        outlineView.headerView = nil
+        
+        outlineView.dataSource = context.coordinator
+        outlineView.delegate = context.coordinator
+        
+        outlineView.registerForDraggedTypes([.string])
+        outlineView.setDraggingSourceOperationMask(.move, forLocal: true)
 
-        NSLayoutConstraint.activate([
-            cellView.view.leftAnchor.constraint(equalTo: view.leftAnchor, constant: 5),
-            cellView.view.rightAnchor.constraint(equalTo: view.rightAnchor, constant: -5),
-            cellView.view.topAnchor.constraint(equalTo: view.topAnchor, constant: 5),
-            cellView.view.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -5),
-        ])
+        let tableContainer = NSScrollView()
+        tableContainer.documentView = outlineView
+        scrollView.documentView = tableContainer.documentView
+        
+        return scrollView
+    }
 
-        cellView.view.layer?.masksToBounds = true
+    func updateNSView(_ nsView: NSScrollView, context: Context) {
+        // No need to update dynamically in this simple case
     }
 }
 
