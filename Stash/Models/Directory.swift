@@ -7,12 +7,23 @@
 
 import Foundation
 
-struct Directory {
+class Directory {
+    let id: UUID
     let title: String
-    let entries: [Entry]
+    var children: [Entry]?
+    var parent: Entry?
+    
+    init(id: UUID, title: String, children: [Entry], parentId: UUID? = nil) {
+        self.id = id
+        self.title = title
+        self.children = children
+        self.children?.forEach { $0.parent = self }
+    }
 }
 
 extension Directory: Entry {
+
+    
     var name: String {
         return title
     }

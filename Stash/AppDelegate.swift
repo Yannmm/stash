@@ -8,6 +8,18 @@
 import AppKit
 import SwiftUI
 
+let kEntries: [Entry] = [
+    Bookmark(id: UUID(), title: "百度", url: URL(string: "https://www.baidu.com")!),
+    Bookmark(id: UUID(), title: "Google", url: URL(string: "https://www.google.com/?client=safari")!),
+    Directory(id: UUID(), title: "Files", children: [
+        Bookmark(id: UUID(), title: "Pdf-8", url: URL(fileURLWithPath: "/Users/rayman/Downloads/report-7.pdf")),
+    ]),
+    Directory(id: UUID(), title: "Group1", children: [
+        Bookmark(id: UUID(), title: "百度", url: URL(string: "https://www.baidu.com")!),
+        Bookmark(id: UUID(), title: "Google", url: URL(string: "https://www.google.com/?client=safari")!),
+    ]),
+]
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     static var shared: AppDelegate!
     var popover = NSPopover()
@@ -21,17 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func setupStatusItem() {
-        let entries: [Entry] = [
-            Bookmark(id: UUID(), title: "百度", url: URL(string: "https://www.baidu.com")!),
-            Bookmark(id: UUID(), title: "Google", url: URL(string: "https://www.google.com/?client=safari")!),
-            Directory(title: "Files", entries: [
-                Bookmark(id: UUID(), title: "Pdf-8", url: URL(fileURLWithPath: "/Users/rayman/Downloads/report-7.pdf")),
-            ]),
-            Directory(title: "Group1", entries: [
-                Bookmark(id: UUID(), title: "百度", url: URL(string: "https://www.baidu.com")!),
-                Bookmark(id: UUID(), title: "Google", url: URL(string: "https://www.google.com/?client=safari")!),
-            ]),
-        ]
+
         
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
@@ -68,7 +70,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 //        menu.addItem(p)
 //        menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "Q"))
 //        statusItem?.menu = menu
-        statusItem?.menu = generateMenu(from: entries)
+        statusItem?.menu = generateMenu(from: kEntries)
     }
     
     @objc func openSettings() {

@@ -12,7 +12,7 @@ class BookmarkManager: ObservableObject {
     @Published var bookmarks: [Bookmark] = []
     
     init() {
-        loadBookmarks()
+//        loadBookmarks()
     }
     
     func addBookmark(url: URL) {
@@ -22,19 +22,19 @@ class BookmarkManager: ObservableObject {
             url: url
         )
         bookmarks.insert(newBookmark, at: 0)
-        saveBookmarks()
+//        saveBookmarks()
     }
     
-    private func saveBookmarks() {
-        if let data = try? JSONEncoder().encode(bookmarks) {
-            UserDefaults.standard.set(data, forKey: "bookmarks")
-        }
-    }
-    
-    private func loadBookmarks() {
-        if let data = UserDefaults.standard.data(forKey: "bookmarks"),
-           let savedBookmarks = try? JSONDecoder().decode([Bookmark].self, from: data) {
-            bookmarks = savedBookmarks
-        }
-    }
+//    private func saveBookmarks() {
+//        if let data = try? JSONEncoder().encode(bookmarks) {
+//            UserDefaults.standard.set(data, forKey: "bookmarks")
+//        }
+//    }
+//    
+//    private func loadBookmarks() {
+//        if let data = UserDefaults.standard.data(forKey: "bookmarks"),
+//           let savedBookmarks = try? JSONDecoder().decode([Bookmark].self, from: data) {
+//            bookmarks = savedBookmarks
+//        }
+//    }
 }

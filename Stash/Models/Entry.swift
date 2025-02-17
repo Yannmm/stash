@@ -7,18 +7,18 @@
 
 import Foundation
 
-protocol Entry {
+protocol Entry: AnyObject {
     var name: String { get }
+    var parent: Entry? { get set }
     
+    var id: UUID { get }
     func open()
-    
     func reveal()
-    
-    var entries: [Entry] { get }
+    var children: [Entry]? { get set }
 }
 
 extension Entry {
-    var entries: [Entry] {
-        return []
+    var children: [Entry]? {
+        return nil
     }
 }

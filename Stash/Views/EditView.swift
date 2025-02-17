@@ -9,18 +9,18 @@ import SwiftUI
 import Cocoa
 
 // MARK: - Data Model
-class ListItem: Identifiable {
-    let id = UUID()
-    let title: String
-    var children: [ListItem]?
-    weak var parent: ListItem? // Helps with reordering
-    
-    init(title: String, children: [ListItem]? = nil) {
-        self.title = title
-        self.children = children
-        self.children?.forEach { $0.parent = self }
-    }
-}
+//class ListItem: Identifiable {
+//    let id = UUID()
+//    let title: String
+//    var children: [ListItem]?
+//    weak var parent: ListItem? // Helps with reordering
+//    
+//    init(title: String, children: [ListItem]? = nil) {
+//        self.title = title
+//        self.children = children
+//        self.children?.forEach { $0.parent = self }
+//    }
+//}
 
 // MARK: - NSOutlineView Wrapper
 struct OutlineView: NSViewRepresentable {
@@ -34,16 +34,16 @@ struct OutlineView: NSViewRepresentable {
         // MARK: - NSOutlineViewDataSource
 
         func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
-            (item as? ListItem)?.children?.count ?? parent.items.count
+            (item as? Entry)?.children?.count ?? parent.items.count
         }
 
         func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
-            (item as? ListItem)?.children != nil
+            (item as? Entry)?.children != nil
         }
 
         func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
-            if let listItem = item as? ListItem {
-                return listItem.children?[index] ?? ListItem(title: "Unknown")
+            if let listItem = item as? Entry {
+                return listItem.children![index]
             }
             return parent.items[index]
         }
@@ -51,7 +51,7 @@ struct OutlineView: NSViewRepresentable {
         // MARK: - NSOutlineViewDelegate
 
         func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
-            guard let listItem = item as? ListItem else { return nil }
+            guard let listItem = item as? Entry else { return nil }
             
             let identifier = NSUserInterfaceItemIdentifier("Cell")
             var cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView
@@ -65,14 +65,14 @@ struct OutlineView: NSViewRepresentable {
                 cell?.addSubview(cell!.textField!)
             }
             
-            cell?.textField?.stringValue = listItem.title
+            cell?.textField?.stringValue = listItem.name
             return cell
         }
 
         // MARK: - Drag & Drop
 
         func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
-            guard let listItem = item as? ListItem else { return nil }
+            guard let listItem = item as? Entry else { return nil }
             let pasteboardItem = NSPasteboardItem()
             pasteboardItem.setString(listItem.id.uuidString, forType: .string)
             return pasteboardItem
@@ -87,7 +87,7 @@ struct OutlineView: NSViewRepresentable {
                   let itemID = pasteboardItem.string(forType: .string),
                   let draggedItem = findItem(by: itemID, in: parent.items) else { return false }
 
-            let targetParent = item as? ListItem
+            let targetParent = item as? Entry
             
             if let oldParent = draggedItem.parent {
                 oldParent.children?.removeAll { $0.id == draggedItem.id }
@@ -118,7 +118,7 @@ struct OutlineView: NSViewRepresentable {
             return true
         }
 
-        private func findItem(by id: String, in items: [ListItem]) -> ListItem? {
+        private func findItem(by id: String, in items: [Entry]) -> Entry? {
             for item in items {
                 if item.id.uuidString == id { return item }
                 if let found = findItem(by: id, in: item.children ?? []) {
@@ -129,7 +129,7 @@ struct OutlineView: NSViewRepresentable {
         }
     }
 
-    @Binding var items: [ListItem]
+    @Binding var items: [Entry]
 
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)

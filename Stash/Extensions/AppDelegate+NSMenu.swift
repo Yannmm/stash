@@ -28,8 +28,8 @@ extension AppDelegate {
             image?.size = NSSize(width: 16, height: 16)
             image = image?.roundCorners(radius: 8)
             item.image = image
-            if !e.entries.isEmpty {
-                let submenu = g(entries: e.entries, isRoot: false)
+            if !(e.children ?? []).isEmpty {
+                let submenu = g(entries: e.children ?? [], isRoot: false)
                 item.submenu = submenu
             }
             menu.addItem(item)
