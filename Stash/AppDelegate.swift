@@ -9,14 +9,14 @@ import AppKit
 import SwiftUI
 
 let kEntries: [Entry] = [
-    Bookmark(id: UUID(), title: "百度", url: URL(string: "https://www.baidu.com")!),
-    Bookmark(id: UUID(), title: "Google", url: URL(string: "https://www.google.com/?client=safari")!),
-    Directory(id: UUID(), title: "Files", children: [
-        Bookmark(id: UUID(), title: "Pdf-8", url: URL(fileURLWithPath: "/Users/rayman/Downloads/report-7.pdf")),
+    Bookmark(id: UUID(), title: "A", url: URL(string: "https://www.baidu.com")!),
+    Bookmark(id: UUID(), title: "B", url: URL(string: "https://www.google.com/?client=safari")!),
+    Directory(id: UUID(), title: "Dir1", children: [
+        Bookmark(id: UUID(), title: "Dir1-1", url: URL(fileURLWithPath: "/Users/rayman/Downloads/report-7.pdf")),
     ]),
-    Directory(id: UUID(), title: "Group1", children: [
-        Bookmark(id: UUID(), title: "百度", url: URL(string: "https://www.baidu.com")!),
-        Bookmark(id: UUID(), title: "Google", url: URL(string: "https://www.google.com/?client=safari")!),
+    Directory(id: UUID(), title: "Dir2", children: [
+        Bookmark(id: UUID(), title: "Dir2-1", url: URL(string: "https://www.baidu.com")!),
+        Bookmark(id: UUID(), title: "Dir2-1", url: URL(string: "https://www.google.com/?client=safari")!),
     ]),
 ]
 

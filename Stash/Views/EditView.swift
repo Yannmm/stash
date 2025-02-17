@@ -25,16 +25,16 @@ import Cocoa
 // MARK: - NSOutlineView Wrapper
 struct OutlineView: NSViewRepresentable {
     class Coordinator: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
-        var parent: OutlineView
+        var entries: [Entry]
         
-        init(parent: OutlineView) {
-            self.parent = parent
+        init(entries: [Entry]) {
+            self.entries = entries
         }
         
         // MARK: - NSOutlineViewDataSource
         
         func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
-            (item as? Entry)?.children?.count ?? parent.items.count
+            (item as? Entry)?.children?.count ?? entries.count
         }
         
         func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
@@ -45,7 +45,7 @@ struct OutlineView: NSViewRepresentable {
             if let listItem = item as? Entry {
                 return listItem.children![index]
             }
-            return parent.items[index]
+            return entries[index]
         }
         
         // MARK: - NSOutlineViewDelegate
@@ -54,10 +54,12 @@ struct OutlineView: NSViewRepresentable {
             guard let listItem = item as? Entry else { return nil }
             
             let identifier = NSUserInterfaceItemIdentifier("Cell")
-            var cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView
+            var cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? CustomTableViewCell
+            
+            
             
             if cell == nil {
-                cell = CustomTableViewCell(title: listItem.name)
+                cell = CustomTableViewCell()
                 cell?.identifier = identifier
                 //                let tf = NSTextField(labelWithString: "")
                 //                cell?.textField = tf
@@ -65,7 +67,7 @@ struct OutlineView: NSViewRepresentable {
                 //                cell?.addSubview(cell!.textField!)
             }
             
-            //            cell?.textField?.stringValue = listItem.name
+            cell?.title = listItem.name
             return cell
         }
         
@@ -83,23 +85,24 @@ struct OutlineView: NSViewRepresentable {
         }
         
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
-            let xxx = item as! Entry
-            let xxx1 = NSHostingView(rootView: Cool1(title: xxx.name))
-            let aaa = xxx1.intrinsicContentSize
-            return aaa.height
+//            let xxx = item as! Entry
+//            let xxx1 = NSHostingView(rootView: Cool1(title: xxx.name))
+//            let aaa = xxx1.intrinsicContentSize
+//            return aaa.height
+            return 100
         }
         
         func outlineView(_ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex: Int) -> Bool {
             guard let pasteboardItem = info.draggingPasteboard.pasteboardItems?.first,
                   let itemID = pasteboardItem.string(forType: .string),
-                  let draggedItem = findItem(by: itemID, in: parent.items) else { return false }
+                  let draggedItem = findItem(by: itemID, in: entries) else { return false }
             
             let targetParent = item as? Entry
             
             if let oldParent = draggedItem.parent {
                 oldParent.children?.removeAll { $0.id == draggedItem.id }
             } else {
-                parent.items.removeAll { $0.id == draggedItem.id }
+                entries.removeAll { $0.id == draggedItem.id }
             }
             
             if let targetParent = targetParent {
@@ -114,9 +117,9 @@ struct OutlineView: NSViewRepresentable {
                 draggedItem.parent = targetParent
             } else {
                 if childIndex == -1 {
-                    parent.items.append(draggedItem)
+                    entries.append(draggedItem)
                 } else {
-                    parent.items.insert(draggedItem, at: childIndex)
+                    entries.insert(draggedItem, at: childIndex)
                 }
                 draggedItem.parent = nil
             }
@@ -139,7 +142,7 @@ struct OutlineView: NSViewRepresentable {
     @Binding var items: [Entry]
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(parent: self)
+        Coordinator(entries: kEntries)
     }
     
     func makeNSView(context: Context) -> NSScrollView {
@@ -190,29 +193,27 @@ class HierarchyView: NSOutlineView {
 }
 
 class CustomTableViewCell: NSTableCellView {
-    let title: String
     
-    init(title: String) {
-        self.title = title
+    var title: String = "" {
+        didSet {
+            xxx.rootView = Cool1(title: title)
+        }
+    }
+    
+    override init(frame frameRect: NSRect) {
         super.init(frame: CGRectZero)
-        
         setup()
-        
-//        self.trackingArea = NSTrackingArea(
-//            rect: bounds,
-//            options: [NSTrackingArea.Options.activeAlways, NSTrackingArea.Options.mouseEnteredAndExited,/* NSTrackingAreaOptions.mouseMoved */],
-//            owner: self,
-//            userInfo: nil
-//        )
-//        addTrackingArea(trackingArea)
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
+    var xxx: NSHostingView<Cool1>!
+    
     private func setup() {
-        let content = NSHostingView(rootView: Cool1(title: self.title))
+        let content = NSHostingView(rootView: Cool1(title: ""))
+        self.xxx = content
         content.sizingOptions = .minSize
         self.addSubview(content)
         
@@ -225,60 +226,60 @@ class CustomTableViewCell: NSTableCellView {
         ])
     }
     
-    private var trackingArea: NSTrackingArea!
-    
-    override func draw(_ dirtyRect: NSRect) {
-        super.draw(dirtyRect)
-        
-        NSColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.00).set()
-        
-        // mouse hover
-        if highlight {
-            let path = NSBezierPath(rect: bounds)
-            path.fill()
-        }
-        
-        // draw divider
-        let rect = NSRect(x: 0, y: bounds.height - 2, width: bounds.width, height: bounds.height)
-        let path = NSBezierPath(rect: rect)
-        path.fill()
-    }
-    
-    private var highlight = false {
-        didSet {
-            setNeedsDisplay(bounds)
-        }
-    }
-    
-    override func mouseEntered(with event: NSEvent) {
-        super.mouseEntered(with: event)
-        if !highlight {
-            highlight = true
-        }
-    }
-    
-    override func mouseExited(with event: NSEvent) {
-        super.mouseExited(with: event)
-        if highlight {
-            highlight = false
-        }
-    }
-    
-    override func updateTrackingAreas() {
-        super.updateTrackingAreas()
-        if (trackingArea != nil) {
-            self.removeTrackingArea(trackingArea)
-        }
-        
-        
-        let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeAlways]
-            let trackingArea = NSTrackingArea(rect: self.bounds, options: options, owner: self, userInfo: nil)
-            self.addTrackingArea(trackingArea)
-    }
-    
-    deinit {
-        removeTrackingArea(trackingArea)
-    }
+//    private var trackingArea: NSTrackingArea!
+//    
+//    override func draw(_ dirtyRect: NSRect) {
+//        super.draw(dirtyRect)
+//        
+//        NSColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.00).set()
+//        
+//        // mouse hover
+//        if highlight {
+//            let path = NSBezierPath(rect: bounds)
+//            path.fill()
+//        }
+//        
+//        // draw divider
+//        let rect = NSRect(x: 0, y: bounds.height - 2, width: bounds.width, height: bounds.height)
+//        let path = NSBezierPath(rect: rect)
+//        path.fill()
+//    }
+//    
+//    private var highlight = false {
+//        didSet {
+//            setNeedsDisplay(bounds)
+//        }
+//    }
+//    
+//    override func mouseEntered(with event: NSEvent) {
+//        super.mouseEntered(with: event)
+//        if !highlight {
+//            highlight = true
+//        }
+//    }
+//    
+//    override func mouseExited(with event: NSEvent) {
+//        super.mouseExited(with: event)
+//        if highlight {
+//            highlight = false
+//        }
+//    }
+//    
+//    override func updateTrackingAreas() {
+//        super.updateTrackingAreas()
+//        if (trackingArea != nil) {
+//            self.removeTrackingArea(trackingArea)
+//        }
+//        
+//        
+//        let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeAlways]
+//            let trackingArea = NSTrackingArea(rect: self.bounds, options: options, owner: self, userInfo: nil)
+//            self.addTrackingArea(trackingArea)
+//    }
+//    
+//    deinit {
+//        removeTrackingArea(trackingArea)
+//    }
 }
 
 
@@ -291,9 +292,9 @@ struct Cool1: View {
                 .font(.largeTitle)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(EdgeInsets(top: 10, leading: 0, bottom: 10, trailing: 0))
-                .onTapGesture {
-                    print("123123")
-                }
+//                .onTapGesture {
+//                    print("123123")
+//                }
         }
     }
 }
