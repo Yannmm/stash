@@ -56,9 +56,9 @@ class CustomTableViewCell: NSTableCellView {
         }
         
         // draw divider
-        let rect = NSRect(x: 0, y: bounds.height - 2, width: bounds.width, height: bounds.height)
-        let path = NSBezierPath(rect: rect)
-        path.fill()
+//        let rect = NSRect(x: 0, y: bounds.height - 2, width: bounds.width, height: bounds.height)
+//        let path = NSBezierPath(rect: rect)
+//        path.fill()
     }
     
     private var highlight = false {
