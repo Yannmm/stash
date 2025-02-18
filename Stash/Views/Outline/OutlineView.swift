@@ -111,32 +111,41 @@ extension OutlineView {
             
             let targetParent = item as? Entry
             
+            // Begin updates for animation
+            outlineView.beginUpdates()
+            
+            // Remove from old location
             if let oldParent = draggedItem.parent {
-                oldParent.children?.removeAll { $0.id == draggedItem.id }
+                if let index = oldParent.children?.firstIndex(where: { $0.id == draggedItem.id }) {
+                    oldParent.children?.remove(at: index)
+                    outlineView.removeItems(at: IndexSet(integer: index), inParent: oldParent, withAnimation: .slideLeft)
+                }
             } else {
-                entries.removeAll { $0.id == draggedItem.id }
+                if let index = entries.firstIndex(where: { $0.id == draggedItem.id }) {
+                    entries.remove(at: index)
+                    outlineView.removeItems(at: IndexSet(integer: index), inParent: nil, withAnimation: .slideLeft)
+                }
             }
             
+            // Insert at new location
             if let targetParent = targetParent {
                 if targetParent.children == nil {
                     targetParent.children = []
                 }
-                if childIndex == -1 {
-                    targetParent.children?.append(draggedItem)
-                } else {
-                    targetParent.children?.insert(draggedItem, at: childIndex)
-                }
+                let insertIndex = childIndex == -1 ? (targetParent.children?.count ?? 0) : childIndex
+                targetParent.children?.insert(draggedItem, at: insertIndex)
+                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: targetParent, withAnimation: .slideRight)
                 draggedItem.parent = targetParent
             } else {
-                if childIndex == -1 || childIndex >= entries.count {
-                    entries.append(draggedItem)
-                } else {
-                    entries.insert(draggedItem, at: childIndex)
-                }
+                let insertIndex = (childIndex == -1 || childIndex >= entries.count) ? entries.endIndex : childIndex
+                entries.insert(draggedItem, at: insertIndex)
+                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: nil, withAnimation: .slideRight)
                 draggedItem.parent = nil
             }
             
-            outlineView.reloadData()
+            // End updates
+            outlineView.endUpdates()
+            
             return true
         }
         
