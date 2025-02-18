@@ -77,8 +77,6 @@ extension OutlineView {
             let identifier = NSUserInterfaceItemIdentifier("Cell")
             var cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? CustomTableViewCell
             
-            
-            
             if cell == nil {
                 cell = CustomTableViewCell()
                 cell?.identifier = identifier
@@ -130,7 +128,7 @@ extension OutlineView {
                 }
                 draggedItem.parent = targetParent
             } else {
-                if childIndex == -1 {
+                if childIndex == -1 || childIndex >= entries.count {
                     entries.append(draggedItem)
                 } else {
                     entries.insert(draggedItem, at: childIndex)
