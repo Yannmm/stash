@@ -9,9 +9,9 @@ import AppKit
 
 class CustomMenuItem: NSMenuItem {
     
-    let object: Entry?
+    let object: (any Entry)?
     
-    init(title string: String, action selector: Selector?, keyEquivalent charCode: String, with object: Entry?) {
+    init(title string: String, action selector: Selector?, keyEquivalent charCode: String, with object: (any Entry)?) {
         self.object = object
         super.init(title: string, action: selector, keyEquivalent: charCode)
     }

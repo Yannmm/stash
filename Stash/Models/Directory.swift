@@ -10,10 +10,10 @@ import Foundation
 class Directory {
     let id: UUID
     let title: String
-    var children: [Entry]?
-    var parent: Entry?
+    var children: [any Entry]?
+    var parent: (any Entry)?
     
-    init(id: UUID, title: String, children: [Entry], parentId: UUID? = nil) {
+    init(id: UUID, title: String, children: [any Entry], parentId: UUID? = nil) {
         self.id = id
         self.title = title
         self.children = children

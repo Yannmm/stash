@@ -9,7 +9,7 @@ import SwiftUI
 
 struct DragAndDropView: View {
     @State private var dropHighlight = false
-    @EnvironmentObject var manager: BookmarkManager
+    @EnvironmentObject var cabint: OkamuraCabinet
     
     var body: some View {
         VStack {
@@ -32,7 +32,7 @@ struct DragAndDropView: View {
                 _ = provider.loadObject(ofClass: URL.self) { url, _ in
                     if let url = url {
                         DispatchQueue.main.async {
-                            manager.addBookmark(url: url)
+//                            manager.addBookmark(url: url)
                         }
                     }
                 }
@@ -40,7 +40,7 @@ struct DragAndDropView: View {
                 _ = provider.loadItem(forTypeIdentifier: kUTTypeFileURL as String, options: nil) { data, _ in
                     if let data = data as? Data, let url = URL(dataRepresentation: data, relativeTo: nil) {
                         DispatchQueue.main.async {
-                            manager.addBookmark(url: url)
+//                            manager.addBookmark(url: url)
                         }
                     }
                 }

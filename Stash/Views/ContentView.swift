@@ -2,11 +2,10 @@ import SwiftUI
 import AppKit
 
 struct ContentView: View {
-    
-    @State private var data: [Entry] = kEntries
+    @EnvironmentObject var cabinet: OkamuraCabinet
     
     var body: some View {
-        OutlineView(items: data)
+        OutlineView(items: $cabinet.entries)
             .frame(minWidth: 300, minHeight: 400)
     }
     

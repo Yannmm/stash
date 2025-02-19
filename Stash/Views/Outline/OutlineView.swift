@@ -10,10 +10,10 @@ import Cocoa
 
 // MARK: - NSOutlineView Wrapper
 struct OutlineView: NSViewRepresentable {
-    @State var items: [Entry]
+    @Binding var items: [any Entry]
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(entries: items)
+        Coordinator(entries: $items)
     }
     
     func makeNSView(context: Context) -> NSScrollView {
@@ -46,24 +46,24 @@ struct OutlineView: NSViewRepresentable {
 
 extension OutlineView {
     class Coordinator: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
-        var entries: [Entry]
+        @Binding var entries: [any Entry]
         
-        init(entries: [Entry]) {
-            self.entries = entries
+        init(entries: Binding<[any Entry]>) {
+            self._entries = entries
         }
         
         // MARK: - NSOutlineViewDataSource
         
         func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
-            (item as? Entry)?.children?.count ?? entries.count
+            (item as? any Entry)?.children?.count ?? entries.count
         }
         
         func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
-            (item as? Entry)?.children != nil
+            (item as? any Entry)?.children != nil
         }
         
         func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
-            if let listItem = item as? Entry {
+            if let listItem = item as? any Entry {
                 return listItem.children![index]
             }
             return entries[index]
@@ -72,7 +72,7 @@ extension OutlineView {
         // MARK: - NSOutlineViewDelegate
         
         func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
-            guard let listItem = item as? Entry else { return nil }
+            guard let listItem = item as? any Entry else { return nil }
             
             let identifier = NSUserInterfaceItemIdentifier("Cell")
             var cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? CustomTableViewCell
@@ -89,7 +89,7 @@ extension OutlineView {
         // MARK: - Drag & Drop
         
         func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
-            guard let listItem = item as? Entry else { return nil }
+            guard let listItem = item as? any Entry else { return nil }
             let pasteboardItem = NSPasteboardItem()
             pasteboardItem.setString(listItem.id.uuidString, forType: .string)
             return pasteboardItem
@@ -100,7 +100,7 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
-            let view = NSHostingView(rootView: CellContent(title: (item as! Entry).name))
+            let view = NSHostingView(rootView: CellContent(title: (item as! any Entry).name))
             return view.intrinsicContentSize.height
         }
         
@@ -109,7 +109,7 @@ extension OutlineView {
                   let itemID = pasteboardItem.string(forType: .string),
                   let draggedItem = findItem(by: itemID, in: entries) else { return false }
             
-            let targetParent = item as? Entry
+            let targetParent = item as? any Entry
             
             // Begin updates for animation
             outlineView.beginUpdates()
@@ -146,10 +146,12 @@ extension OutlineView {
             // End updates
             outlineView.endUpdates()
             
+            entries = entries
+            
             return true
         }
         
-        private func findItem(by id: String, in items: [Entry]) -> Entry? {
+        private func findItem(by id: String, in items: [any Entry]) -> (any Entry)? {
             for item in items {
                 if item.id.uuidString == id { return item }
                 if let found = findItem(by: id, in: item.children ?? []) {

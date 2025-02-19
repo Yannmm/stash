@@ -9,11 +9,11 @@ import AppKit
 import SwiftUI
 
 extension AppDelegate {
-    func generateMenu(from entries: [Entry]) -> NSMenu {
+    func generateMenu(from entries: [any Entry]) -> NSMenu {
         return g(entries: entries)
     }
     
-    private func g(entries: [Entry], isRoot: Bool = true) -> NSMenu {
+    private func g(entries: [any Entry], isRoot: Bool = true) -> NSMenu {
         let menu = NSMenu()
         entries.forEach { e in
             let item = CustomMenuItem(title: e.name, action: #selector(action(_:)), keyEquivalent: "", with: e)

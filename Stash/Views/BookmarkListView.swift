@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct BookmarkListView: View {
-    @EnvironmentObject var manager: BookmarkManager
+    @EnvironmentObject var manager: OkamuraCabinet
     
     var body: some View {
         VStack(alignment: .center, spacing: 0) {
@@ -21,31 +21,29 @@ struct BookmarkListView: View {
             .background(Color.green)
             .contentShape(Rectangle()) // <-- This makes the entire area tappable
             
-         Rectangle()
-            .fill(Color.red)
-            .frame(height: 5)
-            .edgesIgnoringSafeArea(.horizontal)
-            
-            List(manager.bookmarks) { bookmark in
-                HStack {
-                    VStack(alignment: .leading) {
-                        Text(bookmark.title)
-                        Text(bookmark.url.absoluteString)
-                            .foregroundColor(.secondary)
-                            .font(.caption)
-                    }
-                    
-                    Button(action: { copyToClipboard(bookmark.url) }) {
-                        Image(systemName: "doc.on.doc")
-                    }
-                    Button(action: { openURL(bookmark.url) }) {
-                        Image(systemName: "arrowshape.turn.up.right")
-                    }
-                }
-            }
-            .listStyle(SidebarListStyle())
-            
-            CounterView()
+//         Rectangle()
+//            .fill(Color.red)
+//            .frame(height: 5)
+//            .edgesIgnoringSafeArea(.horizontal)
+//            
+//            List(manager.entries, id: \.self) { bookmark in
+//                HStack {
+//                    VStack(alignment: .leading) {
+//                        Text(bookmark.title)
+//                        Text(bookmark.url.absoluteString)
+//                            .foregroundColor(.secondary)
+//                            .font(.caption)
+//                    }
+//                    
+//                    Button(action: { copyToClipboard(bookmark.url) }) {
+//                        Image(systemName: "doc.on.doc")
+//                    }
+//                    Button(action: { openURL(bookmark.url) }) {
+//                        Image(systemName: "arrowshape.turn.up.right")
+//                    }
+//                }
+//            }
+//            .listStyle(SidebarListStyle())
         }
         .frame(width: 300, height: 400)
     }

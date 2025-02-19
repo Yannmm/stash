@@ -16,9 +16,9 @@ class Bookmark: Identifiable {
     let id: UUID
     let title: String
     let url: URL
-    weak var parent: Entry?
+    weak var parent: (any Entry)?
     
-    init(id: UUID, title: String, url: URL, parent: Entry? = nil) {
+    init(id: UUID, title: String, url: URL, parent: (any Entry)? = nil) {
         self.id = id
         self.title = title
         self.url = url
