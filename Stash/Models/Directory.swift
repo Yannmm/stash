@@ -28,6 +28,10 @@ extension Directory: Entry {
         return title
     }
     
+    var icon: Icon {
+        return Icon.system("folder.fill")
+    }
+    
     func open() {
         print("打开目录（菜单中）")
     }

@@ -7,34 +7,29 @@
 
 import AppKit
 import SwiftUI
+import Kingfisher
 
 extension AppDelegate {
+    @MainActor
     func generateMenu(from entries: [any Entry]) -> NSMenu {
         return g(entries: entries)
     }
     
+    @MainActor
     private func g(entries: [any Entry], isRoot: Bool = true) -> NSMenu {
-        let u1 = URL(string: "https://jira.aligntech.com/secure/RapidBoard.jspa?rapidView=1226&projectKey=AMD&view=detail&selectedIssue=AMD-7168&quickFilter=9255#")
-        
-        let k1 = u1?.host()
-        print(k1)
+        //        let u1 = URL(string: "https://www.figma.com/design/G9CcLvgYkfCXaZGKE0lhNd/Insight-lite-app-UI-design?node-id=12-316&p=f&t=uCeb0t4trYsXRro1-0")
         
         let menu = NSMenu()
         entries.forEach { e in
             let item = CustomMenuItem(title: e.name, action: #selector(action(_:)), keyEquivalent: "", with: e)
-//            var image = NSImage(contentsOf: URL(string: "https://a0.muscache.com/airbnb/static/icons/apple-touch-icon-76x76-3b313d93b1b5823293524b9764352ac9.png")!)
             
-            var image = NSImage(systemSymbolName: "folder.fill", accessibilityDescription: nil)
+            switch e.icon {
+            case Icon.system(let name):
+                item.image = NSImage(systemSymbolName: name, accessibilityDescription: nil)
+            case Icon.favicon(let url):
+                setFavicon(url, item)
+            }
             
-//            http://icons.duckduckgo.com/ip2/www.stackoverflow.com.ico
-            //            http://icons.duckduckgo.com/ip2/www.baidu.com.ico
-            //            http://icons.duckduckgo.com/ip2/stackedit.io.ico
-            // https://stackoverflow.com/questions/5119041/how-can-i-get-a-web-sites-favicon
-            // http://icons.duckduckgo.com/ip2/10.133.110.49:8080.ico
-            
-//            image?.size = NSSize(width: 16, height: 16)
-            image = image?.roundCorners(radius: 8)
-            item.image = image
             if !(e.children ?? []).isEmpty {
                 let submenu = g(entries: e.children ?? [], isRoot: false)
                 item.submenu = submenu
@@ -53,5 +48,39 @@ extension AppDelegate {
     
     @objc private func action(_ sender: CustomMenuItem) {
         sender.object?.open()
+    }
+    
+    @MainActor
+    private func setFavicon(_ url: URL?, _ item: NSMenuItem) {
+        // 1. Create proper URL
+        if let url = url {
+            // 2. Configure proper size
+            let processor = ResizingImageProcessor(referenceSize: CGSize(width: 16, height: 16))
+            
+            // 3. Use proper Kingfisher options
+            let options: KingfisherOptionsInfo = [
+                .processor(processor),
+                .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2),
+                .cacheOriginalImage
+            ]
+            
+            // 4. Set image with completion handler to ensure it's set
+            item.kf.setImage(
+                with: url,
+                options: options
+            ) { result in
+                switch result {
+                case .success(let value):
+                    item.image = value.image
+                case .failure(let error):
+                    print("Error loading favicon: \(error)")
+                    // Set fallback image
+                    item.image = NSImage(systemSymbolName: "globe", accessibilityDescription: nil)
+                }
+            }
+        } else {
+            // Set default folder icon for directories
+            item.image = NSImage(systemSymbolName: "folder.fill", accessibilityDescription: nil)
+        }
     }
 }

@@ -38,6 +38,10 @@ extension Bookmark: Entry {
         return title
     }
     
+    var icon: Icon {
+        return Icon.favicon(url.faviconUrl)
+    }
+    
     func open() {
         NSWorkspace.shared.open(url)
     }

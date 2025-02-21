@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		6D6718472D672CDC0063FE57 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 6D6718462D672CDC0063FE57 /* Kingfisher */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		7222C1D42D491BEF00096255 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -52,6 +56,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6D6718472D672CDC0063FE57 /* Kingfisher in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -72,12 +77,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6D6718452D672CDC0063FE57 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
 		7222C1B72D491BEC00096255 = {
 			isa = PBXGroup;
 			children = (
 				7222C1C22D491BEC00096255 /* Stash */,
 				7222C1D62D491BEF00096255 /* StashTests */,
 				7222C1E02D491BEF00096255 /* StashUITests */,
+				6D6718452D672CDC0063FE57 /* Frameworks */,
 				7222C1C12D491BEC00096255 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -112,6 +125,7 @@
 			);
 			name = Stash;
 			packageProductDependencies = (
+				6D6718462D672CDC0063FE57 /* Kingfisher */,
 			);
 			productName = Stash;
 			productReference = 7222C1C02D491BEC00096255 /* Stash.app */;
@@ -565,6 +579,14 @@
 			};
 		};
 /* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		6D6718462D672CDC0063FE57 /* Kingfisher */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6D6718442D66C30C0063FE57 /* XCRemoteSwiftPackageReference "Kingfisher" */;
+			productName = Kingfisher;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 7222C1B82D491BEC00096255 /* Project object */;
 }

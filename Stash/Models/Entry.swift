@@ -11,6 +11,7 @@ protocol Entry: AnyObject, Identifiable {
     var id: UUID { get }
     var name: String { get }
     var parent: (any Entry)? { get set }
+    var icon: Icon { get }
     
     func open()
     func reveal()
@@ -21,4 +22,10 @@ extension Entry {
     var children: [any Entry]? {
         return nil
     }
+}
+
+
+enum Icon {
+    case favicon(URL?)
+    case system(String)
 }
