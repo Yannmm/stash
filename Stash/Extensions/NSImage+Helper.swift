@@ -6,6 +6,7 @@
 //
 
 import Cocoa
+import SwiftUI
 
 extension NSImage {
     func roundCorners(radius: CGFloat) -> NSImage? {
@@ -36,5 +37,20 @@ extension NSImage {
         let roundedImage = NSImage(size: size)
         roundedImage.addRepresentation(bitmapRep)
         return roundedImage
+    }
+}
+
+extension NSImage {
+    func tint(color: Color) -> NSImage? {
+        guard let copiedImage = self.copy() as? NSImage else { return nil }
+        
+        copiedImage.lockFocus()
+        NSColor(color).set()
+        
+        let imageRect = NSRect(origin: .zero, size: copiedImage.size)
+        imageRect.fill(using: .sourceAtop)
+        
+        copiedImage.unlockFocus()
+        return copiedImage
     }
 }

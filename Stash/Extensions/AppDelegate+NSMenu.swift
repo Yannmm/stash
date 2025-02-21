@@ -9,23 +9,21 @@ import AppKit
 import SwiftUI
 import Kingfisher
 
+@MainActor
 extension AppDelegate {
-    @MainActor
+    
     func generateMenu(from entries: [any Entry]) -> NSMenu {
         return g(entries: entries)
     }
     
-    @MainActor
     private func g(entries: [any Entry], isRoot: Bool = true) -> NSMenu {
-        //        let u1 = URL(string: "https://www.figma.com/design/G9CcLvgYkfCXaZGKE0lhNd/Insight-lite-app-UI-design?node-id=12-316&p=f&t=uCeb0t4trYsXRro1-0")
-        
         let menu = NSMenu()
         entries.forEach { e in
             let item = CustomMenuItem(title: e.name, action: #selector(action(_:)), keyEquivalent: "", with: e)
             
             switch e.icon {
             case Icon.system(let name):
-                item.image = NSImage(systemSymbolName: name, accessibilityDescription: nil)
+                item.image = NSImage(systemSymbolName: name, accessibilityDescription: nil)?.tint(color: Color.red)
             case Icon.favicon(let url):
                 setFavicon(url, item)
             }
@@ -46,11 +44,6 @@ extension AppDelegate {
         return menu
     }
     
-    @objc private func action(_ sender: CustomMenuItem) {
-        sender.object?.open()
-    }
-    
-    @MainActor
     private func setFavicon(_ url: URL?, _ item: NSMenuItem) {
         // 1. Create proper URL
         if let url = url {
@@ -80,7 +73,11 @@ extension AppDelegate {
             }
         } else {
             // Set default folder icon for directories
-            item.image = NSImage(systemSymbolName: "folder.fill", accessibilityDescription: nil)
+            item.image = NSImage(systemSymbolName: "globe.fill", accessibilityDescription: nil)?.tint(color: Color.red)
         }
+    }
+    
+    @objc private func action(_ sender: CustomMenuItem) {
+        sender.object?.open()
     }
 }
