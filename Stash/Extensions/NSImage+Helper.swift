@@ -41,16 +41,26 @@ extension NSImage {
 }
 
 extension NSImage {
-    func tint(color: Color) -> NSImage? {
-        guard let copiedImage = self.copy() as? NSImage else { return nil }
+    func tint(color: Color) -> NSImage {
+        guard let cgImage = self.cgImage(forProposedRect: nil, context: nil, hints: nil) else {
+            return self
+        }
         
-        copiedImage.lockFocus()
-        NSColor(color).set()
+        let nsColor = NSColor(color)
+        let coloredImage = NSImage(size: size)
         
-        let imageRect = NSRect(origin: .zero, size: copiedImage.size)
-        imageRect.fill(using: .sourceAtop)
+        coloredImage.lockFocus()
+        nsColor.set()
         
-        copiedImage.unlockFocus()
-        return copiedImage
+        NSGraphicsContext.current?.imageInterpolation = .high
+        NSGraphicsContext.current?.compositingOperation = .sourceAtop
+        
+        let imageRect = NSRect(origin: .zero, size: size)
+        NSImage(cgImage: cgImage, size: size).draw(in: imageRect)
+        
+        imageRect.fill()
+        coloredImage.unlockFocus()
+        
+        return coloredImage
     }
 }

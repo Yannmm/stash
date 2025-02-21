@@ -23,7 +23,9 @@ extension AppDelegate {
             
             switch e.icon {
             case Icon.system(let name):
-                item.image = NSImage(systemSymbolName: name, accessibilityDescription: nil)?.tint(color: Color.red)
+                let image = NSImage(systemSymbolName: name, accessibilityDescription: nil)
+                image?.isTemplate = true
+                item.image = image?.tint(color: Color.theme)
             case Icon.favicon(let url):
                 setFavicon(url, item)
             }
