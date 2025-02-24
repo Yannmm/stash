@@ -63,8 +63,8 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
-            if let listItem = item as? any Entry {
-                return listItem.children![index]
+            if let entry = item as? any Entry {
+                return entry.children![index]
             }
             return entries[index]
         }
@@ -72,7 +72,7 @@ extension OutlineView {
         // MARK: - NSOutlineViewDelegate
         
         func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
-            guard let listItem = item as? any Entry else { return nil }
+            guard let entry = item as? any Entry else { return nil }
             
             let identifier = NSUserInterfaceItemIdentifier("Cell")
             var cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? CustomTableViewCell
@@ -82,16 +82,16 @@ extension OutlineView {
                 cell?.identifier = identifier
             }
             
-            cell?.title = listItem.name
+            cell?.entry = entry
             return cell
         }
         
         // MARK: - Drag & Drop
         
         func outlineView(_ outlineView: NSOutlineView, pasteboardWriterForItem item: Any) -> NSPasteboardWriting? {
-            guard let listItem = item as? any Entry else { return nil }
+            guard let entry = item as? any Entry else { return nil }
             let pasteboardItem = NSPasteboardItem()
-            pasteboardItem.setString(listItem.id.uuidString, forType: .string)
+            pasteboardItem.setString(entry.id.uuidString, forType: .string)
             return pasteboardItem
         }
         
@@ -100,7 +100,7 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
-            let view = NSHostingView(rootView: CellContent(title: (item as! any Entry).name))
+            let view = NSHostingView(rootView: CellContent(entry: (item as? any Entry)))
             return view.intrinsicContentSize.height
         }
         

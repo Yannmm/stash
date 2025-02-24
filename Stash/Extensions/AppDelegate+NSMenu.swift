@@ -75,7 +75,7 @@ extension AppDelegate {
             }
         } else {
             // Set default folder icon for directories
-            item.image = NSImage(systemSymbolName: "globe.fill", accessibilityDescription: nil)?.tint(color: Color.red)
+            item.image = NSImage(systemSymbolName: "globe.fill", accessibilityDescription: nil)
         }
     }
     

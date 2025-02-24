@@ -10,9 +10,10 @@ import SwiftUI
 
 class CustomTableViewCell: NSTableCellView {
     
-    var title: String = "" {
+    var entry: (any Entry)? {
         didSet {
-            hostingView.rootView = CellContent(title: title)
+            guard let e = entry else { return }
+            hostingView.rootView = CellContent(entry: e)
         }
     }
     
@@ -28,7 +29,7 @@ class CustomTableViewCell: NSTableCellView {
     private var hostingView: NSHostingView<CellContent>!
     
     private func setup() {
-        let content = NSHostingView(rootView: CellContent(title: ""))
+        let content = NSHostingView(rootView: CellContent(entry: nil))
         self.hostingView = content
         content.sizingOptions = .minSize
         self.addSubview(content)
