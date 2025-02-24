@@ -50,11 +50,11 @@ extension AppDelegate {
         // 1. Create proper URL
         if let url = url {
             // 2. Configure proper size
-            let processor = ResizingImageProcessor(referenceSize: CGSize(width: 16, height: 16))
+//            let processor = ResizingImageProcessor(referenceSize: CGSize(width: 32, height: 32), mode: .aspectFit)
             
             // 3. Use proper Kingfisher options
             let options: KingfisherOptionsInfo = [
-                .processor(processor),
+//                .processor(processor),
                 .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2),
                 .cacheOriginalImage
             ]
@@ -67,6 +67,7 @@ extension AppDelegate {
                 switch result {
                 case .success(let value):
                     item.image = value.image
+                    item.image?.size = CGSize(width: 16, height: 16)
                 case .failure(let error):
                     print("Error loading favicon: \(error)")
                     // Set fallback image
@@ -75,7 +76,7 @@ extension AppDelegate {
             }
         } else {
             // Set default folder icon for directories
-            item.image = NSImage(systemSymbolName: "globe.fill", accessibilityDescription: nil)
+            item.image = NSImage(systemSymbolName: "globe", accessibilityDescription: nil)
         }
     }
     

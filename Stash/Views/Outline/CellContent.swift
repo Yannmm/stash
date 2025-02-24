@@ -26,17 +26,15 @@ struct CellContent: View {
                     case .favicon(let url):
                         if let url = url {
                             KFImage.url(url)
-                            //                                  .placeholder(placeholderImage)
-                            //                                  .setProcessor(processor)
                                 .loadDiskFileSynchronously()
                                 .cacheMemoryOnly()
                                 .fade(duration: 0.25)
-                            //                                  .lowDataModeSource(.network(lowResolutionURL))
-                            //                                  .onProgress { receivedSize, totalSize in  }
                                 .onSuccess { result in  }
                                 .onFailure { error in }
+                                .resizable()
+                                    .frame(width: 16.0, height: 16.0)
                         } else {
-                            Image(systemName: "globe.fill")
+                            Image(systemName: "globe")
                                 .foregroundStyle(Color.theme)
                         }
                     }

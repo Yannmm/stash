@@ -44,6 +44,8 @@ class OkamuraCabinet: ObservableObject {
         self.entries = [
             Bookmark(id: UUID(), title: "A", url: URL(string: "https://www.baidu.com")!),
             Bookmark(id: UUID(), title: "B", url: URL(string: "https://www.google.com/?client=safari")!),
+            Bookmark(id: UUID(), title: "C", url: URL(string: "https://htmlcheatsheet.com/css/")!),
+            
             Directory(id: UUID(), title: "Dir1", children: [
                 Bookmark(id: UUID(), title: "Dir1-1", url: URL(fileURLWithPath: "/Users/rayman/Downloads/report-7.pdf")),
             ]),
