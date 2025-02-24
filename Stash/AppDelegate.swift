@@ -97,16 +97,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func quit() {}
     
     private func createDropWindow() {
-        dropWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 400),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
-            backing: .buffered,
-            defer: false
-        )
-        dropWindow?.contentViewController = NSHostingController(rootView: DragAndDropView().environmentObject(cabinet))
-        dropWindow?.title = "Drag and Drop1111"
-        dropWindow?.isReleasedWhenClosed = false
-        dropWindow?.collectionBehavior = [.managed, .fullScreenNone]
+//        dropWindow = NSWindow(
+//            contentRect: NSRect(x: 0, y: 0, width: 400, height: 400),
+//            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+//            backing: .buffered,
+//            defer: false
+//        )
+//        dropWindow?.contentViewController = NSHostingController(rootView: DragAndDropView().environmentObject(cabinet))
+//        dropWindow?.title = "Drag and Drop1111"
+//        dropWindow?.isReleasedWhenClosed = false
+//        dropWindow?.collectionBehavior = [.managed, .fullScreenNone]
     }
     
     func showDropWindow() {
