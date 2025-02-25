@@ -12,31 +12,26 @@ struct ContentView: View {
                 OutlineView(items: $cabinet.entries)
             }
             .sheet(isPresented: $present, onDismiss: nil) {
-                ModalView()
-                    .frame(width: 300, height: 200)
+                CraftModalView()
+                //                    .frame(width: 300, height: 200)
+                    .background(Color(NSColor.windowBackgroundColor))
+                    .cornerRadius(8)
                     .interactiveDismissDisabled(true)
             }
         }
         .frame(minWidth: 300, minHeight: 400)
-    }
-}
-
-// Example Modal View
-struct ModalView: View {
-    @Environment(\.dismiss) var dismiss
-    
-    var body: some View {
-        VStack {
-            Text("Modal Content")
-            Button("Close") {
-                dismiss()
+        .task {
+            // TODO: move to creating.
+            do {
+                let x = try await Dominator().fetchWebPageTitle(from: URL(string: "https://www.baidu.com")!)
+                print(x)
+            } catch {
+                print(error)
             }
+            
         }
-        .padding()
     }
 }
-
-
 
 
 
