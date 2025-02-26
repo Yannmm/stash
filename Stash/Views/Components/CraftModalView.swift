@@ -11,17 +11,17 @@ struct CraftModalView: View {
     @Environment(\.dismiss) var dismiss
     @State private var urlString: String = ""
     @State private var pageTitle: String = ""
-    @State private var isLoading = false
+    @State private var loading = false
     @State private var errorMessage: String?
     
     var body: some View {
         VStack(spacing: 16) {
             // URL Input Section
-            CustomTextField(text: $urlString, placeholder: "Search...")
-                            .frame(maxWidth: 200)
+            CustomTextField(text: $urlString, loading: $loading, placeholder: "Search...")
+                .frame(maxWidth: 200)
             
             // Loading or Result Section
-            if isLoading {
+            if loading {
                 ProgressView()
             } else if !pageTitle.isEmpty {
                 Text(pageTitle)
@@ -33,7 +33,8 @@ struct CraftModalView: View {
             // Action Buttons
             HStack {
                 Button("Cancel") {
-                    dismiss()
+//                    dismiss()
+                    loading  = !loading
                 }
                 
                 Button("Save") {
@@ -63,8 +64,8 @@ struct CraftModalView: View {
             return
         }
         
-        isLoading = true
-        defer { isLoading = false }
+        loading = true
+        defer { loading = false }
         
         do {
             pageTitle = try await Dominator().fetchWebPageTitle(from: url)
@@ -79,14 +80,21 @@ struct CraftModalView: View {
 
 struct CustomTextField: View {
     @Binding var text: String
+    @Binding var loading: Bool
     let placeholder: String
     @FocusState private var isFocused: Bool
     
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: "globe")
-                .foregroundColor(.secondary)
             
+            if loading {
+                ProgressView()
+                    .progressViewStyle(CircularProgressViewStyle(tint: .red))
+                    .frame(width: 16, height: 16)
+            } else {
+                Image(systemName: "globe")
+                    .foregroundColor(.secondary)
+            }
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
                 .focused($isFocused)
@@ -98,7 +106,7 @@ struct CustomTextField: View {
         .overlay(
             RoundedRectangle(cornerRadius: 6)
                 .stroke(isFocused ? Color.accentColor : Color(nsColor: .separatorColor),
-                       lineWidth: isFocused ? 2 : 0.5)
+                        lineWidth: isFocused ? 2 : 0.5)
         )
         .focusable()
         .onHover { isHovered in
