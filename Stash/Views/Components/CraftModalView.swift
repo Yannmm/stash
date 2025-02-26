@@ -17,30 +17,8 @@ struct CraftModalView: View {
     var body: some View {
         VStack(spacing: 16) {
             // URL Input Section
-            HStack {
-                TextField("Drop or enter URL here", text: $urlString)
-                    .textFieldStyle(.roundedBorder)
-                    .onDrop(of: [.url], isTargeted: nil) { providers in
-                        guard let first = providers.first else { return false }
-                        first.loadObject(ofClass: URL.self) { url, error in
-                            if let url = url {
-                                urlString = url.absoluteString
-                            }
-                        }
-                        return true
-                    }
-                    .onSubmit {
-                        Task { await parseURL() }
-                    }
-                
-                Button {
-                    Task { await parseURL() }
-                } label: {
-                    Image(systemName: "circle.grid.hex")
-                        .imageScale(.large)
-                }
-                .disabled(urlString.isEmpty || isLoading)
-            }
+            CustomTextField(text: $urlString, placeholder: "Search...")
+                            .frame(maxWidth: 200)
             
             // Loading or Result Section
             if isLoading {
@@ -50,7 +28,7 @@ struct CraftModalView: View {
                     .foregroundStyle(.secondary)
             }
             
-            Spacer()
+            //            Spacer()
             
             // Action Buttons
             HStack {
@@ -67,7 +45,6 @@ struct CraftModalView: View {
             }
         }
         .padding()
-        .frame(width: 400, height: 200)
         .alert("Error", isPresented: .init(
             get: { errorMessage != nil },
             set: { if !$0 { errorMessage = nil } }
@@ -97,6 +74,48 @@ struct CraftModalView: View {
         }
     }
 }
+
+// https://dribbble.com/shots/20559566-Link-input-with-preview
+
+struct CustomTextField: View {
+    @Binding var text: String
+    let placeholder: String
+    @FocusState private var isFocused: Bool
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "globe")
+                .foregroundColor(.secondary)
+            
+            TextField(placeholder, text: $text)
+                .textFieldStyle(.plain)
+                .focused($isFocused)
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(Color(nsColor: .controlBackgroundColor))
+        .cornerRadius(6)
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(isFocused ? Color.accentColor : Color(nsColor: .separatorColor),
+                       lineWidth: isFocused ? 2 : 0.5)
+        )
+        .focusable()
+        .onHover { isHovered in
+            if isHovered {
+                NSCursor.iBeam.push()
+            } else {
+                NSCursor.pop()
+            }
+        }
+        .onAppear {
+            isFocused = true  // Set focus when view appears
+        }
+    }
+}
+
+
+
 #Preview {
     CraftModalView()
 }

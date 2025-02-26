@@ -1,5 +1,6 @@
 import SwiftUI
 import AppKit
+import Kingfisher
 
 struct ContentView: View {
     @EnvironmentObject var cabinet: OkamuraCabinet
@@ -13,7 +14,6 @@ struct ContentView: View {
             }
             .sheet(isPresented: $present, onDismiss: nil) {
                 CraftModalView()
-                //                    .frame(width: 300, height: 200)
                     .background(Color(NSColor.windowBackgroundColor))
                     .cornerRadius(8)
                     .interactiveDismissDisabled(true)
@@ -32,6 +32,35 @@ struct ContentView: View {
         }
     }
 }
+
+// Helper extension for favicon URLs
+extension URL {
+    var faviconURL: URL? {
+        guard let host = self.host else { return nil }
+        return URL(string: "https://www.google.com/s2/favicons?domain=\(host)&sz=32")
+    }
+}
+
+// If you want to show favicons for multiple items:
+struct FaviconRow: View {
+    let url: URL
+    
+    var body: some View {
+        HStack(spacing: 4) {
+            KFImage(url.faviconURL)
+                .placeholder {
+                    Image(systemName: "globe")
+                        .resizable()
+                        .frame(width: 16, height: 16)
+                }
+                .resizable()
+                .frame(width: 16, height: 16)
+            
+            Text(url.host ?? "")
+        }
+    }
+}
+
 
 
 
