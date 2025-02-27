@@ -15,20 +15,12 @@ struct CraftModalView: View {
     @StateObject private var viewModel = CraftViewModel()
     
     var body: some View {
-        VStack(spacing: 16) {
-            VStack(alignment: .leading, spacing: 16) {
-                
-                HStack(spacing: 6) {
-                    Image(systemName: "globe")
-                        .resizable()
-                        .frame(width: 16, height: 16)
-                    Text("1312312")
-                }
-                .padding(.horizontal, 8)
-                AddressInputField(placeholder: "Drop or enter path here.",
-                                  text: $path.wrappedValue?.absoluteString ?? "",
-                                  viewModel: viewModel)
-            }
+        VStack(spacing: 16) {            
+            TitleInputField(viewModel: viewModel)
+            
+            AddressInputField(placeholder: "Drop or enter path here.",
+                              text: $path.wrappedValue?.absoluteString ?? "",
+                              viewModel: viewModel)
             
             HStack {
                 Button("Cancel") {
