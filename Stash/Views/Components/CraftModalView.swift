@@ -9,32 +9,30 @@ import SwiftUI
 
 struct CraftModalView: View {
     @Environment(\.dismiss) var dismiss
-    @State private var urlString: String = ""
-    @State private var pageTitle: String = ""
-    @State private var loading = false
+    @State var path: URL?
     @State private var errorMessage: String?
+    
+    @StateObject private var viewModel = CraftViewModel()
     
     var body: some View {
         VStack(spacing: 16) {
-            // URL Input Section
-            CustomTextField(text: $urlString, loading: $loading, placeholder: "Search...")
-                .frame(maxWidth: 200)
-            
-            // Loading or Result Section
-            if loading {
-                ProgressView()
-            } else if !pageTitle.isEmpty {
-                Text(pageTitle)
-                    .foregroundStyle(.secondary)
+            VStack(alignment: .leading, spacing: 16) {
+                
+                HStack(spacing: 6) {
+                    Image(systemName: "globe")
+                        .resizable()
+                        .frame(width: 16, height: 16)
+                    Text("1312312")
+                }
+                .padding(.horizontal, 8)
+                AddressInputField(placeholder: "Drop or enter path here.",
+                                  text: $path.wrappedValue?.absoluteString ?? "",
+                                  viewModel: viewModel)
             }
             
-            //            Spacer()
-            
-            // Action Buttons
             HStack {
                 Button("Cancel") {
-//                    dismiss()
-                    loading  = !loading
+                    dismiss()
                 }
                 
                 Button("Save") {
@@ -42,7 +40,7 @@ struct CraftModalView: View {
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(pageTitle.isEmpty)
+                //                .disabled(pageTitle.isEmpty)
             }
         }
         .padding()
@@ -57,47 +55,32 @@ struct CraftModalView: View {
             }
         }
     }
-    
-    private func parseURL() async {
-        guard let url = URL(string: urlString) else {
-            errorMessage = "Invalid URL"
-            return
-        }
-        
-        loading = true
-        defer { loading = false }
-        
-        do {
-            pageTitle = try await Dominator().fetchWebPageTitle(from: url)
-        } catch {
-            errorMessage = "Failed to fetch page title: \(error.localizedDescription)"
-            pageTitle = ""
-        }
-    }
 }
 
 // https://dribbble.com/shots/20559566-Link-input-with-preview
 
-struct CustomTextField: View {
-    @Binding var text: String
-    @Binding var loading: Bool
+struct AddressInputField: View {
     let placeholder: String
-    @FocusState private var isFocused: Bool
+    @State var text: String
+    @FocusState private var focused: Bool
+    @StateObject var viewModel: CraftViewModel
     
     var body: some View {
         HStack(spacing: 6) {
             
-            if loading {
+            if viewModel.loading {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: .red))
+                    .scaleEffect(0.5, anchor: .center)
                     .frame(width: 16, height: 16)
             } else {
-                Image(systemName: "globe")
-                    .foregroundColor(.secondary)
+                Image(nsImage: viewModel.icon)
+                    .resizable()
+                    .frame(width: 16, height: 16)
             }
             TextField(placeholder, text: $text)
                 .textFieldStyle(.plain)
-                .focused($isFocused)
+                .focused($focused)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -105,8 +88,8 @@ struct CustomTextField: View {
         .cornerRadius(6)
         .overlay(
             RoundedRectangle(cornerRadius: 6)
-                .stroke(isFocused ? Color.accentColor : Color(nsColor: .separatorColor),
-                        lineWidth: isFocused ? 2 : 0.5)
+                .stroke(focused ? Color.accentColor : Color(nsColor: .separatorColor),
+                        lineWidth: focused ? 2 : 0.5)
         )
         .focusable()
         .onHover { isHovered in
@@ -117,7 +100,16 @@ struct CustomTextField: View {
             }
         }
         .onAppear {
-            isFocused = true  // Set focus when view appears
+            focused = true
+        }
+        .onSubmit {
+            Task {
+                do {
+                    try await viewModel.parse(text)
+                } catch {
+                    print(error)
+                }
+            }
         }
     }
 }
