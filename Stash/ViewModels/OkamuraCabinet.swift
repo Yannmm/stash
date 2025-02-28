@@ -8,9 +8,9 @@
 import Foundation
 
 class OkamuraCabinet: ObservableObject {
-    static let shared = OkamuraCabinet()
-    
     @Published var entries: [any Entry] = []
+    
+    static let shared = OkamuraCabinet()
     
     init() {
         Task {
@@ -18,15 +18,12 @@ class OkamuraCabinet: ObservableObject {
         }
     }
     
-//    func addBookmark(url: URL) {
-//        let newBookmark = Bookmark(
-//            id: UUID(),
-//            title: url.lastPathComponent,
-//            url: url
-//        )
-//        bookmarks.insert(newBookmark, at: 0)
-//        saveBookmarks()
-//    }
+    func add(entry: any Entry) {
+        var a = entries
+        a.append(entry)
+        
+        entries = a
+    }
     
 //    private func saveBookmarks() {
 //        if let data = try? JSONEncoder().encode(bookmarks) {

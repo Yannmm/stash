@@ -18,13 +18,19 @@ class CraftViewModel: ObservableObject {
     
     @Published var title: String = ""
     
+    var url: URL?
+    
     private let dominator = Dominator()
+    
+    var cabinet: OkamuraCabinet!
     
     func parse(_ text: String) async throws {
         let normalized = normalizeUrl(text)
         guard let url = URL(string: normalized) else {
             throw CraftError.invalidUrl(text)
         }
+        
+        self.url = url
         
         loading = true
         defer { loading = false }
@@ -34,6 +40,12 @@ class CraftViewModel: ObservableObject {
         if let u = url.faviconUrl {
             async let _ = try updateImage(url: u)
         }
+    }
+    
+    func save() {
+        let b = Bookmark(id: UUID(), title: title, url: url!)
+        cabinet.add(entry: b)
+        
     }
     
     private func normalizeUrl(_ text: String) -> String {

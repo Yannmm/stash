@@ -11,14 +11,14 @@ struct CraftModalView: View {
     @Environment(\.dismiss) var dismiss
     @State var path: URL?
     @State private var errorMessage: String?
-    
     @StateObject private var viewModel = CraftViewModel()
+    @EnvironmentObject var cabinet: OkamuraCabinet
     
     var body: some View {
-        VStack(spacing: 16) {            
+        VStack(spacing: 16) {
             TitleInputField(viewModel: viewModel)
             
-            AddressInputField(placeholder: "Drop or enter path here.",
+            AddressInputField(placeholder: "Drop or enter path to create a new bookmark.",
                               text: $path.wrappedValue?.absoluteString ?? "",
                               viewModel: viewModel)
             
@@ -28,11 +28,10 @@ struct CraftModalView: View {
                 }
                 
                 Button("Save") {
-                    // TODO: Implement save action
+                    viewModel.save()
                     dismiss()
                 }
                 .buttonStyle(.borderedProminent)
-                //                .disabled(pageTitle.isEmpty)
             }
         }
         .padding()
@@ -46,9 +45,12 @@ struct CraftModalView: View {
                 Text(errorMessage)
             }
         }
+        .onAppear {
+            viewModel.cabinet = cabinet
+        }
     }
 }
 
 #Preview {
-    CraftModalView()
+//    CraftModalView()
 }

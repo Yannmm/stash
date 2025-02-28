@@ -40,7 +40,16 @@ struct OutlineView: NSViewRepresentable {
     }
     
     func updateNSView(_ nsView: NSScrollView, context: Context) {
-        // No need to update dynamically in this simple case
+        guard let outline = nsView.documentView as? NSOutlineView else { return }
+        let olds = context.coordinator.entries
+        let news = items
+        guard olds.count != news.count || !olds.elementsEqual(news, by: { $0.id == $1.id }) else {
+            return
+        }
+        DispatchQueue.main.async {
+            context.coordinator.entries = items
+            outline.reloadData()
+        }
     }
 }
 
@@ -55,7 +64,7 @@ extension OutlineView {
         // MARK: - NSOutlineViewDataSource
         
         func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
-            (item as? any Entry)?.children?.count ?? entries.count
+            return (item as? any Entry)?.children?.count ?? entries.count
         }
         
         func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
@@ -165,21 +174,21 @@ extension OutlineView {
 
 fileprivate extension OutlineView {
     class HierarchyView: NSOutlineView {
-    //    override func makeView(withIdentifier identifier: NSUserInterfaceItemIdentifier, owner: Any?) -> NSView? {
-    //        let view = super.makeView(withIdentifier: identifier, owner: owner)
-    //
-    //        if identifier == NSOutlineView.disclosureButtonIdentifier {
-    //            if let btnView = view as? NSButton {
-    //                btnView.image = NSImage(systemSymbolName: "chevron.forward", accessibilityDescription: nil)
-    //                btnView.alternateImage = NSImage(systemSymbolName: "chevron.down", accessibilityDescription: nil)
-    //
-    //                // can set properties of the image like the size
-    //                btnView.image?.size = NSSize(width: 30, height: 30)
-    //                btnView.alternateImage?.size = NSSize(width: 30, height: 30)
-    //            }
-    //        }
-    //        return view
-    //    }
+        //    override func makeView(withIdentifier identifier: NSUserInterfaceItemIdentifier, owner: Any?) -> NSView? {
+        //        let view = super.makeView(withIdentifier: identifier, owner: owner)
+        //
+        //        if identifier == NSOutlineView.disclosureButtonIdentifier {
+        //            if let btnView = view as? NSButton {
+        //                btnView.image = NSImage(systemSymbolName: "chevron.forward", accessibilityDescription: nil)
+        //                btnView.alternateImage = NSImage(systemSymbolName: "chevron.down", accessibilityDescription: nil)
+        //
+        //                // can set properties of the image like the size
+        //                btnView.image?.size = NSSize(width: 30, height: 30)
+        //                btnView.alternateImage?.size = NSSize(width: 30, height: 30)
+        //            }
+        //        }
+        //        return view
+        //    }
     }
 }
 
