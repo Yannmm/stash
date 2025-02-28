@@ -29,17 +29,22 @@ class OkamuraCabinet: ObservableObject {
 //        }
         try await Task.sleep(for: .seconds(1))
         
+        let dirId1 = UUID()
+        
+        let dirId2 = UUID()
+        
+        
         self.entries = [
             Bookmark(id: UUID(), title: "A", url: URL(string: "https://www.baidu.com")!),
             Bookmark(id: UUID(), title: "B", url: URL(string: "https://www.google.com/?client=safari")!),
             Bookmark(id: UUID(), title: "C", url: URL(string: "https://htmlcheatsheet.com/css/")!),
             
-            Directory(id: UUID(), title: "Dir1", children: [
-                Bookmark(id: UUID(), title: "Dir1-1", url: URL(fileURLWithPath: "/Users/rayman/Downloads/report-7.pdf")),
+            Directory(id: dirId1, title: "Dir1", children: [
+                Bookmark(id: UUID(), title: "Dir1-1", url: URL(fileURLWithPath: "/Users/rayman/Downloads/report-7.pdf"), parentId: dirId1),
             ]),
-            Directory(id: UUID(), title: "Dir2", children: [
-                Bookmark(id: UUID(), title: "Dir2-1", url: URL(string: "https://www.baidu.com")!),
-                Bookmark(id: UUID(), title: "Dir2-2", url: URL(string: "https://www.google.com/?client=safari")!),
+            Directory(id: dirId2, title: "Dir2", children: [
+                Bookmark(id: UUID(), title: "Dir2-1", url: URL(string: "https://www.baidu.com")!, parentId: dirId2),
+                Bookmark(id: UUID(), title: "Dir2-2", url: URL(string: "https://www.google.com/?client=safari")!, parentId: dirId2),
             ]),
         ]
     }

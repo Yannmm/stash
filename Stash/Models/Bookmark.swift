@@ -12,25 +12,16 @@ import Cocoa
 // 2. Open Local file url (or run local script) with default application or Show in finder
 // 3. App Url Scheme
 
-class Bookmark: Identifiable {
+struct Bookmark: Identifiable {
     let id: UUID
     let title: String
     let url: URL
-    weak var parent: (any Entry)?
-    
-    init(id: UUID, title: String, url: URL, parent: (any Entry)? = nil) {
-        self.id = id
-        self.title = title
-        self.url = url
-        self.parent = parent
-    }
+    var parentId: UUID?
 }
 
 extension Bookmark: Entry {
     var children: [any Entry]? {
-        get {
-            return nil
-        }
+        get { nil }
         set {}
     }
     

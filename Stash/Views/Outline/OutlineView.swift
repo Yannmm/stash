@@ -124,7 +124,7 @@ extension OutlineView {
             outlineView.beginUpdates()
             
             // Remove from old location
-            if let oldParent = draggedItem.parent {
+            if let oldParent = draggedItem.parentId {
                 if let index = oldParent.children?.firstIndex(where: { $0.id == draggedItem.id }) {
                     oldParent.children?.remove(at: index)
                     outlineView.removeItems(at: IndexSet(integer: index), inParent: oldParent, withAnimation: .slideLeft)
