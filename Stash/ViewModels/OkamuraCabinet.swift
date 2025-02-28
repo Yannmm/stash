@@ -19,17 +19,8 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func add(entry: any Entry) {
-        var a = entries
-        a.append(entry)
-        
-        entries = a
+        entries.append(entry)
     }
-    
-//    private func saveBookmarks() {
-//        if let data = try? JSONEncoder().encode(bookmarks) {
-//            UserDefaults.standard.set(data, forKey: "bookmarks")
-//        }
-//    }
     
     private func load() async throws {
 //        if let data = UserDefaults.standard.data(forKey: "bookmarks"),
