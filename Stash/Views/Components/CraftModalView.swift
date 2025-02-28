@@ -31,7 +31,8 @@ struct CraftModalView: View {
                     viewModel.save()
                     dismiss()
                 }
-                .buttonStyle(.borderedProminent)
+                .foregroundColor(.accentColor)
+                .disabled(!viewModel.ableToSave)
             }
         }
         .padding()

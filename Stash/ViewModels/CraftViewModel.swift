@@ -16,7 +16,9 @@ class CraftViewModel: ObservableObject {
     
     @Published var loading = false
     
-    @Published var title: String = ""
+    @Published var title: String?
+    
+    @Published var ableToSave = false
     
     var url: URL?
     
@@ -33,7 +35,10 @@ class CraftViewModel: ObservableObject {
         self.url = url
         
         loading = true
-        defer { loading = false }
+        defer {
+            loading = false
+            ableToSave = true
+        }
         
          let _ = try await updateTitle(url: url)
         
@@ -43,7 +48,7 @@ class CraftViewModel: ObservableObject {
     }
     
     func save() {
-        let b = Bookmark(id: UUID(), title: title, url: url!)
+        let b = Bookmark(id: UUID(), title: title!, url: url!)
         cabinet.add(entry: b)
         
     }
