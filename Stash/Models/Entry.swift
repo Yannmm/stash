@@ -24,8 +24,13 @@ extension Entry {
     }
 }
 
-
 enum Icon {
     case favicon(URL?)
     case system(String)
+}
+
+extension Array<any Entry> {
+    func findBy(id: UUID) -> (any Entry)? {
+        return self.map { ($0.children ?? []) }.flatMap { $0 }.first { $0.id == id }
+    }
 }

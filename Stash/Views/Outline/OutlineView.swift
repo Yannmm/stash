@@ -116,7 +116,7 @@ extension OutlineView {
         func outlineView(_ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex: Int) -> Bool {
             guard let pasteboardItem = info.draggingPasteboard.pasteboardItems?.first,
                   let itemID = pasteboardItem.string(forType: .string),
-                  let draggedItem = findItem(by: itemID, in: entries) else { return false }
+                  var draggedItem = findItem(by: itemID, in: entries) else { return false }
             
             let targetParent = item as? any Entry
             
@@ -124,9 +124,11 @@ extension OutlineView {
             outlineView.beginUpdates()
             
             // Remove from old location
-            if let oldParent = draggedItem.parentId {
+            if let parentId = draggedItem.parentId, var oldParent = entries.findBy(id: parentId) {
                 if let index = oldParent.children?.firstIndex(where: { $0.id == draggedItem.id }) {
-                    oldParent.children?.remove(at: index)
+                    var children = oldParent.children
+                    children?.remove(at: index)
+                    oldParent.children = children
                     outlineView.removeItems(at: IndexSet(integer: index), inParent: oldParent, withAnimation: .slideLeft)
                 }
             } else {
@@ -137,23 +139,28 @@ extension OutlineView {
             }
             
             // Insert at new location
-            if let targetParent = targetParent {
-                if targetParent.children == nil {
-                    targetParent.children = []
-                }
-                let insertIndex = childIndex == -1 ? (targetParent.children?.count ?? 0) : childIndex
-                targetParent.children?.insert(draggedItem, at: insertIndex)
+            if var targetParent = targetParent {
+                var children = targetParent.children ?? []
+                let insertIndex = childIndex == -1 ? children.count : childIndex
+                children.removeAll { $0.id == draggedItem.id }
+                children.insert(draggedItem, at: insertIndex)
+                targetParent.children = children
                 outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: targetParent, withAnimation: .slideRight)
-                draggedItem.parent = targetParent
+                draggedItem.parentId = targetParent.id
+                
+                entries.indices.filter { entries[$0].id == targetParent.id }
+                    .forEach { entries[$0] = targetParent }
             } else {
                 let insertIndex = (childIndex == -1 || childIndex >= entries.count) ? entries.endIndex : childIndex
                 entries.insert(draggedItem, at: insertIndex)
                 outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: nil, withAnimation: .slideRight)
-                draggedItem.parent = nil
+                draggedItem.parentId = nil
             }
             
             // End updates
             outlineView.endUpdates()
+            
+            print("🐶 --> \(entries)")
             
             entries = entries
             
