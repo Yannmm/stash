@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol Entry: Hashable {
+protocol Entry: Hashable, Identifiable {
     var id: UUID { get }
     var name: String { get }
     var parentId: UUID? { get set }
@@ -28,6 +28,10 @@ extension Entry {
     func hash(into hasher: inout Hasher) {
         hasher.combine(id.uuidString)
     }
+    
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        return lhs.id == rhs.id
+    }
 }
 
 enum Icon {
@@ -37,6 +41,9 @@ enum Icon {
 
 extension Array<any Entry> {
     func findBy(id: UUID) -> (any Entry)? {
-        return self.map { ($0.children ?? []) }.flatMap { $0 }.first { $0.id == id }
+        return self
+            .map { e in [[e], (e.children ?? [])].flatMap { $0 } }
+            .flatMap { $0 }
+            .first { $0.id == id }
     }
 }

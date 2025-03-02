@@ -12,7 +12,7 @@ import Cocoa
 // 2. Open Local file url (or run local script) with default application or Show in finder
 // 3. App Url Scheme
 
-struct Bookmark: Identifiable {
+struct Bookmark {
     let id: UUID
     let title: String
     let url: URL

@@ -47,8 +47,8 @@ struct OutlineView: NSViewRepresentable {
             return
         }
         DispatchQueue.main.async {
-//            context.coordinator.entries = items
-//            outline.reloadData()
+            context.coordinator.entries = items
+            outline.reloadData()
         }
     }
 }
@@ -72,7 +72,7 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
-            if let entry = item as? any Entry {
+            if let e = item as? any Entry, let entry = entries.findBy(id: e.id) {
                 return entry.children![index]
             }
             return entries[index]

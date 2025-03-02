@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Directory: Identifiable {
+struct Directory {
     let id: UUID
     let title: String
     var children: [any Entry]?
@@ -15,14 +15,6 @@ struct Directory: Identifiable {
 }
 
 extension Directory: Entry {
-    
-    func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-    
-    static func == (lhs: Directory, rhs: Directory) -> Bool {
-        return lhs.id == rhs.id
-    }
 
     var name: String {
         return title
