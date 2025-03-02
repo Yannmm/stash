@@ -47,8 +47,8 @@ struct OutlineView: NSViewRepresentable {
             return
         }
         DispatchQueue.main.async {
-            context.coordinator.entries = items
-            outline.reloadData()
+//            context.coordinator.entries = items
+//            outline.reloadData()
         }
     }
 }
@@ -162,7 +162,7 @@ extension OutlineView {
             
             print("🐶 --> \(entries)")
             
-            entries = entries
+//            entries = entries
             
             return true
         }

@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol Entry {
+protocol Entry: Hashable {
     var id: UUID { get }
     var name: String { get }
     var parentId: UUID? { get set }
@@ -21,6 +21,12 @@ protocol Entry {
 extension Entry {
     var children: [any Entry]? {
         return nil
+    }
+}
+
+extension Entry {
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id.uuidString)
     }
 }
 
