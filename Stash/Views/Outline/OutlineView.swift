@@ -129,12 +129,12 @@ extension OutlineView {
                     var children = oldParent.children
                     children?.remove(at: index)
                     oldParent.children = children
-                    outlineView.removeItems(at: IndexSet(integer: index), inParent: oldParent, withAnimation: .slideLeft)
+//                    outlineView.removeItems(at: IndexSet(integer: index), inParent: oldParent, withAnimation: .slideLeft)
                 }
             } else {
                 if let index = entries.firstIndex(where: { $0.id == draggedItem.id }) {
                     entries.remove(at: index)
-                    outlineView.removeItems(at: IndexSet(integer: index), inParent: nil, withAnimation: .slideLeft)
+//                    outlineView.removeItems(at: IndexSet(integer: index), inParent: nil, withAnimation: .slideLeft)
                 }
             }
             
@@ -172,7 +172,6 @@ extension OutlineView {
                 
                 entries.indices.filter { entries[$0].id == targetParent.id }
                     .forEach { entries[$0] = targetParent }
-                print("🌞 -> before calling insertItems")
 //                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: targetParent, withAnimation: .slideRight)
             } else {
                 let insertIndex = (childIndex == -1 || childIndex >= entries.count) ? entries.endIndex : childIndex
@@ -180,7 +179,7 @@ extension OutlineView {
                 
                 draggedItem.parentId = nil
                 
-                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: nil, withAnimation: .slideRight)
+//                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: nil, withAnimation: .slideRight)
             }
             
             // End updates
