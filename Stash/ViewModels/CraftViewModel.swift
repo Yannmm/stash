@@ -48,7 +48,7 @@ class CraftViewModel: ObservableObject {
     }
     
     func save() {
-        let b = Bookmark(id: UUID(), title: title!, url: url!)
+        let b = Bookmark(id: UUID(), name: title!, url: url!)
         cabinet.add(entry: b)
         
     }

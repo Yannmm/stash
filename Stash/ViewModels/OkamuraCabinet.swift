@@ -20,32 +20,36 @@ class OkamuraCabinet: ObservableObject {
     
     func add(entry: any Entry) {
         entries.append(entry)
+        
+        save()
     }
     
-    private func load() async throws {
-//        if let data = UserDefaults.standard.data(forKey: "bookmarks"),
-//           let savedBookmarks = try? JSONDecoder().decode([Bookmark].self, from: data) {
-//            bookmarks = savedBookmarks
-//        }
-        try await Task.sleep(for: .seconds(1))
-        
-        let dirId1 = UUID()
-        
-        let dirId2 = UUID()
-        
-        
-        self.entries = [
-            Bookmark(id: UUID(), title: "A", url: URL(string: "https://www.baidu.com")!),
-            Bookmark(id: UUID(), title: "B", url: URL(string: "https://www.google.com/?client=safari")!),
-            Bookmark(id: UUID(), title: "C", url: URL(string: "https://htmlcheatsheet.com/css/")!),
+func save() {
+        do {
+            // Convert entries to AnyEntry for encoding
+            let anyEntries = entries.toAnyEntries()
+            let data = try JSONEncoder().encode(anyEntries)
             
-            Directory(id: dirId1, title: "Dir1", children: [
-                Bookmark(id: UUID(), title: "Dir1-1", url: URL(fileURLWithPath: "/Users/rayman/Downloads/report-7.pdf"), parentId: dirId1),
-            ]),
-            Directory(id: dirId2, title: "Dir2", children: [
-                Bookmark(id: UUID(), title: "Dir2-1", url: URL(string: "https://www.baidu.com")!, parentId: dirId2),
-                Bookmark(id: UUID(), title: "Dir2-2", url: URL(string: "https://www.google.com/?client=safari")!, parentId: dirId2),
-            ]),
-        ]
+            // Save to UserDefaults
+            UserDefaults.standard.set(data, forKey: "cabinetEntries")
+            print("Saved \(entries.count) entries")
+        } catch {
+            print("Error saving entries: \(error)")
+        }
+    }
+    
+    func load() {
+        guard let data = UserDefaults.standard.data(forKey: "cabinetEntries") else {
+            print("No saved entries found")
+            return
+        }
+        
+        do {
+            let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
+            entries = [any Entry].fromAnyEntries(anyEntries)
+            print("Loaded \(entries.count) entries")
+        } catch {
+            print("Error loading entries: \(error)")
+        }
     }
 }

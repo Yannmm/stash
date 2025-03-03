@@ -14,31 +14,44 @@ import Cocoa
 
 struct Bookmark {
     let id: UUID
-    let title: String
-    let url: URL
+    let name: String
     var parentId: UUID?
+    let url: URL
+    let icon: Icon
+    var children: [any Entry]?
+    
+    init(id: UUID, name: String, url: URL, icon: Icon = .system("link")) {
+        self.id = id
+        self.name = name
+        self.url = url
+        self.icon = icon
+        self.parentId = nil
+        self.children = nil
+    }
+    
+//    func open() {
+//        NSWorkspace.shared.open(url)
+//    }
+//    
+//    func reveal() {
+//        print("Reveal bookmark")
+//    }
 }
 
 extension Bookmark: Entry {
-    var children: [any Entry]? {
-        get { nil }
-        set {}
-    }
+//    var children: [any Entry]? {
+//        get { nil }
+//        set {}
+//    }
     
-    var name: String {
-        return title
-    }
-    
-    var icon: Icon {
-        return Icon.favicon(url.faviconUrl)
-    }
+
     
     func open() {
         NSWorkspace.shared.open(url)
     }
     
     func reveal() {
-        print("finder 中打开文件所在位置111")
+        print("Reveal bookmark")
     }
     
 }
