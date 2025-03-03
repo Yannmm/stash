@@ -73,8 +73,10 @@ extension OutlineView {
         
         func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
             if let e = item as? any Entry, let entry = entries.findBy(id: e.id) {
+                print("aaa --> \(entry.children![index])")
                 return entry.children![index]
             }
+            print("xxx --> \(entries[index])")
             return entries[index]
         }
         
@@ -115,10 +117,8 @@ extension OutlineView {
         
         func outlineView(_ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex: Int) -> Bool {
             guard let pasteboardItem = info.draggingPasteboard.pasteboardItems?.first,
-                  let itemID = pasteboardItem.string(forType: .string),
-                  var draggedItem = findItem(by: itemID, in: entries) else { return false }
-            
-            let targetParent = item as? any Entry
+                  let pid = pasteboardItem.string(forType: .string),
+                  var draggedItem = findItem(by: pid, in: entries) else { return false }
             
             // Begin updates for animation
             outlineView.beginUpdates()
@@ -139,30 +139,52 @@ extension OutlineView {
             }
             
             // Insert at new location
+            let targetParent = item as? any Entry
+            
             if var targetParent = targetParent {
                 var children = targetParent.children ?? []
                 let insertIndex = childIndex == -1 ? children.count : childIndex
-                children.removeAll { $0.id == draggedItem.id }
-                children.insert(draggedItem, at: insertIndex)
+//                children.removeAll { $0.id == draggedItem.id }
+//                children.insert(draggedItem, at: insertIndex)
+                
+//                children = children.rearrange(element: draggedItem, to: insertIndex)
+                
+                let index = children.firstIndex { $0.id == draggedItem.id }
+                
+                if let i = index {
+                    if insertIndex == i {
+                        
+                    } else {
+                        let element = children[i]
+                        children.insert(element, at: insertIndex)
+                        children.remove(at: i)
+                        
+                    }
+                } else {
+                    children.append(draggedItem)
+                    
+                }
+                
+                
                 targetParent.children = children
-                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: targetParent, withAnimation: .slideRight)
+                
                 draggedItem.parentId = targetParent.id
                 
                 entries.indices.filter { entries[$0].id == targetParent.id }
                     .forEach { entries[$0] = targetParent }
+                print("🌞 -> before calling insertItems")
+//                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: targetParent, withAnimation: .slideRight)
             } else {
                 let insertIndex = (childIndex == -1 || childIndex >= entries.count) ? entries.endIndex : childIndex
                 entries.insert(draggedItem, at: insertIndex)
-                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: nil, withAnimation: .slideRight)
+                
                 draggedItem.parentId = nil
+                
+                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: nil, withAnimation: .slideRight)
             }
             
             // End updates
             outlineView.endUpdates()
-            
-            print("🐶 --> \(entries)")
-            
-//            entries = entries
             
             return true
         }
