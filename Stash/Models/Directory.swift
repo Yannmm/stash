@@ -7,39 +7,24 @@
 
 import Foundation
 
-struct Directory {
+struct Directory: Codable {
     let id: UUID
     let name: String
     var parentId: UUID?
-    let icon: Icon
+    
     var children: [any Entry]?
     
-    init(id: UUID, name: String, icon: Icon = .system("folder")) {
-        self.id = id
-        self.name = name
-        self.icon = icon
-        self.parentId = nil
-        self.children = []
+    enum CodingKeys: CodingKey {
+        case id
+        case name
+        case parentId
     }
-    
-//    func open() {
-//        print("Open directory")
-//    }
-//    
-//    func reveal() {
-//        print("Reveal directory")
-//    }
 }
 
 extension Directory: Entry {
-
-//    var name: String {
-//        return name
-//    }
-//    
-//    var icon: Icon {
-//        return icon
-//    }
+    var icon: Icon {
+        return .system("folder")
+    }
     
     func open() {
         print("打开目录（菜单中）")

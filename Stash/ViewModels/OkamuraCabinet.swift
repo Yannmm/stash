@@ -24,11 +24,11 @@ class OkamuraCabinet: ObservableObject {
         save()
     }
     
-func save() {
+    func save() {
         do {
             // Convert entries to AnyEntry for encoding
-            let anyEntries = entries.toAnyEntries()
-            let data = try JSONEncoder().encode(anyEntries)
+            let aa = entries.map { AnyEntry($0) }
+            let data = try JSONEncoder().encode(aa)
             
             // Save to UserDefaults
             UserDefaults.standard.set(data, forKey: "cabinetEntries")
