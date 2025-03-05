@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol Entry: Identifiable, Equatable, Codable {
+protocol Entry: Identifiable, Equatable {
     var id: UUID { get }
     var name: String { get }
     var parentId: UUID? { get set }
@@ -50,18 +50,62 @@ extension Array<any Entry> {
 
 // ---------------------
 
+enum EntryType: Codable {
+    case bookmark
+    case directory
+}
+
+
 struct AnyEntry: Codable {
-    let base: any Entry
-
-    init(_ base: any Entry) {
-        self.base = base
+    let id: UUID
+    let name: String
+    let parentId: UUID?
+    let icon: Icon
+    let type: EntryType
+    
+    // For bookmark
+    let url: URL?
+    
+    init(_ entry: any Entry) {
+        self.id = entry.id
+        self.name = entry.name
+        self.parentId = entry.parentId
+        self.icon = entry.icon
+        
+        switch entry {
+        case let b as Bookmark:
+            self.url = b.url
+            self.type = .bookmark
+        case let d as Directory:
+            self.url = nil
+            self.type = .directory
+        default:
+            fatalError("Unexpected entry type")
+        }
     }
-
-    func encode(to encoder: Encoder) throws {
-        try base.encode(to: encoder)
+    
+    
+    func asEntry() -> any Entry {
+        switch type {
+        case .bookmark:
+            guard let url = url else {
+                fatalError("Bookmark must have a URL")
+            }
+            return Bookmark(id: id, name: name, parentId: parentId, url: url)
+        case .directory:
+            return Directory(id: id, name: name, parentId: parentId)
+        }
     }
+}
 
-    init(from decoder: Decoder) throws {
-        int
+extension Array where Element == any Entry {
+    var asAnyEntries: [AnyEntry] {
+        self.map { AnyEntry($0) }
+    }
+}
+
+extension Array where Element == AnyEntry {
+    var asEntries: [any Entry] {
+        self.map { $0.asEntry() }
     }
 }

@@ -12,18 +12,11 @@ import Cocoa
 // 2. Open Local file url (or run local script) with default application or Show in finder
 // 3. App Url Scheme
 
-struct Bookmark: Codable {
+struct Bookmark {
     let id: UUID
     let name: String
     var parentId: UUID?
     let url: URL
-    
-//    init(id: UUID, name: String, url: URL) {
-//        self.id = id
-//        self.name = name
-//        self.url = url
-//        self.parentId = nil
-//    }
 }
 
 extension Bookmark: Entry {

@@ -27,11 +27,17 @@ class OkamuraCabinet: ObservableObject {
     func save() {
         do {
             // Convert entries to AnyEntry for encoding
-            let aa = entries.map { AnyEntry($0) }
-            let data = try JSONEncoder().encode(aa)
+//            let aa = entries.map { AnyEntry($0) }
+//            let bb = entries.map { x in
+//                switch x {
+//                case is Bookmark:
+//
+//                }
+//            }
+            let data = try JSONEncoder().encode(entries.asAnyEntries)
             
             // Save to UserDefaults
-            UserDefaults.standard.set(data, forKey: "cabinetEntries")
+            UserDefaults.standard.set(data, forKey: "cabinetEntries1")
             print("Saved \(entries.count) entries")
         } catch {
             print("Error saving entries: \(error)")
@@ -39,14 +45,14 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func load() {
-        guard let data = UserDefaults.standard.data(forKey: "cabinetEntries") else {
+        guard let data = UserDefaults.standard.data(forKey: "cabinetEntries1") else {
             print("No saved entries found")
             return
         }
         
         do {
             let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
-            entries = [any Entry].fromAnyEntries(anyEntries)
+            entries = anyEntries.asEntries
             print("Loaded \(entries.count) entries")
         } catch {
             print("Error loading entries: \(error)")

@@ -7,18 +7,11 @@
 
 import Foundation
 
-struct Directory: Codable {
+struct Directory {
     let id: UUID
     let name: String
     var parentId: UUID?
-    
     var children: [any Entry]?
-    
-    enum CodingKeys: CodingKey {
-        case id
-        case name
-        case parentId
-    }
 }
 
 extension Directory: Entry {
