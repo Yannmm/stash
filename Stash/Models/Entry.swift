@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol Entry: Identifiable, Equatable {
+protocol Entry: Identifiable, Equatable, Hashable {
     var id: UUID { get }
     var name: String { get }
     var parentId: UUID? { get set }
@@ -76,7 +76,7 @@ struct AnyEntry: Codable {
         case let b as Bookmark:
             self.url = b.url
             self.type = .bookmark
-        case let d as Directory:
+        case let _ as Directory:
             self.url = nil
             self.type = .directory
         default:

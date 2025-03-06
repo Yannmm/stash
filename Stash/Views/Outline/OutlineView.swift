@@ -73,10 +73,8 @@ extension OutlineView {
         
         func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
             if let e = item as? any Entry, let entry = entries.findBy(id: e.id) {
-                print("aaa --> \(entry.children![index])")
                 return entry.children![index]
             }
-            print("xxx --> \(entries[index])")
             return entries[index]
         }
         
@@ -86,15 +84,19 @@ extension OutlineView {
             guard let entry = item as? any Entry else { return nil }
             
             let identifier = NSUserInterfaceItemIdentifier("Cell")
-            var cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? CustomTableViewCell
+            var cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? CutomCellView
             
             if cell == nil {
-                cell = CustomTableViewCell()
+                cell = CutomCellView()
                 cell?.identifier = identifier
             }
             
             cell?.entry = entry
             return cell
+        }
+        
+        func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
+            return CustomTableRowView()
         }
         
         // MARK: - Drag & Drop
@@ -129,12 +131,12 @@ extension OutlineView {
                     var children = oldParent.children
                     children?.remove(at: index)
                     oldParent.children = children
-//                    outlineView.removeItems(at: IndexSet(integer: index), inParent: oldParent, withAnimation: .slideLeft)
+                    //                    outlineView.removeItems(at: IndexSet(integer: index), inParent: oldParent, withAnimation: .slideLeft)
                 }
             } else {
                 if let index = entries.firstIndex(where: { $0.id == draggedItem.id }) {
                     entries.remove(at: index)
-//                    outlineView.removeItems(at: IndexSet(integer: index), inParent: nil, withAnimation: .slideLeft)
+                    //                    outlineView.removeItems(at: IndexSet(integer: index), inParent: nil, withAnimation: .slideLeft)
                 }
             }
             
@@ -144,10 +146,10 @@ extension OutlineView {
             if var targetParent = targetParent {
                 var children = targetParent.children ?? []
                 let insertIndex = childIndex == -1 ? children.count : childIndex
-//                children.removeAll { $0.id == draggedItem.id }
-//                children.insert(draggedItem, at: insertIndex)
+                //                children.removeAll { $0.id == draggedItem.id }
+                //                children.insert(draggedItem, at: insertIndex)
                 
-//                children = children.rearrange(element: draggedItem, to: insertIndex)
+                //                children = children.rearrange(element: draggedItem, to: insertIndex)
                 
                 let index = children.firstIndex { $0.id == draggedItem.id }
                 
@@ -172,14 +174,14 @@ extension OutlineView {
                 
                 entries.indices.filter { entries[$0].id == targetParent.id }
                     .forEach { entries[$0] = targetParent }
-//                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: targetParent, withAnimation: .slideRight)
+                //                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: targetParent, withAnimation: .slideRight)
             } else {
                 let insertIndex = (childIndex == -1 || childIndex >= entries.count) ? entries.endIndex : childIndex
                 entries.insert(draggedItem, at: insertIndex)
                 
                 draggedItem.parentId = nil
                 
-//                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: nil, withAnimation: .slideRight)
+                //                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: nil, withAnimation: .slideRight)
             }
             
             // End updates

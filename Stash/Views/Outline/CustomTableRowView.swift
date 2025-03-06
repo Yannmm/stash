@@ -1,53 +1,40 @@
 //
-//  CustomTableViewCell.swift
+//  CustomTableRowView.swift
 //  Stash
 //
-//  Created by Yan Meng on 2025/2/18.
+//  Created by Rayman on 2025/3/6.
 //
 
 import AppKit
-import SwiftUI
 
-class CustomTableViewCell: NSTableCellView {
-    
-    var entry: (any Entry)? {
-        didSet {
-            guard let e = entry else { return }
-            hostingView.rootView = CellContent(entry: e)
-        }
-    }
-    
+class CustomTableRowView: NSTableRowView {
     override init(frame frameRect: NSRect) {
         super.init(frame: CGRectZero)
-        setup()
+        //        setup()
     }
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    private var hostingView: NSHostingView<CellContent>!
-    
-    private func setup() {
-        let content = NSHostingView(rootView: CellContent(entry: nil))
-        self.hostingView = content
-        content.sizingOptions = .minSize
-        self.addSubview(content)
-        
-        content.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: self.topAnchor),
-            content.bottomAnchor.constraint(equalTo: self.bottomAnchor),
-            content.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-            content.trailingAnchor.constraint(equalTo: self.trailingAnchor)
-        ])
+    // Selection
+    override func drawSelection(in dirtyRect: NSRect) {
+        if self.selectionHighlightStyle != .none {
+            let selectionRect = NSInsetRect(self.bounds, 2.5, 2.5)
+            NSColor(calibratedWhite: 0.65, alpha: 1).setStroke()
+            NSColor(calibratedWhite: 0.82, alpha: 1).setFill()
+            let selectionPath = NSBezierPath.init(roundedRect: selectionRect, xRadius: 6, yRadius: 6)
+            selectionPath.fill()
+            selectionPath.stroke()
+        }
     }
     
+    // Hover
     private var trackingArea: NSTrackingArea?
     
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
-        
+        guard !isSelected else { return }
         NSColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.00).set()
         
         // mouse hover
@@ -55,11 +42,6 @@ class CustomTableViewCell: NSTableCellView {
             let path = NSBezierPath(rect: bounds)
             path.fill()
         }
-        
-        // draw divider
-//        let rect = NSRect(x: 0, y: bounds.height - 2, width: bounds.width, height: bounds.height)
-//        let path = NSBezierPath(rect: rect)
-//        path.fill()
     }
     
     private var highlight = false {
@@ -90,8 +72,8 @@ class CustomTableViewCell: NSTableCellView {
         
         
         let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeAlways]
-            let trackingArea = NSTrackingArea(rect: self.bounds, options: options, owner: self, userInfo: nil)
-            self.addTrackingArea(trackingArea)
+        let trackingArea = NSTrackingArea(rect: self.bounds, options: options, owner: self, userInfo: nil)
+        self.addTrackingArea(trackingArea)
     }
     
     deinit {
