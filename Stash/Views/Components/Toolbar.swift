@@ -10,6 +10,8 @@ import SwiftUI
 struct Toolbar: View {
     @Binding var present: Bool
     
+    let addFolder: () -> Void
+    
     var body: some View {
         HStack(spacing: 16) {
             // Left side buttons
@@ -21,8 +23,10 @@ struct Toolbar: View {
                 }
                 .buttonStyle(.plain)
                 
-                Button(action: { print("Delete clicked") }) {
-                    Image(systemName: "minus")
+                Button(action: {
+                    addFolder()
+                }) {
+                    Image(systemName: "folder.badge.plus")
                 }
                 .buttonStyle(.plain)
             }
@@ -52,5 +56,5 @@ struct Toolbar: View {
 }
 
 #Preview {
-//    Toolbar(present: <#T##Binding<Bool>#>)
+    //    Toolbar(present: <#T##Binding<Bool>#>)
 }

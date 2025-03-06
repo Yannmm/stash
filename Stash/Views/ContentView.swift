@@ -6,11 +6,15 @@ struct ContentView: View {
     @EnvironmentObject var cabinet: OkamuraCabinet
     @State private var present = false
     
+    @State private var addFolder = false
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Toolbar(present: $present)
-                OutlineView(items: $cabinet.entries)
+                Toolbar(present: $present) {
+                    addFolder = true
+                }
+                OutlineView(items: $cabinet.entries, addFolder: $addFolder)
             }
             .sheet(isPresented: $present, onDismiss: nil) {
                 CraftModalView()

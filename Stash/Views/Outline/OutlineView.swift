@@ -12,6 +12,8 @@ import Cocoa
 struct OutlineView: NSViewRepresentable {
     @Binding var items: [any Entry]
     
+    @Binding var addFolder: Bool
+    
     func makeCoordinator() -> Coordinator {
         Coordinator(entries: $items)
     }
@@ -36,11 +38,32 @@ struct OutlineView: NSViewRepresentable {
         
         scrollView.documentView = outlineView
         
+        outlineView.target = context.coordinator
+        
+        outlineView.doubleAction = #selector(context.coordinator.tableViewDoubleAction)
+        
         return scrollView
     }
     
+    
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         guard let outline = nsView.documentView as? NSOutlineView else { return }
+        
+        if addFolder {
+            print("🐶 --> \(addFolder)")
+            // Step 1: Insert new item
+            let newItem = Directory(id: UUID(), name: "haha1")
+//            items.append(newItem)
+            
+            // Step 2: Insert item into outline view
+            let index = 0
+            outline.insertItems(at: IndexSet(integer: index), inParent: nil)
+            
+            // Step 3: Start editing the new item
+            let indexPath = IndexPath(item: index, section: 0)
+            outline.editColumn(0, row: index, with: nil, select: true) // Start editing
+        }
+        
         let olds = context.coordinator.entries
         let news = items
         guard olds.count != news.count || !olds.elementsEqual(news, by: { $0.id == $1.id }) else {
@@ -59,6 +82,11 @@ extension OutlineView {
         
         init(entries: Binding<[any Entry]>) {
             self._entries = entries
+        }
+        
+        @objc func tableViewDoubleAction(sender: AnyObject) {
+            let aa = sender as! NSOutlineView
+            print("row double clicked -> \(aa.clickedRow), \(aa.clickedColumn)")
         }
         
         // MARK: - NSOutlineViewDataSource
@@ -80,19 +108,42 @@ extension OutlineView {
         
         // MARK: - NSOutlineViewDelegate
         
+        var aa = [NSTextField]()
+        
         func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
             guard let entry = item as? any Entry else { return nil }
             
             let identifier = NSUserInterfaceItemIdentifier("Cell")
-            var cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? CutomCellView
+            var cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView
             
             if cell == nil {
-                cell = CutomCellView()
+                cell = NSTableCellView()
+                let tf = NSTextField()
+                aa.append(tf)
+                cell?.textField = tf
+                
+                cell?.addSubview(tf)
+//                https://stackoverflow.com/questions/9052127/nstableview-how-to-click-anywhere-in-the-cell-to-edit-text
+//                https://www.mattrajca.com/2016/02/17/handling-text-editing-in-view-based-nstableviews.html#:~:text=Historically%2C%20adding%20editing%20support%20to,called%20with%20the%20updated%20value.
+                tf.translatesAutoresizingMaskIntoConstraints = false
+                NSLayoutConstraint.activate([
+                    tf.topAnchor.constraint(equalTo: cell!.topAnchor),
+                    tf.bottomAnchor.constraint(equalTo: cell!.bottomAnchor),
+                    tf.leadingAnchor.constraint(equalTo: cell!.leadingAnchor),
+                    tf.trailingAnchor.constraint(equalTo: cell!.trailingAnchor)
+                ])
+                
                 cell?.identifier = identifier
             }
             
-            cell?.entry = entry
+//            cell?.entry = entry
+            cell?.textField?.stringValue = entry.name
+            cell?.textField?.isEditable = true
             return cell
+        }
+        
+        func outlineView(_ outlineView: NSOutlineView, setObjectValue object: Any?, for tableColumn: NSTableColumn?, byItem item: Any?) {
+            print(item)
         }
         
         func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
