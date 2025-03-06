@@ -9,15 +9,29 @@ import AppKit
 import SwiftUI
 import Kingfisher
 
+
+//cell?.textField?.stringValue = entry.name
+//cell?.textField?.isEditable = true
+
+class CellViewModel: ObservableObject {
+    @Published var entry: (any Entry)?
+}
+
 struct CellContent: View {
     let entry: (any Entry)?
+    
+    @State var viewModel: CellViewModel
     
     var body: some View {
         HStack {
             Label {
-                Text(entry?.name ?? "")
-                    .font(.body)
-                    .foregroundStyle(Color.text)
+//                Text(entry?.name ?? "")
+//                    .font(.body)
+//                    .foregroundStyle(Color.text)
+                
+                TextField("123123", text: $viewModel.entry?.name)
+                    .textFieldStyle(.plain)
+//                    .focused($focused)
             } icon: {
                 if let e = entry {
                     switch (e.icon) {

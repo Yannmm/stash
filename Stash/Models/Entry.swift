@@ -9,7 +9,7 @@ import Foundation
 
 protocol Entry: Identifiable, Equatable, Hashable {
     var id: UUID { get }
-    var name: String { get }
+    var name: String { get set }
     var parentId: UUID? { get set }
     var icon: Icon { get }
     

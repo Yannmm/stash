@@ -108,37 +108,21 @@ extension OutlineView {
         
         // MARK: - NSOutlineViewDelegate
         
-        var aa = [NSTextField]()
+        //                https://stackoverflow.com/questions/9052127/nstableview-how-to-click-anywhere-in-the-cell-to-edit-text
+        //                https://www.mattrajca.com/2016/02/17/handling-text-editing-in-view-based-nstableviews.html#:~:text=Historically%2C%20adding%20editing%20support%20to,called%20with%20the%20updated%20value.
         
         func outlineView(_ outlineView: NSOutlineView, viewFor tableColumn: NSTableColumn?, item: Any) -> NSView? {
             guard let entry = item as? any Entry else { return nil }
             
             let identifier = NSUserInterfaceItemIdentifier("Cell")
-            var cell = outlineView.makeView(withIdentifier: identifier, owner: self) as? NSTableCellView
+            var cell: CutomCellView! = outlineView.makeView(withIdentifier: identifier, owner: self) as? CutomCellView
             
             if cell == nil {
-                cell = NSTableCellView()
-                let tf = NSTextField()
-                aa.append(tf)
-                cell?.textField = tf
-                
-                cell?.addSubview(tf)
-//                https://stackoverflow.com/questions/9052127/nstableview-how-to-click-anywhere-in-the-cell-to-edit-text
-//                https://www.mattrajca.com/2016/02/17/handling-text-editing-in-view-based-nstableviews.html#:~:text=Historically%2C%20adding%20editing%20support%20to,called%20with%20the%20updated%20value.
-                tf.translatesAutoresizingMaskIntoConstraints = false
-                NSLayoutConstraint.activate([
-                    tf.topAnchor.constraint(equalTo: cell!.topAnchor),
-                    tf.bottomAnchor.constraint(equalTo: cell!.bottomAnchor),
-                    tf.leadingAnchor.constraint(equalTo: cell!.leadingAnchor),
-                    tf.trailingAnchor.constraint(equalTo: cell!.trailingAnchor)
-                ])
-                
+                cell = CutomCellView()
                 cell?.identifier = identifier
             }
             
-//            cell?.entry = entry
-            cell?.textField?.stringValue = entry.name
-            cell?.textField?.isEditable = true
+            cell?.entry = entry
             return cell
         }
         
