@@ -14,8 +14,12 @@ struct OutlineView: NSViewRepresentable {
     
     @Binding var addFolder: Bool
     
+    @FocusState var focusedReminder: Focusable?
+    
     func makeCoordinator() -> Coordinator {
-        Coordinator(entries: $items)
+        Coordinator(entries: $items, focus: $focusedReminder) {
+            focusedReminder = .row(id: $0.id)
+        }
     }
     
     func makeNSView(context: Context) -> NSScrollView {
@@ -49,21 +53,6 @@ struct OutlineView: NSViewRepresentable {
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         guard let outline = nsView.documentView as? NSOutlineView else { return }
         
-        if addFolder {
-            print("🐶 --> \(addFolder)")
-            // Step 1: Insert new item
-            let newItem = Directory(id: UUID(), name: "haha1")
-//            items.append(newItem)
-            
-            // Step 2: Insert item into outline view
-            let index = 0
-            outline.insertItems(at: IndexSet(integer: index), inParent: nil)
-            
-            // Step 3: Start editing the new item
-            let indexPath = IndexPath(item: index, section: 0)
-            outline.editColumn(0, row: index, with: nil, select: true) // Start editing
-        }
-        
         let olds = context.coordinator.entries
         let news = items
         guard olds.count != news.count || !olds.elementsEqual(news, by: { $0.id == $1.id }) else {
@@ -80,13 +69,20 @@ extension OutlineView {
     class Coordinator: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
         @Binding var entries: [any Entry]
         
-        init(entries: Binding<[any Entry]>) {
+        let onDoubleClick: (any Entry) -> Void
+        var focus: FocusState<Focusable?>.Binding
+        
+        init(entries: Binding<[any Entry]>, focus: FocusState<Focusable?>.Binding, onDoubleClick: @escaping (any Entry) -> Void) {
             self._entries = entries
+            self.focus = focus
+            self.onDoubleClick = onDoubleClick
         }
         
         @objc func tableViewDoubleAction(sender: AnyObject) {
             let aa = sender as! NSOutlineView
             print("row double clicked -> \(aa.clickedRow), \(aa.clickedColumn)")
+            let e = entries[aa.clickedRow]
+            self.onDoubleClick(e)
         }
         
         // MARK: - NSOutlineViewDataSource
@@ -121,8 +117,11 @@ extension OutlineView {
                 cell = CutomCellView()
                 cell?.identifier = identifier
             }
+            guard let coordinator = outlineView.dataSource as? Coordinator else {
+                return nil
+            }
             
-            cell?.entry = entry
+            cell?.energy = (entry, coordinator.focus)
             return cell
         }
         
@@ -148,7 +147,7 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
-            let view = NSHostingView(rootView: CellContent(entry: (item as? any Entry)))
+            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry)))
             return view.intrinsicContentSize.height
         }
         

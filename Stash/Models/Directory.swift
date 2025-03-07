@@ -9,7 +9,7 @@ import Foundation
 
 struct Directory {
     let id: UUID
-    let name: String
+    var name: String
     var parentId: UUID?
     var children: [any Entry]?
 }

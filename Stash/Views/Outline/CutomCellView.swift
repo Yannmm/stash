@@ -15,63 +15,92 @@ import Kingfisher
 
 class CellViewModel: ObservableObject {
     @Published var entry: (any Entry)?
+    
+    init(entry: (any Entry)? = nil) {
+        self.entry = entry
+    }
+}
+
+enum Focusable: Hashable {
+    case none
+    case row(id: UUID)
+}
+
+extension View {
+    func `if`<Content: View>(_ conditional: Bool, content: (Self) -> Content) -> some View {
+         if conditional {
+             return AnyView(content(self))
+         } else {
+             return AnyView(self)
+         }
+     }
 }
 
 struct CellContent: View {
-    let entry: (any Entry)?
     
     @State var viewModel: CellViewModel
     
-    var body: some View {
-        HStack {
-            Label {
-//                Text(entry?.name ?? "")
-//                    .font(.body)
-//                    .foregroundStyle(Color.text)
-                
-                TextField("123123", text: $viewModel.entry?.name)
-                    .textFieldStyle(.plain)
-//                    .focused($focused)
-            } icon: {
-                if let e = entry {
-                    switch (e.icon) {
-                    case .system(let name):
-                        Image(systemName: name)
-                            .foregroundStyle(Color.theme)
-                    case .favicon(let url):
-                        if let url = url {
-                            KFImage.url(url)
-                                .loadDiskFileSynchronously()
-                                .cacheMemoryOnly()
-                                .fade(duration: 0.25)
-                                .onSuccess { result in  }
-                                .onFailure { error in }
-                                .resizable()
-                                .frame(width: 16.0, height: 16.0)
-                        } else {
-                            Image(systemName: "globe")
-                                .foregroundStyle(Color.theme)
-                        }
-                    }
-                } else {
-                    Image(systemName: "folder.fill")
-                        .foregroundStyle(Color.theme)
-                }
+    var focus: FocusState<Focusable?>.Binding?
+    
+    var body: some View {HStack {
+        Label {
+            //                Text(entry?.name ?? "")
+            //                    .font(.body)
+            //                    .foregroundStyle(Color.text)
+            
+            TextField("123123", text: Binding<String?>(get: { viewModel.entry?.name },
+                                                       set: { viewModel.entry?.name = $0 ?? "" }) ?? "")
+            .textFieldStyle(.plain)
+            .if(focus != nil) {
+                $0.focused(focus!, equals: .row(id: viewModel.entry?.id ?? UUID()))
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 0))
+        } icon: {
+            if let e = viewModel.entry {
+                switch (e.icon) {
+                case .system(let name):
+                    Image(systemName: name)
+                        .foregroundStyle(Color.theme)
+                case .favicon(let url):
+                    if let url = url {
+                        KFImage.url(url)
+                            .loadDiskFileSynchronously()
+                            .cacheMemoryOnly()
+                            .fade(duration: 0.25)
+                            .onSuccess { result in  }
+                            .onFailure { error in }
+                            .resizable()
+                            .frame(width: 16.0, height: 16.0)
+                    } else {
+                        Image(systemName: "globe")
+                            .foregroundStyle(Color.theme)
+                    }
+                }
+            } else {
+                Image(systemName: "folder.fill")
+                    .foregroundStyle(Color.theme)
+            }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 0))
+    }
     }
 }
 
 class CutomCellView: NSTableCellView {
     
-    var entry: (any Entry)? {
+    var energy: ((any Entry), FocusState<Focusable?>.Binding)? {
         didSet {
-            guard let e = entry else { return }
-            hostingView.rootView = CellContent(entry: e)
+            guard let e = energy else { return }
+            hostingView.rootView = CellContent(viewModel: CellViewModel(entry: e.0), focus: e.1)
         }
     }
+    
+//    var entry: (any Entry)? {
+//        didSet {
+//            guard let e = entry1 else { return }
+//            hostingView.rootView = CellContent(viewModel: CellViewModel(entry: e))
+//        }
+//    }
     
     override init(frame frameRect: NSRect) {
         super.init(frame: CGRectZero)
@@ -85,7 +114,7 @@ class CutomCellView: NSTableCellView {
     private var hostingView: NSHostingView<CellContent>!
     
     private func setup() {
-        let content = NSHostingView(rootView: CellContent(entry: nil))
+        let content = NSHostingView(rootView: CellContent(viewModel: CellViewModel()))
         self.hostingView = content
         content.sizingOptions = .minSize
         self.addSubview(content)
