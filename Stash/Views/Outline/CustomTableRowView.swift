@@ -13,6 +13,13 @@ class CustomTableRowView: NSTableRowView {
         //        setup()
     }
     
+    var isFocused = false {
+        didSet {
+            print("🐶 --> \(isFocused)")
+            setNeedsDisplay(bounds)
+        }
+    }
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -35,7 +42,10 @@ class CustomTableRowView: NSTableRowView {
     override func draw(_ dirtyRect: NSRect) {
         super.draw(dirtyRect)
         guard !isSelected else { return }
-        NSColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.00).set()
+        guard !isFocused else { return }
+        
+//        NSColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.00).set()
+        NSColor.gridColor.set()
         
         // mouse hover
         if highlight {

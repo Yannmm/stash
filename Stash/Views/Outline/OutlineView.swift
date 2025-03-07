@@ -53,6 +53,7 @@ struct OutlineView: NSViewRepresentable {
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         guard let outline = nsView.documentView as? NSOutlineView else { return }
         
+        
         let olds = context.coordinator.entries
         let news = items
         guard olds.count != news.count || !olds.elementsEqual(news, by: { $0.id == $1.id }) else {
@@ -82,6 +83,15 @@ extension OutlineView {
             let aa = sender as! NSOutlineView
             print("row double clicked -> \(aa.clickedRow), \(aa.clickedColumn)")
             let e = entries[aa.clickedRow]
+            
+//            https://peterfriese.dev/blog/2021/swiftui-list-focus/
+            // how to handle enter key event.
+            aa.deselectRow(aa.clickedRow)
+
+            
+            let row = aa.rowView(atRow: aa.clickedRow, makeIfNecessary: false) as! CustomTableRowView
+            row.isFocused = true
+
             self.onDoubleClick(e)
         }
         
@@ -129,8 +139,22 @@ extension OutlineView {
             print(item)
         }
         
+        var rows = [CustomTableRowView]()
+        
         func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
-            return CustomTableRowView()
+            let row = CustomTableRowView()
+//            if let coordinator = outlineView.dataSource as? Coordinator, let f = coordinator.focus.wrappedValue {
+//                switch f {
+//                case .row(id: let id):
+//                    if id == (item as? (any Entry))?.id {
+//                        row.isFocused = true
+//                    }
+//                case .none:
+//                    break
+//                }
+//            }
+            
+            return row
         }
         
         // MARK: - Drag & Drop
