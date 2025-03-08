@@ -54,6 +54,21 @@ struct OutlineView: NSViewRepresentable {
         guard let outline = nsView.documentView as? NSOutlineView else { return }
         
         
+        if let outlineView = nsView.documentView as? NSOutlineView {
+            for row in 0..<outlineView.numberOfRows {
+                guard let rowView = outlineView.rowView(atRow: row, makeIfNecessary: false) as? CustomTableRowView,
+                      let item = outlineView.item(atRow: row) as? any Entry else { continue }
+                
+                // Update focus state based on focusedReminder
+                if case .row(let id) = focusedReminder {
+                    rowView.isFocused = (item.id == id)
+                } else {
+                    rowView.isFocused = false
+                }
+            }
+        }
+        
+        
         let olds = context.coordinator.entries
         let news = items
         guard olds.count != news.count || !olds.elementsEqual(news, by: { $0.id == $1.id }) else {
@@ -143,16 +158,10 @@ extension OutlineView {
         
         func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
             let row = CustomTableRowView()
-//            if let coordinator = outlineView.dataSource as? Coordinator, let f = coordinator.focus.wrappedValue {
-//                switch f {
-//                case .row(id: let id):
-//                    if id == (item as? (any Entry))?.id {
-//                        row.isFocused = true
-//                    }
-//                case .none:
-//                    break
-//                }
-//            }
+            if let entry = item as? any Entry,
+               case .row(let id) = focus.wrappedValue {
+                row.isFocused = (entry.id == id)
+            }
             
             return row
         }
