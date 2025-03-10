@@ -10,6 +10,28 @@ import Kingfisher
 
 @MainActor
 class CraftViewModel: ObservableObject {
+    init(entry: (any Entry)? = nil) {
+        self.entry = entry
+        guard entry != nil else { return }
+        
+        self.title = entry?.name
+        switch entry {
+        case let b as Bookmark:
+            self.url = b.url
+            Task {
+                try await self.updateImage(url: b.url)
+            }
+            
+        case let d as Directory:
+            self.icon = NSImage(systemSymbolName: "folder", accessibilityDescription: nil)
+            break
+            
+        default: break
+        }
+    }
+    
+    private var entry: (any Entry)?
+    
     @Published var icon: NSImage?
     
     @Published var error: (any Error)?

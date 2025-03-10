@@ -15,7 +15,7 @@ class CustomTableRowView: NSTableRowView {
     
     var isFocused = false {
         didSet {
-            print("🐶 --> \(isFocused)")
+//            print("🐶 --> \(isFocused)")
             setNeedsDisplay(bounds)
         }
     }

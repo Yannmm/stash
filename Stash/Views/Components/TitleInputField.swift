@@ -61,12 +61,6 @@ struct TitleInputField: View {
                 disabled = false
             }
         }
-        .onAppear {
-            if !(viewModel.title ?? "").isEmpty {
-                focused = true
-                disabled = false
-            }
-        }
         .onSubmit {
             viewModel.save()
             dismiss()
