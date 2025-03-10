@@ -7,15 +7,9 @@
 
 import AppKit
 
-class CustomTableRowView: NSTableRowView {
-    override init(frame frameRect: NSRect) {
-        super.init(frame: CGRectZero)
-        //        setup()
-    }
-    
+class RowView: NSTableRowView {
     var isFocused = false {
         didSet {
-//            print("🐶 --> \(isFocused)")
             setNeedsDisplay(bounds)
         }
     }

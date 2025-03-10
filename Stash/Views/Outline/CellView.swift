@@ -89,7 +89,7 @@ struct CellContent: View {
     }
 }
 
-class CutomCellView: NSTableCellView {
+class CellView: NSTableCellView {
     
     var energy: ((any Entry), FocusState<Focusable?>.Binding)? {
         didSet {

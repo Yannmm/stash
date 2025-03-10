@@ -56,7 +56,7 @@ struct OutlineView: NSViewRepresentable {
         
         if let outlineView = nsView.documentView as? NSOutlineView {
             for row in 0..<outlineView.numberOfRows {
-                guard let rowView = outlineView.rowView(atRow: row, makeIfNecessary: false) as? CustomTableRowView,
+                guard let rowView = outlineView.rowView(atRow: row, makeIfNecessary: false) as? RowView,
                       let item = outlineView.item(atRow: row) as? any Entry else { continue }
                 
                 // Update focus state based on focusedReminder
@@ -104,7 +104,7 @@ extension OutlineView {
             aa.deselectRow(aa.clickedRow)
 
             
-            let row = aa.rowView(atRow: aa.clickedRow, makeIfNecessary: false) as! CustomTableRowView
+            let row = aa.rowView(atRow: aa.clickedRow, makeIfNecessary: false) as! RowView
             row.isFocused = true
 
             self.onDoubleClick(e)
@@ -136,10 +136,10 @@ extension OutlineView {
             guard let entry = item as? any Entry else { return nil }
             
             let identifier = NSUserInterfaceItemIdentifier("Cell")
-            var cell: CutomCellView! = outlineView.makeView(withIdentifier: identifier, owner: self) as? CutomCellView
+            var cell: CellView! = outlineView.makeView(withIdentifier: identifier, owner: self) as? CellView
             
             if cell == nil {
-                cell = CutomCellView()
+                cell = CellView()
                 cell?.identifier = identifier
             }
             guard let coordinator = outlineView.dataSource as? Coordinator else {
@@ -154,10 +154,10 @@ extension OutlineView {
             print(item)
         }
         
-        var rows = [CustomTableRowView]()
+        var rows = [RowView]()
         
         func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
-            let row = CustomTableRowView()
+            let row = RowView()
             if let entry = item as? any Entry,
                case .row(let id) = focus.wrappedValue {
                 row.isFocused = (entry.id == id)
