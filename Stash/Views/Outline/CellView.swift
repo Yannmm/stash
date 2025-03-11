@@ -26,12 +26,13 @@ struct CellContent: View {
     
     @StateObject var viewModel: CellViewModel
     
-    var focus: FocusState<Focusable?>.Binding?
+//    var focus: FocusState<Focusable?>.Binding?
+    @FocusState.Binding var focus: Focusable
     
-    var isFocused: Bool {
-        guard let f = focus?.wrappedValue, case .row(let id) = f, let eid = viewModel.entry?.id, id == eid else { return false }
-        return true
-    }
+//    var isFocused: Bool {
+//        guard let f = focus?.wrappedValue, case .row(let id) = f, let eid = viewModel.entry?.id, id == eid else { return false }
+//        return true
+//    }
     
     var body: some View {
         VStack(spacing: 4) {
@@ -40,10 +41,11 @@ struct CellContent: View {
                     TextField("123123", text: Binding<String?>(get: { viewModel.entry?.name },
                                                                set: { viewModel.entry?.name = $0 ?? "" }) ?? "")
                     .textFieldStyle(.plain)
-                    .background(isFocused ? Color.red : Color.clear)
-                    .if(focus != nil) {
-                        $0.focused(focus!, equals: .row(id: viewModel.entry?.id ?? UUID()))
-                    }
+                    .background(Color.clear)
+                    .focused($focus, equals: .row(id: viewModel.entry?.id ?? UUID()))
+//                    .if(focus != nil) {
+//                        $0.focused(focus!, equals: .row(id: viewModel.entry?.id ?? UUID()))
+//                    }
                 } icon: {
                     if let e = viewModel.entry {
                         switch (e.icon) {
@@ -80,7 +82,7 @@ struct CellContent: View {
 
 class CellView: NSTableCellView {
     
-    var energy: ((any Entry), FocusState<Focusable?>.Binding)? {
+    var energy: ((any Entry), FocusState<Focusable>.Binding)? {
         didSet {
             guard let e = energy else { return }
             hostingView.rootView = CellContent(viewModel: CellViewModel(entry: e.0), focus: e.1)
