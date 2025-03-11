@@ -28,7 +28,10 @@ struct CellContent: View {
     
     var focus: FocusState<Focusable?>.Binding?
     
-    @State private var currentFocus: Focusable? = nil
+    var isFocused: Bool {
+        guard let f = focus?.wrappedValue, case .row(let id) = f, let eid = viewModel.entry?.id, id == eid else { return false }
+        return true
+    }
     
     var body: some View {
         VStack(spacing: 4) {
@@ -37,7 +40,7 @@ struct CellContent: View {
                     TextField("123123", text: Binding<String?>(get: { viewModel.entry?.name },
                                                                set: { viewModel.entry?.name = $0 ?? "" }) ?? "")
                     .textFieldStyle(.plain)
-                    .background(Color.clear)
+                    .background(isFocused ? Color.red : Color.clear)
                     .if(focus != nil) {
                         $0.focused(focus!, equals: .row(id: viewModel.entry?.id ?? UUID()))
                     }
@@ -71,20 +74,6 @@ struct CellContent: View {
                 .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 0))
             }
             .background(Color.clear)
-        }
-        .onAppear {
-            print("Cell appeared for ID: \(viewModel.entry?.id.uuidString ?? "unknown")")
-            if let focusBinding = focus {
-                currentFocus = focusBinding.wrappedValue
-                print("Initial focus state: \(String(describing: currentFocus))")
-            }
-        }
-        .onReceive(Timer.publish(every: 0.1, on: .main, in: .common).autoconnect()) { _ in
-            if let focusBinding = focus, currentFocus != focusBinding.wrappedValue {
-                let oldValue = currentFocus
-                currentFocus = focusBinding.wrappedValue
-                print("Focus changed from \(String(describing: oldValue)) to \(String(describing: currentFocus))")
-            }
         }
     }
 }
