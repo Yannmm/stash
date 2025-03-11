@@ -8,6 +8,11 @@
 import AppKit
 
 class RowView: NSTableRowView {
+    
+    override init(frame frameRect: NSRect) {
+        super.init(frame: NSRect.zero)
+    }
+    
     var isFocused = false {
         didSet {
             setNeedsDisplay(bounds)
