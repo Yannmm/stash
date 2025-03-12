@@ -96,17 +96,17 @@ extension OutlineView {
         
         @objc func tableViewDoubleAction(sender: AnyObject) {
             let aa = sender as! NSOutlineView
-            print("row double clicked -> \(aa.clickedRow), \(aa.clickedColumn)")
+
             let e = entries[aa.clickedRow]
             
-//            https://peterfriese.dev/blog/2021/swiftui-list-focus/
+            //            https://peterfriese.dev/blog/2021/swiftui-list-focus/
             // how to handle enter key event.
             aa.deselectRow(aa.clickedRow)
-
+            
             
             let row = aa.rowView(atRow: aa.clickedRow, makeIfNecessary: false) as! RowView
             row.isFocused = true
-
+            
             self.onDoubleClick(e)
         }
         
@@ -180,7 +180,7 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
-            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry)))
+            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), focus: FocusState<Focusable?>().projectedValue))
             return view.intrinsicContentSize.height
         }
         

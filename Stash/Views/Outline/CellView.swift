@@ -25,14 +25,12 @@ enum Focusable: Hashable {
 struct CellContent: View {
     
     @StateObject var viewModel: CellViewModel
+    @FocusState.Binding var focus: Focusable?
     
-//    var focus: FocusState<Focusable?>.Binding?
-    @FocusState.Binding var focus: Focusable
-    
-//    var isFocused: Bool {
-//        guard let f = focus?.wrappedValue, case .row(let id) = f, let eid = viewModel.entry?.id, id == eid else { return false }
-//        return true
-//    }
+        var isFocused: Bool {
+            guard let f = $focus.wrappedValue, case .row(let id) = f, let eid = viewModel.entry?.id, id == eid else { return false }
+            return true
+        }
     
     var body: some View {
         VStack(spacing: 4) {
@@ -41,11 +39,11 @@ struct CellContent: View {
                     TextField("123123", text: Binding<String?>(get: { viewModel.entry?.name },
                                                                set: { viewModel.entry?.name = $0 ?? "" }) ?? "")
                     .textFieldStyle(.plain)
-                    .background(Color.clear)
+                    .background(isFocused ? Color.red : Color.clear)
                     .focused($focus, equals: .row(id: viewModel.entry?.id ?? UUID()))
-//                    .if(focus != nil) {
-//                        $0.focused(focus!, equals: .row(id: viewModel.entry?.id ?? UUID()))
-//                    }
+                    //                    .if(focus != nil) {
+                    //                        $0.focused(focus!, equals: .row(id: viewModel.entry?.id ?? UUID()))
+                    //                    }
                 } icon: {
                     if let e = viewModel.entry {
                         switch (e.icon) {
@@ -82,16 +80,21 @@ struct CellContent: View {
 
 class CellView: NSTableCellView {
     
-    var energy: ((any Entry), FocusState<Focusable>.Binding)? {
+    var energy: ((any Entry), FocusState<Focusable?>.Binding)? {
         didSet {
             guard let e = energy else { return }
-            hostingView.rootView = CellContent(viewModel: CellViewModel(entry: e.0), focus: e.1)
+            
+            if hostingView == nil {
+                setup(e.0, e.1)
+            } else {
+                hostingView.rootView = CellContent(viewModel: CellViewModel(entry: e.0), focus: e.1)
+            }
         }
     }
     
     override init(frame frameRect: NSRect) {
         super.init(frame: CGRectZero)
-        setup()
+        //        setup()
     }
     
     required init?(coder: NSCoder) {
@@ -100,8 +103,10 @@ class CellView: NSTableCellView {
     
     private var hostingView: NSHostingView<CellContent>!
     
-    private func setup() {
-        let content = NSHostingView(rootView: CellContent(viewModel: CellViewModel()))
+    
+    
+    private func setup(_ entry: any Entry, _ focus: FocusState<Focusable?>.Binding) {
+        let content = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: entry), focus: focus))
         self.hostingView = content
         content.sizingOptions = .minSize
         self.addSubview(content)
