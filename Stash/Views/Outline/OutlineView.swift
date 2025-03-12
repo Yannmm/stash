@@ -59,11 +59,22 @@ struct OutlineView: NSViewRepresentable {
                 guard let rowView = outlineView.rowView(atRow: row, makeIfNecessary: false) as? RowView,
                       let item = outlineView.item(atRow: row) as? any Entry else { continue }
                 
+                let cellView = outlineView.view(atColumn: 0, row: row, makeIfNecessary: false) as? CellView
+                
+  
+                
                 // Update focus state based on focusedReminder
                 if case .row(let id) = focusedReminder {
-                    rowView.isFocused = (item.id == id)
+                    let flag = item.id == id
+                    rowView.isFocused = flag
+                    if let c = cellView {
+                        c.xxx(flag)
+                    }
                 } else {
                     rowView.isFocused = false
+                    if let c = cellView {
+                        c.xxx(false)
+                    }
                 }
             }
         }
@@ -180,7 +191,7 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
-            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), focus: FocusState<Focusable?>().projectedValue))
+            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), focus: FocusState<Focusable?>().projectedValue, viewModelxxx: CellContentViewModel()))
             return view.intrinsicContentSize.height
         }
         
