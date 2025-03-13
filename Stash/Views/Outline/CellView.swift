@@ -17,6 +17,11 @@ class CellViewModel: ObservableObject {
     }
 }
 
+// passing data from uikit to swiftui https://www.swiftjectivec.com/events-from-swiftui-to-uikit-and-vice-versa/
+extension NSNotification.Name {
+    static let tapViewTapped = NSNotification.Name("tapViewTapped")
+}
+
 enum Focusable: Hashable {
     case none
     case row(id: UUID)
@@ -30,14 +35,7 @@ struct CellContent: View {
     
     @StateObject var viewModel: CellViewModel
     
-    @FocusState.Binding var focus: Focusable?
-    
-    @ObservedObject var viewModelxxx: CellContentViewModel
-    
-    var isFocused: Bool {
-        guard let f = $focus.wrappedValue, case .row(let id) = f, let eid = viewModel.entry?.id, id == eid else { return false }
-        return true
-    }
+    @FocusState private var focused: Bool
     
     var body: some View {
         VStack(spacing: 4) {
@@ -47,7 +45,7 @@ struct CellContent: View {
                                                                set: { viewModel.entry?.name = $0 ?? "" }) ?? "")
                     .textFieldStyle(.plain)
                     .background(Color.clear)
-                    .focused($focus, equals: .row(id: viewModel.entry?.id ?? UUID()))
+                    .focused($focused)
                 } icon: {
                     if let e = viewModel.entry {
                         switch (e.icon) {
@@ -77,7 +75,16 @@ struct CellContent: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 0))
             }
-            .background(viewModelxxx.allEyesOnMe ? Color.red : Color.clear)
+            .background(focused ? Color.red : Color.clear)
+            .onChange(of: focused) { oldValue, newValue in
+                print("0000 ->\(oldValue) xxx \(newValue)")
+            }
+            .onReceive(NotificationCenter.default.publisher(for: .tapViewTapped)) { x in
+                print("33333 -> \((x.object as! any Entry).id)")
+                let id = (x.object as! any Entry).id
+                guard id == viewModel.entry?.id else { return }
+                focused = true
+            }
         }
     }
 }
@@ -91,14 +98,14 @@ class CellView: NSTableCellView {
             if hostingView == nil {
                 setup(e.0, e.1)
             } else {
-                hostingView.rootView = CellContent(viewModel: CellViewModel(entry: e.0), focus: e.1, viewModelxxx: CellContentViewModel())
+                hostingView.rootView = CellContent(viewModel: CellViewModel(entry: e.0))
             }
         }
     }
     
     func xxx(_ flag: Bool) {
         if (hostingView != nil) {
-            hostingView.rootView.viewModelxxx.allEyesOnMe = flag
+//            hostingView.rootView.viewModelxxx.allEyesOnMe = flag
         }
     }
     
@@ -115,7 +122,7 @@ class CellView: NSTableCellView {
     
     
     private func setup(_ entry: any Entry, _ focus: FocusState<Focusable?>.Binding) {
-        let content = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: entry), focus: focus, viewModelxxx: CellContentViewModel()))
+        let content = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: entry)))
         self.hostingView = content
         content.sizingOptions = .minSize
         self.addSubview(content)

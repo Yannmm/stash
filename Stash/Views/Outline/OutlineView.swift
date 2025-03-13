@@ -118,6 +118,8 @@ extension OutlineView {
             let row = aa.rowView(atRow: aa.clickedRow, makeIfNecessary: false) as! RowView
             row.isFocused = true
             
+            NotificationCenter.default.post(name: .tapViewTapped, object: e)
+            
             self.onDoubleClick(e)
         }
         
@@ -191,8 +193,10 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
-            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), focus: FocusState<Focusable?>().projectedValue, viewModelxxx: CellContentViewModel()))
-            return view.intrinsicContentSize.height
+//            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), focus: FocusState<Focusable?>().projectedValue, viewModelxxx: CellContentViewModel()))
+//            return view.intrinsicContentSize.height
+            
+            return 40
         }
         
         func outlineView(_ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex: Int) -> Bool {
