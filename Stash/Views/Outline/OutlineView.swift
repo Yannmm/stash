@@ -14,12 +14,8 @@ struct OutlineView: NSViewRepresentable {
     
     @Binding var addFolder: Bool
     
-    @FocusState var focusedReminder: Focusable?
-    
     func makeCoordinator() -> Coordinator {
-        Coordinator(entries: $items, focus: $focusedReminder) {
-            focusedReminder = .row(id: $0.id)
-        }
+        Coordinator(entries: $items)
     }
     
     func makeNSView(context: Context) -> NSScrollView {
@@ -64,18 +60,19 @@ struct OutlineView: NSViewRepresentable {
   
                 
                 // Update focus state based on focusedReminder
-                if case .row(let id) = focusedReminder {
-                    let flag = item.id == id
-                    rowView.isFocused = flag
-                    if let c = cellView {
-                        c.xxx(flag)
-                    }
-                } else {
-                    rowView.isFocused = false
-                    if let c = cellView {
-                        c.xxx(false)
-                    }
-                }
+                // TODO
+//                if case .row(let id) = focusedReminder {
+//                    let flag = item.id == id
+//                    rowView.isFocused = flag
+//                    if let c = cellView {
+//                        c.xxx(flag)
+//                    }
+//                } else {
+//                    rowView.isFocused = false
+//                    if let c = cellView {
+//                        c.xxx(false)
+//                    }
+//                }
             }
         }
         
@@ -96,13 +93,10 @@ extension OutlineView {
     class Coordinator: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
         @Binding var entries: [any Entry]
         
-        let onDoubleClick: (any Entry) -> Void
-        var focus: FocusState<Focusable?>.Binding
         
-        init(entries: Binding<[any Entry]>, focus: FocusState<Focusable?>.Binding, onDoubleClick: @escaping (any Entry) -> Void) {
+        
+        init(entries: Binding<[any Entry]>) {
             self._entries = entries
-            self.focus = focus
-            self.onDoubleClick = onDoubleClick
         }
         
         @objc func tableViewDoubleAction(sender: AnyObject) {
@@ -119,8 +113,6 @@ extension OutlineView {
             row.isFocused = true
             
             NotificationCenter.default.post(name: .tapViewTapped, object: e)
-            
-            self.onDoubleClick(e)
         }
         
         // MARK: - NSOutlineViewDataSource
@@ -159,7 +151,7 @@ extension OutlineView {
                 return nil
             }
             
-            cell?.energy = (entry, coordinator.focus)
+            cell?.energy = entry
             return cell
         }
         
@@ -171,10 +163,11 @@ extension OutlineView {
         
         func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
             let row = RowView()
-            if let entry = item as? any Entry,
-               case .row(let id) = focus.wrappedValue {
-                row.isFocused = (entry.id == id)
-            }
+            // TODO
+//            if let entry = item as? any Entry,
+//               case .row(let id) = focus.wrappedValue {
+//                row.isFocused = (entry.id == id)
+//            }
             
             return row
         }

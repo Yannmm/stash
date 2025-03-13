@@ -91,14 +91,14 @@ struct CellContent: View {
 
 class CellView: NSTableCellView {
     
-    var energy: ((any Entry), FocusState<Focusable?>.Binding)? {
+    var energy: (any Entry)? {
         didSet {
             guard let e = energy else { return }
             
             if hostingView == nil {
-                setup(e.0, e.1)
+                setup(e)
             } else {
-                hostingView.rootView = CellContent(viewModel: CellViewModel(entry: e.0))
+                hostingView.rootView = CellContent(viewModel: CellViewModel(entry: e))
             }
         }
     }
@@ -121,7 +121,7 @@ class CellView: NSTableCellView {
     
     
     
-    private func setup(_ entry: any Entry, _ focus: FocusState<Focusable?>.Binding) {
+    private func setup(_ entry: any Entry) {
         let content = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: entry)))
         self.hostingView = content
         content.sizingOptions = .minSize
