@@ -90,7 +90,7 @@ struct CellContent: View {
             
             // Bottom border line
             Rectangle()
-                .frame(height: 2)
+                .frame(height: 1)
                 .foregroundColor(focused ? Color.theme : Color.clear)
                 .animation(.easeInOut(duration: 0.2), value: focused)
         }
