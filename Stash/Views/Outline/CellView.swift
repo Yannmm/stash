@@ -38,44 +38,46 @@ struct CellContent: View {
     @FocusState private var focused: Bool
     
     var body: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 0) {
             HStack(spacing: 6) {
-                Label {
-                    TextField("123123", text: Binding<String?>(get: { viewModel.entry?.name },
-                                                               set: { viewModel.entry?.name = $0 ?? "" }) ?? "")
-                    .textFieldStyle(.plain)
-                    .background(Color.clear)
-                    .focused($focused)
-                } icon: {
-                    if let e = viewModel.entry {
-                        switch (e.icon) {
-                        case .system(let name):
-                            Image(systemName: name)
-                                .foregroundStyle(Color.theme)
-                        case .favicon(let url):
-                            if let url = url {
-                                KFImage.url(url)
-                                    .loadDiskFileSynchronously()
-                                    .cacheMemoryOnly()
-                                    .fade(duration: 0.25)
-                                    .onSuccess { result in  }
-                                    .onFailure { error in }
-                                    .resizable()
-                                    .frame(width: 16.0, height: 16.0)
-                            } else {
-                                Image(systemName: "globe")
-                                    .foregroundStyle(Color.theme)
-                            }
-                        }
-                    } else {
-                        Image(systemName: "folder.fill")
+                if let e = viewModel.entry {
+                    switch (e.icon) {
+                    case .system(let name):
+                        Image(systemName: name)
                             .foregroundStyle(Color.theme)
+                    case .favicon(let url):
+                        if let url = url {
+                            KFImage.url(url)
+                                .loadDiskFileSynchronously()
+                                .cacheMemoryOnly()
+                                .fade(duration: 0.25)
+                                .onSuccess { result in  }
+                                .onFailure { error in }
+                                .resizable()
+                                .frame(width: 16.0, height: 16.0)
+                        } else {
+                            Image(systemName: "globe")
+                                .foregroundStyle(Color.theme)
+                        }
                     }
+                } else {
+                    Image(systemName: "folder.fill")
+                        .foregroundStyle(Color.theme)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 0))
+                
+                Rectangle()
+                    .frame(width: 1, height: 20)
+                    .foregroundColor(focused ? Color.theme : Color.clear)
+                    
+                
+                TextField("123123", text: Binding<String?>(get: { viewModel.entry?.name },
+                                                           set: { viewModel.entry?.name = $0 ?? "" }) ?? "")
+                .textFieldStyle(.plain)
+                .background(Color.clear)
+                .focused($focused)
             }
-            .background(focused ? Color.red : Color.clear)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
             .onChange(of: focused) { oldValue, newValue in
                 print("0000 ->\(oldValue) xxx \(newValue)")
             }
@@ -85,6 +87,12 @@ struct CellContent: View {
                 guard id == viewModel.entry?.id else { return }
                 focused = true
             }
+            
+            // Bottom border line
+            Rectangle()
+                .frame(height: 2)
+                .foregroundColor(focused ? Color.theme : Color.clear)
+                .animation(.easeInOut(duration: 0.2), value: focused)
         }
     }
 }
