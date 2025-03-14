@@ -33,7 +33,7 @@ class CellContentViewModel: ObservableObject {
 
 struct CellContent: View {
     
-    @StateObject var viewModel: CellViewModel
+    @ObservedObject var viewModel: CellViewModel
     
     @FocusState private var focused: Bool
     
@@ -91,26 +91,15 @@ struct CellContent: View {
 
 class CellView: NSTableCellView {
     
-    var energy: (any Entry)? {
+    var entry: (any Entry)? {
         didSet {
-            guard let e = energy else { return }
-            
-            if hostingView == nil {
-                setup(e)
-            } else {
-                hostingView.rootView = CellContent(viewModel: CellViewModel(entry: e))
-            }
-        }
-    }
-    
-    func xxx(_ flag: Bool) {
-        if (hostingView != nil) {
-//            hostingView.rootView.viewModelxxx.allEyesOnMe = flag
+            hostingView.rootView = CellContent(viewModel: CellViewModel(entry: entry))
         }
     }
     
     override init(frame frameRect: NSRect) {
         super.init(frame: CGRectZero)
+        setup()
     }
     
     required init?(coder: NSCoder) {
@@ -121,8 +110,8 @@ class CellView: NSTableCellView {
     
     
     
-    private func setup(_ entry: any Entry) {
-        let content = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: entry)))
+    private func setup() {
+        let content = NSHostingView(rootView: CellContent(viewModel: CellViewModel()))
         self.hostingView = content
         content.sizingOptions = .minSize
         self.addSubview(content)

@@ -49,34 +49,6 @@ struct OutlineView: NSViewRepresentable {
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         guard let outline = nsView.documentView as? NSOutlineView else { return }
         
-        
-        if let outlineView = nsView.documentView as? NSOutlineView {
-            for row in 0..<outlineView.numberOfRows {
-                guard let rowView = outlineView.rowView(atRow: row, makeIfNecessary: false) as? RowView,
-                      let item = outlineView.item(atRow: row) as? any Entry else { continue }
-                
-                let cellView = outlineView.view(atColumn: 0, row: row, makeIfNecessary: false) as? CellView
-                
-  
-                
-                // Update focus state based on focusedReminder
-                // TODO
-//                if case .row(let id) = focusedReminder {
-//                    let flag = item.id == id
-//                    rowView.isFocused = flag
-//                    if let c = cellView {
-//                        c.xxx(flag)
-//                    }
-//                } else {
-//                    rowView.isFocused = false
-//                    if let c = cellView {
-//                        c.xxx(false)
-//                    }
-//                }
-            }
-        }
-        
-        
         let olds = context.coordinator.entries
         let news = items
         guard olds.count != news.count || !olds.elementsEqual(news, by: { $0.id == $1.id }) else {
@@ -92,8 +64,6 @@ struct OutlineView: NSViewRepresentable {
 extension OutlineView {
     class Coordinator: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
         @Binding var entries: [any Entry]
-        
-        
         
         init(entries: Binding<[any Entry]>) {
             self._entries = entries
@@ -151,7 +121,7 @@ extension OutlineView {
                 return nil
             }
             
-            cell?.energy = entry
+            cell?.entry = entry
             return cell
         }
         
