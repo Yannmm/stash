@@ -12,8 +12,6 @@ import Cocoa
 struct OutlineView: NSViewRepresentable {
     @Binding var items: [any Entry]
     
-    @Binding var addFolder: Bool
-    
     @EnvironmentObject var cabinet: OkamuraCabinet
     
     func makeCoordinator() -> Coordinator {

@@ -12,9 +12,10 @@ struct ContentView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 Toolbar(present: $present) {
-                    addFolder = true
+                    let directory = Directory(id: UUID(), name: "123")
+                    cabinet.upsert(entry: directory)
                 }
-                OutlineView(items: $cabinet.entries, addFolder: $addFolder)
+                OutlineView(items: $cabinet.entries)
             }
             .sheet(isPresented: $present, onDismiss: nil) {
                 CraftModalView()
