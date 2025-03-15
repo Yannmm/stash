@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import SwiftUI
 
 class RowView: NSTableRowView {
     
@@ -26,12 +27,14 @@ class RowView: NSTableRowView {
     // Selection
     override func drawSelection(in dirtyRect: NSRect) {
         if self.selectionHighlightStyle != .none {
-            let selectionRect = NSInsetRect(self.bounds, 2.5, 2.5)
-            NSColor(calibratedWhite: 0.65, alpha: 1).setStroke()
-            NSColor(calibratedWhite: 0.82, alpha: 1).setFill()
-            let selectionPath = NSBezierPath.init(roundedRect: selectionRect, xRadius: 6, yRadius: 6)
+            //            let selectionRect = NSInsetRect(self.bounds, 2.5, 2.5)
+            let selectionRect = self.bounds
+            NSColor(Color.primary).setFill()
+            //            NSColor(calibratedWhite: 0.65, alpha: 1).setStroke()
+            //            NSColor(calibratedWhite: 0.82, alpha: 1).setFill()
+            let selectionPath = NSBezierPath.init(roundedRect: selectionRect, xRadius: 0, yRadius: 0)
             selectionPath.fill()
-            selectionPath.stroke()
+            //            selectionPath.stroke()
         }
     }
     
@@ -43,7 +46,7 @@ class RowView: NSTableRowView {
         guard !isSelected else { return }
         guard !isFocused else { return }
         
-//        NSColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.00).set()
+        //        NSColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.00).set()
         NSColor.gridColor.set()
         
         // mouse hover

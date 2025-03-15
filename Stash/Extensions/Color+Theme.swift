@@ -8,8 +8,12 @@
 import SwiftUICore
 
 extension Color {
-    static var theme: Color {
+    static var primary: Color {
         return Color(hex: 0x7766E8)
+    }
+    
+    static var accent: Color {
+        return Color(hex: 0xD3D3D3)
     }
     
     static var text: Color {

@@ -58,7 +58,7 @@ struct CellContent: View {
                     switch (e.icon) {
                     case .system(let name):
                         Image(systemName: name)
-                            .foregroundStyle(Color.theme)
+                            .foregroundStyle(Color.primary)
                     case .favicon(let url):
                         if let url = url {
                             KFImage.url(url)
@@ -71,17 +71,17 @@ struct CellContent: View {
                                 .frame(width: 16.0, height: 16.0)
                         } else {
                             Image(systemName: "globe")
-                                .foregroundStyle(Color.theme)
+                                .foregroundStyle(Color.primary)
                         }
                     }
                 } else {
                     Image(systemName: "folder.fill")
-                        .foregroundStyle(Color.theme)
+                        .foregroundStyle(Color.primary)
                 }
                 
                 Rectangle()
                     .frame(width: 1, height: 20)
-                    .foregroundColor(focused ? Color.theme : Color.clear)
+                    .foregroundColor(focused ? Color.primary : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
                 
                 
@@ -107,7 +107,7 @@ struct CellContent: View {
             // Bottom border line
             Rectangle()
                 .frame(height: 1)
-                .foregroundColor(focused ? Color.theme : Color.clear)
+                .foregroundColor(focused ? Color.primary : Color.clear)
                 .animation(.easeInOut(duration: 0.2), value: focused)
         }
         .onAppear {

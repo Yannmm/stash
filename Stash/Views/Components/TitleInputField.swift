@@ -52,7 +52,7 @@ struct TitleInputField: View {
             // Bottom border line
             Rectangle()
                 .frame(height: focused ? 2 : 1)  // Thicker when focused
-                .foregroundColor(focused ? Color.theme : Color(nsColor: .separatorColor))
+                .foregroundColor(focused ? Color.primary : Color(nsColor: .separatorColor))
                 .animation(.easeInOut(duration: 0.2), value: focused)
         }
         .onChange(of: (viewModel.title ?? "")) { oldValue, newValue in
