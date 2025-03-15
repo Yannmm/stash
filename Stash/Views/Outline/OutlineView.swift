@@ -14,8 +14,10 @@ struct OutlineView: NSViewRepresentable {
     
     @Binding var addFolder: Bool
     
+    @EnvironmentObject var cabinet: OkamuraCabinet
+    
     func makeCoordinator() -> Coordinator {
-        Coordinator(entries: $items)
+        Coordinator(entries: $items, cabinet: cabinet)
     }
     
     func makeNSView(context: Context) -> NSScrollView {
@@ -65,8 +67,11 @@ extension OutlineView {
     class Coordinator: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
         @Binding var entries: [any Entry]
         
-        init(entries: Binding<[any Entry]>) {
+        private var cabinet: OkamuraCabinet
+        
+        init(entries: Binding<[any Entry]>, cabinet: OkamuraCabinet) {
             self._entries = entries
+            self.cabinet = cabinet
         }
         
         @objc func tableViewDoubleAction(sender: AnyObject) {
@@ -116,9 +121,6 @@ extension OutlineView {
             if cell == nil {
                 cell = CellView()
                 cell?.identifier = identifier
-            }
-            guard let coordinator = outlineView.dataSource as? Coordinator else {
-                return nil
             }
             
             cell?.entry = entry
@@ -176,12 +178,10 @@ extension OutlineView {
                     var children = oldParent.children
                     children?.remove(at: index)
                     oldParent.children = children
-                    //                    outlineView.removeItems(at: IndexSet(integer: index), inParent: oldParent, withAnimation: .slideLeft)
                 }
             } else {
                 if let index = entries.firstIndex(where: { $0.id == draggedItem.id }) {
                     entries.remove(at: index)
-                    //                    outlineView.removeItems(at: IndexSet(integer: index), inParent: nil, withAnimation: .slideLeft)
                 }
             }
             
@@ -191,11 +191,6 @@ extension OutlineView {
             if var targetParent = targetParent {
                 var children = targetParent.children ?? []
                 let insertIndex = childIndex == -1 ? children.count : childIndex
-                //                children.removeAll { $0.id == draggedItem.id }
-                //                children.insert(draggedItem, at: insertIndex)
-                
-                //                children = children.rearrange(element: draggedItem, to: insertIndex)
-                
                 let index = children.firstIndex { $0.id == draggedItem.id }
                 
                 if let i = index {
@@ -209,9 +204,7 @@ extension OutlineView {
                     }
                 } else {
                     children.append(draggedItem)
-                    
                 }
-                
                 
                 targetParent.children = children
                 
@@ -225,12 +218,14 @@ extension OutlineView {
                 entries.insert(draggedItem, at: insertIndex)
                 
                 draggedItem.parentId = nil
-                
-                //                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: nil, withAnimation: .slideRight)
             }
             
             // End updates
             outlineView.endUpdates()
+            
+            DispatchQueue.global().async { [weak self] in
+                self?.cabinet.save()
+            }
             
             return true
         }

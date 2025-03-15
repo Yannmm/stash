@@ -24,16 +24,6 @@ struct ContentView: View {
             }
         }
         .frame(minWidth: 300, minHeight: 400)
-        .task {
-            // TODO: move to creating.
-            do {
-                let x = try await Dominator().fetchWebPageTitle(from: URL(string: "https://www.baidu.com")!)
-                print(x)
-            } catch {
-                print(error)
-            }
-            
-        }
     }
 }
 

@@ -12,6 +12,8 @@ import Kingfisher
 class CellViewModel: ObservableObject {
     @Published var entry: (any Entry)?
     
+    var cabinet: OkamuraCabinet!
+    
     var title: String
     
     init(entry: (any Entry)? = nil) {
@@ -23,7 +25,7 @@ class CellViewModel: ObservableObject {
         guard var e = entry else { return }
         guard e.name != title else { return }
         e.name = title
-        OkamuraCabinet.shared.upsert(entry: e)
+        cabinet.upsert(entry: e)
     }
 }
 
@@ -42,6 +44,8 @@ class CellContentViewModel: ObservableObject {
 }
 
 struct CellContent: View {
+    
+    @EnvironmentObject var cabinet: OkamuraCabinet
     
     @ObservedObject var viewModel: CellViewModel
     
@@ -79,12 +83,12 @@ struct CellContent: View {
                     .frame(width: 1, height: 20)
                     .foregroundColor(focused ? Color.theme : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
-                    
+                
                 
                 TextField("Input the title here...", text: $viewModel.title)
-                .textFieldStyle(.plain)
-                .background(Color.clear)
-                .focused($focused)
+                    .textFieldStyle(.plain)
+                    .background(Color.clear)
+                    .focused($focused)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
@@ -93,6 +97,7 @@ struct CellContent: View {
                 viewModel.update()
             }
             .onReceive(NotificationCenter.default.publisher(for: .tapViewTapped)) { x in
+                // TODO: how about use environmen to pass a hook down here?
                 print("33333 -> \((x.object as! any Entry).id)")
                 let id = (x.object as! any Entry).id
                 guard id == viewModel.entry?.id else { return }
@@ -105,7 +110,11 @@ struct CellContent: View {
                 .foregroundColor(focused ? Color.theme : Color.clear)
                 .animation(.easeInOut(duration: 0.2), value: focused)
         }
+        .onAppear {
+            viewModel.cabinet = cabinet
+        }
     }
+    
 }
 
 class CellView: NSTableCellView {
