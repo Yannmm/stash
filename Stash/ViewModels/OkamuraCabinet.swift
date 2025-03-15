@@ -18,22 +18,17 @@ class OkamuraCabinet: ObservableObject {
         }
     }
     
-    func add(entry: any Entry) {
-        entries.append(entry)
-        
+    func upsert(entry: any Entry) {
+        if let index = entries.firstIndex(where: { $0.id == entry.id }) {
+            entries[index] = entry
+        } else {
+            entries.append(entry)
+        }
         save()
     }
     
     func save() {
         do {
-            // Convert entries to AnyEntry for encoding
-//            let aa = entries.map { AnyEntry($0) }
-//            let bb = entries.map { x in
-//                switch x {
-//                case is Bookmark:
-//
-//                }
-//            }
             let data = try JSONEncoder().encode(entries.asAnyEntries)
             
             // Save to UserDefaults

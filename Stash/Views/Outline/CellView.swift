@@ -12,8 +12,18 @@ import Kingfisher
 class CellViewModel: ObservableObject {
     @Published var entry: (any Entry)?
     
+    var title: String
+    
     init(entry: (any Entry)? = nil) {
         self.entry = entry
+        self.title = entry?.name ?? ""
+    }
+    
+    func update() {
+        guard var e = entry else { return }
+        guard e.name != title else { return }
+        e.name = title
+        OkamuraCabinet.shared.upsert(entry: e)
     }
 }
 
@@ -68,10 +78,10 @@ struct CellContent: View {
                 Rectangle()
                     .frame(width: 1, height: 20)
                     .foregroundColor(focused ? Color.theme : Color.clear)
+                    .animation(.easeInOut(duration: 0.2), value: focused)
                     
                 
-                TextField("123123", text: Binding<String?>(get: { viewModel.entry?.name },
-                                                           set: { viewModel.entry?.name = $0 ?? "" }) ?? "")
+                TextField("Input the title here...", text: $viewModel.title)
                 .textFieldStyle(.plain)
                 .background(Color.clear)
                 .focused($focused)
@@ -79,7 +89,8 @@ struct CellContent: View {
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
             .onChange(of: focused) { oldValue, newValue in
-                print("0000 ->\(oldValue) xxx \(newValue)")
+                guard newValue != oldValue, !newValue else { return }
+                viewModel.update()
             }
             .onReceive(NotificationCenter.default.publisher(for: .tapViewTapped)) { x in
                 print("33333 -> \((x.object as! any Entry).id)")
