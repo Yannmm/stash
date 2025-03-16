@@ -82,7 +82,7 @@ extension OutlineView {
             aa.deselectRow(aa.clickedRow)
             
             
-            let row = aa.rowView(atRow: aa.clickedRow, makeIfNecessary: false) as! RowView
+            let row = aa.rowView(atRow: aa.clickedRow, makeIfNecessary: true) as! RowView
             row.isFocused = true
             
             NotificationCenter.default.post(name: .tapViewTapped, object: e)

@@ -14,7 +14,7 @@ class CellViewModel: ObservableObject {
     
     var cabinet: OkamuraCabinet!
     
-    var title: String
+    @Published var title: String
     
     init(entry: (any Entry)? = nil) {
         self.entry = entry
@@ -24,6 +24,10 @@ class CellViewModel: ObservableObject {
     func update() {
         guard var e = entry else { return }
         guard e.name != title else { return }
+        guard !title.trim().isEmpty else {
+            title = e.name
+            return
+        }
         e.name = title
         cabinet.upsert(entry: e)
     }
