@@ -56,9 +56,11 @@ struct OutlineView: NSViewRepresentable {
         guard olds.count != news.count || !olds.elementsEqual(news, by: { $0.id == $1.id }) else {
             return
         }
+        print("不一致，刷新 --> \(olds.map({$0.id.uuidString.suffix(4)})), 🐶 -> \(news.map({$0.id.uuidString.suffix(4)}))")
+        context.coordinator.entries = items
         // TODO: checkout this article. https://chris.eidhof.nl/post/view-representable/
         DispatchQueue.main.async {
-            context.coordinator.entries = items
+            
 //            outline.reloadData()
         }
     }
