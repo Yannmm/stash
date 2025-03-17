@@ -27,6 +27,15 @@ class OkamuraCabinet: ObservableObject {
         save()
     }
     
+    func insert(entry: any Entry, location: Int?) {
+        if let i = location {
+            entries.insert(entry, at: i)
+        } else {
+            entries.append(entry)
+        }
+        save()
+    }
+    
     func save() {
         do {
             let data = try JSONEncoder().encode(entries.asAnyEntries)

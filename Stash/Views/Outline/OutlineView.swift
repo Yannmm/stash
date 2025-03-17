@@ -14,8 +14,10 @@ struct OutlineView: NSViewRepresentable {
     
     @EnvironmentObject var cabinet: OkamuraCabinet
     
+    let onSelectRow: (Int?) -> Void
+    
     func makeCoordinator() -> Coordinator {
-        Coordinator(entries: $items, cabinet: cabinet)
+        Coordinator(entries: $items, cabinet: cabinet, onSelectRow: onSelectRow)
     }
     
     func makeNSView(context: Context) -> NSScrollView {
@@ -67,9 +69,12 @@ extension OutlineView {
         
         private var cabinet: OkamuraCabinet
         
-        init(entries: Binding<[any Entry]>, cabinet: OkamuraCabinet) {
+        let onSelectRow: (Int?) -> Void
+        
+        init(entries: Binding<[any Entry]>, cabinet: OkamuraCabinet, onSelectRow: @escaping (Int?) -> Void) {
             self._entries = entries
             self.cabinet = cabinet
+            self.onSelectRow = onSelectRow
         }
         
         @objc func tableViewDoubleAction(sender: AnyObject) {
@@ -129,8 +134,6 @@ extension OutlineView {
             print(item)
         }
         
-        var rows = [RowView]()
-        
         func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
             let row = RowView()
             // TODO
@@ -140,6 +143,12 @@ extension OutlineView {
 //            }
             
             return row
+        }
+        
+        func outlineViewSelectionDidChange(_ notification: Notification) {
+            guard let outlineView = notification.object as? NSOutlineView else { return }
+            
+            onSelectRow(outlineView.selectedRow == -1 ? nil : outlineView.selectedRow)
         }
         
         // MARK: - Drag & Drop
