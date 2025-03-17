@@ -56,9 +56,10 @@ struct OutlineView: NSViewRepresentable {
         guard olds.count != news.count || !olds.elementsEqual(news, by: { $0.id == $1.id }) else {
             return
         }
+        // TODO: checkout this article. https://chris.eidhof.nl/post/view-representable/
         DispatchQueue.main.async {
             context.coordinator.entries = items
-            outline.reloadData()
+//            outline.reloadData()
         }
     }
 }
