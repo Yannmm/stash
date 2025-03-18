@@ -7,17 +7,17 @@ struct ContentView: View {
     
     @State private var present = false
     
-    @State private var location: Int?
+    @State private var parentId: UUID?
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 Toolbar(present: $present) {
-                    let directory = Directory(id: UUID(), name: "123")
-                    cabinet.insert(entry: directory, location: location)
+                    let directory = Directory(id: UUID(), name: "123", parentId: parentId)
+                    cabinet.insert(entry: directory, anchor: parentId)
                 }
                 OutlineView(entries: $cabinet.entries) {
-                    self.location = $0
+                    self.parentId = $0
                 }
             }
             .sheet(isPresented: $present, onDismiss: nil) {

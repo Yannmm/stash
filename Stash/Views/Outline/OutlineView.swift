@@ -14,7 +14,7 @@ struct OutlineView: NSViewRepresentable {
     
     @EnvironmentObject var cabinet: OkamuraCabinet
     
-    let onSelectRow: (Int?) -> Void
+    let onSelectRow: (UUID?) -> Void
     
     func makeCoordinator() -> Coordinator {
         Coordinator(parent: self)
@@ -137,7 +137,8 @@ extension OutlineView {
         func outlineViewSelectionDidChange(_ notification: Notification) {
             guard let outlineView = notification.object as? NSOutlineView else { return }
             
-            parent.onSelectRow(outlineView.selectedRow == -1 ? nil : outlineView.selectedRow)
+            let entry = outlineView.item(atRow: outlineView.selectedRow) as? (any Entry)
+            parent.onSelectRow(entry?.id)
         }
         
         // MARK: - Drag & Drop

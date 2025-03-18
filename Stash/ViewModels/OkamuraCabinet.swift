@@ -22,17 +22,17 @@ class OkamuraCabinet: ObservableObject {
         }
     }
     
-    func upsert(entry: any Entry) {
-        if let index = entries.firstIndex(where: { $0.id == entry.id }) {
-            entries[index] = entry
-        } else {
-            entries.append(entry)
-        }
-        save()
-    }
+//    func upsert(entry: any Entry) {
+//        if let index = entries.firstIndex(where: { $0.id == entry.id }) {
+//            entries[index] = entry
+//        } else {
+//            entries.append(entry)
+//        }
+//        save()
+//    }
     
-    func insert(entry: any Entry, location: Int?) {
-        if let i = location {
+    func insert(entry: any Entry, anchor: UUID?) {
+        if let a = anchor, let x = entries.findBy(id: a), let i = entries.firstIndex(where: { $0.id == x.id }) {
             entries.insert(entry, at: i)
         } else {
             entries.append(entry)
