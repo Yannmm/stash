@@ -16,7 +16,7 @@ struct ContentView: View {
                     let directory = Directory(id: UUID(), name: "123")
                     cabinet.insert(entry: directory, location: location)
                 }
-                OutlineView(items: $cabinet.entries) {
+                OutlineView(entries: $cabinet.entries) {
                     self.location = $0
                 }
             }

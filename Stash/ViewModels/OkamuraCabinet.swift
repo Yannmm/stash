@@ -8,7 +8,11 @@
 import Foundation
 
 class OkamuraCabinet: ObservableObject {
-    @Published var entries: [any Entry] = []
+    @Published var entries: [any Entry] = [] {
+        didSet {
+            print("11111")
+        }
+    }
     
     static let shared = OkamuraCabinet()
     

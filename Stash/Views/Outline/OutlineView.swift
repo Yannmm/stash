@@ -10,14 +10,14 @@ import Cocoa
 
 // MARK: - NSOutlineView Wrapper
 struct OutlineView: NSViewRepresentable {
-    @Binding var items: [any Entry]
+    @Binding var entries: [any Entry]
     
     @EnvironmentObject var cabinet: OkamuraCabinet
     
     let onSelectRow: (Int?) -> Void
     
     func makeCoordinator() -> Coordinator {
-        Coordinator(entries: $items, cabinet: cabinet, onSelectRow: onSelectRow)
+        Coordinator(parent: self)
     }
     
     func makeNSView(context: Context) -> NSScrollView {
@@ -49,41 +49,32 @@ struct OutlineView: NSViewRepresentable {
     
     
     func updateNSView(_ nsView: NSScrollView, context: Context) {
+        guard entries.map({$0.id.uuidString.suffix(4)}) != context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}) else { return }
+        print("🐶 --> \(entries.map({$0.id.uuidString.suffix(4)})) 🌞 \(context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}))")
+        context.coordinator.parent = self
+        
         guard let outline = nsView.documentView as? NSOutlineView else { return }
         
-        let olds = context.coordinator.entries
-        let news = items
-        guard olds.count != news.count || !olds.elementsEqual(news, by: { $0.id == $1.id }) else {
-            return
-        }
-        print("不一致，刷新 --> \(olds.map({$0.id.uuidString.suffix(4)})), 🐶 -> \(news.map({$0.id.uuidString.suffix(4)}))")
-        context.coordinator.entries = items
         // TODO: checkout this article. https://chris.eidhof.nl/post/view-representable/
         DispatchQueue.main.async {
-            
-//            outline.reloadData()
+            outline.reloadData()
         }
     }
 }
 
 extension OutlineView {
     class Coordinator: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
-        @Binding var entries: [any Entry]
         
-        private var cabinet: OkamuraCabinet
+        var parent: OutlineView
         
-        let onSelectRow: (Int?) -> Void
-        
-        init(entries: Binding<[any Entry]>, cabinet: OkamuraCabinet, onSelectRow: @escaping (Int?) -> Void) {
-            self._entries = entries
-            self.cabinet = cabinet
-            self.onSelectRow = onSelectRow
+        init(parent: OutlineView) {
+            self.parent = parent
         }
         
         @objc func tableViewDoubleAction(sender: AnyObject) {
             let aa = sender as! NSOutlineView
 
-            let e = entries[aa.clickedRow]
+            let e = parent.entries[aa.clickedRow]
             
             //            https://peterfriese.dev/blog/2021/swiftui-list-focus/
             // how to handle enter key event.
@@ -99,7 +90,7 @@ extension OutlineView {
         // MARK: - NSOutlineViewDataSource
         
         func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
-            return (item as? any Entry)?.children?.count ?? entries.count
+            return (item as? any Entry)?.children?.count ?? parent.entries.count
         }
         
         func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
@@ -107,10 +98,10 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
-            if let e = item as? any Entry, let entry = entries.findBy(id: e.id) {
+            if let e = item as? any Entry, let entry = parent.entries.findBy(id: e.id) {
                 return entry.children![index]
             }
-            return entries[index]
+            return parent.entries[index]
         }
         
         // MARK: - NSOutlineViewDelegate
@@ -133,25 +124,20 @@ extension OutlineView {
             return cell
         }
         
+        
         func outlineView(_ outlineView: NSOutlineView, setObjectValue object: Any?, for tableColumn: NSTableColumn?, byItem item: Any?) {
             print(item)
         }
         
         func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
             let row = RowView()
-            // TODO
-//            if let entry = item as? any Entry,
-//               case .row(let id) = focus.wrappedValue {
-//                row.isFocused = (entry.id == id)
-//            }
-            
             return row
         }
         
         func outlineViewSelectionDidChange(_ notification: Notification) {
             guard let outlineView = notification.object as? NSOutlineView else { return }
             
-            onSelectRow(outlineView.selectedRow == -1 ? nil : outlineView.selectedRow)
+            parent.onSelectRow(outlineView.selectedRow == -1 ? nil : outlineView.selectedRow)
         }
         
         // MARK: - Drag & Drop
@@ -177,21 +163,21 @@ extension OutlineView {
         func outlineView(_ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex: Int) -> Bool {
             guard let pasteboardItem = info.draggingPasteboard.pasteboardItems?.first,
                   let pid = pasteboardItem.string(forType: .string),
-                  var draggedItem = findItem(by: pid, in: entries) else { return false }
+                  var draggedItem = findItem(by: pid, in: parent.entries) else { return false }
             
             // Begin updates for animation
             outlineView.beginUpdates()
             
             // Remove from old location
-            if let parentId = draggedItem.parentId, var oldParent = entries.findBy(id: parentId) {
+            if let parentId = draggedItem.parentId, var oldParent = parent.entries.findBy(id: parentId) {
                 if let index = oldParent.children?.firstIndex(where: { $0.id == draggedItem.id }) {
                     var children = oldParent.children
                     children?.remove(at: index)
                     oldParent.children = children
                 }
             } else {
-                if let index = entries.firstIndex(where: { $0.id == draggedItem.id }) {
-                    entries.remove(at: index)
+                if let index = parent.entries.firstIndex(where: { $0.id == draggedItem.id }) {
+                    parent.entries.remove(at: index)
                 }
             }
             
@@ -220,12 +206,12 @@ extension OutlineView {
                 
                 draggedItem.parentId = targetParent.id
                 
-                entries.indices.filter { entries[$0].id == targetParent.id }
-                    .forEach { entries[$0] = targetParent }
+                parent.entries.indices.filter { parent.entries[$0].id == targetParent.id }
+                    .forEach { parent.entries[$0] = targetParent }
                 //                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: targetParent, withAnimation: .slideRight)
             } else {
-                let insertIndex = (childIndex == -1 || childIndex >= entries.count) ? entries.endIndex : childIndex
-                entries.insert(draggedItem, at: insertIndex)
+                let insertIndex = (childIndex == -1 || childIndex >= parent.entries.count) ? parent.entries.endIndex : childIndex
+                parent.entries.insert(draggedItem, at: insertIndex)
                 
                 draggedItem.parentId = nil
             }
@@ -233,8 +219,10 @@ extension OutlineView {
             // End updates
             outlineView.endUpdates()
             
+            // TODO: copy entries and assign back to parent
+            
             DispatchQueue.global().async { [weak self] in
-                self?.cabinet.save()
+                self?.parent.cabinet.save()
             }
             
             return true
