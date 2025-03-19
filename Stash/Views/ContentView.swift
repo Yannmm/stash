@@ -13,10 +13,11 @@ struct ContentView: View {
         NavigationStack {
             VStack(spacing: 0) {
                 Toolbar(present: $present) {
-                    let directory = Directory(id: UUID(), name: "123")
+                    let name = cabinet.directoryDefaultName(anchorId: anchorId)
+                    let directory = Directory(id: UUID(), name: name)
                     cabinet.relocate(entry: directory, anchorId: anchorId)
                     
-                    let deadlineTime = DispatchTime.now() + 0.3 //Here is 0.3 second as per your requirement
+                    let deadlineTime = DispatchTime.now() + 0.25
                     DispatchQueue.main.asyncAfter(deadline: deadlineTime) {
                         NotificationCenter.default.post(name: .tapViewTapped, object: directory)
                     }

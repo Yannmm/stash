@@ -32,6 +32,10 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func relocate(entry: any Entry, anchorId: UUID?) {
+        if let index = entries.firstIndex(where: { $0.id == entry.id }) {
+            entries.remove(at: index)
+        }
+        
         if let aid = anchorId, let index = entries.firstIndex(where: { $0.id == aid }) {
             let anchor = entries[index]
             var copy = entry
@@ -68,5 +72,32 @@ class OkamuraCabinet: ObservableObject {
         } catch {
             print("Error loading entries: \(error)")
         }
+    }
+    
+    func directoryDefaultName(anchorId: UUID?) -> String {
+        var name = "Group"
+        var lid: UUID?
+        if let aid = anchorId, let anchor = entries.findBy(id: aid), let location = anchor.location {
+            lid = location
+        }
+        let existings = entries
+            .findChildrenBy(id: lid)
+            .map { $0 as? Directory }
+            .compactMap { $0 }
+            .map { $0.name }
+        
+        let prefix = name
+        for i in 0..<Int.max {
+            if i == 0 {
+            } else {
+                name = "\(prefix) \(i)"
+            }
+            if existings.contains(name) {
+                continue
+            } else {
+                break
+            }
+        }
+        return name
     }
 }
