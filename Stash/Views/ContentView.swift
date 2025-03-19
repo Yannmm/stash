@@ -7,21 +7,21 @@ struct ContentView: View {
     
     @State private var present = false
     
-    @State private var parentId: UUID?
+    @State private var anchorId: UUID?
     
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
                 Toolbar(present: $present) {
-                    let directory = Directory(id: UUID(), name: "123", parentId: parentId)
-                    cabinet.insert(entry: directory, anchor: parentId)
+                    let directory = Directory(id: UUID(), name: "123")
+                    cabinet.relocate(entry: directory, anchorId: anchorId)
                 }
                 OutlineView(entries: $cabinet.entries) {
-                    self.parentId = $0
+                    self.anchorId = $0
                 }
             }
             .sheet(isPresented: $present, onDismiss: nil) {
-                CraftModalView()
+                CraftModalView(anchorId: $anchorId)
                     .background(Color(NSColor.windowBackgroundColor))
                     .cornerRadius(8)
                     .interactiveDismissDisabled(true)

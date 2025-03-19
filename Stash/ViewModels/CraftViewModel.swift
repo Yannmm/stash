@@ -44,6 +44,8 @@ class CraftViewModel: ObservableObject {
     
     var url: URL?
     
+    var anchorId: UUID?
+    
     private let dominator = Dominator()
     
     var cabinet: OkamuraCabinet!
@@ -71,7 +73,7 @@ class CraftViewModel: ObservableObject {
     
     func save() {
         let b = Bookmark(id: UUID(), name: title!, url: url!)
-        cabinet.upsert(entry: b)
+        cabinet.relocate(entry: b, anchorId: anchorId)
         
     }
     

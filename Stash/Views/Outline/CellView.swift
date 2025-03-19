@@ -29,7 +29,7 @@ class CellViewModel: ObservableObject {
             return
         }
         e.name = title
-        cabinet.upsert(entry: e)
+        cabinet.update(entry: e)
     }
 }
 

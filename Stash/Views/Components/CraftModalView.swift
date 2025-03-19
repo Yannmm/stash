@@ -14,6 +14,8 @@ struct CraftModalView: View {
     @StateObject private var viewModel = CraftViewModel()
     @EnvironmentObject var cabinet: OkamuraCabinet
     
+    @Binding var anchorId: UUID?
+    
     var body: some View {
         VStack(spacing: 16) {
             TitleInputField(viewModel: viewModel)
@@ -48,6 +50,7 @@ struct CraftModalView: View {
         }
         .onAppear {
             viewModel.cabinet = cabinet
+            viewModel.anchorId = anchorId
         }
     }
 }

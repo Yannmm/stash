@@ -22,18 +22,21 @@ class OkamuraCabinet: ObservableObject {
         }
     }
     
-//    func upsert(entry: any Entry) {
-//        if let index = entries.firstIndex(where: { $0.id == entry.id }) {
-//            entries[index] = entry
-//        } else {
-//            entries.append(entry)
-//        }
-//        save()
-//    }
+    func update(entry: any Entry) {
+        if let index = entries.firstIndex(where: { $0.id == entry.id }) {
+            entries[index] = entry
+        } else {
+            print("you cannot update an entry that is not in entries.")
+        }
+        save()
+    }
     
-    func insert(entry: any Entry, anchor: UUID?) {
-        if let a = anchor, let x = entries.findBy(id: a), let i = entries.firstIndex(where: { $0.id == x.id }) {
-            entries.insert(entry, at: i)
+    func relocate(entry: any Entry, anchorId: UUID?) {
+        if let aid = anchorId, let index = entries.firstIndex(where: { $0.id == aid }) {
+            let anchor = entries[index]
+            var copy = entry
+            copy.parentId = anchor.parentId
+            entries.insert(copy, at: index)
         } else {
             entries.append(entry)
         }
