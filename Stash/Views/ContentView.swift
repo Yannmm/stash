@@ -15,6 +15,11 @@ struct ContentView: View {
                 Toolbar(present: $present) {
                     let directory = Directory(id: UUID(), name: "123")
                     cabinet.relocate(entry: directory, anchorId: anchorId)
+                    
+                    let deadlineTime = DispatchTime.now() + 0.3 //Here is 0.3 second as per your requirement
+                    DispatchQueue.main.asyncAfter(deadline: deadlineTime) {
+                        NotificationCenter.default.post(name: .tapViewTapped, object: directory)
+                    }
                 }
                 OutlineView(entries: $cabinet.entries) {
                     self.anchorId = $0
