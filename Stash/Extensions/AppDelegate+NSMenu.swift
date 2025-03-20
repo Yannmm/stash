@@ -30,8 +30,9 @@ extension AppDelegate {
                 setFavicon(url, item)
             }
             
-            if !(e.children ?? []).isEmpty {
-                let submenu = g(entries: e.children ?? [], isRoot: false)
+            let children = e.children(among: entries)
+            if !children.isEmpty {
+                let submenu = g(entries: children, isRoot: false)
                 item.submenu = submenu
             }
             menu.addItem(item)

@@ -39,7 +39,7 @@ class OkamuraCabinet: ObservableObject {
         if let aid = anchorId, let index = entries.firstIndex(where: { $0.id == aid }) {
             let anchor = entries[index]
             var copy = entry
-            copy.parentId = anchor.parentId
+            copy.parentId = anchor.location
             entries.insert(copy, at: index)
         } else {
             entries.append(entry)
@@ -80,11 +80,21 @@ class OkamuraCabinet: ObservableObject {
         if let aid = anchorId, let anchor = entries.findBy(id: aid), let location = anchor.location {
             lid = location
         }
-        let existings = entries
-            .findChildrenBy(id: lid)
-            .map { $0 as? Directory }
-            .compactMap { $0 }
-            .map { $0.name }
+        
+        var existings = [String]()
+        
+        if let id = lid, let entry = entries.findBy(id: id) {
+            existings = entry
+                .children(among: entries)
+                .map { $0 as? Directory }
+                .compactMap { $0 }
+                .map { $0.name }
+        } else {
+            existings = entries.toppings()
+                .map { $0 as? Directory }
+                .compactMap { $0 }
+                .map { $0.name }
+        }
         
         let prefix = name
         for i in 0..<Int.max {

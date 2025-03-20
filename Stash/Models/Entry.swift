@@ -23,13 +23,12 @@ protocol Entry: Identifiable, Equatable, Hashable {
     func reveal()
 }
 
+enum Icon: Codable {
+    case favicon(URL?)
+    case system(String)
+}
+
 extension Entry {
-    // TODO: remove this. make array flat.
-    var children: [any Entry]? {
-        get { return nil }
-        set { }
-    }
-    
     var location: UUID? {
         switch self {
         case let b as  Bookmark:
@@ -52,20 +51,22 @@ extension Entry {
     }
 }
 
-enum Icon: Codable {
-    case favicon(URL?)
-    case system(String)
+extension Entry {
+    func children(among list: [any Entry]) -> [any Entry] {
+        return list.filter { $0.parentId == id }
+    }
+    
+    func siblings(among list: [any Entry]) -> [any Entry] {
+        return list.filter { $0.parentId == parentId }
+    }
 }
 
 extension Array<any Entry> {
     func findBy(id: UUID) -> (any Entry)? {
-        return self
-            .map { e in [[e], (e.children ?? [])].flatMap { $0 } }
-            .flatMap { $0 }
-            .first { $0.id == id }
+        return self.first { $0.id == id }
     }
     
-    func findChildrenBy(id: UUID?) -> [any Entry] {
-        return self.filter { $0.parentId == id }
+    func toppings() -> [any Entry] {
+        return self.filter { $0.parentId == nil }
     }
 }

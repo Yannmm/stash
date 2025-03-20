@@ -90,7 +90,7 @@ extension OutlineView {
         // MARK: - NSOutlineViewDataSource
         
         func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
-            return (item as? any Entry)?.children?.count ?? parent.entries.count
+            return (item as? any Entry)?.children(among: parent.entries).count ?? parent.entries.count
         }
         
         func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
@@ -99,7 +99,7 @@ extension OutlineView {
         
         func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
             if let e = item as? any Entry, let entry = parent.entries.findBy(id: e.id) {
-                return entry.children![index]
+                return entry.children(among: parent.entries)[index]
             }
             return parent.entries[index]
         }
@@ -171,10 +171,10 @@ extension OutlineView {
             
             // Remove from old location
             if let parentId = draggedItem.parentId, var oldParent = parent.entries.findBy(id: parentId) {
-                if let index = oldParent.children?.firstIndex(where: { $0.id == draggedItem.id }) {
-                    var children = oldParent.children
-                    children?.remove(at: index)
-                    oldParent.children = children
+                if let index = oldParent.children(among: parent.entries).firstIndex(where: { $0.id == draggedItem.id }) {
+//                    var children = oldParent.children(among: parent.entries)
+//                    children.remove(at: index)
+//                    oldParent.children = children
                 }
             } else {
                 if let index = parent.entries.firstIndex(where: { $0.id == draggedItem.id }) {
@@ -186,24 +186,24 @@ extension OutlineView {
             let targetParent = item as? any Entry
             
             if var targetParent = targetParent {
-                var children = targetParent.children ?? []
-                let insertIndex = childIndex == -1 ? children.count : childIndex
-                let index = children.firstIndex { $0.id == draggedItem.id }
-                
-                if let i = index {
-                    if insertIndex == i {
-                        
-                    } else {
-                        let element = children[i]
-                        children.insert(element, at: insertIndex)
-                        children.remove(at: i)
-                        
-                    }
-                } else {
-                    children.append(draggedItem)
-                }
-                
-                targetParent.children = children
+//                var children = targetParent.children ?? []
+//                let insertIndex = childIndex == -1 ? children.count : childIndex
+//                let index = children.firstIndex { $0.id == draggedItem.id }
+//                
+//                if let i = index {
+//                    if insertIndex == i {
+//                        
+//                    } else {
+//                        let element = children[i]
+//                        children.insert(element, at: insertIndex)
+//                        children.remove(at: i)
+//                        
+//                    }
+//                } else {
+//                    children.append(draggedItem)
+//                }
+//                
+//                targetParent.children = children
                 
                 draggedItem.parentId = targetParent.id
                 
@@ -232,7 +232,7 @@ extension OutlineView {
         private func findItem(by id: String, in items: [any Entry]) -> (any Entry)? {
             for item in items {
                 if item.id.uuidString == id { return item }
-                if let found = findItem(by: id, in: item.children ?? []) {
+                if let found = findItem(by: id, in: item.children(among: parent.entries)) {
                     return found
                 }
             }
