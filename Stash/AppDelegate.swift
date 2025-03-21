@@ -121,4 +121,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             popover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
         }
     }
+    
+    @objc func deleteAll() {
+        cabinet.removeAll()
+    }
 }

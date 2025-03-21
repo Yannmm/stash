@@ -13,12 +13,29 @@ import Kingfisher
 extension AppDelegate {
     
     func generateMenu(from entries: [any Entry]) -> NSMenu {
-        return g(entries: entries)
+        let menu = g(entries: entries, parentId: nil)
+        
+        return appendMore(menu: menu)
     }
     
-    private func g(entries: [any Entry], isRoot: Bool = true) -> NSMenu {
+    private func appendMore(menu: NSMenu) -> NSMenu {
+        // Append drag & drop
+        menu.addItem(NSMenuItem.separator())
+        let item1 = NSMenuItem(title: "Drag & Drop", action: #selector(togglePopover), keyEquivalent: "G")
+        menu.addItem(item1)
+        
+        // Clear all
+        let item2 = NSMenuItem(title: "Clear All", action: #selector(deleteAll), keyEquivalent: "A")
+        menu.addItem(item2)
+        
+        return menu
+    }
+    
+    private func g(entries: [any Entry], parentId: UUID?, isRoot: Bool = true) -> NSMenu {
         let menu = NSMenu()
-        entries.forEach { e in
+        
+        
+        entries.filter({ $0.parentId == parentId }).forEach { e in
             let item = CustomMenuItem(title: e.name, action: #selector(action(_:)), keyEquivalent: "", with: e)
             
             switch e.icon {
@@ -32,17 +49,10 @@ extension AppDelegate {
             
             let children = e.children(among: entries)
             if !children.isEmpty {
-                let submenu = g(entries: children, isRoot: false)
+                let submenu = g(entries: children, parentId: e.id, isRoot: false)
                 item.submenu = submenu
             }
             menu.addItem(item)
-        }
-        if (isRoot) {
-            menu.addItem(NSMenuItem.separator())
-            
-            let ooo = NSMenuItem(title: "Drag & Drop", action: #selector(togglePopover), keyEquivalent: "G")
-            
-            menu.addItem(ooo)
         }
         return menu
     }

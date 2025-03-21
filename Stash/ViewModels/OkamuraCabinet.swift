@@ -110,4 +110,9 @@ class OkamuraCabinet: ObservableObject {
         }
         return name
     }
+    
+    func removeAll() {
+        entries = []
+        save()
+    }
 }
