@@ -90,18 +90,18 @@ extension OutlineView {
         // MARK: - NSOutlineViewDataSource
         
         func outlineView(_ outlineView: NSOutlineView, numberOfChildrenOfItem item: Any?) -> Int {
-            return (item as? any Entry)?.children(among: parent.entries).count ?? parent.entries.count
+            return (item as? any Entry)?.children(among: parent.entries).count ?? parent.entries.toppings().count
         }
         
         func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
-            (item as? any Entry)?.children != nil
+            (item as? any Entry)?.children(among: parent.entries) != nil
         }
         
         func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
             if let e = item as? any Entry, let entry = parent.entries.findBy(id: e.id) {
                 return entry.children(among: parent.entries)[index]
             }
-            return parent.entries[index]
+            return parent.entries.toppings()[index]
         }
         
         // MARK: - NSOutlineViewDelegate
