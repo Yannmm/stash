@@ -53,25 +53,24 @@ struct OutlineView: NSViewRepresentable {
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         guard entries.map({$0.id.uuidString.suffix(4)}) != context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}) else { return }
         
-        // TODO: check anchor id same ness.
-        
         print("🐶 --> \(entries.map({$0.id.uuidString.suffix(4)})) 🌞 \(context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}))")
         context.coordinator.parent = self
         
-        guard let outline = nsView.documentView as? NSOutlineView else { return }
+        guard let outlineView = nsView.documentView as? NSOutlineView else { return }
         
         // TODO: checkout this article. https://chris.eidhof.nl/post/view-representable/
         DispatchQueue.main.async {
-            outline.reloadData()
-            if let aid = anchorId,
-               let entry1 = entries.findBy(id: aid),
-               let lid = entry1.location,
-               let entry2 = entries.findBy(id: lid) {
-                let deadlineTime = DispatchTime.now()
-                DispatchQueue.main.asyncAfter(deadline: deadlineTime) {
-                    outline.expandItem(entry2)
-                }
-            }
+            outlineView.reloadData()
+            _expandIfNecessary(outlineView)
+        }
+    }
+    
+    private func _expandIfNecessary(_ outlineView: NSOutlineView) {
+        if let aid = anchorId,
+           let entry1 = entries.findBy(id: aid),
+           let lid = entry1.location,
+           let entry2 = entries.findBy(id: lid) {
+            outlineView.expandItem(entry2)
         }
     }
 }
