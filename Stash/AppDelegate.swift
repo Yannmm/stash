@@ -9,6 +9,8 @@ import AppKit
 import SwiftUI
 import Combine
 
+import HotKey
+
 class AppDelegate: NSObject, NSApplicationDelegate {
     static var shared: AppDelegate!
     var popover = NSPopover()
@@ -21,6 +23,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private var cancellables = Set<AnyCancellable>()
     
+    let hotKey = HotKey(key: .r, modifiers: [.command, .option])
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppDelegate.shared = self
         setupStatusItem()
@@ -31,6 +35,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 self?.statusItem?.menu = self?.generateMenu(from: entries)
             }
             .store(in: &cancellables)
+        
+        
+        
+        
+        hotKey.keyDownHandler = {
+          print("Pressed at \(Date())")
+        }
     }
     
     private func setupStatusItem() {

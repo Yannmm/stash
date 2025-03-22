@@ -94,7 +94,7 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, isItemExpandable item: Any) -> Bool {
-            (item as? any Entry)?.children(among: parent.entries) != nil
+            !((item as? any Entry)?.children(among: parent.entries) ?? []).isEmpty
         }
         
         func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {

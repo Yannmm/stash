@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		6D6718472D672CDC0063FE57 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 6D6718462D672CDC0063FE57 /* Kingfisher */; };
+		720642CA2D8DBA0600F62043 /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = 720642C92D8DBA0600F62043 /* HotKey */; };
 		726B64F82D6DCEA1000AA419 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 726B64F72D6DCEA1000AA419 /* SwiftSoup */; };
 /* End PBXBuildFile section */
 
@@ -57,6 +58,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				720642CA2D8DBA0600F62043 /* HotKey in Frameworks */,
 				6D6718472D672CDC0063FE57 /* Kingfisher in Frameworks */,
 				726B64F82D6DCEA1000AA419 /* SwiftSoup in Frameworks */,
 			);
@@ -129,6 +131,7 @@
 			packageProductDependencies = (
 				6D6718462D672CDC0063FE57 /* Kingfisher */,
 				726B64F72D6DCEA1000AA419 /* SwiftSoup */,
+				720642C92D8DBA0600F62043 /* HotKey */,
 			);
 			productName = Stash;
 			productReference = 7222C1C02D491BEC00096255 /* Stash.app */;
@@ -215,6 +218,7 @@
 			packageReferences = (
 				6D6718442D66C30C0063FE57 /* XCRemoteSwiftPackageReference "Kingfisher" */,
 				726B64F32D6DCE32000AA419 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
+				720642C82D8DB9D400F62043 /* XCRemoteSwiftPackageReference "HotKey" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7222C1C12D491BEC00096255 /* Products */;
@@ -582,6 +586,14 @@
 				minimumVersion = 8.2.0;
 			};
 		};
+		720642C82D8DB9D400F62043 /* XCRemoteSwiftPackageReference "HotKey" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/soffes/HotKey";
+			requirement = {
+				branch = main;
+				kind = branch;
+			};
+		};
 		726B64F32D6DCE32000AA419 /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/scinfu/SwiftSoup.git";
@@ -597,6 +609,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 6D6718442D66C30C0063FE57 /* XCRemoteSwiftPackageReference "Kingfisher" */;
 			productName = Kingfisher;
+		};
+		720642C92D8DBA0600F62043 /* HotKey */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 720642C82D8DB9D400F62043 /* XCRemoteSwiftPackageReference "HotKey" */;
+			productName = HotKey;
 		};
 		726B64F72D6DCEA1000AA419 /* SwiftSoup */ = {
 			isa = XCSwiftPackageProductDependency;

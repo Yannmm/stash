@@ -21,24 +21,28 @@ extension AppDelegate {
     private func appendMore(menu: NSMenu) -> NSMenu {
         // Append drag & drop
         menu.addItem(NSMenuItem.separator())
-        let item1 = NSMenuItem(title: "Drag & Drop", action: #selector(togglePopover), keyEquivalent: "G")
+        let item1 = NSMenuItem(title: "Drag & Drop", action: #selector(togglePopover), keyEquivalent: "")
+        item1.keyEquivalentModifierMask = .command
+        item1.keyEquivalent = "D"
         menu.addItem(item1)
         
         // Clear all
-        let item2 = NSMenuItem(title: "Clear All", action: #selector(deleteAll), keyEquivalent: "A")
+        let item2 = NSMenuItem(title: "Clear All", action: #selector(deleteAll), keyEquivalent: "")
+        item2.keyEquivalentModifierMask = .command
+        item2.keyEquivalent = "C"
         menu.addItem(item2)
         
         return menu
     }
     
-    private func g(entries: [any Entry], parentId: UUID?, isRoot: Bool = true) -> NSMenu {
+    private func g(entries: [any Entry], parentId: UUID?) -> NSMenu {
         let menu = NSMenu()
-        
-        
-        entries.filter({ $0.parentId == parentId }).forEach { e in
-            let item = CustomMenuItem(title: e.name, action: #selector(action(_:)), keyEquivalent: "", with: e)
+        for (index, entry) in entries.filter({ $0.parentId == parentId }).enumerated() {
+            let item = CustomMenuItem(title: entry.name, action: #selector(action(_:)), keyEquivalent: "", with: entry)
+            item.keyEquivalentModifierMask = []
+            item.keyEquivalent = "\(index + 1)"
             
-            switch e.icon {
+            switch entry.icon {
             case Icon.system(let name):
                 let image = NSImage(systemSymbolName: name, accessibilityDescription: nil)
                 image?.isTemplate = true
@@ -47,9 +51,9 @@ extension AppDelegate {
                 setFavicon(url, item)
             }
             
-            let children = e.children(among: entries)
+            let children = entry.children(among: entries)
             if !children.isEmpty {
-                let submenu = g(entries: children, parentId: e.id, isRoot: false)
+                let submenu = g(entries: children, parentId: entry.id)
                 item.submenu = submenu
             }
             menu.addItem(item)

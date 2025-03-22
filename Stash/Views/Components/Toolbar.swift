@@ -19,7 +19,7 @@ struct Toolbar: View {
                 Button(action: {
                     present = true
                 }) {
-                    Image(systemName: "plus")
+                    Image(systemName: "link.badge.plus")
                 }
                 .buttonStyle(.plain)
                 
