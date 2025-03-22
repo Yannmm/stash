@@ -12,6 +12,8 @@ import Cocoa
 struct OutlineView: NSViewRepresentable {
     @Binding var entries: [any Entry]
     
+    @Binding var anchorId: UUID?
+    
     @EnvironmentObject var cabinet: OkamuraCabinet
     
     let onSelectRow: (UUID?) -> Void
@@ -50,6 +52,9 @@ struct OutlineView: NSViewRepresentable {
     
     func updateNSView(_ nsView: NSScrollView, context: Context) {
         guard entries.map({$0.id.uuidString.suffix(4)}) != context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}) else { return }
+        
+        // TODO: check anchor id same ness.
+        
         print("🐶 --> \(entries.map({$0.id.uuidString.suffix(4)})) 🌞 \(context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}))")
         context.coordinator.parent = self
         
@@ -58,6 +63,15 @@ struct OutlineView: NSViewRepresentable {
         // TODO: checkout this article. https://chris.eidhof.nl/post/view-representable/
         DispatchQueue.main.async {
             outline.reloadData()
+            if let aid = anchorId,
+               let entry1 = entries.findBy(id: aid),
+               let lid = entry1.location,
+               let entry2 = entries.findBy(id: lid) {
+                let deadlineTime = DispatchTime.now()
+                DispatchQueue.main.asyncAfter(deadline: deadlineTime) {
+                    outline.expandItem(entry2)
+                }
+            }
         }
     }
 }
@@ -73,7 +87,7 @@ extension OutlineView {
         
         @objc func tableViewDoubleAction(sender: AnyObject) {
             let aa = sender as! NSOutlineView
-
+            
             let e = parent.entries[aa.clickedRow]
             
             //            https://peterfriese.dev/blog/2021/swiftui-list-focus/
@@ -155,8 +169,8 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
-//            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), focus: FocusState<Focusable?>().projectedValue, viewModelxxx: CellContentViewModel()))
-//            return view.intrinsicContentSize.height
+            //            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), focus: FocusState<Focusable?>().projectedValue, viewModelxxx: CellContentViewModel()))
+            //            return view.intrinsicContentSize.height
             
             return 40
         }
@@ -172,9 +186,9 @@ extension OutlineView {
             // Remove from old location
             if let parentId = draggedItem.parentId, var oldParent = parent.entries.findBy(id: parentId) {
                 if let index = oldParent.children(among: parent.entries).firstIndex(where: { $0.id == draggedItem.id }) {
-//                    var children = oldParent.children(among: parent.entries)
-//                    children.remove(at: index)
-//                    oldParent.children = children
+                    //                    var children = oldParent.children(among: parent.entries)
+                    //                    children.remove(at: index)
+                    //                    oldParent.children = children
                 }
             } else {
                 if let index = parent.entries.firstIndex(where: { $0.id == draggedItem.id }) {
@@ -186,24 +200,24 @@ extension OutlineView {
             let targetParent = item as? any Entry
             
             if var targetParent = targetParent {
-//                var children = targetParent.children ?? []
-//                let insertIndex = childIndex == -1 ? children.count : childIndex
-//                let index = children.firstIndex { $0.id == draggedItem.id }
-//                
-//                if let i = index {
-//                    if insertIndex == i {
-//                        
-//                    } else {
-//                        let element = children[i]
-//                        children.insert(element, at: insertIndex)
-//                        children.remove(at: i)
-//                        
-//                    }
-//                } else {
-//                    children.append(draggedItem)
-//                }
-//                
-//                targetParent.children = children
+                //                var children = targetParent.children ?? []
+                //                let insertIndex = childIndex == -1 ? children.count : childIndex
+                //                let index = children.firstIndex { $0.id == draggedItem.id }
+                //
+                //                if let i = index {
+                //                    if insertIndex == i {
+                //
+                //                    } else {
+                //                        let element = children[i]
+                //                        children.insert(element, at: insertIndex)
+                //                        children.remove(at: i)
+                //
+                //                    }
+                //                } else {
+                //                    children.append(draggedItem)
+                //                }
+                //
+                //                targetParent.children = children
                 
                 draggedItem.parentId = targetParent.id
                 

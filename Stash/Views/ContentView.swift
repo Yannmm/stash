@@ -22,7 +22,7 @@ struct ContentView: View {
                         NotificationCenter.default.post(name: .tapViewTapped, object: directory)
                     }
                 }
-                OutlineView(entries: $cabinet.entries) {
+                OutlineView(entries: $cabinet.entries, anchorId: $anchorId) {
                     self.anchorId = $0
                 }
             }
