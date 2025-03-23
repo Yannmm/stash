@@ -8,7 +8,6 @@
 import AppKit
 import SwiftUI
 import Combine
-
 import HotKey
 
 class AppDelegate: NSObject, NSApplicationDelegate {
