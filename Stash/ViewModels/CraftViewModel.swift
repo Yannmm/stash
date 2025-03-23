@@ -23,7 +23,7 @@ class CraftViewModel: ObservableObject {
             }
             
         case let d as Directory:
-            self.icon = NSImage(systemSymbolName: "folder", accessibilityDescription: nil)
+            self.icon = NSImage(systemSymbolName: "square.stack.3d.down.right.fill", accessibilityDescription: nil)
             break
             
         default: break

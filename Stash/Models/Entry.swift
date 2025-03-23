@@ -24,8 +24,9 @@ protocol Entry: Identifiable, Equatable, Hashable {
 }
 
 enum Icon: Codable {
-    case favicon(URL?)
+    case favicon(URL)
     case system(String)
+    case local(URL)
 }
 
 extension Entry {

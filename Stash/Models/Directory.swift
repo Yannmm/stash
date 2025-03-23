@@ -16,7 +16,7 @@ struct Directory {
 
 extension Directory: Entry {
     var icon: Icon {
-        return .system("folder")
+        return .system("square.stack.3d.down.right.fill")
     }
     
     func open() {
