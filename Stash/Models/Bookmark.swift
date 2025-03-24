@@ -21,7 +21,15 @@ struct Bookmark {
 
 extension Bookmark: Entry {
     var icon: Icon {
-        return .favicon(url.faviconUrl)
+        if url.isFileURL {
+            return .local(url)
+        } else {
+            if let furl = url.faviconUrl {
+                return .favicon(furl)
+            } else {
+                return .system("link")
+            }
+        }
     }
     
     var children: [any Entry]? {

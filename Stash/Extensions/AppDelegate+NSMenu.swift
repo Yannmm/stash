@@ -49,6 +49,8 @@ extension AppDelegate {
                 item.image = image?.tint(color: Color.primary)
             case Icon.favicon(let url):
                 setFavicon(url, item)
+            case Icon.local(let url):
+                item.image = NSWorkspace.shared.icon(forFile: url.path)
             }
             
             let children = entry.children(among: entries)

@@ -72,6 +72,7 @@ class CraftViewModel: ObservableObject {
     }
     
     func save() {
+        这里 title 为空，url 不对 https:///Users/rayman/Downloads/Xnip2024-12-19_15-56-42.jpg
         let b = Bookmark(id: UUID(), name: title!, url: url!)
         cabinet.relocate(entry: b, anchorId: anchorId)
         

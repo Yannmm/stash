@@ -64,19 +64,16 @@ struct CellContent: View {
                         Image(systemName: name)
                             .foregroundStyle(Color.primary)
                     case .favicon(let url):
-                        if let url = url {
-                            KFImage.url(url)
-                                .loadDiskFileSynchronously()
-                                .cacheMemoryOnly()
-                                .fade(duration: 0.25)
-                                .onSuccess { result in  }
-                                .onFailure { error in }
-                                .resizable()
-                                .frame(width: 16.0, height: 16.0)
-                        } else {
-                            Image(systemName: "globe")
-                                .foregroundStyle(Color.primary)
-                        }
+                        KFImage.url(url)
+                            .loadDiskFileSynchronously()
+                            .cacheMemoryOnly()
+                            .fade(duration: 0.25)
+                            .onSuccess { result in  }
+                            .onFailure { error in }
+                            .resizable()
+                            .frame(width: 16.0, height: 16.0)
+                    case .local(let url):
+                        Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
                     }
                 } else {
                     Image(systemName: "folder.fill")
