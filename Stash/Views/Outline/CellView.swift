@@ -62,6 +62,8 @@ struct CellContent: View {
                     switch (e.icon) {
                     case .system(let name):
                         Image(systemName: name)
+                            .resizable()
+                            .frame(width: 16.0, height: 16.0)
                             .foregroundStyle(Color.primary)
                     case .favicon(let url):
                         KFImage.url(url)

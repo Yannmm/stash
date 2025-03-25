@@ -98,7 +98,9 @@ class CraftViewModel: ObservableObject {
     
     private func updateImage(url: URL) async throws {
         if url.isFileURL {
-            icon = NSWorkspace.shared.icon(forFile: url.path)
+            let i = NSWorkspace.shared.icon(forFile: url.path)
+            i.size = CGSize(width: 16, height: 16)
+            icon = i
         } else {
             if let u = url.faviconUrl {
                 let image = try await withCheckedThrowingContinuation { continuation in
