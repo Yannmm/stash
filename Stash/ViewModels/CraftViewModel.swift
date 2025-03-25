@@ -51,11 +51,15 @@ class CraftViewModel: ObservableObject {
     var cabinet: OkamuraCabinet!
     
     func parse(_ text: String) async throws {
-        let normalized = normalizeUrl(text)
-        guard let url = URL(string: normalized) else {
-            throw CraftError.invalidUrl(text)
-        }
+        var url = URL(fileURLWithPath: text)
         
+        if !url.isFileURL {
+            let normalized = normalizeUrl(text)
+            guard let nurl = URL(string: normalized) else {
+                throw CraftError.invalidUrl(text)
+            }
+            url = nurl
+        }
         self.url = url
         
         loading = true
@@ -64,18 +68,14 @@ class CraftViewModel: ObservableObject {
             ableToSave = true
         }
         
-         let _ = try await updateTitle(url: url)
+        let _ = try await updateTitle(url: url)
         
-        if let u = url.faviconUrl {
-            async let _ = try updateImage(url: u)
-        }
+        async let _ = try updateImage(url: url)
     }
     
     func save() {
-        这里 title 为空，url 不对 https:///Users/rayman/Downloads/Xnip2024-12-19_15-56-42.jpg
         let b = Bookmark(id: UUID(), name: title!, url: url!)
         cabinet.relocate(entry: b, anchorId: anchorId)
-        
     }
     
     private func normalizeUrl(_ text: String) -> String {
@@ -88,7 +88,7 @@ class CraftViewModel: ObservableObject {
         
         // Check if it's a localhost or IP address
         if trimmed.hasPrefix("localhost") ||
-           trimmed.range(of: "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", options: .regularExpression) != nil {
+            trimmed.range(of: "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", options: .regularExpression) != nil {
             return "http://" + trimmed
         }
         
@@ -97,24 +97,35 @@ class CraftViewModel: ObservableObject {
     }
     
     private func updateImage(url: URL) async throws {
-        let image = try await withCheckedThrowingContinuation { continuation in
-            KingfisherManager.shared.retrieveImage(with: url) { result in
-                // Do something with `result`
-                switch (result) {
-                case .success(let r):
-                    continuation.resume(returning: r.image)
-                case .failure(let e):
-                    continuation.resume(throwing: e)
+        if url.isFileURL {
+            icon = NSWorkspace.shared.icon(forFile: url.path)
+        } else {
+            if let u = url.faviconUrl {
+                let image = try await withCheckedThrowingContinuation { continuation in
+                    KingfisherManager.shared.retrieveImage(with: u) { result in
+                        // Do something with `result`
+                        switch (result) {
+                        case .success(let r):
+                            continuation.resume(returning: r.image)
+                        case .failure(let e):
+                            continuation.resume(throwing: e)
+                        }
+                    }
                 }
+                icon = image
+            } else {
+                icon = NSImage(systemSymbolName: "link", accessibilityDescription: nil)
             }
+
         }
-        
-        icon = image
     }
     
     private func updateTitle(url: URL) async throws {
-        let x = try await Dominator().fetchWebPageTitle(from: url)
-        title = x
+        if url.isFileURL {
+            title = url.lastPathComponent
+        } else {
+            title = try await Dominator().fetchWebPageTitle(from: url)
+        }
     }
     
     enum CraftError: Error {
