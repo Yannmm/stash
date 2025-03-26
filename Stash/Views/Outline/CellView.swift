@@ -76,6 +76,9 @@ struct CellContent: View {
                             .frame(width: 16.0, height: 16.0)
                     case .local(let url):
                         Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                            .resizable()
+                            .aspectRatio(contentMode: .fill)
+                            .frame(width: 17.0, height: 17.0)
                     }
                 } else {
                     Image(systemName: "folder.fill")

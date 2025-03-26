@@ -51,7 +51,7 @@ extension AppDelegate {
                 setFavicon(url, item)
             case Icon.local(let url):
                 let i = NSWorkspace.shared.icon(forFile: url.path)
-                i.size = CGSize(width: 16, height: 16)
+                i.size = CGSize(width: 17, height: 17)
                 item.image = i
             }
             

@@ -18,9 +18,9 @@ class CraftViewModel: ObservableObject {
         switch entry {
         case let b as Bookmark:
             self.url = b.url
-            Task {
-                try await self.updateImage(url: b.url)
-            }
+//            Task {
+//                try await self.updateImage(url: b.url)
+//            }
             
         case let d as Directory:
             self.icon = NSImage(systemSymbolName: "square.stack.3d.down.right.fill", accessibilityDescription: nil)
@@ -51,16 +51,16 @@ class CraftViewModel: ObservableObject {
     var cabinet: OkamuraCabinet!
     
     func parse(_ text: String) async throws {
-        var url = URL(fileURLWithPath: text)
+        let path = Path(text)
         
-        if !url.isFileURL {
-            let normalized = normalizeUrl(text)
-            guard let nurl = URL(string: normalized) else {
-                throw CraftError.invalidUrl(text)
-            }
-            url = nurl
+        switch path {
+        case .file(let url):
+            self.url = url
+        case .web(let url):
+            self.url = url
+        case .unknown:
+            return
         }
-        self.url = url
         
         loading = true
         defer {
@@ -68,9 +68,9 @@ class CraftViewModel: ObservableObject {
             ableToSave = true
         }
         
-        let _ = try await updateTitle(url: url)
+        let _ = try await updateTitle(path)
         
-        async let _ = try updateImage(url: url)
+        async let _ = try updateImage(path)
     }
     
     func save() {
@@ -78,30 +78,15 @@ class CraftViewModel: ObservableObject {
         cabinet.relocate(entry: b, anchorId: anchorId)
     }
     
-    private func normalizeUrl(_ text: String) -> String {
-        let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        // Check if it already has a protocol
-        if trimmed.hasPrefix("http://") || trimmed.hasPrefix("https://") {
-            return trimmed
-        }
-        
-        // Check if it's a localhost or IP address
-        if trimmed.hasPrefix("localhost") ||
-            trimmed.range(of: "^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}", options: .regularExpression) != nil {
-            return "http://" + trimmed
-        }
-        
-        // Default to https for all other URLs
-        return "https://" + trimmed
-    }
+
     
-    private func updateImage(url: URL) async throws {
-        if url.isFileURL {
+    private func updateImage(_ path: Path) async throws {
+        switch path {
+        case .file(let url):
             let i = NSWorkspace.shared.icon(forFile: url.path)
             i.size = CGSize(width: 16, height: 16)
             icon = i
-        } else {
+        case .web(let url):
             if let u = url.faviconUrl {
                 let image = try await withCheckedThrowingContinuation { continuation in
                     KingfisherManager.shared.retrieveImage(with: u) { result in
@@ -118,15 +103,19 @@ class CraftViewModel: ObservableObject {
             } else {
                 icon = NSImage(systemSymbolName: "link", accessibilityDescription: nil)
             }
-
+        case .unknown:
+            return
         }
     }
     
-    private func updateTitle(url: URL) async throws {
-        if url.isFileURL {
+    private func updateTitle(_ path: Path) async throws {
+        switch path {
+        case .file(let url):
             title = url.lastPathComponent
-        } else {
+        case .web(let url):
             title = try await Dominator().fetchWebPageTitle(from: url)
+        case .unknown:
+            return
         }
     }
     
