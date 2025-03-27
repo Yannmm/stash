@@ -51,7 +51,14 @@ struct OutlineView: NSViewRepresentable {
     
     
     func updateNSView(_ nsView: NSScrollView, context: Context) {
-        guard entries.map({$0.id.uuidString.suffix(4)}) != context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}) else { return }
+        // TODO: combine id & parent id
+        guard entries.map({$0.id.uuidString.suffix(4)}) != context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)})
+                && entries
+            .map({$0.parentId})
+        !=
+        context.coordinator.parent.entries
+            .map({$0.parentId})
+        else { return }
         
         print("🐶 --> \(entries.map({$0.id.uuidString.suffix(4)})) 🌞 \(context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}))")
         context.coordinator.parent = self
@@ -182,52 +189,21 @@ extension OutlineView {
             // Begin updates for animation
             outlineView.beginUpdates()
             
-            // Remove from old location
-            if let parentId = draggedItem.parentId, var oldParent = parent.entries.findBy(id: parentId) {
-                if let index = oldParent.children(among: parent.entries).firstIndex(where: { $0.id == draggedItem.id }) {
-                    //                    var children = oldParent.children(among: parent.entries)
-                    //                    children.remove(at: index)
-                    //                    oldParent.children = children
-                }
+            parent.entries.removeAll(where: { $0.id == draggedItem.id })
+            
+            var children = [any Entry]()
+            if let targetParent = item as? any Entry {
+                draggedItem.parentId = targetParent.id
+                children = targetParent.children(among: parent.entries)
             } else {
-                if let index = parent.entries.firstIndex(where: { $0.id == draggedItem.id }) {
-                    parent.entries.remove(at: index)
-                }
+                draggedItem.parentId = nil
+                children = parent.entries.filter({ $0.parentId == nil })
             }
             
-            // Insert at new location
-            let targetParent = item as? any Entry
-            
-            if var targetParent = targetParent {
-                //                var children = targetParent.children ?? []
-                //                let insertIndex = childIndex == -1 ? children.count : childIndex
-                //                let index = children.firstIndex { $0.id == draggedItem.id }
-                //
-                //                if let i = index {
-                //                    if insertIndex == i {
-                //
-                //                    } else {
-                //                        let element = children[i]
-                //                        children.insert(element, at: insertIndex)
-                //                        children.remove(at: i)
-                //
-                //                    }
-                //                } else {
-                //                    children.append(draggedItem)
-                //                }
-                //
-                //                targetParent.children = children
-                
-                draggedItem.parentId = targetParent.id
-                
-                parent.entries.indices.filter { parent.entries[$0].id == targetParent.id }
-                    .forEach { parent.entries[$0] = targetParent }
-                //                outlineView.insertItems(at: IndexSet(integer: insertIndex), inParent: targetParent, withAnimation: .slideRight)
+            if childIndex >= 0 && childIndex <= children.count, let index = parent.entries.firstIndex(where: { $0.id == children[childIndex].id }) {
+                parent.entries.insert(draggedItem, at: index)
             } else {
-                let insertIndex = (childIndex == -1 || childIndex >= parent.entries.count) ? parent.entries.endIndex : childIndex
-                parent.entries.insert(draggedItem, at: insertIndex)
-                
-                draggedItem.parentId = nil
+                parent.entries.append(draggedItem)
             }
             
             // End updates
