@@ -55,7 +55,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         popover.contentViewController = NSHostingController(rootView: contentView)
         
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "bookmark.fill", accessibilityDescription: nil)
+            button.image = NSImage(systemSymbolName: "square.stack.3d.up.fill", accessibilityDescription: nil)
             //            button.action = #selector(togglePopover)
         }
     }

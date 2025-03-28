@@ -17,16 +17,6 @@ protocol Entry: Identifiable, Equatable, Hashable {
     var location: UUID? { get }
     
     var icon: Icon { get }
-    
-    func open()
-    
-    func reveal()
-}
-
-enum Icon: Codable {
-    case favicon(URL)
-    case system(String)
-    case local(URL)
 }
 
 extension Entry {
@@ -34,8 +24,8 @@ extension Entry {
         switch self {
         case let b as  Bookmark:
             return b.parentId
-        case let d as Directory:
-            return d.id
+        case let g as Group:
+            return g.id
         default:
             return nil
         }

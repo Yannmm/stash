@@ -38,7 +38,7 @@ extension AppDelegate {
     private func g(entries: [any Entry], parentId: UUID?) -> NSMenu {
         let menu = NSMenu()
         for (index, entry) in entries.filter({ $0.parentId == parentId }).enumerated() {
-            let item = CustomMenuItem(title: entry.name, action: #selector(action(_:)), keyEquivalent: "", with: entry)
+            let item = CustomMenuItem(title: entry.name, action: (entry as? Actionable).map({_ in #selector(action(_:))}), keyEquivalent: "", with: entry)
             item.keyEquivalentModifierMask = []
             item.keyEquivalent = "\(index + 1)"
             
@@ -100,6 +100,6 @@ extension AppDelegate {
     }
     
     @objc private func action(_ sender: CustomMenuItem) {
-        sender.object?.open()
+        (sender.object as? Actionable)?.open()
     }
 }

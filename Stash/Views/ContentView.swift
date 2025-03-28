@@ -14,7 +14,7 @@ struct ContentView: View {
             VStack(spacing: 0) {
                 Toolbar(present: $present) {
                     let name = cabinet.directoryDefaultName(anchorId: anchorId)
-                    let directory = Directory(id: UUID(), name: name)
+                    let directory = Group(id: UUID(), name: name)
                     cabinet.relocate(entry: directory, anchorId: anchorId)
                     
                     let deadlineTime = DispatchTime.now() + 0.25

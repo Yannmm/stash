@@ -22,7 +22,7 @@ class CraftViewModel: ObservableObject {
 //                try await self.updateImage(url: b.url)
 //            }
             
-        case let d as Directory:
+        case let d as Group:
             self.icon = NSImage(systemSymbolName: "square.stack.3d.down.right.fill", accessibilityDescription: nil)
             break
             

@@ -29,7 +29,7 @@ class RowView: NSTableRowView {
         if self.selectionHighlightStyle != .none {
             //            let selectionRect = NSInsetRect(self.bounds, 2.5, 2.5)
             let selectionRect = self.bounds
-            NSColor(Color.primary).setFill()
+            NSColor(Color.accentColor).setFill()
             //            NSColor(calibratedWhite: 0.65, alpha: 1).setStroke()
             //            NSColor(calibratedWhite: 0.82, alpha: 1).setFill()
             let selectionPath = NSBezierPath.init(roundedRect: selectionRect, xRadius: 0, yRadius: 0)

@@ -33,7 +33,7 @@ struct AnyEntry: Codable {
         case let b as Bookmark:
             self.url = b.url
             self.type = .bookmark
-        case let _ as Directory:
+        case let _ as Group:
             self.url = nil
             self.type = .directory
         default:
@@ -50,7 +50,7 @@ struct AnyEntry: Codable {
             }
             return Bookmark(id: id, name: name, parentId: parentId, url: url)
         case .directory:
-            return Directory(id: id, name: name, parentId: parentId)
+            return Group(id: id, name: name, parentId: parentId)
         }
     }
 }

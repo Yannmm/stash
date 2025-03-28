@@ -31,12 +31,9 @@ extension Bookmark: Entry {
             }
         }
     }
-    
-    var children: [any Entry]? {
-        get { nil }
-        set {}
-    }
-    
+}
+
+extension Bookmark: Actionable {
     func open() {
         NSWorkspace.shared.open(url)
     }
@@ -45,5 +42,6 @@ extension Bookmark: Entry {
         print("Reveal bookmark")
     }
     
+    var revealable: Bool { true }
 }
 

@@ -86,12 +86,12 @@ class OkamuraCabinet: ObservableObject {
         if let id = lid, let entry = entries.findBy(id: id) {
             existings = entry
                 .children(among: entries)
-                .map { $0 as? Directory }
+                .map { $0 as? Group }
                 .compactMap { $0 }
                 .map { $0.name }
         } else {
             existings = entries.toppings()
-                .map { $0 as? Directory }
+                .map { $0 as? Group }
                 .compactMap { $0 }
                 .map { $0.name }
         }
