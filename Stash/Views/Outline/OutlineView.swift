@@ -151,6 +151,7 @@ extension OutlineView {
         
         func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
             let row = RowView()
+            row.id = (item as? (any Entry))?.id
             return row
         }
         
@@ -159,6 +160,8 @@ extension OutlineView {
             
             let entry = outlineView.item(atRow: outlineView.selectedRow) as? (any Entry)
             parent.onSelectRow(entry?.id)
+            
+            NotificationCenter.default.post(name: .onHoverRowView, object: entry?.id)
         }
         
         // MARK: - Drag & Drop

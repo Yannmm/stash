@@ -59,6 +59,11 @@ class OkamuraCabinet: ObservableObject {
         }
     }
     
+    func delete(entry: any Entry) {
+        entries = entries.filter({ $0.id == entry.id })
+        save()
+    }
+    
     func load() {
         guard let data = UserDefaults.standard.data(forKey: "cabinetEntries1") else {
             print("No saved entries found")

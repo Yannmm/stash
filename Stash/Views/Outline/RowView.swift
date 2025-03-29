@@ -20,6 +20,8 @@ class RowView: NSTableRowView {
         }
     }
     
+    var id: UUID?
+    
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
@@ -29,12 +31,9 @@ class RowView: NSTableRowView {
         if self.selectionHighlightStyle != .none {
             //            let selectionRect = NSInsetRect(self.bounds, 2.5, 2.5)
             let selectionRect = self.bounds
-            NSColor(Color.accentColor).setFill()
-            //            NSColor(calibratedWhite: 0.65, alpha: 1).setStroke()
-            //            NSColor(calibratedWhite: 0.82, alpha: 1).setFill()
+            NSColor(Color.red).setFill()
             let selectionPath = NSBezierPath.init(roundedRect: selectionRect, xRadius: 0, yRadius: 0)
             selectionPath.fill()
-            //            selectionPath.stroke()
         }
     }
     
@@ -46,7 +45,6 @@ class RowView: NSTableRowView {
         guard !isSelected else { return }
         guard !isFocused else { return }
         
-        //        NSColor(red: 0.96, green: 0.96, blue: 0.96, alpha: 1.00).set()
         NSColor.gridColor.set()
         
         // mouse hover
@@ -67,6 +65,10 @@ class RowView: NSTableRowView {
         if !highlight {
             highlight = true
         }
+        
+        if !isSelected {
+            NotificationCenter.default.post(name: .onHoverRowView, object: id)
+        }
     }
     
     override func mouseExited(with event: NSEvent) {
@@ -74,15 +76,18 @@ class RowView: NSTableRowView {
         if highlight {
             highlight = false
         }
+        
+        if !isSelected {
+            NotificationCenter.default.post(name: .onHoverRowView, object: id)
+        }
     }
     
     override func updateTrackingAreas() {
         super.updateTrackingAreas()
+        
         if (trackingArea != nil) {
             self.removeTrackingArea(trackingArea!)
         }
-        
-        
         let options: NSTrackingArea.Options = [.mouseEnteredAndExited, .activeAlways]
         let trackingArea = NSTrackingArea(rect: self.bounds, options: options, owner: self, userInfo: nil)
         self.addTrackingArea(trackingArea)
