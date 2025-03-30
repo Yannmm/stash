@@ -161,7 +161,7 @@ extension OutlineView {
             let entry = outlineView.item(atRow: outlineView.selectedRow) as? (any Entry)
             parent.onSelectRow(entry?.id)
             
-            NotificationCenter.default.post(name: .onHoverRowView, object: entry?.id)
+            NotificationCenter.default.post(name: .onHoverRowView, object: (entry?.id, false))
         }
         
         // MARK: - Drag & Drop

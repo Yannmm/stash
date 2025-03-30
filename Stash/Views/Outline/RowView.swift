@@ -67,7 +67,7 @@ class RowView: NSTableRowView {
         }
         
         if !isSelected {
-            NotificationCenter.default.post(name: .onHoverRowView, object: id)
+            NotificationCenter.default.post(name: .onHoverRowView, object: (id, true))
         }
     }
     
@@ -78,7 +78,7 @@ class RowView: NSTableRowView {
         }
         
         if !isSelected {
-            NotificationCenter.default.post(name: .onHoverRowView, object: id)
+            NotificationCenter.default.post(name: .onHoverRowView, object: (id, false))
         }
     }
     

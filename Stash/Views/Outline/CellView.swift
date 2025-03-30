@@ -111,8 +111,8 @@ struct CellContent: View {
                     focused = true
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .onHoverRowView)) { x in
-                    guard let id = x.object as? UUID, id == viewModel.entry?.id else { return }
-                    deletable = !deletable
+                    guard let tuple = x.object as? (UUID?, Bool), tuple.0 == viewModel.entry?.id else { return }
+                    deletable = tuple.1
                 }
                 
                 // Bottom border line

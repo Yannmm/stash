@@ -60,7 +60,8 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func delete(entry: any Entry) {
-        entries = entries.filter({ $0.id == entry.id })
+        guard let index = entries.firstIndex(where: { $0.id == entry.id }) else { return }
+        entries.remove(at: index)
         save()
     }
     
