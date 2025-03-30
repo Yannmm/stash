@@ -24,19 +24,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     let hotKey = HotKey(key: .r, modifiers: [.command, .option])
     
+    private var settingsWindow: NSWindow?
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppDelegate.shared = self
         setupStatusItem()
+        setupHotKey()
         
         cabinet.$entries
             .sink { [weak self] entries in
                 self?.statusItem?.menu = self?.generateMenu(from: entries)
             }
             .store(in: &cancellables)
+    }
+    
+    private func setupStatusItem() {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
-        
-        
-        
+        if let button = statusItem?.button {
+            button.image = NSImage(systemSymbolName: "square.stack.3d.up.fill", accessibilityDescription: nil)
+            
+            let menu = NSMenu()
+            menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ","))
+            menu.addItem(NSMenuItem.separator())
+            menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
+            
+            statusItem?.menu = menu
+        }
+    }
+    
+    private func setupHotKey() {
         hotKey.keyDownHandler = { [weak self] in
             if let button = self?.statusItem?.button {
                 button.performClick(nil)
@@ -44,24 +61,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
-    private func setupStatusItem() {
-        
-        
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        
-        let contentView = ContentView().environmentObject(cabinet)
-        popover.contentSize = NSSize(width: 600, height: 400)
-        popover.behavior = .transient
-        popover.contentViewController = NSHostingController(rootView: contentView)
-        
-        if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "square.stack.3d.up.fill", accessibilityDescription: nil)
-            //            button.action = #selector(togglePopover)
-        }
+    private func setupSettingsWindow() {
+        settingsWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 200),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        settingsWindow?.title = "Settings"
+        settingsWindow?.center()
+        settingsWindow?.contentView = NSHostingView(rootView: SettingsView())
     }
     
     @objc func openSettings() {
-        NSApplication.shared.terminate(self)
+        if settingsWindow == nil {
+            setupSettingsWindow()
+        }
+        settingsWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
     }
     
     @objc private func quit() {}

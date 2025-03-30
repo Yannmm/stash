@@ -32,6 +32,8 @@ extension AppDelegate {
         item2.keyEquivalent = "C"
         menu.addItem(item2)
         
+        menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ","))
+        
         return menu
     }
     
