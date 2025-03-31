@@ -40,9 +40,12 @@ extension AppDelegate {
     private func g(entries: [any Entry], parentId: UUID?) -> NSMenu {
         let menu = NSMenu()
         for (index, entry) in entries.filter({ $0.parentId == parentId }).enumerated() {
-            let item = CustomMenuItem(title: entry.name, action: (entry as? Actionable).map({_ in #selector(action(_:))}), keyEquivalent: "", with: entry)
-            item.keyEquivalentModifierMask = []
-            item.keyEquivalent = "\(index + 1)"
+            let actionable = entry is Actionable
+            let item = CustomMenuItem(title: entry.name, action: actionable ? #selector(action(_:)) : nil, keyEquivalent: "", with: entry)
+            if actionable {
+                item.keyEquivalentModifierMask = []
+                item.keyEquivalent = "\(index + 1)"
+            }
             
             switch entry.icon {
             case Icon.system(let name):
