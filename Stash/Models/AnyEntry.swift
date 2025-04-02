@@ -16,18 +16,14 @@ enum EntryType: Codable {
 struct AnyEntry: Codable {
     let id: UUID
     let name: String
-    let parentId: UUID?
-    let icon: Icon
     let type: EntryType
-    
-    // For bookmark
     let url: URL?
+    var children: [AnyEntry]
     
     init(_ entry: any Entry) {
         self.id = entry.id
         self.name = entry.name
-        self.parentId = entry.parentId
-        self.icon = entry.icon
+        self.children = []
         
         switch entry {
         case let b as Bookmark:
@@ -41,28 +37,52 @@ struct AnyEntry: Codable {
         }
     }
     
-    
-    func asEntry() -> any Entry {
-        switch type {
-        case .bookmark:
-            guard let url = url else {
-                fatalError("Bookmark must have a URL")
-            }
-            return Bookmark(id: id, name: name, parentId: parentId, url: url)
-        case .directory:
-            return Group(id: id, name: name, parentId: parentId)
+    enum CodingKeys: String, CodingKey {
+            case id, name, type, url, children
         }
-    }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            id = try container.decode(UUID.self, forKey: .id)
+            name = try container.decode(String.self, forKey: .name)
+            type = try container.decode(EntryType.self, forKey: .type)
+            url = try container.decodeIfPresent(URL.self, forKey: .url)
+            children = try container.decodeIfPresent([AnyEntry].self, forKey: .children) ?? []
+        }
 }
 
 extension Array where Element == any Entry {
     var asAnyEntries: [AnyEntry] {
-        self.map { AnyEntry($0) }
+        func _inflate(target: inout [AnyEntry], source: [String: [any Entry]], key: String) {
+            target.append(contentsOf: (source[key] ?? []).map { AnyEntry($0) })
+            guard target.count > 0 else { return }
+            for (index, value) in target.enumerated() {
+                _inflate(target: &target[index].children, source: source, key: value.id.uuidString)
+            }
+        }
+        
+        
+        var mapper = [String: [any Entry]]()
+        
+        self.forEach { entry in
+            let key = entry.parentId?.uuidString ?? "?"
+            var a = mapper[key] ?? []
+            a.append(entry)
+            mapper[key] = a
+        }
+        
+        var result = [AnyEntry]()
+        
+        _inflate(target: &result, source: mapper, key: "?")
+        
+        return result
     }
 }
 
 extension Array where Element == AnyEntry {
     var asEntries: [any Entry] {
-        self.map { $0.asEntry() }
+//        self.map { $0.asEntry() }
+        // TODO: implement
+        return []
     }
 }

@@ -74,6 +74,11 @@ class OkamuraCabinet: ObservableObject {
         do {
             let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
             entries = anyEntries.asEntries
+            
+            // TODO: remove this
+            let data = try JSONEncoder().encode(entries.asAnyEntries)
+            
+            
             print("Loaded \(entries.count) entries")
         } catch {
             print("Error loading entries: \(error)")
