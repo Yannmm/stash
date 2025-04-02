@@ -78,6 +78,10 @@ class OkamuraCabinet: ObservableObject {
             // TODO: remove this
             let data = try JSONEncoder().encode(entries.asAnyEntries)
             
+            let kk = NSString(data: data, encoding: String.Encoding.utf8.rawValue)
+            
+            print(kk)
+            
             
             print("Loaded \(entries.count) entries")
         } catch {
