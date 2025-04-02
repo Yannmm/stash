@@ -31,7 +31,7 @@ class RowView: NSTableRowView {
         if self.selectionHighlightStyle != .none {
             //            let selectionRect = NSInsetRect(self.bounds, 2.5, 2.5)
             let selectionRect = self.bounds
-            NSColor(Color.red).setFill()
+            NSColor(Color.accentColor).setFill()
             let selectionPath = NSBezierPath.init(roundedRect: selectionRect, xRadius: 0, yRadius: 0)
             selectionPath.fill()
         }

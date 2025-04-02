@@ -33,6 +33,7 @@ struct OutlineView: NSViewRepresentable {
         outlineView.addTableColumn(column)
         outlineView.outlineTableColumn = column
         outlineView.headerView = nil
+        outlineView.autoresizesOutlineColumn = false
         
         outlineView.dataSource = context.coordinator
         outlineView.delegate = context.coordinator
@@ -143,7 +144,6 @@ extension OutlineView {
             cell?.entry = entry
             return cell
         }
-        
         
         func outlineView(_ outlineView: NSOutlineView, setObjectValue object: Any?, for tableColumn: NSTableColumn?, byItem item: Any?) {
             print(item)
