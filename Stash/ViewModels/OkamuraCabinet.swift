@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AppKit
 
 class OkamuraCabinet: ObservableObject {
     @Published var entries: [any Entry] = [] {
@@ -74,15 +75,6 @@ class OkamuraCabinet: ObservableObject {
         do {
             let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
             entries = anyEntries.asEntries
-            
-            // TODO: remove this
-            let data = try JSONEncoder().encode(entries.asAnyEntries)
-            
-            let kk = NSString(data: data, encoding: String.Encoding.utf8.rawValue)
-            
-            print(kk)
-            
-            
             print("Loaded \(entries.count) entries")
         } catch {
             print("Error loading entries: \(error)")
@@ -129,5 +121,75 @@ class OkamuraCabinet: ObservableObject {
     func removeAll() {
         entries = []
         save()
+    }
+    
+    func export() {
+        do {
+            let data = try JSONEncoder().encode(entries.asAnyEntries)
+            try saveToDisk(data: data, fileName: "stash.json")
+        } catch {
+            print("save to disk failed: \(error)")
+        }
+    }
+    
+    func `import`() {
+        
+        // Example Usage
+        if let fileURL = selectFile() {
+            print("Selected File: \(fileURL.path)")
+        }
+    }
+}
+
+fileprivate extension OkamuraCabinet {
+    func saveToDisk(data: Data, fileName: String) throws {
+        let json = try JSONSerialization.jsonObject(with: data)
+        let pretty = try JSONSerialization.data(
+            withJSONObject: json,
+            options: [.prettyPrinted, .withoutEscapingSlashes])
+        
+        guard let string = String(data: pretty, encoding: .utf8) else {
+            throw SomeError.Save.invalidJSON
+        }
+        
+        guard let fileURL = filePath(fileName) else {
+            throw SomeError.Save.missingFilePath
+        }
+        
+        print("save to path --> \(fileURL.absoluteString)")
+        
+        try string.write(to: fileURL, atomically: true, encoding: .utf8)
+    }
+    
+    private func filePath(_ fileName: String) -> URL? {
+        guard let directory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return nil }
+        return directory.appendingPathComponent(fileName)
+    }
+    
+    // TODO: import function
+    
+
+    
+    func selectFile() -> URL? {
+        let openPanel = NSOpenPanel()
+        openPanel.title = "Choose a File"
+        openPanel.allowedFileTypes = ["txt", "json", "pdf"] // Limit file types (optional)
+        openPanel.allowsMultipleSelection = false
+        openPanel.canChooseDirectories = false
+
+        if openPanel.runModal() == .OK {
+            return openPanel.url // Returns selected file URL
+        }
+        return nil
+    }
+
+}
+
+extension OkamuraCabinet {
+    struct SomeError {
+        enum Save: Error {
+            case missingFilePath
+            case invalidJSON
+        }
     }
 }

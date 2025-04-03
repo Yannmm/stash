@@ -104,4 +104,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func deleteAll() {
         cabinet.removeAll()
     }
+    
+    @objc func export() {
+        OkamuraCabinet.shared.export()
+    }
+    
+    @objc func `import`() {
+        OkamuraCabinet.shared.import()
+    }
 }

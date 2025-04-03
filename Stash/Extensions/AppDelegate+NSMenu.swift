@@ -34,17 +34,23 @@ extension AppDelegate {
         
         menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ","))
         
+        menu.addItem(NSMenuItem(title: "Export", action: #selector(export), keyEquivalent: ","))
+        
+        menu.addItem(NSMenuItem(title: "Import", action: #selector(`import`), keyEquivalent: ","))
+        
         return menu
     }
     
     private func g(entries: [any Entry], parentId: UUID?) -> NSMenu {
         let menu = NSMenu()
-        for (index, entry) in entries.filter({ $0.parentId == parentId }).enumerated() {
+        var index = 1
+        for entry in entries.filter({ $0.parentId == parentId }) {
             let actionable = entry is Actionable
             let item = CustomMenuItem(title: entry.name, action: actionable ? #selector(action(_:)) : nil, keyEquivalent: "", with: entry)
             if actionable {
                 item.keyEquivalentModifierMask = []
-                item.keyEquivalent = "\(index + 1)"
+                item.keyEquivalent = "\(index)"
+                index += 1
             }
             
             switch entry.icon {
