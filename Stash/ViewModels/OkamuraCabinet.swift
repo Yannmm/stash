@@ -137,7 +137,17 @@ class OkamuraCabinet: ObservableObject {
         // Example Usage
         if let fileURL = selectFile() {
             print("Selected File: \(fileURL.path)")
+            do {
+                let data = try Data(contentsOf: fileURL)
+                let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
+                self.entries = anyEntries.asEntries
+                save()
+            } catch {
+                print("something wrong happended: \(error)")
+            }
         }
+        
+        
     }
 }
 
@@ -176,8 +186,11 @@ fileprivate extension OkamuraCabinet {
         openPanel.allowedFileTypes = ["txt", "json", "pdf"] // Limit file types (optional)
         openPanel.allowsMultipleSelection = false
         openPanel.canChooseDirectories = false
+        
+        openPanel.orderFrontRegardless()
 
         if openPanel.runModal() == .OK {
+            
             return openPanel.url // Returns selected file URL
         }
         return nil
