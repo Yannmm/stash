@@ -60,7 +60,7 @@ struct CellContent: View {
     
     var body: some View {
         HStack {
-            VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
                     if let e = viewModel.entry {
                         switch (e.icon) {
@@ -82,7 +82,7 @@ struct CellContent: View {
                             Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .frame(height: 16.0)
+                                .frame(height: 17.0)
                         }
                     } else {
                         Image(systemName: "folder.fill")
@@ -99,7 +99,6 @@ struct CellContent: View {
                         .background(Color.clear)
                         .focused($focused)
                 }
-                .padding(.horizontal, 8)
                 .padding(.vertical, 4)
                 .onChange(of: focused) { oldValue, newValue in
                     guard newValue != oldValue, !newValue else { return }
@@ -120,6 +119,20 @@ struct CellContent: View {
                     .frame(height: 1)
                     .foregroundColor(focused ? Color.primary : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
+                
+                
+                Text("https://gist.github.com/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/")
+                    .lineLimit(nil)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .tint(Color.secondary)
+                    .underline(true, color: Color.secondary)
+                    .onHover { hovering in
+                        if hovering {
+                            NSCursor.pointingHand.push()
+                        } else {
+                            NSCursor.pop()
+                        }
+                    }
             }
             .onAppear {
                 viewModel.cabinet = cabinet
@@ -136,11 +149,10 @@ struct CellContent: View {
                         .foregroundStyle(Color.primary)
                 }
                 .buttonStyle(.plain)
-                
             }
         }
+        .padding(.vertical, 10)
     }
-    
 }
 
 class CellView: NSTableCellView {

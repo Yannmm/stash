@@ -36,7 +36,7 @@ struct ContentView: View {
                     .interactiveDismissDisabled(true)
             }
         }
-        .frame(minWidth: 300, minHeight: 400)
+        .frame(width: 600)
     }
 }
 

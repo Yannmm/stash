@@ -34,6 +34,7 @@ struct OutlineView: NSViewRepresentable {
         outlineView.outlineTableColumn = column
         outlineView.headerView = nil
         outlineView.autoresizesOutlineColumn = false
+        outlineView.style = .plain
         
         outlineView.dataSource = context.coordinator
         outlineView.delegate = context.coordinator
@@ -178,10 +179,9 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
-            //            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), focus: FocusState<Focusable?>().projectedValue, viewModelxxx: CellContentViewModel()))
-            //            return view.intrinsicContentSize.height
-            
-            return 40
+            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry))
+                .frame(width: 600))
+            return view.fittingSize.height
         }
         
         func outlineView(_ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex: Int) -> Bool {
