@@ -25,6 +25,9 @@ struct ContentView: View {
                 OutlineView(entries: $cabinet.entries, anchorId: $anchorId) {
                     self.anchorId = $0
                 }
+                
+                ModifierKeyMonitorView() // embeds the monitoring
+                    .frame(width: 0, height: 0) // Invisible view
             }
             .sheet(isPresented: $present, onDismiss: nil) {
                 CraftModalView(anchorId: $anchorId)

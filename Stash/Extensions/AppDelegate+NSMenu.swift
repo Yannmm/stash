@@ -43,6 +43,7 @@ extension AppDelegate {
     
     private func g(entries: [any Entry], parentId: UUID?) -> NSMenu {
         let menu = NSMenu()
+        menu.delegate = self
         var index = 1
         for entry in entries.filter({ $0.parentId == parentId }) {
             let actionable = entry is Actionable
@@ -112,5 +113,22 @@ extension AppDelegate {
     
     @objc private func action(_ sender: CustomMenuItem) {
         (sender.object as? Actionable)?.open()
+    }
+}
+
+
+extension AppDelegate: NSMenuDelegate {
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        let modifierFlags = NSEvent.modifierFlags
+        
+        for item in menu.items {
+            if modifierFlags.contains(.option) {
+//                item.title = "Alternative Action"
+                print("ooooptions")
+            } else {
+//                item.title = "Default Action"
+                print("default, no option")
+            }
+        }
     }
 }
