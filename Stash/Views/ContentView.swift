@@ -19,7 +19,7 @@ struct ContentView: View {
                     
                     let deadlineTime = DispatchTime.now() + 0.25
                     DispatchQueue.main.asyncAfter(deadline: deadlineTime) {
-                        NotificationCenter.default.post(name: .tapViewTapped, object: directory)
+                        NotificationCenter.default.post(name: .onDoubleTapRowView, object: directory)
                     }
                 }
                 OutlineView(entries: $cabinet.entries, anchorId: $anchorId) {

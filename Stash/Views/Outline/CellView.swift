@@ -33,12 +33,6 @@ class CellViewModel: ObservableObject {
     }
 }
 
-// passing data from uikit to swiftui https://www.swiftjectivec.com/events-from-swiftui-to-uikit-and-vice-versa/
-extension NSNotification.Name {
-    static let tapViewTapped = NSNotification.Name("tapViewTapped")
-    static let onHoverRowView = NSNotification.Name("onHoverRowView")
-}
-
 enum Focusable: Hashable {
     case none
     case row(id: UUID)
@@ -57,6 +51,13 @@ struct CellContent: View {
     @FocusState private var focused: Bool
     
     @State private var deletable: Bool = false
+    
+    @State private var shouldExpand: Bool
+    
+    init(viewModel: CellViewModel, shouldExpand: Bool = false) {
+        self.viewModel = viewModel
+        self.shouldExpand = shouldExpand
+    }
     
     var body: some View {
         HStack {
@@ -104,7 +105,7 @@ struct CellContent: View {
                     guard newValue != oldValue, !newValue else { return }
                     viewModel.update()
                 }
-                .onReceive(NotificationCenter.default.publisher(for: .tapViewTapped)) { x in
+                .onReceive(NotificationCenter.default.publisher(for: .onDoubleTapRowView)) { x in
                     let id = (x.object as! any Entry).id
                     guard id == viewModel.entry?.id else { return }
                     focused = true
@@ -113,6 +114,10 @@ struct CellContent: View {
                     guard let tuple = x.object as? (UUID?, Bool), tuple.0 == viewModel.entry?.id else { return }
                     deletable = tuple.1
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .onCmdKeyChange)) { noti in
+                    let flag = (noti.object as? Bool) ?? false
+                    shouldExpand = flag
+                }
                 
                 // Bottom border line
                 Rectangle()
@@ -120,19 +125,20 @@ struct CellContent: View {
                     .foregroundColor(focused ? Color.primary : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
                 
-                
-                Text("https://gist.github.com/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/Yannmm/")
-                    .lineLimit(nil)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .tint(Color.secondary)
-                    .underline(true, color: Color.secondary)
-                    .onHover { hovering in
-                        if hovering {
-                            NSCursor.pointingHand.push()
-                        } else {
-                            NSCursor.pop()
+                if shouldExpand, let e = viewModel.entry as? Bookmark {
+                    Text(e.url.absoluteString)
+                        .lineLimit(nil)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .tint(Color.secondary)
+                        .underline(true, color: Color.secondary)
+                        .onHover { hovering in
+                            if hovering {
+                                NSCursor.pointingHand.push()
+                            } else {
+                                NSCursor.pop()
+                            }
                         }
-                    }
+                }
             }
             .onAppear {
                 viewModel.cabinet = cabinet

@@ -24,15 +24,8 @@ struct ModifierKeyMonitorView: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {}
 
     private func handleModifierFlags(_ flags: NSEvent.ModifierFlags) {
-        if flags.contains(.shift) {
-            print("Shift key is down")
-        } else {
-            print("Shift key is up")
-        }
-
-        if flags.contains(.command) {
-            print("Command key is down")
-        }
+        let result = flags.intersection(.deviceIndependentFlagsMask) == .command
+        NotificationCenter.default.post(name: .onCmdKeyChange, object: result)
     }
 }
 
