@@ -109,7 +109,7 @@ extension OutlineView {
         @objc func tableViewDoubleAction(sender: AnyObject) {
             let outlineView = sender as! NSOutlineView
             
-            let entry = parent.entries[outlineView.clickedRow]
+            guard let entry = outlineView.item(atRow: outlineView.clickedRow) as? any Entry else { return }
             
             //            https://peterfriese.dev/blog/2021/swiftui-list-focus/
             // how to handle enter key event.
@@ -191,12 +191,7 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
-            let flag = NSEvent.modifierFlags.contains(.command)
-            if flag {
-                print("Command key is pressed")
-            }
-            
-            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), shouldExpand: flag)
+            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), shouldExpand: NSEvent.modifierFlags.containsOnly(.command))
                 .frame(width: 600))
             print("height is \(view.fittingSize.height)")
             return view.fittingSize.height
@@ -252,20 +247,7 @@ extension OutlineView {
 }
 
 fileprivate extension OutlineView {
-    class HierarchyView: NSOutlineView {
-//        init() {
-//            super.init(frame: NSRect.zero)
-//            
-//            NotificationCenter.default.addObserver(forName: .onCmdKeyChange, object: nil, queue: nil) { noti in
-//                
-//                self.noteHeightOfRows(withIndexesChanged: IndexSet([0]))
-//            }
-//        }
-//        
-//        required init?(coder: NSCoder) {
-//            fatalError("init(coder:) has not been implemented")
-//        }
-    }
+    class HierarchyView: NSOutlineView {}
 }
 
 

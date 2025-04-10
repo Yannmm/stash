@@ -68,7 +68,7 @@ struct CellContent: View {
                         case .system(let name):
                             Image(systemName: name)
                                 .resizable()
-                                .frame(width: 16.0, height: 16.0)
+                                .frame(width: 20.0, height: 20.0)
                                 .foregroundStyle(Color.primary)
                         case .favicon(let url):
                             KFImage.url(url)
@@ -78,7 +78,7 @@ struct CellContent: View {
                                 .onSuccess { result in  }
                                 .onFailure { error in }
                                 .resizable()
-                                .frame(width: 16.0, height: 16.0)
+                                .frame(width: 20.0, height: 20.0)
                         case .local(let url):
                             Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
                                 .resizable()
@@ -96,6 +96,7 @@ struct CellContent: View {
                         .animation(.easeInOut(duration: 0.2), value: focused)
                     
                     TextField("Input the title here...", text: $viewModel.title)
+                        .font(.title3)
                         .textFieldStyle(.plain)
                         .background(Color.clear)
                         .focused($focused)
@@ -106,8 +107,9 @@ struct CellContent: View {
                     viewModel.update()
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .onDoubleTapRowView)) { x in
-                    let id = (x.object as! any Entry).id
-                    guard id == viewModel.entry?.id else { return }
+                    let entry = x.object as? any Entry
+                    print("id: \(entry?.id)(\(entry?.name) --- e.id: \(viewModel.entry?.id) (\(viewModel.entry?.name)")
+                    guard entry?.id == viewModel.entry?.id else { return }
                     focused = true
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .onHoverRowView)) { x in
@@ -127,9 +129,10 @@ struct CellContent: View {
                 
                 if shouldExpand, let e = viewModel.entry as? Bookmark {
                     Text(e.url.absoluteString)
+                        .font(.callout)
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
-                        .tint(Color.secondary)
+                        .tint(Color.accentColor)
                         .underline(true, color: Color.secondary)
                         .onHover { hovering in
                             if hovering {

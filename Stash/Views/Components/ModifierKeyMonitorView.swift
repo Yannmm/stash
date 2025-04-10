@@ -24,8 +24,7 @@ struct ModifierKeyMonitorView: NSViewRepresentable {
     func updateNSView(_ nsView: NSView, context: Context) {}
 
     private func handleModifierFlags(_ flags: NSEvent.ModifierFlags) {
-        let result = flags.intersection(.deviceIndependentFlagsMask) == .command
-        NotificationCenter.default.post(name: .onCmdKeyChange, object: result)
+        NotificationCenter.default.post(name: .onCmdKeyChange, object: flags.containsOnly(.command))
     }
 }
 
