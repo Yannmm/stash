@@ -62,9 +62,7 @@ class RowView: NSTableRowView {
     
     override func mouseEntered(with event: NSEvent) {
         super.mouseEntered(with: event)
-        if !highlight {
-            highlight = true
-        }
+        highlight = true
         
         if !isSelected {
             NotificationCenter.default.post(name: .onHoverRowView, object: (id, true))
@@ -73,9 +71,7 @@ class RowView: NSTableRowView {
     
     override func mouseExited(with event: NSEvent) {
         super.mouseExited(with: event)
-        if highlight {
-            highlight = false
-        }
+        highlight = false
         
         if !isSelected {
             NotificationCenter.default.post(name: .onHoverRowView, object: (id, false))

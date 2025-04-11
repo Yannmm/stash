@@ -61,6 +61,15 @@ struct OutlineView: NSViewRepresentable {
             outlineView.noteHeightOfRows(withIndexesChanged: IndexSet(indices))
         }
         
+        NotificationCenter.default.addObserver(forName: NSControl.textDidEndEditingNotification, object: nil, queue: nil) { noti in
+            guard let view = outlineView.window?.firstResponder as? NSView, view.isDescendant(of: outlineView) else { return }
+            
+            for index in 0..<outlineView.numberOfRows {
+                let row = outlineView.rowView(atRow: index, makeIfNecessary: true) as! RowView
+                row.isFocused = false
+            }
+        }
+        
         return scrollView
     }
     
