@@ -66,7 +66,7 @@ class RowView: NSTableRowView {
         super.mouseEntered(with: event)
         highlight = true
         
-        if !isSelected && !NSEvent.modifierFlags.containsOnly(.command) {
+        if !isSelected {
             NotificationCenter.default.post(name: .onHoverRowView, object: (id, true))
         }
     }

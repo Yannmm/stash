@@ -202,7 +202,7 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
-            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), shouldExpand: NSEvent.modifierFlags.containsOnly(.command))
+            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), expanded: NSEvent.modifierFlags.containsOnly(.command))
                 .frame(width: 600))
             print("height is \(view.fittingSize.height)")
             return view.fittingSize.height

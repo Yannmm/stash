@@ -39,6 +39,7 @@ extension Bookmark: Actionable {
     }
     
     func reveal() {
+//        NSWorkspace.shared.activateFileViewerSelecting([url])square.and.arrow.up.circle
         print("Reveal bookmark")
     }
     

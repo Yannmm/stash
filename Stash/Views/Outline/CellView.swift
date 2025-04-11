@@ -50,13 +50,33 @@ struct CellContent: View {
     
     @FocusState private var focused: Bool
     
-    @State private var deletable: Bool = false
+    @State private var hovered: Bool = false
     
-    @State private var shouldExpand: Bool
+    @State private var expanded: Bool
     
-    init(viewModel: CellViewModel, shouldExpand: Bool = false) {
+    var shouldShowDelete: Bool {
+        return hovered && !expanded
+    }
+    
+    var shouldShowCopy: Bool {
+        if let _ = viewModel.entry as? Bookmark, hovered, expanded {
+            return true
+        } else {
+            return false
+        }
+    }
+    
+    var shouldShowReveal: Bool {
+        if let a = viewModel.entry as? Actionable, a.revealable, hovered, expanded {
+            return true
+        } else {
+            return false
+        }
+    }
+    
+    init(viewModel: CellViewModel, expanded: Bool = false) {
         self.viewModel = viewModel
-        self.shouldExpand = shouldExpand
+        self.expanded = expanded
     }
     
     var body: some View {
@@ -77,6 +97,7 @@ struct CellContent: View {
                                 .fade(duration: 0.25)
                                 .onSuccess { result in  }
                                 .onFailure { error in }
+                                .onFailureImage(NSImage(systemSymbolName: "globe", accessibilityDescription: nil))
                                 .resizable()
                                 .frame(width: 20.0, height: 20.0)
                         case .local(let url):
@@ -113,12 +134,11 @@ struct CellContent: View {
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .onHoverRowView)) { x in
                     guard let tuple = x.object as? (UUID?, Bool), tuple.0 == viewModel.entry?.id else { return }
-                    deletable = tuple.1
+                    hovered = tuple.1
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .onCmdKeyChange)) { noti in
                     let flag = (noti.object as? Bool) ?? false
-                    shouldExpand = flag
-                    deletable = false
+                    expanded = flag
                 }
                 
                 // Bottom border line
@@ -127,7 +147,7 @@ struct CellContent: View {
                     .foregroundColor(focused ? Color.primary : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
                 
-                if shouldExpand, let e = viewModel.entry as? Bookmark {
+                if expanded, let e = viewModel.entry as? Bookmark {
                     Text(e.url.absoluteString)
                         .font(.callout)
                         .lineLimit(nil)
@@ -147,18 +167,49 @@ struct CellContent: View {
                 viewModel.cabinet = cabinet
             }
             Spacer()
-            if deletable {
-                Button(action: {
-                    guard let e = viewModel.entry else { return }
-                    cabinet.delete(entry: e)
-                }) {
-                    Image(systemName: "minus.circle.fill")
-                        .resizable()
-                        .frame(width: 16.0, height: 16.0)
-                        .foregroundStyle(Color.primary)
+            
+            HStack(spacing: 20) {
+                if shouldShowDelete {
+                    Button(action: {
+                        guard let e = viewModel.entry else { return }
+                        cabinet.delete(entry: e)
+                    }) {
+                        Image(systemName: "minus.circle.fill")
+                            .resizable()
+                            .frame(width: 20.0, height: 20.0)
+                            .foregroundStyle(Color.primary)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
+                if shouldShowReveal {
+                    Button(action: {
+                        guard let a = viewModel.entry as? Actionable, a.revealable else { return }
+                        a.reveal()
+                    }) {
+                        Image(systemName: "arrowshape.turn.up.right.circle.fill")
+                            .resizable()
+                            .frame(width: 20.0, height: 20.0)
+                            .foregroundStyle(Color.primary)
+                    }
+                    .buttonStyle(.plain)
+                }
+                if shouldShowCopy {
+                    Button(action: {
+                        guard let e = viewModel.entry as? Bookmark else { return }
+                        let pasteBoard = NSPasteboard.general
+                        pasteBoard.clearContents()
+                        pasteBoard.writeObjects([e.url.absoluteString as NSString])
+                    }) {
+                        Image(systemName: "document.circle.fill")
+                            .resizable()
+                            .frame(width: 20.0, height: 20.0)
+                            .foregroundStyle(Color.primary)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
+            
+            
         }
         .padding(.vertical, 10)
     }
