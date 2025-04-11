@@ -27,15 +27,16 @@ class RowView: NSTableRowView {
     }
     
     // Selection
-    override func drawSelection(in dirtyRect: NSRect) {
-        if self.selectionHighlightStyle != .none {
-            //            let selectionRect = NSInsetRect(self.bounds, 2.5, 2.5)
-            let selectionRect = self.bounds
-            NSColor(Color.accentColor).setFill()
-            let selectionPath = NSBezierPath.init(roundedRect: selectionRect, xRadius: 0, yRadius: 0)
-            selectionPath.fill()
-        }
-    }
+//    override func drawSelection(in dirtyRect: NSRect) {
+//        
+//        if self.selectionHighlightStyle != .none {
+//            //            let selectionRect = NSInsetRect(self.bounds, 2.5, 2.5)
+//            let selectionRect = self.bounds
+//            NSColor(Color.accentColor).setFill()
+//            let selectionPath = NSBezierPath.init(roundedRect: selectionRect, xRadius: 0, yRadius: 0)
+//            selectionPath.fill()
+//        }
+//    }
     
     // Hover
     private var trackingArea: NSTrackingArea?
@@ -44,6 +45,7 @@ class RowView: NSTableRowView {
         super.draw(dirtyRect)
         guard !isSelected else { return }
         guard !isFocused else { return }
+        guard !NSEvent.modifierFlags.containsOnly(.command) else { return }
         
         NSColor.gridColor.set()
         
@@ -64,7 +66,7 @@ class RowView: NSTableRowView {
         super.mouseEntered(with: event)
         highlight = true
         
-        if !isSelected {
+        if !isSelected && !NSEvent.modifierFlags.containsOnly(.command) {
             NotificationCenter.default.post(name: .onHoverRowView, object: (id, true))
         }
     }

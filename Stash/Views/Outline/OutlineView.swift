@@ -116,6 +116,8 @@ extension OutlineView {
         }
         
         @objc func tableViewDoubleAction(sender: AnyObject) {
+            guard !NSEvent.modifierFlags.containsOnly(.command) else { return }
+            
             let outlineView = sender as! NSOutlineView
             
             guard let entry = outlineView.item(atRow: outlineView.clickedRow) as? any Entry else { return }

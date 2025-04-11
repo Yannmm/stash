@@ -108,7 +108,6 @@ struct CellContent: View {
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .onDoubleTapRowView)) { x in
                     let entry = x.object as? any Entry
-                    print("id: \(entry?.id)(\(entry?.name) --- e.id: \(viewModel.entry?.id) (\(viewModel.entry?.name)")
                     guard entry?.id == viewModel.entry?.id else { return }
                     focused = true
                 }
@@ -119,6 +118,7 @@ struct CellContent: View {
                 .onReceive(NotificationCenter.default.publisher(for: .onCmdKeyChange)) { noti in
                     let flag = (noti.object as? Bool) ?? false
                     shouldExpand = flag
+                    deletable = false
                 }
                 
                 // Bottom border line
