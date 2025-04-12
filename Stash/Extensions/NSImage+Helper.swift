@@ -68,7 +68,7 @@ extension NSImage {
 
 extension NSImage {
     enum Constant {
-        static let ratio = 1.25
+        static let ratio = 1.0
         
         static let side1: Double = 16
         static let size1 = CGSize(width: side1, height: side1)
