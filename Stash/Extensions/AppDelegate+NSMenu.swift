@@ -63,7 +63,7 @@ extension AppDelegate {
                 setFavicon(url, item)
             case Icon.local(let url):
                 let i = NSWorkspace.shared.icon(forFile: url.path)
-                i.size = CGSize(width: 17, height: 17)
+                i.size = NSImage.Constant.scaledSize1
                 item.image = i
             }
             
@@ -98,7 +98,7 @@ extension AppDelegate {
                 switch result {
                 case .success(let value):
                     item.image = value.image
-                    item.image?.size = CGSize(width: 16, height: 16)
+                    item.image?.size = NSImage.Constant.size1
                 case .failure(let error):
                     print("Error loading favicon: \(error)")
                     // Set fallback image

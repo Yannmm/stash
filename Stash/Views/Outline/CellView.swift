@@ -83,33 +83,38 @@ struct CellContent: View {
         HStack {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
-                    if let e = viewModel.entry {
-                        switch (e.icon) {
-                        case .system(let name):
-                            Image(systemName: name)
-                                .resizable()
-                                .frame(width: 20.0, height: 20.0)
+                    HStack(alignment: .center) {
+                        if let e = viewModel.entry {
+                            switch (e.icon) {
+                            case .system(let name):
+                                Image(systemName: name)
+                                    .resizable()
+                                    .frame(width: NSImage.Constant.side2)
+                                    .foregroundStyle(Color.primary)
+                            case .favicon(let url):
+                                KFImage.url(url)
+                                    .loadDiskFileSynchronously()
+                                    .cacheMemoryOnly()
+                                    .onSuccess { result in  }
+                                    .onFailure { error in }
+                                    .onFailureImage(NSImage(systemSymbolName: "globe", accessibilityDescription: nil))
+                                    .resizable(resizingMode: .stretch)
+                                    .frame(width: NSImage.Constant.side2)
+                            case .local(let url):
+                                Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                                    .resizable()
+                                    .aspectRatio(contentMode: .fit)
+                                    .frame(width: NSImage.Constant.scaledSide2)
+                            }
+                        } else {
+                            Image(systemName: "folder.fill")
                                 .foregroundStyle(Color.primary)
-                        case .favicon(let url):
-                            KFImage.url(url)
-                                .loadDiskFileSynchronously()
-                                .cacheMemoryOnly()
-                                .fade(duration: 0.25)
-                                .onSuccess { result in  }
-                                .onFailure { error in }
-                                .onFailureImage(NSImage(systemSymbolName: "globe", accessibilityDescription: nil))
-                                .resizable()
-                                .frame(width: 20.0, height: 20.0)
-                        case .local(let url):
-                            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(height: 17.0)
                         }
-                    } else {
-                        Image(systemName: "folder.fill")
-                            .foregroundStyle(Color.primary)
                     }
+                    .frame(width: 30)
+                    .frame(maxHeight: .infinity)
+                    .layoutPriority(0)
+                    
                     
                     Rectangle()
                         .frame(width: 1, height: 20)
@@ -121,6 +126,7 @@ struct CellContent: View {
                         .textFieldStyle(.plain)
                         .background(Color.clear)
                         .focused($focused)
+                        .layoutPriority(1)
                 }
                 .padding(.vertical, 4)
                 .onChange(of: focused) { oldValue, newValue in

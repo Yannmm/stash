@@ -64,3 +64,19 @@ extension NSImage {
         return coloredImage
     }
 }
+
+
+extension NSImage {
+    enum Constant {
+        static let ratio = 1.25
+        
+        static let side1: Double = 16
+        static let size1 = CGSize(width: side1, height: side1)
+        static let scaledSize1 = CGSize(width: side1 * ratio, height: side1 * ratio)
+        
+        static let side2: Double = 20
+        static let size2 = CGSize(width: side2, height: side2)
+        static let scaledSide2 = side2 * ratio
+        static let scaledSize2 = CGSize(width: side2 * ratio, height: side2 * ratio)
+    }
+}
