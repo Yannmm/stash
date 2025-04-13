@@ -149,13 +149,14 @@ struct CellContent: View {
                     .foregroundColor(focused ? Color.primary : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
                 
-                if expanded, let e = viewModel.entry as? Bookmark {
-                    Text(e.url.absoluteString)
+                if expanded, let p = path {
+                    Text(p)
                         .font(.callout)
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
-                        .tint(Color.accentColor)
-                        .underline(true, color: Color.secondary)
+//                        .tint(Color.red)
+//                        .underline(true, color: Color.secondary)
+//                        .background(Color.red)
                         .onHover { hovering in
                             if hovering {
                                 NSCursor.pointingHand.push()
@@ -214,6 +215,38 @@ struct CellContent: View {
             
         }
         .padding(.vertical, 10)
+    }
+    
+    var path: AttributedString? {
+        guard let bookmark = viewModel.entry as? Bookmark else { return nil }
+        
+        var prefix: String!
+        if let scheme = bookmark.url.scheme {
+//            switch scheme {
+//            case "http", "https":
+//                prefix = "URL"
+//            case "file":
+//                prefix = "FILE"
+//            case "vnc":
+//                prefix = "VNC"
+//            default:
+//                prefix = "Unknown"
+//            }
+            prefix = scheme.uppercased()
+        } else {
+            prefix = "Unknown"
+        }
+        
+        var asPrefix = AttributedString(" \(prefix!) ")
+        asPrefix.font = .callout
+        asPrefix.foregroundColor = .white
+        asPrefix.backgroundColor = NSColor(Color.primary)
+        
+        var asPath = AttributedString(bookmark.url.absoluteString)
+        asPath.font = .callout
+        asPath.foregroundColor = .blue
+        
+        return asPrefix + AttributedString(" ") + asPath
     }
 }
 
