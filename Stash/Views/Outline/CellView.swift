@@ -8,6 +8,7 @@
 import AppKit
 import SwiftUI
 import Kingfisher
+// import Glur
 
 class CellViewModel: ObservableObject {
     @Published var entry: (any Entry)?
@@ -74,13 +75,17 @@ struct CellContent: View {
         }
     }
     
+    var shouldShowActions: Bool {
+        return shouldShowDelete || shouldShowCopy || shouldShowReveal
+    }
+    
     init(viewModel: CellViewModel, expanded: Bool = false) {
         self.viewModel = viewModel
         self.expanded = expanded
     }
     
     var body: some View {
-        HStack {
+        ZStack {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
                     if let e = viewModel.entry {
@@ -103,7 +108,7 @@ struct CellContent: View {
                             Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-//                                .frame(width: NSImage.Constant.side2)
+                            //                                .frame(width: NSImage.Constant.side2)
                                 .frame(width: NSImage.Constant.side2, height: NSImage.Constant.side2)
                         }
                     } else {
@@ -154,9 +159,9 @@ struct CellContent: View {
                         .font(.callout)
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
-//                        .tint(Color.red)
-//                        .underline(true, color: Color.secondary)
-//                        .background(Color.red)
+                    //                        .tint(Color.red)
+                    //                        .underline(true, color: Color.secondary)
+                    //                        .background(Color.red)
                         .onHover { hovering in
                             if hovering {
                                 NSCursor.pointingHand.push()
@@ -171,48 +176,58 @@ struct CellContent: View {
             }
             Spacer()
             
-            HStack(spacing: 20) {
-                if shouldShowDelete {
-                    Button(action: {
-                        guard let e = viewModel.entry else { return }
-                        cabinet.delete(entry: e)
-                    }) {
-                        Image(systemName: "minus.circle.fill")
-                            .resizable()
-                            .frame(width: 20.0, height: 20.0)
-                            .foregroundStyle(Color.primary)
+            if shouldShowActions {
+                HStack(spacing: 20) {
+                    if shouldShowDelete {
+                        Button(action: {
+                            guard let e = viewModel.entry else { return }
+                            cabinet.delete(entry: e)
+                        }) {
+                            Image(systemName: "minus.circle.fill")
+                                .resizable()
+                                .frame(width: 20.0, height: 20.0)
+                                .foregroundStyle(Color.primary)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
-                }
-                if shouldShowReveal {
-                    Button(action: {
-                        guard let a = viewModel.entry as? Actionable, a.revealable else { return }
-                        a.reveal()
-                    }) {
-                        Image(systemName: "arrowshape.turn.up.right.circle.fill")
-                            .resizable()
-                            .frame(width: 20.0, height: 20.0)
-                            .foregroundStyle(Color.primary)
+                    if shouldShowReveal {
+                        Button(action: {
+                            guard let a = viewModel.entry as? Actionable, a.revealable else { return }
+                            a.reveal()
+                        }) {
+                            Image(systemName: "arrowshape.turn.up.right.circle.fill")
+                                .resizable()
+                                .frame(width: 20.0, height: 20.0)
+                                .foregroundStyle(Color.primary)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
-                }
-                if shouldShowCopy {
-                    Button(action: {
-                        guard let e = viewModel.entry as? Bookmark else { return }
-                        let pasteBoard = NSPasteboard.general
-                        pasteBoard.clearContents()
-                        pasteBoard.writeObjects([e.url.absoluteString as NSString])
-                    }) {
-                        Image(systemName: "document.circle.fill")
-                            .resizable()
-                            .frame(width: 20.0, height: 20.0)
-                            .foregroundStyle(Color.primary)
+                    if shouldShowCopy {
+                        Button(action: {
+                            guard let e = viewModel.entry as? Bookmark else { return }
+                            let pasteBoard = NSPasteboard.general
+                            pasteBoard.clearContents()
+                            pasteBoard.writeObjects([e.url.absoluteString as NSString])
+                        }) {
+                            Image(systemName: "document.circle.fill")
+                                .resizable()
+                                .frame(width: 20.0, height: 20.0)
+                                .foregroundStyle(Color.primary)
+                        }
+                        .buttonStyle(.plain)
                     }
-                    .buttonStyle(.plain)
                 }
+                .padding()
+                .background(
+                    LinearGradient(
+                        gradient: Gradient(colors: gradientColors),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
             }
-            
-            
         }
         .padding(.vertical, 10)
     }
@@ -222,16 +237,6 @@ struct CellContent: View {
         
         var prefix: String!
         if let scheme = bookmark.url.scheme {
-//            switch scheme {
-//            case "http", "https":
-//                prefix = "URL"
-//            case "file":
-//                prefix = "FILE"
-//            case "vnc":
-//                prefix = "VNC"
-//            default:
-//                prefix = "Unknown"
-//            }
             prefix = scheme.uppercased()
         } else {
             prefix = "Unknown"
@@ -247,6 +252,20 @@ struct CellContent: View {
         asPath.foregroundColor = .blue
         
         return asPrefix + AttributedString(" ") + asPath
+    }
+    
+    var gradientColors: [Color] {
+        if shouldShowDelete {
+            return [Color(NSColor.gridColor).opacity(0.3),
+                    Color(NSColor.gridColor).opacity(0.8),
+                    Color(NSColor.gridColor).opacity(0.3)]
+        } else if shouldShowDelete || shouldShowReveal {
+            return [.white.opacity(0.3),
+                    .white.opacity(0.8),
+                    .white.opacity(0.3)]
+        } else {
+            return []
+        }
     }
 }
 

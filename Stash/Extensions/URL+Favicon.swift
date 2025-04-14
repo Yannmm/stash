@@ -17,7 +17,7 @@ extension URL {
     }
     
     private struct Constant {
-        //        static let template = "https://twenty-icons.com/%@"
+//                static let template = "https://twenty-icons.com/%@"
         static let template = "https://favicone.com/%@?s=128"
         
     }
