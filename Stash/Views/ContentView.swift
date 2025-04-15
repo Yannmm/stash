@@ -26,8 +26,9 @@ struct ContentView: View {
                     self.anchorId = $0
                 }
                 
-                ModifierKeyMonitorView() // embeds the monitoring
-                    .frame(width: 0, height: 0) // Invisible view
+                // Invisible monitoring view
+                ModifierKeyMonitorView(listen: !present)
+                    .frame(width: 0, height: 0)
             }
             .sheet(isPresented: $present, onDismiss: nil) {
                 CraftModalView(anchorId: $anchorId)
