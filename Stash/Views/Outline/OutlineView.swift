@@ -26,7 +26,9 @@ struct OutlineView: NSViewRepresentable {
         let scrollView = NSScrollView()
         scrollView.hasVerticalScroller = true
         
-        let outlineView = HierarchyView()
+        let outlineView = HierarchyView() {
+            onSelectRow(nil)
+        }
         outlineView.draggingDestinationFeedbackStyle = .regular
         
         let column = NSTableColumn(identifier: NSUserInterfaceItemIdentifier("Column"))
@@ -258,7 +260,26 @@ extension OutlineView {
 }
 
 fileprivate extension OutlineView {
-    class HierarchyView: NSOutlineView {}
+    class HierarchyView: NSOutlineView {
+        let onEscKeyDown: () -> Void
+        
+        init(onEscKeyDown: @escaping () -> Void) {
+            self.onEscKeyDown = onEscKeyDown
+            super.init(frame: CGRectZero)
+        }
+        
+        required init?(coder: NSCoder) {
+            fatalError("init(coder:) has not been implemented")
+        }
+        
+        override func keyDown(with event: NSEvent) {
+            if event.keyCode == 53 { // 53 = Esc key
+                deselectAll(nil)
+            } else {
+                super.keyDown(with: event)
+            }
+        }
+    }
 }
 
 

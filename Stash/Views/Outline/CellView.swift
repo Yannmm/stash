@@ -93,6 +93,7 @@ struct CellContent: View {
                         case .system(let name):
                             Image(systemName: name)
                                 .resizable()
+                                .aspectRatio(contentMode: .fit)
                                 .frame(width: NSImage.Constant.side2)
                                 .foregroundStyle(Color.primary)
                         case .favicon(let url):
@@ -134,13 +135,13 @@ struct CellContent: View {
                     guard newValue != oldValue, !newValue else { return }
                     viewModel.update()
                 }
-                .onReceive(NotificationCenter.default.publisher(for: .onDoubleTapRowView)) { x in
-                    let entry = x.object as? any Entry
+                .onReceive(NotificationCenter.default.publisher(for: .onDoubleTapRowView)) { noti in
+                    let entry = noti.object as? any Entry
                     guard entry?.id == viewModel.entry?.id else { return }
                     focused = true
                 }
-                .onReceive(NotificationCenter.default.publisher(for: .onHoverRowView)) { x in
-                    guard let tuple = x.object as? (UUID?, Bool), tuple.0 == viewModel.entry?.id else { return }
+                .onReceive(NotificationCenter.default.publisher(for: .onHoverRowView)) { noti in
+                    guard let tuple = noti.object as? (UUID?, Bool), tuple.0 == viewModel.entry?.id else { return }
                     hovered = tuple.1
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .onCmdKeyChange)) { noti in
