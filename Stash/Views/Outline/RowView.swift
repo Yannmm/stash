@@ -10,7 +10,12 @@ import SwiftUI
 
 class RowView: NSTableRowView {
     
-    override init(frame frameRect: NSRect) {
+    var id: UUID?
+    
+    let ignoreMouseEvent: () -> Bool
+    
+    init(ignoreMouseEvent: @escaping () -> Bool) {
+        self.ignoreMouseEvent = ignoreMouseEvent
         super.init(frame: NSRect.zero)
     }
     
@@ -19,8 +24,6 @@ class RowView: NSTableRowView {
             setNeedsDisplay(bounds)
         }
     }
-    
-    var id: UUID?
     
     required init?(coder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
@@ -64,6 +67,8 @@ class RowView: NSTableRowView {
     
     override func mouseEntered(with event: NSEvent) {
         super.mouseEntered(with: event)
+        guard !ignoreMouseEvent() else { return }
+        
         highlight = true
         
         if !isSelected {
@@ -73,6 +78,8 @@ class RowView: NSTableRowView {
     
     override func mouseExited(with event: NSEvent) {
         super.mouseExited(with: event)
+        guard !ignoreMouseEvent() else { return }
+        
         highlight = false
         
         if !isSelected {

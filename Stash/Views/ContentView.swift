@@ -22,7 +22,7 @@ struct ContentView: View {
                         NotificationCenter.default.post(name: .onDoubleTapRowView, object: directory)
                     }
                 }
-                OutlineView(entries: $cabinet.entries, anchorId: $anchorId) {
+                OutlineView(entries: $cabinet.entries, anchorId: $anchorId, presentingModal: $present) {
                     self.anchorId = $0
                 }
                 
