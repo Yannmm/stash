@@ -69,11 +69,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupSettingsWindow() {
         settingsWindow = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 400, height: 200),
-            styleMask: [.titled, .closable],
+            styleMask: [.resizable, .titled, .closable, .miniaturizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
-        settingsWindow?.title = "Settings"
+        
         settingsWindow?.center()
         settingsWindow?.contentView = NSHostingView(rootView: SettingsView())
     }

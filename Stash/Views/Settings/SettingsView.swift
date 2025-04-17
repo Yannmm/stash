@@ -6,22 +6,32 @@ struct SettingsView: View {
     @State private var currentKey: Key = .r
     @State private var currentModifiers: NSEvent.ModifierFlags = [.command, .option]
     
+//    var body: some View {
+//        Form {
+//            Section("Keyboard Shortcuts") {
+//                HStack {
+//                    Text("Toggle Stash:")
+//                    Spacer()
+//                    KeyRecorderView(
+//                        isRecording: $isRecording,
+//                        key: $currentKey,
+//                        modifiers: $currentModifiers
+//                    )
+//                }
+//            }
+//        }
+//        .padding()
+//        .frame(width: 400, height: 200)
+//    }
+    
     var body: some View {
-        Form {
-            Section("Keyboard Shortcuts") {
-                HStack {
-                    Text("Toggle Stash:")
-                    Spacer()
-                    KeyRecorderView(
-                        isRecording: $isRecording,
-                        key: $currentKey,
-                        modifiers: $currentModifiers
-                    )
-                }
-            }
+        NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
+            Text("Menu").frame(width: 215)
+                .toolbar(removing: .sidebarToggle)
+        } detail: {
+            Text("Settings")
         }
-        .padding()
-        .frame(width: 400, height: 200)
+        .frame(minWidth: 715, maxWidth: 715, minHeight: 470, maxHeight: .infinity)
     }
 }
 
