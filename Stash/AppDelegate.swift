@@ -67,23 +67,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func setupSettingsWindow() {
+        let hostingView = NSHostingView(rootView: SettingsView())
         settingsWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 200),
-            styleMask: [.resizable, .titled, .closable, .miniaturizable, .fullSizeContentView],
+            contentRect: NSRect(x: 0, y: 0, width: hostingView.fittingSize.width, height: hostingView.fittingSize.height),
+            styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
-        
+        settingsWindow?.isReleasedWhenClosed = false
         settingsWindow?.center()
-        settingsWindow?.contentView = NSHostingView(rootView: SettingsView())
+        settingsWindow?.contentView = hostingView
+        
     }
     
     @objc func openSettings() {
         if settingsWindow == nil {
             setupSettingsWindow()
         }
-        settingsWindow?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: true)
+        settingsWindow?.orderFrontRegardless()
     }
     
     @objc private func quit() {}

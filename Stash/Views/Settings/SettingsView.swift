@@ -6,32 +6,95 @@ struct SettingsView: View {
     @State private var currentKey: Key = .r
     @State private var currentModifiers: NSEvent.ModifierFlags = [.command, .option]
     
-//    var body: some View {
-//        Form {
-//            Section("Keyboard Shortcuts") {
-//                HStack {
-//                    Text("Toggle Stash:")
-//                    Spacer()
-//                    KeyRecorderView(
-//                        isRecording: $isRecording,
-//                        key: $currentKey,
-//                        modifiers: $currentModifiers
-//                    )
-//                }
-//            }
-//        }
-//        .padding()
-//        .frame(width: 400, height: 200)
-//    }
+    @State private var launchOnLogin = false
+    @State private var iCloudSync = false
+    @State private var updateFrequency = UpdateFrequency.weekly
+    
+    enum UpdateFrequency: String, CaseIterable {
+        case daily = "Daily"
+        case weekly = "Weekly"
+        case monthly = "Monthly"
+    }
     
     var body: some View {
-        NavigationSplitView(columnVisibility: .constant(.doubleColumn)) {
-            Text("Menu").frame(width: 215)
-                .toolbar(removing: .sidebarToggle)
-        } detail: {
-            Text("Settings")
+        Form {
+            // General Section
+            Section("General") {
+                Toggle("Launch on Login", isOn: $launchOnLogin)
+                
+                HStack {
+                    Text("Global Shortcut")
+                    Spacer()
+                    KeyRecorderView(
+                        isRecording: $isRecording,
+                        key: $currentKey,
+                        modifiers: $currentModifiers
+                    )
+                }
+                
+                Toggle("iCloud Sync", isOn: $iCloudSync)
+                
+                Button("Import...") {
+                    // Handle import
+                    let panel = NSOpenPanel()
+                    panel.allowsMultipleSelection = false
+                    panel.canChooseDirectories = false
+                    panel.canCreateDirectories = false
+                    panel.canChooseFiles = true
+                    panel.allowedContentTypes = [.json]
+                    
+                    panel.begin { response in
+                        if response == .OK, let url = panel.url {
+                            // Handle the selected file URL
+                            print("Selected file: \(url)")
+                        }
+                    }
+                }
+            }
+            
+            // Check Update Section
+            Section("Data Management") {
+                Button("Import") {
+                    // Handle update check
+                }
+                .buttonStyle(.bordered)
+                
+                Picker("Check frequency:", selection: $updateFrequency) {
+                    ForEach(UpdateFrequency.allCases, id: \.self) { frequency in
+                        Text(frequency.rawValue).tag(frequency)
+                    }
+                }
+            }
+            
+            // Check Update Section
+            Section("Software Update") {
+                HStack {
+                    Button("Check for Updates") {
+                        // Handle update check
+                    }
+                    .buttonStyle(.bordered)
+                    
+                    Spacer()
+                    
+                    Text("Last checked date...")
+                }
+                
+                Picker("Check frequency:", selection: $updateFrequency) {
+                    ForEach(UpdateFrequency.allCases, id: \.self) { frequency in
+                        Text(frequency.rawValue).tag(frequency)
+                    }
+                }
+            }
+            
+            // About Section
+            Section("About") {
+                Link("www.github.com", destination: URL(string: "https://www.github.com")!)
+                    .foregroundStyle(.secondary)
+            }
         }
-        .frame(minWidth: 715, maxWidth: 715, minHeight: 470, maxHeight: .infinity)
+        .formStyle(.grouped)
+        .padding()
+        .frame(width: 400)
     }
 }
 
