@@ -11,31 +11,35 @@ import Combine
 import HotKey
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    static var shared: AppDelegate!
     var popover = NSPopover()
     var statusItem: NSStatusItem?
     var dropWindow: NSWindow?
     
-    var cabinet: OkamuraCabinet {
-        OkamuraCabinet.shared
-    }
+    var cabinet: OkamuraCabinet { OkamuraCabinet.shared }
+    
+    var hotKeyMananger: HotKeyManager { HotKeyManager.shared }
     
     private var cancellables = Set<AnyCancellable>()
-    
-    let hotKey = HotKey(key: .r, modifiers: [.command, .option])
     
     private var settingsWindow: NSWindow?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
-        AppDelegate.shared = self
+        
+        HotKeyManager.shared.register()
+        
         setupStatusItem()
-        setupHotKey()
         
         cabinet.$entries
             .sink { [weak self] entries in
                 self?.statusItem?.menu = self?.generateMenu(from: entries)
             }
             .store(in: &cancellables)
+        
+        NotificationCenter.default.addObserver(forName: .onShortcutKeyDown, object: nil, queue: nil) { [weak self] _ in
+            if let button = self?.statusItem?.button {
+                button.performClick(nil)
+            }
+        }
     }
     
     private func setupStatusItem() {
@@ -58,16 +62,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
-    private func setupHotKey() {
-        hotKey.keyDownHandler = { [weak self] in
-            if let button = self?.statusItem?.button {
-                button.performClick(nil)
-            }
-        }
-    }
-    
     private func setupSettingsWindow() {
-        let hostingView = NSHostingView(rootView: SettingsView())
+        let hostingView = NSHostingView(rootView: SettingsView(shortcut: hotKeyMananger.shortcut))
         settingsWindow = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: hostingView.fittingSize.width, height: hostingView.fittingSize.height),
             styleMask: [.titled, .closable, .miniaturizable],
