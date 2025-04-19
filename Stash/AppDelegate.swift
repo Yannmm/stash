@@ -66,7 +66,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let hostingView = NSHostingView(rootView: SettingsView(shortcut: hotKeyMananger.shortcut,
                                                                onSelectImportFile: { [unowned self] in self.cabinet.import(from: $0) },
                                                                onSelectExportDestination: { [unowned self] in try self.cabinet.export(to: $0) },
-                                                               onReset: { [unowned self] in self.cabinet.removeAll() }))
+                                                               onReset: { [unowned self] in self.cabinet.removeAll() },
+                                                               onChangeDockIcon: { NSApp.setActivationPolicy($0 ? .regular : .accessory) }))
         settingsWindow = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: hostingView.fittingSize.width, height: hostingView.fittingSize.height),
             styleMask: [.titled, .closable, .miniaturizable],
@@ -100,4 +101,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             popover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
         }
     }
+    
+    //    import Cocoa
+    
+    func xx() {
+        // Hide from Dock
+        NSApp.setActivationPolicy(.accessory)
+        
+        // Show in Dock
+        NSApp.setActivationPolicy(.regular)
+    }
+    
+    
 }

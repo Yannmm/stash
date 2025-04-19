@@ -3,6 +3,7 @@ import HotKey
 
 struct SettingsView: View {
     @State private var isRecording = false
+    @State private var dockIcon = true
     @State var shortcut: (Key, NSEvent.ModifierFlags)
     @State var importFilePath: URL?
     @State var exportFilePath: URL?
@@ -10,6 +11,7 @@ struct SettingsView: View {
     let onSelectImportFile: (URL) -> Void
     let onSelectExportDestination: (URL) throws -> URL
     let onReset: () -> Void
+    let onChangeDockIcon: (Bool) -> Void
  
     var importDescription: AttributedString {
         if let path = importFilePath?.path {
@@ -46,7 +48,7 @@ struct SettingsView: View {
     }
     
     @State private var launchOnLogin = false
-    @State private var iCloudSync = false
+    @State private var icloudSync = false
     @State private var updateFrequency = UpdateFrequency.weekly
     @State private var resetAlert = false
     
@@ -61,7 +63,8 @@ struct SettingsView: View {
             // General Section
             Section("General") {
                 Toggle("Launch on Login", isOn: $launchOnLogin)
-                
+                Toggle("iCloud Sync", isOn: $icloudSync)
+                Toggle("Show Icon In Dock", isOn: $dockIcon)
                 HStack {
                     Text("Global Shortcut")
                     Spacer()
@@ -70,10 +73,6 @@ struct SettingsView: View {
                         shortcut: $shortcut
                     )
                 }
-                
-                Toggle("iCloud Sync", isOn: $iCloudSync)
-                
-
             }
             
             // Check Update Section
@@ -176,6 +175,9 @@ struct SettingsView: View {
         .frame(width: 400)
         .onChange(of: shortcutHash) {
             HotKeyManager.shared.update(key: shortcut.0, modifiers: shortcut.1)
+        }
+        .onChange(of: dockIcon) { _, flag in
+            onChangeDockIcon(flag)
         }
     }
 }
