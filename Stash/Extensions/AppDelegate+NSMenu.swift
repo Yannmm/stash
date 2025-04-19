@@ -25,19 +25,8 @@ extension AppDelegate {
         item1.keyEquivalentModifierMask = .command
         item1.keyEquivalent = "D"
         menu.addItem(item1)
-        
-        // Clear all
-        let item2 = NSMenuItem(title: "Clear All", action: #selector(deleteAll), keyEquivalent: "")
-        item2.keyEquivalentModifierMask = .command
-        item2.keyEquivalent = "C"
-        menu.addItem(item2)
-        
+                
         menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ","))
-        
-        menu.addItem(NSMenuItem(title: "Export", action: #selector(export), keyEquivalent: ","))
-        
-        menu.addItem(NSMenuItem(title: "Import", action: #selector(`import`), keyEquivalent: ","))
-        
         return menu
     }
     

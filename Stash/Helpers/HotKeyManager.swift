@@ -43,7 +43,7 @@ class HotKeyManager {
         }
         
         var modifiers: NSEvent.ModifierFlags?
-        if let saved = pieceSaver.value(for: .hotkey) as? UInt {
+        if let saved = pieceSaver.value(for: .hokeyModifiers) as? UInt {
             modifiers = NSEvent.ModifierFlags(rawValue: saved)
         }
         if modifiers == nil {

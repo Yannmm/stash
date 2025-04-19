@@ -63,7 +63,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func setupSettingsWindow() {
-        let hostingView = NSHostingView(rootView: SettingsView(shortcut: hotKeyMananger.shortcut))
+        let hostingView = NSHostingView(rootView: SettingsView(shortcut: hotKeyMananger.shortcut,
+                                                               onSelectImportFile: { [unowned self] in self.cabinet.import(from: $0) },
+                                                               onSelectExportDestination: { [unowned self] in try self.cabinet.export(to: $0) },
+                                                               onReset: { [unowned self] in self.cabinet.removeAll() }))
         settingsWindow = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: hostingView.fittingSize.width, height: hostingView.fittingSize.height),
             styleMask: [.titled, .closable, .miniaturizable],
@@ -96,17 +99,5 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             popover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
         }
-    }
-    
-    @objc func deleteAll() {
-        cabinet.removeAll()
-    }
-    
-    @objc func export() {
-        OkamuraCabinet.shared.export()
-    }
-    
-    @objc func `import`() {
-        OkamuraCabinet.shared.import()
     }
 }
