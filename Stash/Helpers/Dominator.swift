@@ -87,4 +87,37 @@ class Dominator {
         // Fallback to domain name
         return fallbackURL.host ?? fallbackURL.absoluteString
     }
+    
+    func test1() throws  {
+        let html = try String(contentsOfFile: "/Users/yannmm/Downloads/safari_bookmarks.html", encoding: .utf8)
+        let dom = try SwiftSoup.parse(html)
+        
+        // Get all DT elements
+        let dtElements = try dom.select("DT")
+        
+        for dt in dtElements {
+            // Check if this DT contains an H3 (folder)
+            if let h3 = try dt.select("H3").first() {
+                let folderTitle = try h3.text()
+                
+                // Get the next DL sibling which contains the folder's contents
+                if let dl = try dt.select("DL").first() {
+                    // Recursively parse the contents of the folder
+//                    let children = try parseBookmarkElements(element: dl)
+//                    let folder = BookmarkItem(title: folderTitle, url: nil, children: children)
+//                    bookmarks.append(folder)
+                }
+            }
+            // Check if this DT contains an A (bookmark)
+            else if let a = try dt.select("A").first() {
+                let title = try a.text()
+                let urlString = try a.attr("HREF")
+                let url = URL(string: urlString)
+//                let bookmark = BookmarkItem(title: title, url: url, children: nil)
+//                bookmarks.append(bookmark)
+            }
+        }
+
+        print(123)
+    }
 }

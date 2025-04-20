@@ -40,7 +40,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 button.performClick(nil)
             }
         }
+        
+        do {
+            try dominator.test1()
+        } catch {
+            print(error)
+        }
+        
     }
+    
+    let dominator = Dominator()
     
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -84,7 +93,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if settingsWindow == nil {
             setupSettingsWindow()
         }
-        settingsWindow?.orderFrontRegardless()
+        settingsWindow?.makeKeyAndOrderFront(nil)
     }
     
     @objc private func quit() {}
