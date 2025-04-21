@@ -88,36 +88,67 @@ class Dominator {
         return fallbackURL.host ?? fallbackURL.absoluteString
     }
     
-    func test1() throws  {
-        let html = try String(contentsOfFile: "/Users/yannmm/Downloads/safari_bookmarks.html", encoding: .utf8)
-        let dom = try SwiftSoup.parse(html)
+    private func parseDT(_ dt: Element, _ group: String?) throws -> Any {
+        let h3s = try dt.select("> h3")
         
-        // Get all DT elements
-        let dtElements = try dom.select("DT")
+        print("🐶 --> \(group)")
+        if (group == "Favorites") {
+            print(123)
+        }
         
-        for dt in dtElements {
-            // Check if this DT contains an H3 (folder)
-            if let h3 = try dt.select("H3").first() {
-                let folderTitle = try h3.text()
-                
-                // Get the next DL sibling which contains the folder's contents
-                if let dl = try dt.select("DL").first() {
-                    // Recursively parse the contents of the folder
-//                    let children = try parseBookmarkElements(element: dl)
-//                    let folder = BookmarkItem(title: folderTitle, url: nil, children: children)
-//                    bookmarks.append(folder)
+        if h3s.count > 0 {
+            let header = try h3s.first()!.text()
+            let dl = try dt.select("> dl")
+            let dts = try dl.select("> dt")
+            var result = [String: Any]()
+            try dts.map({
+                let a = dt
+                let b = group
+                let c = header
+                return try parseDT($0, header)
+            }).forEach { k in
+                if header == "Favorites" {
+                    print(123)
+                }
+                guard let dict = k as? [String: Any] else { return }
+                for (k, v) in dict {
+                    let value = result[k]
+                    if let xxx = v as? String, value == nil || value is [String] {
+                        var kk = (value as? [String]) ?? [String]()
+                        kk.append(xxx)
+                        result[k] = kk
+                    } else {
+                        result.merge(dict, uniquingKeysWith: { _, new in new })
+                    }
                 }
             }
-            // Check if this DT contains an A (bookmark)
-            else if let a = try dt.select("A").first() {
-                let title = try a.text()
-                let urlString = try a.attr("HREF")
-                let url = URL(string: urlString)
-//                let bookmark = BookmarkItem(title: title, url: url, children: nil)
-//                bookmarks.append(bookmark)
-            }
+            return result
+        } else {
+            let a = try dt.select("> a")
+            let text = try a.text()
+            return [group: text]
         }
+    }
+    
 
-        print(123)
+    
+    func test1(_ html: String) throws  {
+                let dom = try SwiftSoup.parse(html)
+        
+                let allElements: Elements = try dom.select("body > dt")
+        
+        print(allElements.count)
+        
+        let dt = allElements.first()!
+        
+        
+        let xx = try parseDT(dt, nil)
+
+        print(xx)
+        
+        
+        
+        
+
     }
 }

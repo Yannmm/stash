@@ -40,13 +40,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 button.performClick(nil)
             }
         }
-        
-        do {
-            try dominator.test1()
-        } catch {
-            print(error)
-        }
-        
     }
     
     let dominator = Dominator()
@@ -104,22 +97,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func togglePopover() {
-        if (popover.isShown) {
-            popover.performClose(self)
-        } else {
-            popover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
+//        if (popover.isShown) {
+//            popover.performClose(self)
+//        } else {
+//            popover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
+//        }
+        
+    
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+
+        if panel.runModal() == .OK, let url = panel.url {
+            // Now you can access the file
+            do {
+                let content = try String(contentsOf: url)
+                do {
+                    try dominator.test1(content)
+                } catch {
+                    print(error)
+                }
+            } catch {
+                print("Error reading file: \(error)")
+            }
         }
     }
-    
-    //    import Cocoa
-    
-    func xx() {
-        // Hide from Dock
-        NSApp.setActivationPolicy(.accessory)
-        
-        // Show in Dock
-        NSApp.setActivationPolicy(.regular)
-    }
-    
-    
 }
