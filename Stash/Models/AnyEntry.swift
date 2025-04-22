@@ -106,7 +106,6 @@ extension Array where Element == AnyEntry {
         func _deflate(target: inout [any Entry], source: [AnyEntry], parentId: UUID?) {
             for anyEntry in source {
                 target.append(anyEntry.asEntry(with: parentId))
-                //                guard anyEntry.children >
                 _deflate(target: &target, source: anyEntry.children, parentId: anyEntry.id)
             }
         }

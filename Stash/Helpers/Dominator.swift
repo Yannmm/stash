@@ -88,46 +88,50 @@ class Dominator {
         return fallbackURL.host ?? fallbackURL.absoluteString
     }
     
-    private func parseDT(_ dt: Element, _ group: String?) throws -> Any {
+    private func parseDT(_ dt: Element) throws -> Any {
         let h3s = try dt.select("> h3")
         
-        print("🐶 --> \(group)")
-        if (group == "Favorites") {
-            print(123)
-        }
-        
+        var result1 = [String]()
         if h3s.count > 0 {
             let header = try h3s.first()!.text()
             let dl = try dt.select("> dl")
             let dts = try dl.select("> dt")
             var result = [String: Any]()
-            try dts.map({
-                let a = dt
-                let b = group
-                let c = header
-                return try parseDT($0, header)
-            }).forEach { k in
-                if header == "Favorites" {
-                    print(123)
-                }
-                guard let dict = k as? [String: Any] else { return }
-                for (k, v) in dict {
-                    let value = result[k]
-                    if let xxx = v as? String, value == nil || value is [String] {
-                        var kk = (value as? [String]) ?? [String]()
-                        kk.append(xxx)
-                        result[k] = kk
-                    } else {
-                        result.merge(dict, uniquingKeysWith: { _, new in new })
-                    }
+            try dts.map({ try parseDT($0) }).forEach { k in
+                if let k1 = k as? String {
+                    // single element
+                    result1.append(k1)
+                } else if let k2 = k as? [String: Any] {
+                    // group
+//                    var a = (result[header] as? [String: Any]) ?? [String: Any]()
+                    result.merge(k2, uniquingKeysWith: { _, new in new })
+//                    result[header] = a
+                } else {
+                    print(44444)
                 }
             }
-            return result
+            result["children - \(header)"] = result1
+            return [header: result]
         } else {
             let a = try dt.select("> a")
             let text = try a.text()
-            return [group: text]
+            return text
         }
+    }
+    
+    
+    private func wrapper(_ dts: Elements) throws -> Any {
+        var rr = [String: Any]()
+        
+        try dts.map({ try parseDT($0) }).forEach({ xxx in
+            if let map = xxx as? [String: Any] {
+                rr.merge(map, uniquingKeysWith: { _, new in new })
+            } else {
+                print(3333)
+            }
+        })
+        
+        return rr
     }
     
 
@@ -139,10 +143,11 @@ class Dominator {
         
         print(allElements.count)
         
-        let dt = allElements.first()!
+//        let dt = allElements.first()!
+//        let xx = try parseDT(dt)
         
         
-        let xx = try parseDT(dt, nil)
+        let xx = try wrapper(allElements)
 
         print(xx)
         

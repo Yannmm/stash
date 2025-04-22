@@ -83,27 +83,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func openSettings() {
-        if settingsWindow == nil {
-            setupSettingsWindow()
-        }
-        settingsWindow?.makeKeyAndOrderFront(nil)
-    }
-    
-    @objc private func quit() {}
-    
-    func showDropWindow() {
-        dropWindow?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: false)
-    }
-    
-    @objc func togglePopover() {
-//        if (popover.isShown) {
-//            popover.performClose(self)
-//        } else {
-//            popover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
+//        if settingsWindow == nil {
+//            setupSettingsWindow()
 //        }
+//        settingsWindow?.makeKeyAndOrderFront(nil)
         
-    
         let panel = NSOpenPanel()
         panel.canChooseFiles = true
         panel.canChooseDirectories = false
@@ -121,6 +105,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             } catch {
                 print("Error reading file: \(error)")
             }
+        }
+    }
+    
+    @objc private func quit() {}
+    
+    func showDropWindow() {
+        dropWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: false)
+    }
+    
+    @objc func togglePopover() {
+        if (popover.isShown) {
+            popover.performClose(self)
+        } else {
+            popover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
         }
     }
 }
