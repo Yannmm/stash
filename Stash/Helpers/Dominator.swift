@@ -40,8 +40,8 @@ class Dominator {
                 }
             }
             
-            throw NSError(domain: "HTMLParsingError", code: -1, 
-                         userInfo: [NSLocalizedDescriptionKey: "Failed to convert data to string"])
+            throw NSError(domain: "HTMLParsingError", code: -1,
+                          userInfo: [NSLocalizedDescriptionKey: "Failed to convert data to string"])
         }
         
         return try extractTitle(from: htmlString, fallbackURL: url)
@@ -88,30 +88,30 @@ class Dominator {
         return fallbackURL.host ?? fallbackURL.absoluteString
     }
     
-    private func parseDT(_ dt: Element) throws -> Any {
+    private func parseDT(_ dt: Element) throws -> Any? {
         let h3s = try dt.select("> h3")
         
-        var result1 = [String]()
+        var items = [String]()
+        var children = [String: Any]()
         if h3s.count > 0 {
             let header = try h3s.first()!.text()
-            let dl = try dt.select("> dl")
+            guard let dl = try dt.select("> dl").first() else { return nil }
             let dts = try dl.select("> dt")
-            var result = [String: Any]()
-            try dts.map({ try parseDT($0) }).forEach { k in
-                if let k1 = k as? String {
-                    // single element
-                    result1.append(k1)
-                } else if let k2 = k as? [String: Any] {
-                    // group
-//                    var a = (result[header] as? [String: Any]) ?? [String: Any]()
-                    result.merge(k2, uniquingKeysWith: { _, new in new })
-//                    result[header] = a
-                } else {
-                    print(44444)
+            try dts.map({ try parseDT($0) })
+                .compactMap({ $0 })
+                .forEach { result in
+                    switch result {
+                    case let r as String:
+                        // single element
+                        items.append(r)
+                    case let r as [String: Any]:
+                        children.merge(r, uniquingKeysWith: { _, new in new })
+                    default:
+                        print("impossible to happen")
+                    }
                 }
-            }
-            result["children - \(header)"] = result1
-            return [header: result]
+            children["items"] = items
+            return [header: children]
         } else {
             let a = try dt.select("> a")
             let text = try a.text()
@@ -121,39 +121,42 @@ class Dominator {
     
     
     private func wrapper(_ dts: Elements) throws -> Any {
-        var rr = [String: Any]()
+        var result = [String: Any]()
         
-        try dts.map({ try parseDT($0) }).forEach({ xxx in
+        try dts.map({ try parseDT($0) })
+            .compactMap({ $0 })
+            .forEach({ xxx in
             if let map = xxx as? [String: Any] {
-                rr.merge(map, uniquingKeysWith: { _, new in new })
+                result.merge(map, uniquingKeysWith: { _, new in new })
             } else {
+                // TODO?
                 print(3333)
             }
         })
         
-        return rr
+        return result
     }
     
-
+    
     
     func test1(_ html: String) throws  {
-                let dom = try SwiftSoup.parse(html)
+        let dom = try SwiftSoup.parse(html)
         
-                let allElements: Elements = try dom.select("body > dt")
+        let allElements: Elements = try dom.select("body > dt")
         
         print(allElements.count)
         
-//        let dt = allElements.first()!
-//        let xx = try parseDT(dt)
+        //        let dt = allElements.first()!
+        //        let xx = try parseDT(dt)
         
         
         let xx = try wrapper(allElements)
-
+        
         print(xx)
         
         
         
         
-
+        
     }
 }
