@@ -130,14 +130,46 @@ class OkamuraCabinet: ObservableObject {
         return filePath
     }
     
-    func `import`(from filePath: URL) {
+    func `import`(from filePath: URL) throws {
         do {
             let data = try Data(contentsOf: filePath)
+            importFromData(data)
+        } catch {
+            print("something wrong happended: \(error)")
+        }
+    }
+    
+    func importFromData(_ data: Data) {
+        do {
             let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
             self.entries = anyEntries.asEntries
             save()
         } catch {
             print("something wrong happended: \(error)")
+        }
+    }
+    
+    func iiiimport() {
+        import UniformTypeIdentifiers
+        
+        // check MIME type
+        if let type = try? fileURL.resourceValues(forKeys: [.contentTypeKey]).contentType {
+            if type.conforms(to: .json) {
+                print("This is a JSON file.")
+            } else if type.conforms(to: .html) {
+                print("This is an HTML file.")
+            } else {
+                print("Unknown or unsupported file type.")
+            }
+        }
+        
+        // check file content
+        let content = try String(contentsOf: fileURL)
+
+        if content.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{") {
+            print("Likely a JSON file.")
+        } else if content.contains("<html") || content.contains("<!DOCTYPE html") {
+            print("Likely an HTML file.")
         }
     }
 }

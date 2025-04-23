@@ -88,6 +88,24 @@ class Dominator {
         return fallbackURL.host ?? fallbackURL.absoluteString
     }
     
+    /// Browser bookmarks import
+    // Tested: Safari, Chrome
+    func parseBookmarkFile(_ html: String) throws -> Data  {
+        guard isBookmarkFile(html) else {
+            throw ParseError.invalidDoctype
+        }
+        
+        let document = try SwiftSoup.parse(html)
+        let allElements: Elements = try document.select("body > dt")
+        
+        let json = try wrapper(allElements)
+        let pretty = try JSONSerialization.data(
+            withJSONObject: json,
+            options: [.prettyPrinted, .withoutEscapingSlashes])
+        
+        return pretty
+    }
+    
     private func parseDT(_ dt: Element) throws -> Any? {
         let h3s = try dt.select("> h3")
         
@@ -118,7 +136,6 @@ class Dominator {
         }
     }
     
-    
     private func wrapper(_ dts: Elements) throws -> [Any] {
         var collector = [Any]()
         try dts.map({ try parseDT($0) })
@@ -129,37 +146,22 @@ class Dominator {
         return collector
     }
     
-    
-    
-    func test1(_ html: String) throws  {
-        let dom = try SwiftSoup.parse(html)
-        
-        let allElements: Elements = try dom.select("body > dt")
-        
-        print(allElements.count)
-        
-//                let dt = allElements.first()!
-//                let xx = try parseDT(dt)
-        
-        
-        let xx = try wrapper(allElements)
-        
-        let pretty = try JSONSerialization.data(
-            withJSONObject: xx,
-            options: [.prettyPrinted, .withoutEscapingSlashes])
-        
-        let string = String(data: pretty, encoding: .utf8)
-        print(string)
-        
-        if let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
-            let aa = documentsURL.appendingPathComponent("xxx.json")
-            print(123)
-            try string!.write(to: aa, atomically: true, encoding: .utf8)
+    private func isBookmarkFile(_ html: String) -> Bool {
+        if let match = html.range(of: #"(?i)<!DOCTYPE\s+([^\s>]+)"#, options: .regularExpression) {
+            let components = html[match].split(separator: " ")
+            if components.count > 1 {
+                let doctype = components[1].lowercased()
+                return doctype == Constant.bookmarkDoctype
+            }
         }
+        return false
     }
     
-    enum Result {
-        case item([String: String])
-        case child([String: Any])
+    enum ParseError: Error {
+        case invalidDoctype
+    }
+    
+    enum Constant {
+        static let bookmarkDoctype = "netscape-bookmark-file-1"
     }
 }

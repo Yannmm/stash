@@ -83,29 +83,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func openSettings() {
-        if settingsWindow == nil {
-            setupSettingsWindow()
-        }
-        settingsWindow?.makeKeyAndOrderFront(nil)
-        
-//        let panel = NSOpenPanel()
-//        panel.canChooseFiles = true
-//        panel.canChooseDirectories = false
-//        panel.allowsMultipleSelection = false
-//
-//        if panel.runModal() == .OK, let url = panel.url {
-//            // Now you can access the file
-//            do {
-//                let content = try String(contentsOf: url)
-//                do {
-//                    try dominator.test1(content)
-//                } catch {
-//                    print(error)
-//                }
-//            } catch {
-//                print("Error reading file: \(error)")
-//            }
+//        if settingsWindow == nil {
+//            setupSettingsWindow()
 //        }
+//        settingsWindow?.makeKeyAndOrderFront(nil)
+        
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = false
+
+        if panel.runModal() == .OK, let url = panel.url {
+            // Now you can access the file
+            do {
+                let content = try String(contentsOf: url)
+                do {
+                    try dominator.test1(content)
+                } catch {
+                    print(error)
+                }
+            } catch {
+                print("Error reading file: \(error)")
+            }
+        }
     }
     
     @objc private func quit() {}
