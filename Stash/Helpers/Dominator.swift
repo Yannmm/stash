@@ -88,10 +88,10 @@ class Dominator {
         return fallbackURL.host ?? fallbackURL.absoluteString
     }
     
-    private func parseDT(_ dt: Element) throws -> Any? {
+    private func parseDT(_ dt: Element) throws -> Result? {
         let h3s = try dt.select("> h3")
         
-        var items = [String]()
+        var items = [[String : String]]()
         var children = [String: Any]()
         if h3s.count > 0 {
             let header = try h3s.first()!.text()
@@ -101,40 +101,38 @@ class Dominator {
                 .compactMap({ $0 })
                 .forEach { result in
                     switch result {
-                    case let r as String:
+                    case .item(let item):
                         // single element
-                        items.append(r)
-                    case let r as [String: Any]:
-                        children.merge(r, uniquingKeysWith: { _, new in new })
-                    default:
-                        print("impossible to happen")
+                        items.append(item)
+                    case .child(let child):
+                        children.merge(child, uniquingKeysWith: { _, new in new })
                     }
                 }
             children["items"] = items
-            return [header: children]
+            return .child([header: children])
         } else {
             let a = try dt.select("> a")
-            let text = try a.text()
-            return text
+            let name = try a.text()
+            let url = try a.attr("href")
+            return .item(["name": name, "url": url])
         }
     }
     
     
     private func wrapper(_ dts: Elements) throws -> Any {
-        var result = [String: Any]()
-        
+        var collector = [String: Any]()
         try dts.map({ try parseDT($0) })
             .compactMap({ $0 })
-            .forEach({ xxx in
-            if let map = xxx as? [String: Any] {
-                result.merge(map, uniquingKeysWith: { _, new in new })
-            } else {
-                // TODO?
-                print(3333)
-            }
+            .forEach({ result in
+                switch result {
+                case .item(let item):
+                    // single element
+                    print("impossible to reach")
+                case .child(let child):
+                    collector.merge(child, uniquingKeysWith: { _, new in new })
+                }
         })
-        
-        return result
+        return collector
     }
     
     
@@ -158,5 +156,10 @@ class Dominator {
         
         
         
+    }
+    
+    enum Result {
+        case item([String: String])
+        case child([String: Any])
     }
 }
