@@ -88,11 +88,10 @@ class Dominator {
         return fallbackURL.host ?? fallbackURL.absoluteString
     }
     
-    private func parseDT(_ dt: Element) throws -> Result? {
+    private func parseDT(_ dt: Element) throws -> Any? {
         let h3s = try dt.select("> h3")
         
-        var items = [[String : String]]()
-        var children = [String: Any]()
+        var children = [Any]()
         if h3s.count > 0 {
             let header = try h3s.first()!.text()
             guard let dl = try dt.select("> dl").first() else { return nil }
@@ -100,37 +99,32 @@ class Dominator {
             try dts.map({ try parseDT($0) })
                 .compactMap({ $0 })
                 .forEach { result in
-                    switch result {
-                    case .item(let item):
-                        // single element
-                        items.append(item)
-                    case .child(let child):
-                        children.merge(child, uniquingKeysWith: { _, new in new })
-                    }
+                    children.append(result)
                 }
-            children["items"] = items
-            return .child([header: children])
+            return [
+                "name": header,
+                "type": "directory",
+                "children": children
+            ] as [String : Any]
         } else {
             let a = try dt.select("> a")
             let name = try a.text()
             let url = try a.attr("href")
-            return .item(["name": name, "url": url])
+            return [
+                "name": name,
+                "type": "bookmark",
+                "url": url,
+            ]
         }
     }
     
     
-    private func wrapper(_ dts: Elements) throws -> Any {
-        var collector = [String: Any]()
+    private func wrapper(_ dts: Elements) throws -> [Any] {
+        var collector = [Any]()
         try dts.map({ try parseDT($0) })
             .compactMap({ $0 })
             .forEach({ result in
-                switch result {
-                case .item(let item):
-                    // single element
-                    print("impossible to reach")
-                case .child(let child):
-                    collector.merge(child, uniquingKeysWith: { _, new in new })
-                }
+                collector.append(result)
         })
         return collector
     }
@@ -144,18 +138,24 @@ class Dominator {
         
         print(allElements.count)
         
-        //        let dt = allElements.first()!
-        //        let xx = try parseDT(dt)
+//                let dt = allElements.first()!
+//                let xx = try parseDT(dt)
         
         
         let xx = try wrapper(allElements)
         
-        print(xx)
+        let pretty = try JSONSerialization.data(
+            withJSONObject: xx,
+            options: [.prettyPrinted, .withoutEscapingSlashes])
         
+        let string = String(data: pretty, encoding: .utf8)
+        print(string)
         
-        
-        
-        
+        if let documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first {
+            let aa = documentsURL.appendingPathComponent("xxx.json")
+            print(123)
+            try string!.write(to: aa, atomically: true, encoding: .utf8)
+        }
     }
     
     enum Result {
