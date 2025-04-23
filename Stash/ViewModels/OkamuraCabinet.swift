@@ -7,6 +7,7 @@
 
 import Foundation
 import AppKit
+import UniformTypeIdentifiers
 
 class OkamuraCabinet: ObservableObject {
     @Published var entries: [any Entry] = [] {
@@ -149,28 +150,35 @@ class OkamuraCabinet: ObservableObject {
         }
     }
     
-    func iiiimport() {
-        import UniformTypeIdentifiers
-        
-        // check MIME type
-        if let type = try? fileURL.resourceValues(forKeys: [.contentTypeKey]).contentType {
+    func checkImportFileType(from filePath: URL) throws -> ImportFileType {
+        // 1. check mime type
+        if let type = try filePath.resourceValues(forKeys: [.contentTypeKey]).contentType {
             if type.conforms(to: .json) {
-                print("This is a JSON file.")
+                return .json
             } else if type.conforms(to: .html) {
-                print("This is an HTML file.")
+                return .html
             } else {
-                print("Unknown or unsupported file type.")
+                return .unsupported
             }
         }
         
-        // check file content
-        let content = try String(contentsOf: fileURL)
-
+        // 2. check file content
+        let content = try String(contentsOf: filePath)
         if content.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{") {
-            print("Likely a JSON file.")
+            return .json
         } else if content.contains("<html") || content.contains("<!DOCTYPE html") {
-            print("Likely an HTML file.")
+            return .html
+        } else {
+            return .unsupported
         }
+    }
+    
+//    throw SomeError.Parse.unsupportedFileType(type)
+    
+    enum ImportFileType {
+        case json
+        case html
+        case unsupported
     }
 }
 
@@ -197,5 +205,10 @@ extension OkamuraCabinet {
             case missingFilePath
             case invalidJSON
         }
+        
+        enum Parse: Error {
+            case unsupportedFileType(UTType)
+        }
     }
+    
 }
