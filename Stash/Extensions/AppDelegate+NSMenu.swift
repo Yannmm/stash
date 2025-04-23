@@ -58,7 +58,7 @@ extension AppDelegate {
             
             let children = entry.children(among: entries)
             if !children.isEmpty {
-                let submenu = g(entries: children, parentId: entry.id)
+                let submenu = g(entries: entries, parentId: entry.id)
                 item.submenu = submenu
             }
             menu.addItem(item)
