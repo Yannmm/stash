@@ -30,6 +30,7 @@ extension AppDelegate {
         return menu
     }
     
+    // TODO: shortcut
     private func g(entries: [any Entry], parentId: UUID?) -> NSMenu {
         let menu = NSMenu()
         menu.delegate = self
