@@ -165,7 +165,11 @@ extension Dominator {
 }
 
 extension Dominator {
-    func test2() throws {
+    func generate(_ json: Any) throws -> String {
+        guard let j = json as? [[String: Any]] else {
+            throw SomeError.Construct.invalidJSON
+        }
+        
         // Create elements
         let html = Document.init("this is a document")
         let head = Element(Tag("head"), "")
@@ -173,26 +177,25 @@ extension Dominator {
         try head.appendChild(title)
         
         let body = Element(Tag("body"), "")
-        let h1 = try Element(Tag("h1"), "").text("Hello, world!")
-        let p = try Element(Tag("p"), "").text("This HTML was built using SwiftSoup.")
-        
-        try body.appendChild(h1)
-        try body.appendChild(p)
         
         // Append head and body to html
         try html.appendChild(head)
         try html.appendChild(body)
         
+        
+        try j.map({ try constrcutDT($0) })
+            .compactMap({ $0 })
+            .forEach({ try body.appendChild($0) })
+        
+        
+        
         // Get HTML as string
         let htmlString =  try html.outerHtml()
         
-        // Write to file
-        let path = FileManager.default.currentDirectoryPath + "/output.html"
-        try htmlString.write(toFile: path, atomically: true, encoding: .utf8)
-        print("HTML written to \(path)")
+        return htmlString
     }
     
-    private func generateDT(_ json: [String: Any]) throws -> Element? {
+    private func constrcutDT(_ json: [String: Any]) throws -> Element? {
         
         guard let type = json["type"] as? String else { return nil }
         
@@ -201,11 +204,12 @@ extension Dominator {
             let dt = Element(Tag("dt"), "")
             let name = json["name"] as? String ?? ""
             let href = json["url"] as? String ?? ""
-            let a = try Element(Tag("dt"), "")
+            let a = try Element(Tag("a"), "")
                 .text(name)
                 .attr("href", href)
+            try dt.appendChild(a)
             return dt
-        case "group":
+        case "directory":
             let dt = Element(Tag("dt"), "")
             
             let name = json["name"] as? String ?? ""
@@ -217,7 +221,7 @@ extension Dominator {
             try dt.appendChild(dl)
             
             if let children = json["children"] as? [[String: Any]] {
-               try children.map({ try generateDT($0) })
+                try children.map({ try constrcutDT($0) })
                     .compactMap({ $0 })
                     .forEach({ try dl.appendChild($0) })
             }
@@ -240,6 +244,7 @@ extension Dominator {
         
         enum Construct: Error, LocalizedError {
             case unexpectedType(String)
+            case invalidJSON
         }
     }
 }

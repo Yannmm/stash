@@ -126,7 +126,7 @@ class OkamuraCabinet: ObservableObject {
     
     func export(to directoryPath: URL) throws -> URL {
         let data = try JSONEncoder().encode(entries.asAnyEntries)
-        let filePath = directoryPath.appendingPathComponent("stash.json")
+        let filePath = directoryPath.appendingPathComponent("stash.html")
         try saveToDisk(data: data, filePath: filePath)
         return filePath
     }
@@ -184,16 +184,21 @@ extension OkamuraCabinet {
 fileprivate extension OkamuraCabinet {
     func saveToDisk(data: Data, filePath: URL) throws {
         let json = try JSONSerialization.jsonObject(with: data)
-        let pretty = try JSONSerialization.data(
-            withJSONObject: json,
-            options: [.prettyPrinted, .withoutEscapingSlashes])
         
-        guard let string = String(data: pretty, encoding: .utf8) else {
-            throw SomeError.Save.invalidJSON
-        }
+        let d = Dominator()
         
-        print("save to path --> \(filePath.absoluteString)")
+        let string = try d.generate(json)
         
+//        let pretty = try JSONSerialization.data(
+//            withJSONObject: json,
+//            options: [.prettyPrinted, .withoutEscapingSlashes])
+//        
+//        guard let string = String(data: pretty, encoding: .utf8) else {
+//            throw SomeError.Save.invalidJSON
+//        }
+//        
+//        print("save to path --> \(filePath.absoluteString)")
+//        
         try string.write(to: filePath, atomically: true, encoding: .utf8)
     }
 }
