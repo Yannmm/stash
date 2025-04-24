@@ -130,27 +130,34 @@ class OkamuraCabinet: ObservableObject {
         try saveToDisk(data: data, filePath: filePath)
         return filePath
     }
+}
+
+extension OkamuraCabinet {
+    enum ImportFileType {
+        case json
+        case html
+        case unsupported
+    }
     
     func `import`(from filePath: URL) throws {
-        do {
-            let data = try Data(contentsOf: filePath)
-            importFromData(data)
-        } catch {
-            print("something wrong happended: \(error)")
+        var data: Data!
+        switch try checkImportFileType(filePath) {
+        case .json:
+            data = try Data(contentsOf: filePath)
+        case .html:
+            let htmlString = try String(contentsOf: filePath, encoding: .utf8)
+            let dominator = Dominator()
+            data = try dominator.parseBookmarkFile(htmlString)
+        case .unsupported:
+            throw SomeError.Parse.unsupportedFileType
         }
+        
+        let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
+        self.entries = anyEntries.asEntries
+        save()
     }
     
-    func importFromData(_ data: Data) {
-        do {
-            let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
-            self.entries = anyEntries.asEntries
-            save()
-        } catch {
-            print("something wrong happended: \(error)")
-        }
-    }
-    
-    func checkImportFileType(from filePath: URL) throws -> ImportFileType {
+    private func checkImportFileType(_ filePath: URL) throws -> ImportFileType {
         // 1. check mime type
         if let type = try filePath.resourceValues(forKeys: [.contentTypeKey]).contentType {
             if type.conforms(to: .json) {
@@ -171,14 +178,6 @@ class OkamuraCabinet: ObservableObject {
         } else {
             return .unsupported
         }
-    }
-    
-//    throw SomeError.Parse.unsupportedFileType(type)
-    
-    enum ImportFileType {
-        case json
-        case html
-        case unsupported
     }
 }
 
@@ -206,8 +205,15 @@ extension OkamuraCabinet {
             case invalidJSON
         }
         
-        enum Parse: Error {
-            case unsupportedFileType(UTType)
+        enum Parse: Error, LocalizedError {
+            case unsupportedFileType
+            
+            var errorDescription: String? {
+                switch self {
+                case .unsupportedFileType:
+                    return "Unsupported File Type: Only Netscape Bookmark File format is supported."
+                }
+            }
         }
     }
     

@@ -7,8 +7,9 @@ struct SettingsView: View {
     @State var shortcut: (Key, NSEvent.ModifierFlags)
     @State var importFilePath: URL?
     @State var exportFilePath: URL?
+    @State var error: Error?
     
-    let onSelectImportFile: (URL) -> Void
+    let onSelectImportFile: (URL) throws -> Void
     let onSelectExportDestination: (URL) throws -> URL
     let onReset: () -> Void
     let onChangeDockIcon: (Bool) -> Void
@@ -87,12 +88,16 @@ struct SettingsView: View {
                         panel.canChooseDirectories = false
                         panel.canCreateDirectories = false
                         panel.canChooseFiles = true
-                        panel.allowedContentTypes = [.json]
+                        panel.allowedContentTypes = [.html, .json]
                         
                         panel.begin { response in
                             guard response == .OK, let url = panel.url else { return }
-                            importFilePath = url
-                            onSelectImportFile(url)
+                            do {
+                                try onSelectImportFile(url)
+                                importFilePath = url
+                            } catch {
+                                self.error = error
+                            }
                         }
                     }
                     .buttonStyle(.bordered)
@@ -178,6 +183,14 @@ struct SettingsView: View {
         }
         .onChange(of: dockIcon) { _, flag in
             onChangeDockIcon(flag)
+        }
+        .alert("Error", isPresented: Binding(
+            get: { error != nil },
+            set: { x in }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(error?.localizedDescription ?? "")
         }
     }
 }

@@ -66,7 +66,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func setupSettingsWindow() {
         let hostingView = NSHostingView(rootView: SettingsView(shortcut: hotKeyMananger.shortcut,
-                                                               onSelectImportFile: { [unowned self] in self.cabinet.import(from: $0) },
+                                                               onSelectImportFile: { [unowned self] in try self.cabinet.import(from: $0) },
                                                                onSelectExportDestination: { [unowned self] in try self.cabinet.export(to: $0) },
                                                                onReset: { [unowned self] in self.cabinet.removeAll() },
                                                                onChangeDockIcon: { NSApp.setActivationPolicy($0 ? .regular : .accessory) }))
@@ -83,29 +83,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func openSettings() {
-//        if settingsWindow == nil {
-//            setupSettingsWindow()
-//        }
-//        settingsWindow?.makeKeyAndOrderFront(nil)
-        
-        let panel = NSOpenPanel()
-        panel.canChooseFiles = true
-        panel.canChooseDirectories = false
-        panel.allowsMultipleSelection = false
-
-        if panel.runModal() == .OK, let url = panel.url {
-            // Now you can access the file
-            do {
-                let content = try String(contentsOf: url)
-                do {
-                    try dominator.test1(content)
-                } catch {
-                    print(error)
-                }
-            } catch {
-                print("Error reading file: \(error)")
-            }
+        if settingsWindow == nil {
+            setupSettingsWindow()
         }
+        settingsWindow?.makeKeyAndOrderFront(nil)
+        
+//        let panel = NSOpenPanel()
+//        panel.canChooseFiles = true
+//        panel.canChooseDirectories = false
+//        panel.allowsMultipleSelection = false
+//
+//        if panel.runModal() == .OK, let url = panel.url {
+//            // Now you can access the file
+//            do {
+//                let content = try String(contentsOf: url)
+//                do {
+//                    try dominator.test1(content)
+//                } catch {
+//                    print(error)
+//                }
+//            } catch {
+//                print("Error reading file: \(error)")
+//            }
+//        }
     }
     
     @objc private func quit() {}
