@@ -87,12 +87,14 @@ class Dominator {
         // Fallback to domain name
         return fallbackURL.host ?? fallbackURL.absoluteString
     }
-    
+}
+
+extension Dominator {
     /// Browser bookmarks import
     // Tested: Safari, Chrome
     func parseBookmarkFile(_ html: String) throws -> Data  {
         guard isBookmarkFile(html) else {
-            throw ParseError.invalidDoctype
+            throw SomeError.Parse.invalidDoctype
         }
         
         let document = try SwiftSoup.parse(html)
@@ -142,7 +144,7 @@ class Dominator {
             .compactMap({ $0 })
             .forEach({ result in
                 collector.append(result)
-        })
+            })
         return collector
     }
     
@@ -157,11 +159,87 @@ class Dominator {
         return false
     }
     
-    enum ParseError: Error {
-        case invalidDoctype
-    }
-    
     enum Constant {
         static let bookmarkDoctype = "netscape-bookmark-file-1"
+    }
+}
+
+extension Dominator {
+    func test2() throws {
+        // Create elements
+        let html = Document.init("this is a document")
+        let head = Element(Tag("head"), "")
+        let title = try Element(Tag("title"), "").text("My Page Title")
+        try head.appendChild(title)
+        
+        let body = Element(Tag("body"), "")
+        let h1 = try Element(Tag("h1"), "").text("Hello, world!")
+        let p = try Element(Tag("p"), "").text("This HTML was built using SwiftSoup.")
+        
+        try body.appendChild(h1)
+        try body.appendChild(p)
+        
+        // Append head and body to html
+        try html.appendChild(head)
+        try html.appendChild(body)
+        
+        // Get HTML as string
+        let htmlString =  try html.outerHtml()
+        
+        // Write to file
+        let path = FileManager.default.currentDirectoryPath + "/output.html"
+        try htmlString.write(toFile: path, atomically: true, encoding: .utf8)
+        print("HTML written to \(path)")
+    }
+    
+    private func generateDT(_ json: [String: Any]) throws -> Element? {
+        
+        guard let type = json["type"] as? String else { return nil }
+        
+        switch type {
+        case "bookmark":
+            let dt = Element(Tag("dt"), "")
+            let name = json["name"] as? String ?? ""
+            let href = json["url"] as? String ?? ""
+            let a = try Element(Tag("dt"), "")
+                .text(name)
+                .attr("href", href)
+            return dt
+        case "group":
+            let dt = Element(Tag("dt"), "")
+            
+            let name = json["name"] as? String ?? ""
+            let a = try Element(Tag("h3"), "")
+                .text(name)
+            try dt.appendChild(a)
+            
+            let dl = Element(Tag("dl"), "")
+            try dt.appendChild(dl)
+            
+            if let children = json["children"] as? [[String: Any]] {
+               try children.map({ try generateDT($0) })
+                    .compactMap({ $0 })
+                    .forEach({ try dl.appendChild($0) })
+            }
+            
+            return dt
+        default:
+            throw SomeError.Construct.unexpectedType(type)
+        }
+        
+        
+    }
+    
+}
+
+extension Dominator {
+    struct SomeError {
+        enum Parse: Error, LocalizedError {
+            case invalidDoctype
+        }
+        
+        enum Construct: Error, LocalizedError {
+            case unexpectedType(String)
+        }
     }
 }
