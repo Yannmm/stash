@@ -22,10 +22,10 @@ extension AppDelegate {
         // Append drag & drop
         menu.addItem(NSMenuItem.separator())
         let item1 = NSMenuItem(title: "Drag & Drop", action: #selector(togglePopover), keyEquivalent: "")
-        item1.keyEquivalentModifierMask = .command
-        item1.keyEquivalent = "D"
+        item1.keyEquivalentModifierMask = [.command, .control]
+        item1.keyEquivalent = "d"
         menu.addItem(item1)
-                
+        
         menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ","))
         return menu
     }
@@ -34,14 +34,14 @@ extension AppDelegate {
     private func g(entries: [any Entry], parentId: UUID?) -> NSMenu {
         let menu = NSMenu()
         menu.delegate = self
-        var index = 1
+//        var index = 0
         for entry in entries.filter({ $0.parentId == parentId }) {
             let actionable = entry is Actionable
             let item = CustomMenuItem(title: entry.name, action: actionable ? #selector(action(_:)) : nil, keyEquivalent: "", with: entry)
             if actionable {
                 item.keyEquivalentModifierMask = []
-                item.keyEquivalent = "\(index)"
-                index += 1
+//                item.keyEquivalent = alphanumberics[index]
+//                index += 1
             }
             
             switch entry.icon {
@@ -71,11 +71,11 @@ extension AppDelegate {
         // 1. Create proper URL
         if let url = url {
             // 2. Configure proper size
-//            let processor = ResizingImageProcessor(referenceSize: CGSize(width: 32, height: 32), mode: .aspectFit)
+            //            let processor = ResizingImageProcessor(referenceSize: CGSize(width: 32, height: 32), mode: .aspectFit)
             
             // 3. Use proper Kingfisher options
             let options: KingfisherOptionsInfo = [
-//                .processor(processor),
+                //                .processor(processor),
                 .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2),
                 .cacheOriginalImage
             ]
@@ -106,6 +106,18 @@ extension AppDelegate {
     }
 }
 
+fileprivate extension AppDelegate {
+    
+    var leftyKeystrokes: [String] {
+        [
+            "1", "2", "3", "4", "5",
+            "q", "w", "e", "r", "t",
+            "a", "s", "d", "f", "g",
+            "z", "x", "c", "v", "b",
+        ]
+    }
+}
+
 
 extension AppDelegate: NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
@@ -113,10 +125,10 @@ extension AppDelegate: NSMenuDelegate {
         
         for item in menu.items {
             if modifierFlags.contains(.option) {
-//                item.title = "Alternative Action"
+                //                item.title = "Alternative Action"
                 print("ooooptions")
             } else {
-//                item.title = "Default Action"
+                //                item.title = "Default Action"
                 print("default, no option")
             }
         }

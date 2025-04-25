@@ -133,51 +133,14 @@ class OkamuraCabinet: ObservableObject {
 }
 
 extension OkamuraCabinet {
-    enum ImportFileType {
-        case json
-        case html
-        case unsupported
-    }
-    
     func `import`(from filePath: URL) throws {
-        var data: Data!
-        switch try checkImportFileType(filePath) {
-        case .json:
-            data = try Data(contentsOf: filePath)
-        case .html:
-            let htmlString = try String(contentsOf: filePath, encoding: .utf8)
-            let dominator = Dominator()
-            data = try dominator.decompose(htmlString)
-        case .unsupported:
-            throw SomeError.Parse.unsupportedFileType
-        }
+        let htmlString = try String(contentsOf: filePath, encoding: .utf8)
+        let dominator = Dominator()
+        let data = try dominator.decompose(htmlString)
         
         let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
         self.entries = anyEntries.asEntries
         save()
-    }
-    
-    private func checkImportFileType(_ filePath: URL) throws -> ImportFileType {
-        // 1. check mime type
-        if let type = try filePath.resourceValues(forKeys: [.contentTypeKey]).contentType {
-            if type.conforms(to: .json) {
-                return .json
-            } else if type.conforms(to: .html) {
-                return .html
-            } else {
-                return .unsupported
-            }
-        }
-        
-        // 2. check file content
-        let content = try String(contentsOf: filePath)
-        if content.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("{") {
-            return .json
-        } else if content.contains("<html") || content.contains("<!DOCTYPE html") {
-            return .html
-        } else {
-            return .unsupported
-        }
     }
 }
 
