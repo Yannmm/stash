@@ -149,18 +149,11 @@ extension Dominator {
     }
     
     private func isBookmarkFile(_ html: String) -> Bool {
-        if let match = html.range(of: #"(?i)<!DOCTYPE\s+([^\s>]+)"#, options: .regularExpression) {
-            let components = html[match].split(separator: " ")
-            if components.count > 1 {
-                let doctype = components[1].lowercased()
-                return doctype == Constant.bookmarkDoctype
-            }
+        if let range = html.range(of: #"(?i)<!DOCTYPE\s+NETSCAPE-Bookmark-file-1>"#, options: .regularExpression) {
+            let doctype = html[range].lowercased()
+            return doctype.caseInsensitiveCompare(Constant.bookmarkDoctype) == .orderedSame
         }
         return false
-    }
-    
-    enum Constant {
-        static let bookmarkDoctype = "netscape-bookmark-file-1"
     }
 }
 
@@ -193,7 +186,7 @@ extension Dominator {
         // Get HTML as string
         let htmlString =  try html.outerHtml()
         
-        return htmlString
+        return Constant.bookmarkDoctype + "\n" + htmlString
     }
     
     private func composeDT(_ json: [String: Any]) throws -> Element? {
@@ -231,10 +224,7 @@ extension Dominator {
         default:
             throw SomeError.Compose.unexpectedType(type)
         }
-        
-        
     }
-    
 }
 
 extension Dominator {
@@ -247,5 +237,9 @@ extension Dominator {
             case unexpectedType(String)
             case invalidJSON
         }
+    }
+    
+    enum Constant {
+        static let bookmarkDoctype = "<!DOCTYPE netscape-bookmark-file-1>"
     }
 }

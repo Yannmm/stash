@@ -88,7 +88,7 @@ struct SettingsView: View {
                         panel.canChooseDirectories = false
                         panel.canCreateDirectories = false
                         panel.canChooseFiles = true
-                        panel.allowedContentTypes = [.html, .json]
+                        panel.allowedContentTypes = [.html]
                         
                         panel.begin { response in
                             guard response == .OK, let url = panel.url else { return }
