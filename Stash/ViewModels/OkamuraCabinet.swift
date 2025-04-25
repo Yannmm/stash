@@ -124,11 +124,12 @@ class OkamuraCabinet: ObservableObject {
         save()
     }
     
-    func export(to directoryPath: URL) throws -> URL {
-        let data = try JSONEncoder().encode(entries.asAnyEntries)
-        let filePath = directoryPath.appendingPathComponent("stash.html")
-        try saveToDisk(data: data, filePath: filePath)
-        return filePath
+    // Recently
+    
+    var recency: [Bookmark] = []
+    
+    func asRecent(_ bookmark: Bookmark) {
+        recency.insert(bookmark, at: 0)
     }
 }
 
@@ -141,6 +142,13 @@ extension OkamuraCabinet {
         let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
         self.entries = anyEntries.asEntries
         save()
+    }
+    
+    func export(to directoryPath: URL) throws -> URL {
+        let data = try JSONEncoder().encode(entries.asAnyEntries)
+        let filePath = directoryPath.appendingPathComponent("stash.html")
+        try saveToDisk(data: data, filePath: filePath)
+        return filePath
     }
 }
 

@@ -102,6 +102,9 @@ extension AppDelegate {
     }
     
     @objc private func action(_ sender: CustomMenuItem) {
+        if let b = sender.object as? Bookmark {
+            cabinet.asRecent(b)
+        }
         (sender.object as? Actionable)?.open()
     }
 }
