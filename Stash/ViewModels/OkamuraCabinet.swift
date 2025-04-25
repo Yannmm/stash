@@ -147,7 +147,7 @@ extension OkamuraCabinet {
         case .html:
             let htmlString = try String(contentsOf: filePath, encoding: .utf8)
             let dominator = Dominator()
-            data = try dominator.parseBookmarkFile(htmlString)
+            data = try dominator.decompose(htmlString)
         case .unsupported:
             throw SomeError.Parse.unsupportedFileType
         }
@@ -187,18 +187,8 @@ fileprivate extension OkamuraCabinet {
         
         let d = Dominator()
         
-        let string = try d.generate(json)
-        
-//        let pretty = try JSONSerialization.data(
-//            withJSONObject: json,
-//            options: [.prettyPrinted, .withoutEscapingSlashes])
-//        
-//        guard let string = String(data: pretty, encoding: .utf8) else {
-//            throw SomeError.Save.invalidJSON
-//        }
-//        
-//        print("save to path --> \(filePath.absoluteString)")
-//        
+        let string = try d.compose(json)
+          
         try string.write(to: filePath, atomically: true, encoding: .utf8)
     }
 }

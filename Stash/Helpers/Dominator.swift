@@ -92,15 +92,15 @@ class Dominator {
 extension Dominator {
     /// Browser bookmarks import
     // Tested: Safari, Chrome
-    func parseBookmarkFile(_ html: String) throws -> Data  {
+    func decompose(_ html: String) throws -> Data  {
         guard isBookmarkFile(html) else {
-            throw SomeError.Parse.invalidDoctype
+            throw SomeError.Decompose.invalidDoctype
         }
         
         let document = try SwiftSoup.parse(html)
         let allElements: Elements = try document.select("body > dt")
         
-        let json = try wrapper(allElements)
+        let json = try collect(allElements)
         let pretty = try JSONSerialization.data(
             withJSONObject: json,
             options: [.prettyPrinted, .withoutEscapingSlashes])
@@ -108,7 +108,7 @@ extension Dominator {
         return pretty
     }
     
-    private func parseDT(_ dt: Element) throws -> Any? {
+    private func decomposeDT(_ dt: Element) throws -> Any? {
         let h3s = try dt.select("> h3")
         
         var children = [Any]()
@@ -116,7 +116,7 @@ extension Dominator {
             let header = try h3s.first()!.text()
             guard let dl = try dt.select("> dl").first() else { return nil }
             let dts = try dl.select("> dt")
-            try dts.map({ try parseDT($0) })
+            try dts.map({ try decomposeDT($0) })
                 .compactMap({ $0 })
                 .forEach { result in
                     children.append(result)
@@ -138,9 +138,9 @@ extension Dominator {
         }
     }
     
-    private func wrapper(_ dts: Elements) throws -> [Any] {
+    private func collect(_ dts: Elements) throws -> [Any] {
         var collector = [Any]()
-        try dts.map({ try parseDT($0) })
+        try dts.map({ try decomposeDT($0) })
             .compactMap({ $0 })
             .forEach({ result in
                 collector.append(result)
@@ -165,29 +165,30 @@ extension Dominator {
 }
 
 extension Dominator {
-    func generate(_ json: Any) throws -> String {
+    func compose(_ json: Any) throws -> String {
         guard let j = json as? [[String: Any]] else {
-            throw SomeError.Construct.invalidJSON
+            throw SomeError.Compose.invalidJSON
         }
         
         // Create elements
-        let html = Document.init("this is a document")
+        let html = Document.init("")
+        
         let head = Element(Tag("head"), "")
-        let title = try Element(Tag("title"), "").text("My Page Title")
+        let meta = try Element(Tag("meta"), "")
+            .attr("http-equiv", "Content-Type")
+            .attr("content", "text/html; charset=UTF-8")
+        try head.appendChild(meta)
+        let title = try Element(Tag("title"), "").text("Bookmarks")
         try head.appendChild(title)
         
         let body = Element(Tag("body"), "")
         
-        // Append head and body to html
         try html.appendChild(head)
         try html.appendChild(body)
         
-        
-        try j.map({ try constrcutDT($0) })
+        try j.map({ try composeDT($0) })
             .compactMap({ $0 })
             .forEach({ try body.appendChild($0) })
-        
-        
         
         // Get HTML as string
         let htmlString =  try html.outerHtml()
@@ -195,7 +196,7 @@ extension Dominator {
         return htmlString
     }
     
-    private func constrcutDT(_ json: [String: Any]) throws -> Element? {
+    private func composeDT(_ json: [String: Any]) throws -> Element? {
         
         guard let type = json["type"] as? String else { return nil }
         
@@ -221,14 +222,14 @@ extension Dominator {
             try dt.appendChild(dl)
             
             if let children = json["children"] as? [[String: Any]] {
-                try children.map({ try constrcutDT($0) })
+                try children.map({ try composeDT($0) })
                     .compactMap({ $0 })
                     .forEach({ try dl.appendChild($0) })
             }
             
             return dt
         default:
-            throw SomeError.Construct.unexpectedType(type)
+            throw SomeError.Compose.unexpectedType(type)
         }
         
         
@@ -238,11 +239,11 @@ extension Dominator {
 
 extension Dominator {
     struct SomeError {
-        enum Parse: Error, LocalizedError {
+        enum Decompose: Error, LocalizedError {
             case invalidDoctype
         }
         
-        enum Construct: Error, LocalizedError {
+        enum Compose: Error, LocalizedError {
             case unexpectedType(String)
             case invalidJSON
         }
