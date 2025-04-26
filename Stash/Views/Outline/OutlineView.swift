@@ -243,7 +243,8 @@ extension OutlineView {
             // TODO: copy entries and assign back to parent
             
             DispatchQueue.global().async { [weak self] in
-                self?.parent.cabinet.save()
+                // TODO: handle error
+                try? self?.parent.cabinet.save()
             }
             
             return true

@@ -11,7 +11,7 @@ struct SettingsView: View {
     
     let onSelectImportFile: (URL) throws -> Void
     let onSelectExportDestination: (URL) throws -> URL
-    let onReset: () -> Void
+    let onReset: () throws -> Void
     let onChangeDockIcon: (Bool) -> Void
  
     var importDescription: AttributedString {
@@ -139,7 +139,11 @@ struct SettingsView: View {
                     .alert("Sure to Reset?", isPresented: $resetAlert) {
                         Button("Cancel", role: .cancel) { }
                         Button("Confirm", role: .destructive) {
-                            onReset()
+                            do {
+                                try onReset()
+                            } catch {
+                                self.error = error
+                            }
                         }
                     } message: {
                         Text("This action cannot be undone. All your data will be permanently deleted.")

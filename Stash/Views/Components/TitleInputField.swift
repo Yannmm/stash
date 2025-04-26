@@ -12,6 +12,7 @@ struct TitleInputField: View {
     @State private var disabled: Bool = true
     @Environment(\.dismiss) var dismiss
     @StateObject var viewModel: CraftViewModel
+    @State private var error: Error?
     
     var body: some View {
         VStack(spacing: 4) {
@@ -62,9 +63,21 @@ struct TitleInputField: View {
             }
         }
         .onSubmit {
-            viewModel.save()
+            do {
+                try viewModel.save()
+            } catch {
+                self.error = error
+            }
             dismiss()
         }
+        .alert("Error", isPresented: Binding(
+                    get: { error != nil },
+                    set: { x in }
+                )) {
+                    Button("OK", role: .cancel) {}
+                } message: {
+                    Text(error?.localizedDescription ?? "")
+                }
     }
 }
 

@@ -73,9 +73,9 @@ class CraftViewModel: ObservableObject {
         async let _ = try updateImage(path)
     }
     
-    func save() {
+    func save() throws {
         let b = Bookmark(id: UUID(), name: title!, url: url!)
-        cabinet.relocate(entry: b, anchorId: anchorId)
+        try cabinet.relocate(entry: b, anchorId: anchorId)
     }
     
 

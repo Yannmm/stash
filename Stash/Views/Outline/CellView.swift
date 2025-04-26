@@ -22,7 +22,7 @@ class CellViewModel: ObservableObject {
         self.title = entry?.name ?? ""
     }
     
-    func update() {
+    func update() throws {
         guard var e = entry else { return }
         guard e.name != title else { return }
         guard !title.trim().isEmpty else {
@@ -30,7 +30,7 @@ class CellViewModel: ObservableObject {
             return
         }
         e.name = title
-        cabinet.update(entry: e)
+        try cabinet.update(entry: e)
     }
 }
 
@@ -54,6 +54,7 @@ struct CellContent: View {
     @State private var hovered: Bool = false
     
     @State private var expanded: Bool
+    @State private var error: Error?
     
     var shouldShowDelete: Bool {
         return hovered && !expanded
@@ -133,7 +134,11 @@ struct CellContent: View {
                 .padding(.vertical, 4)
                 .onChange(of: focused) { oldValue, newValue in
                     guard newValue != oldValue, !newValue else { return }
-                    viewModel.update()
+                    do {
+                        try viewModel.update()
+                    } catch {
+                        self.error = error
+                    }
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .onDoubleTapRowView)) { noti in
                     let entry = noti.object as? any Entry
@@ -182,7 +187,11 @@ struct CellContent: View {
                     if shouldShowDelete {
                         Button(action: {
                             guard let e = viewModel.entry else { return }
-                            cabinet.delete(entry: e)
+                            do {
+                                try cabinet.delete(entry: e)
+                            } catch {
+                                self.error = error
+                            }
                         }) {
                             Image(systemName: "minus.circle.fill")
                                 .resizable()
@@ -231,6 +240,14 @@ struct CellContent: View {
             }
         }
         .padding(.vertical, 10)
+        .alert("Error", isPresented: Binding(
+            get: { error != nil },
+            set: { x in }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(error?.localizedDescription ?? "")
+        }
     }
     
     var path: AttributedString? {

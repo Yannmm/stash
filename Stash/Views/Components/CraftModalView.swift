@@ -13,6 +13,7 @@ struct CraftModalView: View {
     @State private var errorMessage: String?
     @StateObject private var viewModel = CraftViewModel()
     @EnvironmentObject var cabinet: OkamuraCabinet
+    @State private var error: Error?
     
     @Binding var anchorId: UUID?
     
@@ -30,7 +31,11 @@ struct CraftModalView: View {
                 }
                 
                 Button("Save") {
-                    viewModel.save()
+                    do {
+                        try viewModel.save()
+                    } catch {
+                        self.error = error
+                    }
                     dismiss()
                 }
                 .foregroundColor(.accentColor)
@@ -51,6 +56,14 @@ struct CraftModalView: View {
         .onAppear {
             viewModel.cabinet = cabinet
             viewModel.anchorId = anchorId
+        }
+        .alert("Error", isPresented: Binding(
+            get: { error != nil },
+            set: { x in }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(error?.localizedDescription ?? "")
         }
     }
 }

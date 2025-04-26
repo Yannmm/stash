@@ -10,10 +10,24 @@ import AppKit
 import UniformTypeIdentifiers
 
 class OkamuraCabinet: ObservableObject {
-    @Published var entries: [any Entry] = [] {
+    
+    // TODO: replace entries with storedEntries in other files.
+    @Published private(set) var entries: [any Entry] = []
+    
+    @Published var storedEntries: [any Entry] = [] {
         didSet {
-            print("11111")
+            updateEntries()
         }
+    }
+    
+    private var recentEntries: [Bookmark] = [] {
+        didSet {
+            updateEntries()
+        }
+    }
+    
+    private func updateEntries() {
+        entries = recentEntries + storedEntries
     }
     
     static let shared = OkamuraCabinet()
@@ -24,81 +38,66 @@ class OkamuraCabinet: ObservableObject {
         }
     }
     
-    func update(entry: any Entry) {
-        if let index = entries.firstIndex(where: { $0.id == entry.id }) {
-            entries[index] = entry
-        } else {
-            print("you cannot update an entry that is not in entries.")
+    func update(entry: any Entry) throws {
+        if let index = storedEntries.firstIndex(where: { $0.id == entry.id }) {
+            storedEntries[index] = entry
+            try save()
         }
-        save()
     }
     
-    func relocate(entry: any Entry, anchorId: UUID?) {
-        if let index = entries.firstIndex(where: { $0.id == entry.id }) {
-            entries.remove(at: index)
+    func relocate(entry: any Entry, anchorId: UUID?) throws {
+        if let index = storedEntries.firstIndex(where: { $0.id == entry.id }) {
+            storedEntries.remove(at: index)
         }
         
-        if let aid = anchorId, let index = entries.firstIndex(where: { $0.id == aid }) {
-            let anchor = entries[index]
+        if let aid = anchorId, let index = storedEntries.firstIndex(where: { $0.id == aid }) {
+            let anchor = storedEntries[index]
             var copy = entry
             copy.parentId = anchor.location
-            entries.insert(copy, at: index)
+            storedEntries.insert(copy, at: index)
         } else {
-            entries.append(entry)
+            storedEntries.append(entry)
         }
-        save()
+        try save()
     }
     
-    func save() {
-        do {
-            let data = try JSONEncoder().encode(entries.asAnyEntries)
-            
-            // Save to UserDefaults
-            UserDefaults.standard.set(data, forKey: "cabinetEntries1")
-            print("Saved \(entries.count) entries")
-        } catch {
-            print("Error saving entries: \(error)")
-        }
-    }
-    
-    func delete(entry: any Entry) {
-        guard let index = entries.firstIndex(where: { $0.id == entry.id }) else { return }
-        entries.remove(at: index)
-        save()
-    }
-    
-    func load() {
-        guard let data = UserDefaults.standard.data(forKey: "cabinetEntries1") else {
-            print("No saved entries found")
-            return
-        }
+    func save() throws {
+        let data = try JSONEncoder().encode(storedEntries.asAnyEntries)
         
-        do {
-            let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
-            entries = anyEntries.asEntries
-            print("Loaded \(entries.count) entries")
-        } catch {
-            print("Error loading entries: \(error)")
-        }
+        // TODO: save to app documents
+        // Save to UserDefaults
+        UserDefaults.standard.set(data, forKey: "cabinetEntries1")
+    }
+    
+    func delete(entry: any Entry) throws {
+        guard let index = storedEntries.firstIndex(where: { $0.id == entry.id }) else { return }
+        storedEntries.remove(at: index)
+        try save()
+    }
+    
+    func load() throws {
+        guard let data = UserDefaults.standard.data(forKey: "cabinetEntries1") else { return }
+        let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
+        storedEntries = anyEntries.asEntries
     }
     
     func directoryDefaultName(anchorId: UUID?) -> String {
         var name = "Group"
         var lid: UUID?
-        if let aid = anchorId, let anchor = entries.findBy(id: aid), let location = anchor.location {
+        if let aid = anchorId, let anchor = storedEntries.findBy(id: aid), let location = anchor.location {
             lid = location
         }
         
         var existings = [String]()
         
-        if let id = lid, let entry = entries.findBy(id: id) {
+        if let id = lid, let entry = storedEntries.findBy(id: id) {
             existings = entry
-                .children(among: entries)
+                .children(among: storedEntries)
                 .map { $0 as? Group }
                 .compactMap { $0 }
                 .map { $0.name }
         } else {
-            existings = entries.toppings()
+            existings = storedEntries.toppings()
                 .map { $0 as? Group }
                 .compactMap { $0 }
                 .map { $0.name }
@@ -119,17 +118,14 @@ class OkamuraCabinet: ObservableObject {
         return name
     }
     
-    func removeAll() {
-        entries = []
-        save()
+    func removeAll() throws {
+        storedEntries = []
+        recentEntries = []
+        try save()
     }
     
-    // Recently
-    
-    var recency: [Bookmark] = []
-    
     func asRecent(_ bookmark: Bookmark) {
-        recency.insert(bookmark, at: 0)
+        recentEntries.insert(bookmark, at: 0)
     }
 }
 
@@ -140,12 +136,12 @@ extension OkamuraCabinet {
         let data = try dominator.decompose(htmlString)
         
         let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
-        self.entries = anyEntries.asEntries
-        save()
+        self.storedEntries = anyEntries.asEntries
+        try save()
     }
     
     func export(to directoryPath: URL) throws -> URL {
-        let data = try JSONEncoder().encode(entries.asAnyEntries)
+        let data = try JSONEncoder().encode(storedEntries.asAnyEntries)
         let filePath = directoryPath.appendingPathComponent("stash.html")
         try saveToDisk(data: data, filePath: filePath)
         return filePath
