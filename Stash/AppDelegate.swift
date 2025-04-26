@@ -29,7 +29,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         setupStatusItem()
         
-        cabinet.$entries
+        Publishers.CombineLatest(cabinet.$storedEntries, cabinet.$recentEntries)
             .sink { [weak self] entries in
                 self?.statusItem?.menu = self?.generateMenu(from: entries)
             }

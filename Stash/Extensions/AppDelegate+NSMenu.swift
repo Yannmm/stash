@@ -12,27 +12,32 @@ import Kingfisher
 @MainActor
 extension AppDelegate {
     
-    func generateMenu(from entries: [any Entry]) -> NSMenu {
-        let menu = g(entries: entries, parentId: nil)
+    func generateMenu(from entries: ([any Entry], [any Entry])) -> NSMenu {
+        let storedOnes = entries.0
+        let recentOnes = entries.1
         
-        return appendMore(menu: menu)
-    }
-    
-    private func appendMore(menu: NSMenu) -> NSMenu {
-        // Append drag & drop
+        let menu = NSMenu()
+        
+        if !recentOnes.isEmpty {
+            let recentTitle = NSMenuItem(title: "Recent", action: nil, keyEquivalent: "")
+            recentTitle.isEnabled = false
+            menu.addItem(recentTitle)
+            g(menu: menu, entries: recentOnes, parentId: nil)
+            menu.addItem(NSMenuItem.separator())
+        }
+        
+        g(menu: menu, entries: storedOnes, parentId: nil)
+        
         menu.addItem(NSMenuItem.separator())
-        let item1 = NSMenuItem(title: "Drag & Drop", action: #selector(togglePopover), keyEquivalent: "")
-        item1.keyEquivalentModifierMask = [.command, .control]
-        item1.keyEquivalent = "d"
-        menu.addItem(item1)
+        menu.addItem(NSMenuItem(title: "Edit", action: #selector(togglePopover), keyEquivalent: "E"))
+        menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: "S"))
         
-        menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ","))
         return menu
     }
+
     
     // TODO: shortcut
-    private func g(entries: [any Entry], parentId: UUID?) -> NSMenu {
-        let menu = NSMenu()
+    private func g(menu: NSMenu, entries: [any Entry], parentId: UUID?) {
         menu.delegate = self
 //        var index = 0
         for entry in entries.filter({ $0.parentId == parentId }) {
@@ -59,12 +64,12 @@ extension AppDelegate {
             
             let children = entry.children(among: entries)
             if !children.isEmpty {
-                let submenu = g(entries: entries, parentId: entry.id)
+                let submenu = NSMenu()
+                g(menu: submenu, entries: entries, parentId: entry.id)
                 item.submenu = submenu
             }
             menu.addItem(item)
         }
-        return menu
     }
     
     private func setFavicon(_ url: URL?, _ item: NSMenuItem) {

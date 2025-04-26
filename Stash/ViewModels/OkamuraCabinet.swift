@@ -10,25 +10,10 @@ import AppKit
 import UniformTypeIdentifiers
 
 class OkamuraCabinet: ObservableObject {
+
+    @Published var storedEntries: [any Entry] = []
     
-    // TODO: replace entries with storedEntries in other files.
-    @Published private(set) var entries: [any Entry] = []
-    
-    @Published var storedEntries: [any Entry] = [] {
-        didSet {
-            updateEntries()
-        }
-    }
-    
-    private var recentEntries: [Bookmark] = [] {
-        didSet {
-            updateEntries()
-        }
-    }
-    
-    private func updateEntries() {
-        entries = recentEntries + storedEntries
-    }
+    @Published private(set) var recentEntries: [Bookmark] = []
     
     static let shared = OkamuraCabinet()
     
@@ -125,7 +110,9 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func asRecent(_ bookmark: Bookmark) {
-        recentEntries.insert(bookmark, at: 0)
+        var b = bookmark
+        b.parentId = nil
+        recentEntries.insert(b, at: 0)
     }
 }
 
