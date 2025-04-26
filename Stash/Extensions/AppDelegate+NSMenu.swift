@@ -12,7 +12,7 @@ import Kingfisher
 @MainActor
 extension AppDelegate {
     
-    func generateMenu(from entries: ([any Entry], [any Entry])) -> NSMenu {
+    func generateMenu(from entries: ([any Entry], [(any Entry, String)])) -> NSMenu {
         let storedOnes = entries.0
         let recentOnes = entries.1
         
@@ -22,7 +22,7 @@ extension AppDelegate {
             let recentTitle = NSMenuItem(title: "Recent", action: nil, keyEquivalent: "")
             recentTitle.isEnabled = false
             menu.addItem(recentTitle)
-            g(menu: menu, entries: recentOnes, parentId: nil, keyEquivalents: leftyKeystrokes)
+            g(menu: menu, entries: recentOnes.map({ $0.0 }), parentId: nil, keyEquivalents: recentOnes.map({ $0.1 }))
             menu.addItem(NSMenuItem.separator())
         }
         

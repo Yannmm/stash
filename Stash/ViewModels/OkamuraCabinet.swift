@@ -13,7 +13,7 @@ class OkamuraCabinet: ObservableObject {
 
     @Published var storedEntries: [any Entry] = []
     
-    @Published private(set) var recentEntries: [Bookmark] = []
+    @Published private(set) var recentEntries: [(Bookmark, String)] = []
     
     static let shared = OkamuraCabinet()
     
@@ -109,16 +109,24 @@ class OkamuraCabinet: ObservableObject {
         try save()
     }
     
+    // TODO: save recentEntries
     func asRecent(_ bookmark: Bookmark) {
         var b = bookmark
         b.parentId = nil
-        guard recentEntries.firstIndex(where: { $0.id == b.id }) == nil else { return }
-        var array = recentEntries
-        array.insert(b, at: 0)
-        if array.count > leftyKeystrokes.count {
-            array = Array(array[0...(leftyKeystrokes.count - 1)])
+        guard recentEntries.firstIndex(where: { $0.0.id == b.id }) == nil else { return }
+        var copy = recentEntries
+        if (copy.count + 1) > leftyKeystrokes.count {
+            copy = Array(copy[0...(leftyKeystrokes.count - 1)])
         }
-        recentEntries = array
+        
+        let kk = Array(copy.map({ $0.1 }))
+        
+        let kk2 = leftyKeystrokes.filter { !kk.contains($0) }
+        
+        if kk2.count > 0 {
+            copy.insert((b, kk2[0]), at: 0)
+        }
+        recentEntries = copy
     }
 }
 
