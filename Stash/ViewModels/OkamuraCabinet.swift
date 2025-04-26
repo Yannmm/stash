@@ -49,9 +49,13 @@ class OkamuraCabinet: ObservableObject {
     func save() throws {
         let data = try JSONEncoder().encode(storedEntries.asAnyEntries)
         
+        let data1 = try JSONEncoder().encode(recentEntries.map({ $0.0 }).asAnyEntries)
+        
         // TODO: save to app documents
         // Save to UserDefaults
         UserDefaults.standard.set(data, forKey: "cabinetEntries1")
+        UserDefaults.standard.set(data1, forKey: "recent_entries")
+        UserDefaults.standard.set(recentEntries.map({ $0.1 }), forKey: "recent_keys")
     }
     
     func delete(entry: any Entry) throws {
@@ -64,6 +68,17 @@ class OkamuraCabinet: ObservableObject {
         guard let data = UserDefaults.standard.data(forKey: "cabinetEntries1") else { return }
         let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
         storedEntries = anyEntries.asEntries
+        
+        if let data = UserDefaults.standard.data(forKey: "recent_entries"), let keys = UserDefaults.standard.object(forKey: "recent_keys") as? [String] {
+            let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
+            var aa = [(Bookmark, String)]()
+            for (index, entry) in anyEntries.asEntries.enumerated() {
+                if let bookmark = entry as? Bookmark, index <= keys.count - 1 {
+                    aa.append((bookmark, keys[index]))
+                }
+            }
+            recentEntries = aa
+        }
     }
     
     func directoryDefaultName(anchorId: UUID?) -> String {
@@ -110,7 +125,7 @@ class OkamuraCabinet: ObservableObject {
     }
     
     // TODO: save recentEntries
-    func asRecent(_ bookmark: Bookmark) {
+    func asRecent(_ bookmark: Bookmark) throws {
         var b = bookmark
         b.parentId = nil
         guard recentEntries.firstIndex(where: { $0.0.id == b.id }) == nil else { return }
@@ -127,6 +142,8 @@ class OkamuraCabinet: ObservableObject {
             copy.insert((b, kk2[0]), at: 0)
         }
         recentEntries = copy
+        
+        try save()
     }
 }
 
