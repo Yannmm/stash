@@ -112,7 +112,13 @@ class OkamuraCabinet: ObservableObject {
     func asRecent(_ bookmark: Bookmark) {
         var b = bookmark
         b.parentId = nil
-        recentEntries.insert(b, at: 0)
+        guard recentEntries.firstIndex(where: { $0.id == b.id }) == nil else { return }
+        var array = recentEntries
+        array.insert(b, at: 0)
+        if array.count > leftyKeystrokes.count {
+            array = Array(array[0...(leftyKeystrokes.count - 1)])
+        }
+        recentEntries = array
     }
 }
 

@@ -22,11 +22,11 @@ extension AppDelegate {
             let recentTitle = NSMenuItem(title: "Recent", action: nil, keyEquivalent: "")
             recentTitle.isEnabled = false
             menu.addItem(recentTitle)
-            g(menu: menu, entries: recentOnes, parentId: nil)
+            g(menu: menu, entries: recentOnes, parentId: nil, keyEquivalents: leftyKeystrokes)
             menu.addItem(NSMenuItem.separator())
         }
         
-        g(menu: menu, entries: storedOnes, parentId: nil)
+        g(menu: menu, entries: storedOnes, parentId: nil, keyEquivalents: [])
         
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Edit", action: #selector(togglePopover), keyEquivalent: "E"))
@@ -37,16 +37,17 @@ extension AppDelegate {
 
     
     // TODO: shortcut
-    private func g(menu: NSMenu, entries: [any Entry], parentId: UUID?) {
+    private func g(menu: NSMenu, entries: [any Entry], parentId: UUID?, keyEquivalents: [String]) {
         menu.delegate = self
-//        var index = 0
-        for entry in entries.filter({ $0.parentId == parentId }) {
+
+        for (index, entry) in entries.filter({ $0.parentId == parentId }).enumerated() {
             let actionable = entry is Actionable
             let item = CustomMenuItem(title: entry.name, action: actionable ? #selector(action(_:)) : nil, keyEquivalent: "", with: entry)
             if actionable {
                 item.keyEquivalentModifierMask = []
-//                item.keyEquivalent = alphanumberics[index]
-//                index += 1
+                if index <= keyEquivalents.count - 1 {
+                    item.keyEquivalent = keyEquivalents[index]
+                }
             }
             
             switch entry.icon {
@@ -65,7 +66,7 @@ extension AppDelegate {
             let children = entry.children(among: entries)
             if !children.isEmpty {
                 let submenu = NSMenu()
-                g(menu: submenu, entries: entries, parentId: entry.id)
+                g(menu: submenu, entries: entries, parentId: entry.id, keyEquivalents: keyEquivalents)
                 item.submenu = submenu
             }
             menu.addItem(item)
@@ -114,19 +115,6 @@ extension AppDelegate {
     }
 }
 
-fileprivate extension AppDelegate {
-    
-    var leftyKeystrokes: [String] {
-        [
-            "1", "2", "3", "4", "5",
-            "q", "w", "e", "r", "t",
-            "a", "s", "d", "f", "g",
-            "z", "x", "c", "v", "b",
-        ]
-    }
-}
-
-
 extension AppDelegate: NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
         let modifierFlags = NSEvent.modifierFlags
@@ -141,4 +129,14 @@ extension AppDelegate: NSMenuDelegate {
             }
         }
     }
+}
+
+
+var leftyKeystrokes: [String] {
+    [
+        "1", "2", "3", "4", "5",
+        "q", "w", "e", "r", "t",
+        "a", "s", "d", "f", "g",
+        "z", "x", "c", "v", "b",
+    ]
 }
