@@ -11,13 +11,17 @@ class PieceSaver {
     enum Key: String {
         case hotkey
         case hokeyModifiers
+        case collapseHistory
+        case icloudSync
+        case launchOnLogin
+        case showDockIcon
     }
-    
+
     func save(for key: Key, value: Any?) {
         UserDefaults.standard.set(value, forKey: key.rawValue)
     }
     
-    func value(for key: Key) -> Any? {
-        UserDefaults.standard.value(forKey: key.rawValue)
+    func value<T>(for key: Key) -> T? {
+        UserDefaults.standard.value(forKey: key.rawValue) as? T
     }
 }

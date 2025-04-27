@@ -15,8 +15,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var dropWindow: NSWindow?
     
-    private let settingsViewModel = SettingsViewModel()
-    
+    private lazy var settingsViewModel: SettingsViewModel = {
+        let viewModel = SettingsViewModel(hotKeyManager: hotKeyMananger, cabinet: cabinet)
+        return viewModel
+    }()    
     var cabinet: OkamuraCabinet { OkamuraCabinet.shared }
     
     var hotKeyMananger: HotKeyManager { HotKeyManager.shared }
@@ -25,11 +27,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private var settingsWindow: NSWindow?
     
+    private var hotxxx: HotKey?
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
-        
-        HotKeyManager.shared.register()
-        
         setupStatusItem()
+        
+        HotKeyManager.shared.register(shortcut: settingsViewModel.shortcut)
         
         Publishers.CombineLatest3(cabinet.$storedEntries, cabinet.$recentEntries, settingsViewModel.$collapseHistory)
             .sink { [weak self] tuple3 in
@@ -42,6 +45,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 button.performClick(nil)
             }
         }
+        
+        hotKeyMananger.register(shortcut: settingsViewModel.shortcut)
     }
     
     let dominator = Dominator()
@@ -67,13 +72,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func setupSettingsWindow() {
-        let hostingView = NSHostingView(rootView: SettingsView(shortcut: hotKeyMananger.shortcut,
-                                                               viewModel: self.settingsViewModel,
-                                                               onSelectImportFile: { [unowned self] in try self.cabinet.import(from: $0) },
-                                                               onSelectExportDestination: { [unowned self] in try self.cabinet.export(to: $0) },
-                                                               onReset: { [unowned self] in try self.cabinet.removeAll() },
-                                                               onShowDockIconChange: { NSApp.setActivationPolicy($0 ? .regular : .accessory) }
-                                                              ))
+        let hostingView = NSHostingView(rootView: SettingsView(viewModel: self.settingsViewModel))
+        
         settingsWindow = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: hostingView.fittingSize.width, height: hostingView.fittingSize.height),
             styleMask: [.titled, .closable, .miniaturizable],

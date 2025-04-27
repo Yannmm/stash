@@ -2,28 +2,12 @@ import SwiftUI
 import HotKey
 
 struct SettingsView: View {
-    @State var shortcut: (Key, NSEvent.ModifierFlags)
-    @State var importFilePath: URL?
-    @State var exportFilePath: URL?
-    @State private var isRecording = false
-    
-    @State private var error: Error?
-    @State private var launchOnLogin = false
-    @State private var icloudSync = false
-    @State private var updateFrequency = UpdateFrequency.weekly
-    @State private var resetAlert = false
-    
     @StateObject var viewModel: SettingsViewModel
-    
-    let onSelectImportFile: (URL) throws -> Void
-    let onSelectExportDestination: (URL) throws -> URL
-    let onReset: () throws -> Void
-    
-    @State private var showDockIcon = true
-    let onShowDockIconChange: (Bool) -> Void
-    
+    @State private var isRecording = false
+    @State private var resetAlert = false
+    //    @State private var updateFrequency = UpdateFrequency.weekly
     var importDescription: AttributedString {
-        if let path = importFilePath?.path {
+        if let path = viewModel.importFromFile?.path {
             let tilde = (path as NSString).abbreviatingWithTildeInPath
             var a1 = AttributedString("Recently imported from: ")
             a1.foregroundColor = .secondary
@@ -35,7 +19,7 @@ struct SettingsView: View {
     }
     
     var exportDescription: AttributedString {
-        if let path = exportFilePath?.path {
+        if let path = viewModel.exportToDirectory?.path {
             let tilde = (path as NSString).abbreviatingWithTildeInPath
             var a1 = AttributedString("Recently exported to: ")
             a1.foregroundColor = .secondary
@@ -46,35 +30,19 @@ struct SettingsView: View {
         }
     }
     
-    var shortcutHash: Int {
-        let a = shortcut.0.carbonKeyCode
-        let b = shortcut.1.rawValue
-        
-        var hasher = Hasher()
-        hasher.combine(a)
-        hasher.combine(b)
-        return hasher.finalize()
-    }
-    
-    enum UpdateFrequency: String, CaseIterable {
-        case daily = "Daily"
-        case weekly = "Weekly"
-        case monthly = "Monthly"
-    }
-    
     var body: some View {
         Form {
             // General Section
             Section("General") {
-                Toggle("Launch on Login", isOn: $launchOnLogin)
-                Toggle("iCloud Sync", isOn: $icloudSync)
-                Toggle("Show Icon In Dock", isOn: $showDockIcon)
+                Toggle("Launch on Login", isOn: $viewModel.launchOnLogin)
+                Toggle("iCloud Sync", isOn: $viewModel.icloudSync)
+                Toggle("Show Icon In Dock", isOn: $viewModel.showDockIcon)
                 HStack {
                     Text("Global Shortcut")
                     Spacer()
                     KeyRecorderView(
                         isRecording: $isRecording,
-                        shortcut: $shortcut
+                        shortcut: $viewModel.shortcut
                     )
                 }
             }
@@ -110,12 +78,7 @@ struct SettingsView: View {
                         
                         panel.begin { response in
                             guard response == .OK, let url = panel.url else { return }
-                            do {
-                                try onSelectImportFile(url)
-                                importFilePath = url
-                            } catch {
-                                self.error = error
-                            }
+                            viewModel.importFromFile = url
                         }
                     }
                     .buttonStyle(.bordered)
@@ -134,11 +97,7 @@ struct SettingsView: View {
                         
                         panel.begin { response in
                             guard response == .OK, let url = panel.url else { return }
-                            do {
-                                exportFilePath = try onSelectExportDestination(url)
-                            } catch {
-                                print("save to disk failed")
-                            }
+                            viewModel.exportToDirectory = url
                         }
                     }
                     .buttonStyle(.bordered)
@@ -157,11 +116,7 @@ struct SettingsView: View {
                     .alert("Sure to Reset?", isPresented: $resetAlert) {
                         Button("Cancel", role: .cancel) { }
                         Button("Confirm", role: .destructive) {
-                            do {
-                                try onReset()
-                            } catch {
-                                self.error = error
-                            }
+                            viewModel.reset()
                         }
                     } message: {
                         Text("This action cannot be undone. All your data will be permanently deleted.")
@@ -188,7 +143,7 @@ struct SettingsView: View {
             //                    }
             //                }
             //            }
-            
+            
             // About Section
             Section("About") {
                 Link("https://github.com/Yannmm/stash", destination: URL(string: "https://github.com/Yannmm/stash")!)
@@ -197,23 +152,23 @@ struct SettingsView: View {
         }
         .navigationTitle("Stash Settings")
         .scrollIndicators(.hidden)
-        .formStyle(.grouped)
+        .formStyle(.grouped)
         .padding()
         .frame(width: 400)
-        .onChange(of: shortcutHash) {
-            HotKeyManager.shared.update(key: shortcut.0, modifiers: shortcut.1)
-        }
-        .onChange(of: showDockIcon) { _, flag in
-            onShowDockIconChange(flag)
-        }
         .alert("Error", isPresented: Binding(
-            get: { error != nil },
-            set: { x in }
+            get: { viewModel.error != nil },
+            set: { _ in }
         )) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(error?.localizedDescription ?? "")
+            Text(viewModel.error?.localizedDescription ?? "")
         }
+    }
+    
+    enum UpdateFrequency: String, CaseIterable {
+        case daily = "Daily"
+        case weekly = "Weekly"
+        case monthly = "Monthly"
     }
 }
 

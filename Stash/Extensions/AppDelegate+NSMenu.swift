@@ -17,18 +17,18 @@ extension AppDelegate {
         
         if !history.isEmpty {
             if collapseHistory {
-                let xxxx = NSMenuItem(title: "Recent", action: nil, keyEquivalent: "")
+                let item = NSMenuItem(title: "Recently Visited", action: nil, keyEquivalent: "")
                 let image = NSImage(systemSymbolName: "clock.fill", accessibilityDescription: nil)
                 image?.isTemplate = true
-                xxxx.image = image?.tint(color: Color.primary)
+                item.image = image?.tint(color: Color.primary)
                 let submenu = NSMenu()
                 g(menu: submenu, entries: history.map({ $0.0 }), parentId: nil, keyEquivalents: history.map({ $0.1 }))
-                xxxx.submenu = submenu
-                menu.addItem(xxxx)
+                item.submenu = submenu
+                menu.addItem(item)
             } else {
-                let recentTitle = NSMenuItem(title: "Recent", action: nil, keyEquivalent: "")
-                recentTitle.isEnabled = false
-                menu.addItem(recentTitle)
+                let item = NSMenuItem(title: "Recently Visited", action: nil, keyEquivalent: "")
+                item.isEnabled = false
+                menu.addItem(item)
                 g(menu: menu, entries: history.map({ $0.0 }), parentId: nil, keyEquivalents: history.map({ $0.1 }))
             }
             menu.addItem(NSMenuItem.separator())
