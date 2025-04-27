@@ -29,11 +29,10 @@ struct ContentView: View {
                 OutlineView(entries: $cabinet.storedEntries, anchorId: $anchorId, presentingModal: $present) {
                     self.anchorId = $0
                 }
-                
-                // Invisible monitoring view
                 ModifierKeyMonitorView(listen: !present)
                     .frame(width: 0, height: 0)
             }
+            .padding()
             .sheet(isPresented: $present, onDismiss: nil) {
                 CraftModalView(anchorId: $anchorId)
                     .background(Color(NSColor.windowBackgroundColor))

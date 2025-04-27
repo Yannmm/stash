@@ -11,9 +11,7 @@ import Cocoa
 // MARK: - NSOutlineView Wrapper
 struct OutlineView: NSViewRepresentable {
     @Binding var entries: [any Entry]
-    
     @Binding var anchorId: UUID?
-    
     @Binding var presentingModal: Bool
     
     @EnvironmentObject var cabinet: OkamuraCabinet
@@ -208,7 +206,6 @@ extension OutlineView {
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
             let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), expanded: NSEvent.modifierFlags.containsOnly(.command))
                 .frame(width: 600))
-            print("height is \(view.fittingSize.height)")
             return view.fittingSize.height
         }
         
