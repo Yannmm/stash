@@ -2,18 +2,26 @@ import SwiftUI
 import HotKey
 
 struct SettingsView: View {
-    @State private var isRecording = false
-    @State private var dockIcon = true
     @State var shortcut: (Key, NSEvent.ModifierFlags)
     @State var importFilePath: URL?
     @State var exportFilePath: URL?
-    @State var error: Error?
+    @State private var isRecording = false
+    
+    @State private var error: Error?
+    @State private var launchOnLogin = false
+    @State private var icloudSync = false
+    @State private var updateFrequency = UpdateFrequency.weekly
+    @State private var resetAlert = false
+    
+    @StateObject var viewModel: SettingsViewModel
     
     let onSelectImportFile: (URL) throws -> Void
     let onSelectExportDestination: (URL) throws -> URL
     let onReset: () throws -> Void
-    let onChangeDockIcon: (Bool) -> Void
- 
+    
+    @State private var showDockIcon = true
+    let onShowDockIconChange: (Bool) -> Void
+    
     var importDescription: AttributedString {
         if let path = importFilePath?.path {
             let tilde = (path as NSString).abbreviatingWithTildeInPath
@@ -48,11 +56,6 @@ struct SettingsView: View {
         return hasher.finalize()
     }
     
-    @State private var launchOnLogin = false
-    @State private var icloudSync = false
-    @State private var updateFrequency = UpdateFrequency.weekly
-    @State private var resetAlert = false
-    
     enum UpdateFrequency: String, CaseIterable {
         case daily = "Daily"
         case weekly = "Weekly"
@@ -65,7 +68,7 @@ struct SettingsView: View {
             Section("General") {
                 Toggle("Launch on Login", isOn: $launchOnLogin)
                 Toggle("iCloud Sync", isOn: $icloudSync)
-                Toggle("Show Icon In Dock", isOn: $dockIcon)
+                Toggle("Show Icon In Dock", isOn: $showDockIcon)
                 HStack {
                     Text("Global Shortcut")
                     Spacer()
@@ -74,6 +77,21 @@ struct SettingsView: View {
                         shortcut: $shortcut
                     )
                 }
+            }
+            Section {
+                Toggle(isOn: $viewModel.collapseHistory) {
+                    Text("Collapse History")
+                }
+            } footer: {
+                HStack {
+                    Text("Show or hide the list of recently-visited bookmarks at the top of menu.")
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                        .multilineTextAlignment(.leading)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.top, -4)
             }
             
             // Check Update Section
@@ -152,24 +170,24 @@ struct SettingsView: View {
             }
             
             // Check Update Section
-//            Section("Software Update") {
-//                HStack {
-//                    Button("Check for Updates") {
-//                        // Handle update check
-//                    }
-//                    .buttonStyle(.bordered)
-//                    
-//                    Spacer()
-//                    
-//                    Text("Last checked date...")
-//                }
-//                
-//                Picker("Check frequency:", selection: $updateFrequency) {
-//                    ForEach(UpdateFrequency.allCases, id: \.self) { frequency in
-//                        Text(frequency.rawValue).tag(frequency)
-//                    }
-//                }
-//            }
+            //            Section("Software Update") {
+            //                HStack {
+            //                    Button("Check for Updates") {
+            //                        // Handle update check
+            //                    }
+            //                    .buttonStyle(.bordered)
+            //
+            //                    Spacer()
+            //
+            //                    Text("Last checked date...")
+            //                }
+            //
+            //                Picker("Check frequency:", selection: $updateFrequency) {
+            //                    ForEach(UpdateFrequency.allCases, id: \.self) { frequency in
+            //                        Text(frequency.rawValue).tag(frequency)
+            //                    }
+            //                }
+            //            }
             
             // About Section
             Section("About") {
@@ -185,8 +203,8 @@ struct SettingsView: View {
         .onChange(of: shortcutHash) {
             HotKeyManager.shared.update(key: shortcut.0, modifiers: shortcut.1)
         }
-        .onChange(of: dockIcon) { _, flag in
-            onChangeDockIcon(flag)
+        .onChange(of: showDockIcon) { _, flag in
+            onShowDockIconChange(flag)
         }
         .alert("Error", isPresented: Binding(
             get: { error != nil },

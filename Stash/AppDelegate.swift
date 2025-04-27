@@ -15,6 +15,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var dropWindow: NSWindow?
     
+    private let settingsViewModel = SettingsViewModel()
+    
     var cabinet: OkamuraCabinet { OkamuraCabinet.shared }
     
     var hotKeyMananger: HotKeyManager { HotKeyManager.shared }
@@ -29,9 +31,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         setupStatusItem()
         
-        Publishers.CombineLatest(cabinet.$storedEntries, cabinet.$recentEntries)
-            .sink { [weak self] entries in
-                self?.statusItem?.menu = self?.generateMenu(from: entries)
+        Publishers.CombineLatest3(cabinet.$storedEntries, cabinet.$recentEntries, settingsViewModel.$collapseHistory)
+            .sink { [weak self] tuple3 in
+                self?.statusItem?.menu = self?.generateMenu(from: tuple3.0, history: tuple3.1, collapseHistory: tuple3.2)
             }
             .store(in: &cancellables)
         
@@ -66,10 +68,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func setupSettingsWindow() {
         let hostingView = NSHostingView(rootView: SettingsView(shortcut: hotKeyMananger.shortcut,
+                                                               viewModel: self.settingsViewModel,
                                                                onSelectImportFile: { [unowned self] in try self.cabinet.import(from: $0) },
                                                                onSelectExportDestination: { [unowned self] in try self.cabinet.export(to: $0) },
                                                                onReset: { [unowned self] in try self.cabinet.removeAll() },
-                                                               onChangeDockIcon: { NSApp.setActivationPolicy($0 ? .regular : .accessory) }))
+                                                               onShowDockIconChange: { NSApp.setActivationPolicy($0 ? .regular : .accessory) }
+                                                              ))
         settingsWindow = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: hostingView.fittingSize.width, height: hostingView.fittingSize.height),
             styleMask: [.titled, .closable, .miniaturizable],

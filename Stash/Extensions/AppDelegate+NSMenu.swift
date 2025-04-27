@@ -12,21 +12,29 @@ import Kingfisher
 @MainActor
 extension AppDelegate {
     
-    func generateMenu(from entries: ([any Entry], [(any Entry, String)])) -> NSMenu {
-        let storedOnes = entries.0
-        let recentOnes = entries.1
-        
+    func generateMenu(from entries: [any Entry], history: [(any Entry, String)], collapseHistory: Bool) -> NSMenu {
         let menu = NSMenu()
         
-        if !recentOnes.isEmpty {
-            let recentTitle = NSMenuItem(title: "Recent", action: nil, keyEquivalent: "")
-            recentTitle.isEnabled = false
-            menu.addItem(recentTitle)
-            g(menu: menu, entries: recentOnes.map({ $0.0 }), parentId: nil, keyEquivalents: recentOnes.map({ $0.1 }))
+        if !history.isEmpty {
+            if collapseHistory {
+                let xxxx = NSMenuItem(title: "Recent", action: nil, keyEquivalent: "")
+                let image = NSImage(systemSymbolName: "clock.fill", accessibilityDescription: nil)
+                image?.isTemplate = true
+                xxxx.image = image?.tint(color: Color.primary)
+                let submenu = NSMenu()
+                g(menu: submenu, entries: history.map({ $0.0 }), parentId: nil, keyEquivalents: history.map({ $0.1 }))
+                xxxx.submenu = submenu
+                menu.addItem(xxxx)
+            } else {
+                let recentTitle = NSMenuItem(title: "Recent", action: nil, keyEquivalent: "")
+                recentTitle.isEnabled = false
+                menu.addItem(recentTitle)
+                g(menu: menu, entries: history.map({ $0.0 }), parentId: nil, keyEquivalents: history.map({ $0.1 }))
+            }
             menu.addItem(NSMenuItem.separator())
         }
         
-        g(menu: menu, entries: storedOnes, parentId: nil, keyEquivalents: [])
+        g(menu: menu, entries: entries, parentId: nil, keyEquivalents: [])
         
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Edit", action: #selector(togglePopover), keyEquivalent: "E"))

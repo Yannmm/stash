@@ -8,16 +8,17 @@
 import Foundation
 import AppKit
 import UniformTypeIdentifiers
+import Combine
 
 class OkamuraCabinet: ObservableObject {
-
+    
     @Published var storedEntries: [any Entry] = []
     
     @Published private(set) var recentEntries: [(Bookmark, String)] = []
     
     static let shared = OkamuraCabinet()
     
-    init() {
+    init() {        
         Task {
             try await load()
         }
@@ -173,7 +174,7 @@ fileprivate extension OkamuraCabinet {
         let d = Dominator()
         
         let string = try d.compose(json)
-          
+        
         try string.write(to: filePath, atomically: true, encoding: .utf8)
     }
 }
