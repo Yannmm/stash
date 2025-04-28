@@ -240,6 +240,7 @@ struct CellContent: View {
             }
         }
         .padding(.vertical, 10)
+        .padding(.leading, 10)
         .alert("Error", isPresented: Binding(
             get: { error != nil },
             set: { x in }

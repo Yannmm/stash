@@ -32,7 +32,6 @@ struct ContentView: View {
                 ModifierKeyMonitorView(listen: !present)
                     .frame(width: 0, height: 0)
             }
-            .padding()
             .sheet(isPresented: $present, onDismiss: nil) {
                 CraftModalView(anchorId: $anchorId)
                     .background(Color(NSColor.windowBackgroundColor))

@@ -24,6 +24,7 @@ struct OutlineView: NSViewRepresentable {
     
     func makeNSView(context: Context) -> NSScrollView {
         let scrollView = NSScrollView()
+        scrollView.contentInsets = .init(top: 0, left: 12, bottom: 0, right: 12)
         scrollView.hasVerticalScroller = true
         
         let outlineView = HierarchyView() {
@@ -278,6 +279,12 @@ fileprivate extension OutlineView {
             } else {
                 super.keyDown(with: event)
             }
+        }
+        
+        override func frameOfOutlineCell(atRow row: Int) -> NSRect {
+            var frame = super.frameOfOutlineCell(atRow: row)
+            frame.origin.x += 10
+            return frame
         }
     }
 }
