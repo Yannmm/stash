@@ -95,7 +95,7 @@ struct CellContent: View {
                             Image(systemName: name)
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                                .frame(width: NSImage.Constant.side2)
+                                .frame(width: NSImage.Constant.side2, height: NSImage.Constant.side2)
                                 .foregroundStyle(Color.primary)
                         case .favicon(let url):
                             KFImage.url(url)

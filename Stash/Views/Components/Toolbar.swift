@@ -52,9 +52,16 @@ struct Toolbar: View {
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
         .background(Color(nsColor: .windowBackgroundColor))
+        .background(
+                        GeometryReader { geometry in
+                            Color.clear
+                                .onAppear {
+                                    print("Height: \(geometry.size.height)")
+                                }
+                                .onChange(of: geometry.size) { newSize in
+                                    print("New Height: \(newSize.height)")
+                                }
+                        }
+                    )
     }
-}
-
-#Preview {
-    //    Toolbar(present: <#T##Binding<Bool>#>)
 }

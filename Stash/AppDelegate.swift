@@ -55,7 +55,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         let contentView = ContentView().environmentObject(cabinet)
-        popover.contentSize = NSSize(width: 600, height: 400)
+        
+        popover.contentSize = NSSize(width: 600, height: cabinet.storedEntries.filter({ $0.parentId == nil }).count * 49)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: contentView)
         
@@ -123,6 +124,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if (popover.isShown) {
             popover.performClose(self)
         } else {
+            popover.contentSize = CGSize(width: 600, height: cabinet.storedEntries.filter({ $0.parentId == nil }).count * 49 + 34)
             popover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
         }
     }
