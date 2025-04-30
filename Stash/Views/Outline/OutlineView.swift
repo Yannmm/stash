@@ -145,6 +145,16 @@ extension OutlineView {
             !((item as? any Entry)?.children(among: parent.entries) ?? []).isEmpty
         }
         
+        func outlineViewItemDidExpand(_ notification: Notification) {
+            guard let outlineView = notification.object as? NSOutlineView else { return }
+            NotificationCenter.default.post(name: .onExpandOrCollapseItem, object: outlineView.numberOfRows)
+        }
+        
+        func outlineViewItemDidCollapse(_ notification: Notification) {
+            guard let outlineView = notification.object as? NSOutlineView else { return }
+            NotificationCenter.default.post(name: .onExpandOrCollapseItem, object: outlineView.numberOfRows)
+        }
+        
         func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
             if let e = item as? any Entry, let entry = parent.entries.findBy(id: e.id) {
                 return entry.children(among: parent.entries)[index]
@@ -204,11 +214,9 @@ extension OutlineView {
             return .move
         }
         
-        // TODO: how to get all exopanded item count?
-        
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
             let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), expanded: NSEvent.modifierFlags.containsOnly(.command))
-                .frame(width: 600))
+                .frame(width: 1000))
             print("🐶 -> \(view.fittingSize.height)")
             return view.fittingSize.height
         }
@@ -289,6 +297,8 @@ fileprivate extension OutlineView {
             frame.origin.x += 10
             return frame
         }
+        
+        
     }
 }
 

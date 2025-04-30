@@ -39,7 +39,6 @@ struct ContentView: View {
                     .interactiveDismissDisabled(true)
             }
         }
-        .frame(width: 600)
         .alert("Error", isPresented: Binding(
             get: { error != nil },
             set: { x in }

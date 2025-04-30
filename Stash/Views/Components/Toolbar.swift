@@ -9,6 +9,8 @@ import SwiftUI
 
 struct Toolbar: View {
     @Binding var present: Bool
+    @State var tip = Constant.tips[0]
+    @State private var timer: Timer?
     
     let addFolder: () -> Void
     
@@ -32,7 +34,7 @@ struct Toolbar: View {
             }
             Spacer()
             // Center title
-            Text("SwiftUI")
+            Text(tip)
                 .font(.headline)
             Spacer()
             // Right side buttons
@@ -52,16 +54,36 @@ struct Toolbar: View {
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
         .background(Color(nsColor: .windowBackgroundColor))
-        .background(
-                        GeometryReader { geometry in
-                            Color.clear
-                                .onAppear {
-                                    print("Height: \(geometry.size.height)")
-                                }
-                                .onChange(of: geometry.size) { newSize in
-                                    print("New Height: \(newSize.height)")
-                                }
-                        }
-                    )
+        .onAppear {
+            timer = Timer.scheduledTimer(withTimeInterval: 4.0, repeats: true) { time in
+                let seconds = Calendar.current.component(.second, from: Date())
+                tip = Constant.tips[seconds % Constant.tips.count]
+            }
+        }
+        .onDisappear {
+            timer?.invalidate()
+            timer = nil
+        }
+        //        .background(
+        //                        GeometryReader { geometry in
+        //                            Color.clear
+        //                                .onAppear {
+        //                                    print("Height: \(geometry.size.height)")
+        //                                }
+        //                                .onChange(of: geometry.size) { newSize in
+        //                                    print("New Height: \(newSize.height)")
+        //                                }
+        //                        }
+        //                    )
+    }
+}
+
+fileprivate extension Toolbar {
+    struct Constant {
+        static let tips = [
+            "Hold CMD(⌘) Key for More Info.",
+            "Tap ESC Key to Deselect an Item.",
+            "Support Network, local or VNC."
+        ]
     }
 }

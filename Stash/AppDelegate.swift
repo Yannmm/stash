@@ -25,9 +25,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private var cancellables = Set<AnyCancellable>()
     
-    private var settingsWindow: NSWindow?
+    private var outlineViewRowCount: Int?
     
-    private var hotxxx: HotKey?
+    private var settingsWindow: NSWindow?
     
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
@@ -46,6 +46,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         
+        NotificationCenter.default.addObserver(forName: .onExpandOrCollapseItem, object: nil, queue: nil) { [weak self] noti in
+            guard let count = noti.object as? Int else { return }
+            self?.outlineViewRowCount = count
+            self?.popover.contentSize = CGSize(width: 1000, height: count * 49 + 34)
+        }
+        
         hotKeyMananger.register(shortcut: settingsViewModel.shortcut)
     }
     
@@ -55,8 +61,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         let contentView = ContentView().environmentObject(cabinet)
-        
-        popover.contentSize = NSSize(width: 600, height: cabinet.storedEntries.filter({ $0.parentId == nil }).count * 49)
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: contentView)
         
@@ -92,25 +96,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             setupSettingsWindow()
         }
         settingsWindow?.makeKeyAndOrderFront(nil)
-        
-//        let panel = NSOpenPanel()
-//        panel.canChooseFiles = true
-//        panel.canChooseDirectories = false
-//        panel.allowsMultipleSelection = false
-//
-//        if panel.runModal() == .OK, let url = panel.url {
-//            // Now you can access the file
-//            do {
-//                let content = try String(contentsOf: url)
-//                do {
-//                    try dominator.test1(content)
-//                } catch {
-//                    print(error)
-//                }
-//            } catch {
-//                print("Error reading file: \(error)")
-//            }
-//        }
     }
     
     @objc private func quit() {}
@@ -124,7 +109,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if (popover.isShown) {
             popover.performClose(self)
         } else {
-            popover.contentSize = CGSize(width: 600, height: cabinet.storedEntries.filter({ $0.parentId == nil }).count * 49 + 34)
+            let count = outlineViewRowCount ?? cabinet.storedEntries.filter({ $0.parentId == nil }).count
+            popover.contentSize = CGSize(width: 1000, height: count * 49 + 34)
             popover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
         }
     }
