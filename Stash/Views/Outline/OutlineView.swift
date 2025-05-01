@@ -70,7 +70,7 @@ struct OutlineView: NSViewRepresentable {
             outlineView.noteHeightOfRows(withIndexesChanged: IndexSet(indices))
         }
         
-        NotificationCenter.default.addObserver(forName: NSControl.textDidEndEditingNotification, object: nil, queue: nil) { noti in
+        NotificationCenter.default.addObserver(forName: NSControl.textDidEndEditingNotification, object: nil, queue: nil) { _ in
             guard let view = outlineView.window?.firstResponder as? NSView, view.isDescendant(of: outlineView) else { return }
             
             for index in 0..<outlineView.numberOfRows {
@@ -290,21 +290,19 @@ fileprivate extension OutlineView {
             fatalError("init(coder:) has not been implemented")
         }
         
-        override func keyDown(with event: NSEvent) {
-            if event.keyCode == 53 { // 53 = Esc key
-                selectedRow == -1 ? super.keyDown(with: event) : deselectAll(nil)
-            } else {
-                super.keyDown(with: event)
-            }
-        }
+//        override func keyDown(with event: NSEvent) {
+//            if event.keyCode == 53 { // 53 = Esc key
+//                selectedRow == -1 ? super.keyDown(with: event) : deselectAll(nil)
+//            } else {
+//                super.keyDown(with: event)
+//            }
+//        }
         
         override func frameOfOutlineCell(atRow row: Int) -> NSRect {
             var frame = super.frameOfOutlineCell(atRow: row)
             frame.origin.x += 10
             return frame
         }
-        
-        
     }
 }
 

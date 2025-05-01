@@ -155,6 +155,9 @@ struct CellContent: View {
                 .onReceive(NotificationCenter.default.publisher(for: .onCmdKeyChange)) { noti in
                     let flag = (noti.object as? Bool) ?? false
                     expanded = flag
+                }.onChange(of: focused) { old, new in
+                    guard !new else { return }
+                    NotificationCenter.default.post(name: NSControl.textDidEndEditingNotification, object: nil)
                 }
                 
                 // Bottom border line
