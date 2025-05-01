@@ -149,6 +149,9 @@ struct CellContent: View {
                     guard let tuple = noti.object as? (UUID?, Bool), tuple.0 == viewModel.entry?.id else { return }
                     hovered = tuple.1
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .onClearRowView)) { noti in
+                    hovered = false
+                }
                 .onReceive(NotificationCenter.default.publisher(for: .onCmdKeyChange)) { noti in
                     let flag = (noti.object as? Bool) ?? false
                     expanded = flag

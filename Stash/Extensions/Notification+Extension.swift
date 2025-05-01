@@ -11,6 +11,7 @@ import Foundation
 extension NSNotification.Name {
     static let onDoubleTapRowView = NSNotification.Name("onDoubleTapRowView")
     static let onHoverRowView = NSNotification.Name("onHoverRowView")
+    static let onClearRowView = NSNotification.Name("onClearRowView")
     static let onCmdKeyChange = NSNotification.Name("onCmdKeyChange")
     static let onShortcutKeyDown = NSNotification.Name("onShortcutKeyDown")
     static let onExpandOrCollapseItem = NSNotification.Name("onExpandOrCollapseItem")

@@ -47,6 +47,12 @@ struct OutlineView: NSViewRepresentable {
         
         scrollView.documentView = outlineView
         
+        scrollView.contentView.postsBoundsChangedNotifications = true
+        
+        NotificationCenter.default.addObserver(forName: NSView.boundsDidChangeNotification, object: scrollView.contentView, queue: nil) { noti in
+            NotificationCenter.default.post(name: .onClearRowView, object: nil)
+        }
+        
         outlineView.target = context.coordinator
         
         outlineView.doubleAction = #selector(context.coordinator.tableViewDoubleAction)
@@ -198,7 +204,7 @@ extension OutlineView {
             let entry = outlineView.item(atRow: outlineView.selectedRow) as? (any Entry)
             parent.onSelectRow(entry?.id)
             
-            NotificationCenter.default.post(name: .onHoverRowView, object: (entry?.id, false))
+            NotificationCenter.default.post(name: .onClearRowView, object: nil)
         }
         
         // MARK: - Drag & Drop
@@ -286,7 +292,7 @@ fileprivate extension OutlineView {
         
         override func keyDown(with event: NSEvent) {
             if event.keyCode == 53 { // 53 = Esc key
-                deselectAll(nil)
+                selectedRow == -1 ? super.keyDown(with: event) : deselectAll(nil)
             } else {
                 super.keyDown(with: event)
             }

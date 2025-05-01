@@ -17,6 +17,10 @@ class RowView: NSTableRowView {
     init(ignoreMouseEvent: @escaping () -> Bool) {
         self.ignoreMouseEvent = ignoreMouseEvent
         super.init(frame: NSRect.zero)
+        
+        NotificationCenter.default.addObserver(forName: .onClearRowView, object: nil, queue: nil) { noti in
+            self.highlight = false
+        }
     }
     
     var isFocused = false {
@@ -29,18 +33,6 @@ class RowView: NSTableRowView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    // Selection
-//    override func drawSelection(in dirtyRect: NSRect) {
-//        
-//        if self.selectionHighlightStyle != .none {
-//            //            let selectionRect = NSInsetRect(self.bounds, 2.5, 2.5)
-//            let selectionRect = self.bounds
-//            NSColor(Color.accentColor).setFill()
-//            let selectionPath = NSBezierPath.init(roundedRect: selectionRect, xRadius: 0, yRadius: 0)
-//            selectionPath.fill()
-//        }
-//    }
-    
     // Hover
     private var trackingArea: NSTrackingArea?
     
@@ -50,10 +42,9 @@ class RowView: NSTableRowView {
         guard !isFocused else { return }
         guard !NSEvent.modifierFlags.containsOnly(.command) else { return }
         
-        NSColor.gridColor.set()
-        
         // mouse hover
         if highlight {
+            NSColor.gridColor.set()
             let path = NSBezierPath(rect: bounds)
             path.fill()
         }
@@ -83,7 +74,8 @@ class RowView: NSTableRowView {
         highlight = false
         
         if !isSelected {
-            NotificationCenter.default.post(name: .onHoverRowView, object: (id, false))
+//            NotificationCenter.default.post(name: .onHoverRowView, object: (id, false) as (UUID?, Bool))
+            NotificationCenter.default.post(name: .onClearRowView, object: nil)
         }
     }
     

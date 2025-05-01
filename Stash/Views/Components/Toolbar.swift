@@ -15,9 +15,9 @@ struct Toolbar: View {
     let addFolder: () -> Void
     
     var body: some View {
-        HStack(spacing: 16) {
-            // Left side buttons
-            HStack(spacing: 8) {
+        ZStack {
+            // Left-aligned buttons
+            HStack {
                 Button(action: {
                     present = true
                 }) {
@@ -31,24 +31,13 @@ struct Toolbar: View {
                     Image(systemName: "folder.badge.plus")
                 }
                 .buttonStyle(.plain)
+                Spacer()
             }
-            Spacer()
-            // Center title
+            
+            // Centered text
             Text(tip)
                 .font(.headline)
-            Spacer()
-            // Right side buttons
-            HStack(spacing: 8) {
-                Button(action: { print("Search clicked") }) {
-                    Image(systemName: "magnifyingglass")
-                }
-                .buttonStyle(.plain)
-                
-                Button(action: { print("Share clicked") }) {
-                    Image(systemName: "square.and.arrow.up")
-                }
-                .buttonStyle(.plain)
-            }
+                .frame(maxWidth: .infinity)
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
