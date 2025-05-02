@@ -10,8 +10,6 @@ import Foundation
 // passing data from uikit to swiftui https://www.swiftjectivec.com/events-from-swiftui-to-uikit-and-vice-versa/
 extension NSNotification.Name {
     static let onDoubleTapRowView = NSNotification.Name("onDoubleTapRowView")
-    static let onHoverRowView = NSNotification.Name("onHoverRowView")
-    static let onClearRowView = NSNotification.Name("onClearRowView")
     static let onCmdKeyChange = NSNotification.Name("onCmdKeyChange")
     static let onShortcutKeyDown = NSNotification.Name("onShortcutKeyDown")
     static let onExpandOrCollapseItem = NSNotification.Name("onExpandOrCollapseItem")

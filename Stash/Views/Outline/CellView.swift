@@ -51,18 +51,16 @@ struct CellContent: View {
     
     @FocusState private var focused: Bool
     
-    @State private var hovered: Bool = false
-    
     @State private var expanded: Bool
     @State private var error: Error?
     @State private var deleteAlert: Bool = false
     
     var shouldShowDelete: Bool {
-        return hovered && !expanded
+        return expanded
     }
     
     var shouldShowCopy: Bool {
-        if let _ = viewModel.entry as? Bookmark, hovered, expanded {
+        if let _ = viewModel.entry as? Bookmark, expanded {
             return true
         } else {
             return false
@@ -70,7 +68,7 @@ struct CellContent: View {
     }
     
     var shouldShowReveal: Bool {
-        if let a = viewModel.entry as? Actionable, a.revealable, hovered, expanded {
+        if let a = viewModel.entry as? Actionable, a.revealable, expanded {
             return true
         } else {
             return false
@@ -78,7 +76,7 @@ struct CellContent: View {
     }
     
     var shouldShowActions: Bool {
-        return shouldShowDelete || shouldShowCopy || shouldShowReveal
+        return shouldShowDelete || shouldShowReveal || shouldShowCopy
     }
     
     init(viewModel: CellViewModel, expanded: Bool = false) {
@@ -87,7 +85,7 @@ struct CellContent: View {
     }
     
     var body: some View {
-        ZStack {
+        HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
                     if let e = viewModel.entry {
@@ -147,13 +145,6 @@ struct CellContent: View {
                     guard entry?.id == viewModel.entry?.id else { return }
                     focused = true
                 }
-                .onReceive(NotificationCenter.default.publisher(for: .onHoverRowView)) { noti in
-                    guard let tuple = noti.object as? (UUID?, Bool), tuple.0 == viewModel.entry?.id else { return }
-                    hovered = tuple.1
-                }
-                .onReceive(NotificationCenter.default.publisher(for: .onClearRowView)) { noti in
-                    hovered = false
-                }
                 .onReceive(NotificationCenter.default.publisher(for: .onCmdKeyChange)) { noti in
                     let flag = (noti.object as? Bool) ?? false
                     expanded = flag
@@ -189,29 +180,27 @@ struct CellContent: View {
             Spacer()
             
             if shouldShowActions {
-                HStack(spacing: 20) {
-                    if shouldShowDelete {
-                        Button(action: {
-                            deleteAlert = true
-                        }) {
-                            Image(systemName: "minus.circle.fill")
-                                .resizable()
-                                .frame(width: 20.0, height: 20.0)
-                                .foregroundStyle(Color.primary)
-                        }
-                        .buttonStyle(.plain)
+                HStack(spacing: 10) {
+                    Button(action: {
+                        deleteAlert = true
+                    }) {
+                        Image(systemName: "trash.circle")
+                            .resizable()
+                            .frame(width: 20.0, height: 20.0)
                     }
+                    .buttonStyle(.borderless)
+                    .help("Delete item")
                     if shouldShowReveal {
                         Button(action: {
                             guard let a = viewModel.entry as? Actionable, a.revealable else { return }
                             a.reveal()
                         }) {
-                            Image(systemName: "arrowshape.turn.up.right.circle.fill")
+                            Image(systemName: "archivebox.circle")
                                 .resizable()
                                 .frame(width: 20.0, height: 20.0)
-                                .foregroundStyle(Color.primary)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.borderless)
+                        .help("Delete item")
                     }
                     if shouldShowCopy {
                         Button(action: {
@@ -220,24 +209,26 @@ struct CellContent: View {
                             pasteBoard.clearContents()
                             pasteBoard.writeObjects([e.url.absoluteString as NSString])
                         }) {
-                            Image(systemName: "document.circle.fill")
+                            Image(systemName: "rectangle.on.rectangle.circle")
                                 .resizable()
                                 .frame(width: 20.0, height: 20.0)
-                                .foregroundStyle(Color.primary)
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(.borderless)
+                        .help("Delete item")
                     }
                 }
-                .padding()
-                .background(
-                    LinearGradient(
-                        gradient: Gradient(colors: gradientColors),
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 10))
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
+                
+                
+                //                .padding()
+                //                .background(
+                //                    LinearGradient(
+                //                        gradient: Gradient(colors: gradientColors),
+                //                        startPoint: .leading,
+                //                        endPoint: .trailing
+                //                    )
+                //                )
+                //                .clipShape(RoundedRectangle(cornerRadius: 10))
+                //                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
             }
         }
         .padding(.vertical, 10)

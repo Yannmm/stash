@@ -49,10 +49,6 @@ struct OutlineView: NSViewRepresentable {
         
         scrollView.contentView.postsBoundsChangedNotifications = true
         
-        NotificationCenter.default.addObserver(forName: NSView.boundsDidChangeNotification, object: scrollView.contentView, queue: nil) { noti in
-            NotificationCenter.default.post(name: .onClearRowView, object: nil)
-        }
-        
         outlineView.target = context.coordinator
         
         outlineView.doubleAction = #selector(context.coordinator.tableViewDoubleAction)
@@ -199,8 +195,6 @@ extension OutlineView {
             
             let entry = outlineView.item(atRow: outlineView.selectedRow) as? (any Entry)
             parent.onSelectRow(entry?.id)
-            
-            NotificationCenter.default.post(name: .onClearRowView, object: nil)
         }
         
         func selectionShouldChange(in outlineView: NSOutlineView) -> Bool {
