@@ -40,7 +40,7 @@ class RowView: NSTableRowView {
         super.draw(dirtyRect)
         guard !isSelected else { return }
         guard !isFocused else { return }
-        guard !NSEvent.modifierFlags.containsOnly(.command) else { return }
+//        guard !NSEvent.modifierFlags.containsOnly(.command) else { return }
         
         // mouse hover
         if highlight {
@@ -74,7 +74,6 @@ class RowView: NSTableRowView {
         highlight = false
         
         if !isSelected {
-//            NotificationCenter.default.post(name: .onHoverRowView, object: (id, false) as (UUID?, Bool))
             NotificationCenter.default.post(name: .onClearRowView, object: nil)
         }
     }

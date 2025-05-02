@@ -67,7 +67,3 @@ struct CraftModalView: View {
         }
     }
 }
-
-#Preview {
-//    CraftModalView()
-}

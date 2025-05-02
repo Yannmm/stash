@@ -35,7 +35,7 @@ struct Toolbar: View {
             }
             
             // Centered text
-            Text(tip)
+            Text("Tip: \(tip)")
                 .font(.headline)
                 .frame(maxWidth: .infinity)
         }

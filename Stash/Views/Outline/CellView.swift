@@ -55,6 +55,7 @@ struct CellContent: View {
     
     @State private var expanded: Bool
     @State private var error: Error?
+    @State private var deleteAlert: Bool = false
     
     var shouldShowDelete: Bool {
         return hovered && !expanded
@@ -130,6 +131,7 @@ struct CellContent: View {
                         .background(Color.clear)
                         .focused($focused)
                         .layoutPriority(1)
+                        .allowsHitTesting(false)
                 }
                 .padding(.vertical, 4)
                 .onChange(of: focused) { oldValue, newValue in
@@ -155,7 +157,8 @@ struct CellContent: View {
                 .onReceive(NotificationCenter.default.publisher(for: .onCmdKeyChange)) { noti in
                     let flag = (noti.object as? Bool) ?? false
                     expanded = flag
-                }.onChange(of: focused) { old, new in
+                }
+                .onChange(of: focused) { old, new in
                     guard !new else { return }
                     NotificationCenter.default.post(name: NSControl.textDidEndEditingNotification, object: nil)
                 }
@@ -171,9 +174,6 @@ struct CellContent: View {
                         .font(.callout)
                         .lineLimit(nil)
                         .fixedSize(horizontal: false, vertical: true)
-                    //                        .tint(Color.red)
-                    //                        .underline(true, color: Color.secondary)
-                    //                        .background(Color.red)
                         .onHover { hovering in
                             if hovering {
                                 NSCursor.pointingHand.push()
@@ -192,12 +192,7 @@ struct CellContent: View {
                 HStack(spacing: 20) {
                     if shouldShowDelete {
                         Button(action: {
-                            guard let e = viewModel.entry else { return }
-                            do {
-                                try cabinet.delete(entry: e)
-                            } catch {
-                                self.error = error
-                            }
+                            deleteAlert = true
                         }) {
                             Image(systemName: "minus.circle.fill")
                                 .resizable()
@@ -247,6 +242,19 @@ struct CellContent: View {
         }
         .padding(.vertical, 10)
         .padding(.leading, 10)
+        .alert("Sure to delete?", isPresented: $deleteAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Confirm", role: .destructive) {
+                guard let e = viewModel.entry else { return }
+                do {
+                    try cabinet.delete(entry: e)
+                } catch {
+                    self.error = error
+                }
+            }
+        } message: {
+            Text("This action cannot be undone. The item will be permanently deleted.")
+        }
         .alert("Error", isPresented: Binding(
             get: { error != nil },
             set: { x in }

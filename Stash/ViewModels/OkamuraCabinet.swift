@@ -60,9 +60,13 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func delete(entry: any Entry) throws {
-        guard let index = storedEntries.firstIndex(where: { $0.id == entry.id }) else { return }
-        storedEntries.remove(at: index)
-        try save()
+        if let index = recentEntries.firstIndex(where: { $0.0.id == entry.id }) {
+            recentEntries.remove(at: index)
+        }
+        if let index = storedEntries.firstIndex(where: { $0.id == entry.id }) {
+            storedEntries.remove(at: index)
+            try save()
+        }
     }
     
     func load() throws {

@@ -188,10 +188,6 @@ extension OutlineView {
             return cell
         }
         
-        func outlineView(_ outlineView: NSOutlineView, setObjectValue object: Any?, for tableColumn: NSTableColumn?, byItem item: Any?) {
-            print(item)
-        }
-        
         func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
             let row = RowView() { [weak self] in self?.parent.presentingModal ?? false }
             row.id = (item as? (any Entry))?.id
@@ -205,6 +201,10 @@ extension OutlineView {
             parent.onSelectRow(entry?.id)
             
             NotificationCenter.default.post(name: .onClearRowView, object: nil)
+        }
+        
+        func selectionShouldChange(in outlineView: NSOutlineView) -> Bool {
+            !NSEvent.modifierFlags.containsOnly(.command)
         }
         
         // MARK: - Drag & Drop
@@ -284,19 +284,29 @@ fileprivate extension OutlineView {
         init(onEscKeyDown: @escaping () -> Void) {
             self.onEscKeyDown = onEscKeyDown
             super.init(frame: CGRectZero)
+            
+            NSEvent.addLocalMonitorForEvents(matching: .flagsChanged) { [weak self] event in
+                if event.modifierFlags.containsOnly(.command) {
+                    DispatchQueue.main.async {
+                        self?.deselectAll(nil)
+                    }
+                }
+                return event
+            }
         }
         
         required init?(coder: NSCoder) {
             fatalError("init(coder:) has not been implemented")
         }
         
-//        override func keyDown(with event: NSEvent) {
-//            if event.keyCode == 53 { // 53 = Esc key
-//                selectedRow == -1 ? super.keyDown(with: event) : deselectAll(nil)
-//            } else {
-//                super.keyDown(with: event)
-//            }
-//        }
+        override func keyDown(with event: NSEvent) {
+            print("event.keyCode -> \(event.modifierFlags)")
+            if event.keyCode == 53 { // 53 = Esc key
+                selectedRow == -1 ? super.keyDown(with: event) : deselectAll(nil)
+            } else {
+                super.keyDown(with: event)
+            }
+        }
         
         override func frameOfOutlineCell(atRow row: Int) -> NSRect {
             var frame = super.frameOfOutlineCell(atRow: row)
