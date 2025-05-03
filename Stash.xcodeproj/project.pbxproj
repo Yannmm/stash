@@ -36,22 +36,9 @@
 		7222C1DD2D491BEF00096255 /* StashUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StashUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		72BE6FDC2DB3AE8E006FD0BF /* Exceptions for "Stash" folder in "Stash" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				Info.plist,
-			);
-			target = 7222C1BF2D491BEC00096255 /* Stash */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7222C1C22D491BEC00096255 /* Stash */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				72BE6FDC2DB3AE8E006FD0BF /* Exceptions for "Stash" folder in "Stash" target */,
-			);
 			path = Stash;
 			sourceTree = "<group>";
 		};

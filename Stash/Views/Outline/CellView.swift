@@ -54,6 +54,7 @@ struct CellContent: View {
     @State private var expanded: Bool
     @State private var error: Error?
     @State private var deleteAlert: Bool = false
+    @State private var didCopy = false
     
     var shouldShowDelete: Bool {
         return expanded
@@ -130,6 +131,7 @@ struct CellContent: View {
                         .focused($focused)
                         .layoutPriority(1)
                         .allowsHitTesting(false)
+                        .truncationMode(.tail)
                 }
                 .padding(.vertical, 4)
                 .onChange(of: focused) { oldValue, newValue in
@@ -160,18 +162,32 @@ struct CellContent: View {
                     .foregroundColor(focused ? Color.primary : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
                 
-                if expanded, let p = path {
-                    Text(p)
-                        .font(.callout)
-                        .lineLimit(nil)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .onHover { hovering in
-                            if hovering {
-                                NSCursor.pointingHand.push()
-                            } else {
-                                NSCursor.pop()
-                            }
+                if expanded, let tuple2 = bookmarkAccessible {
+                    Button {
+                        tuple2.1.open()
+                        do {
+                            try cabinet.asRecent(tuple2.1)
+                        } catch {
+                            self.error = error
                         }
+                    } label: {
+                        HStack {
+                            Text(tuple2.0)
+                                .font(.callout)
+                                .lineLimit(nil)
+                                .multilineTextAlignment(.leading)
+                            Spacer()
+                        }
+                    }
+                    .buttonStyle(PlainButtonStyle())
+                    .fixedSize(horizontal: false, vertical: true)
+                    .onHover { hovering in
+                        if hovering {
+                            NSCursor.pointingHand.push()
+                        } else {
+                            NSCursor.pop()
+                        }
+                    }
                 }
             }
             .onAppear {
@@ -200,7 +216,7 @@ struct CellContent: View {
                                 .frame(width: 20.0, height: 20.0)
                         }
                         .buttonStyle(.borderless)
-                        .help("Delete item")
+                        .help("Reveal in Finder")
                     }
                     if shouldShowCopy {
                         Button(action: {
@@ -208,27 +224,26 @@ struct CellContent: View {
                             let pasteBoard = NSPasteboard.general
                             pasteBoard.clearContents()
                             pasteBoard.writeObjects([e.url.absoluteString as NSString])
+                            didCopy = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                didCopy = false
+                            }
                         }) {
-                            Image(systemName: "rectangle.on.rectangle.circle")
-                                .resizable()
-                                .frame(width: 20.0, height: 20.0)
+                            if didCopy {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .resizable()
+                                    .frame(width: 20.0, height: 20.0)
+                                    .foregroundColor(.green)
+                            } else {
+                                Image(systemName: "rectangle.on.rectangle.circle")
+                                    .resizable()
+                                    .frame(width: 20.0, height: 20.0)
+                            }
                         }
                         .buttonStyle(.borderless)
-                        .help("Delete item")
+                        .help("Copy path")
                     }
                 }
-                
-                
-                //                .padding()
-                //                .background(
-                //                    LinearGradient(
-                //                        gradient: Gradient(colors: gradientColors),
-                //                        startPoint: .leading,
-                //                        endPoint: .trailing
-                //                    )
-                //                )
-                //                .clipShape(RoundedRectangle(cornerRadius: 10))
-                //                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .trailing)
             }
         }
         .padding(.vertical, 10)
@@ -256,26 +271,30 @@ struct CellContent: View {
         }
     }
     
-    var path: AttributedString? {
+    var bookmarkAccessible: (AttributedString, Bookmark)? {
         guard let bookmark = viewModel.entry as? Bookmark else { return nil }
         
+        let components = URLComponents(url: bookmark.url, resolvingAgainstBaseURL: false)
+        let scheme = components?.scheme
+        
         var prefix: String!
-        if let scheme = bookmark.url.scheme {
-            prefix = scheme.uppercased()
+        if let s = scheme {
+            prefix = "\(s)://"
         } else {
             prefix = "Unknown"
         }
         
-        var asPrefix = AttributedString(" \(prefix!) ")
+        var asPrefix = AttributedString("\(prefix!)")
         asPrefix.font = .callout
         asPrefix.foregroundColor = .white
         asPrefix.backgroundColor = NSColor(Color.primary)
         
-        var asPath = AttributedString(bookmark.url.absoluteString)
+        guard let path = components?.string else { return nil }
+        var asPath = AttributedString(path.replacingOccurrences(of: prefix, with: ""))
         asPath.font = .callout
-        asPath.foregroundColor = .blue
+        asPath.foregroundColor = .linkColor
         
-        return asPrefix + AttributedString(" ") + asPath
+        return (asPrefix + AttributedString(" ") + asPath, bookmark)
     }
     
     var gradientColors: [Color] {
