@@ -44,6 +44,7 @@ struct CraftModalView: View {
                     }
                     .foregroundColor(.accentColor)
                     .disabled(!viewModel.savable)
+                    .if(viewModel.savable, content: { $0.buttonStyle(.borderedProminent) })
                 } else {
                     Button("Parse") {
                         Task {
@@ -54,8 +55,8 @@ struct CraftModalView: View {
                             }
                         }
                     }
-                    .disabled(!viewModel.parsable)
-                    .if(viewModel.parsable, content: { $0.buttonStyle(.borderedProminent) })
+                    .disabled(!viewModel.parsable || viewModel.loading)
+                    .if(viewModel.parsable && !viewModel.loading, content: { $0.buttonStyle(.borderedProminent) })
                 }
             }
         }

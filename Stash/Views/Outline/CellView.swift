@@ -242,7 +242,7 @@ struct CellContent: View {
         }
         .padding(.vertical, 10)
         .padding(.leading, 10)
-        .alert("Sure to delete?", isPresented: $deleteAlert) {
+        .alert("Sure to Delete?", isPresented: $deleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Confirm", role: .destructive) {
                 guard let e = viewModel.entry else { return }

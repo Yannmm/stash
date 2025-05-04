@@ -56,7 +56,6 @@ struct AddressInputField: View {
         }
         .onChange(of: viewModel.path ?? "", { _, value in
             viewModel.parsable = !value.isEmpty
-            
         })
         .onSubmit {
             Task {
