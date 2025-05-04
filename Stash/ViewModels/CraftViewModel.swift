@@ -10,6 +10,28 @@ import Kingfisher
 
 @MainActor
 class CraftViewModel: ObservableObject {
+    @Published var icon: NSImage?
+    @Published var error: (any Error)?
+    @Published var loading = false
+    @Published var title: String?
+    @Published var savable = false
+    @Published var parsable = false {
+        didSet {
+            savable = false
+            title = nil
+            icon = nil
+        }
+    }
+    @Published var path: String?
+    private var url: URL?
+    var anchorId: UUID?
+    
+    private let dominator = Dominator()
+    
+    var cabinet: OkamuraCabinet!
+    
+    private var entry: (any Entry)?
+    
     init(entry: (any Entry)? = nil) {
         self.entry = entry
         guard entry != nil else { return }
@@ -30,28 +52,12 @@ class CraftViewModel: ObservableObject {
         }
     }
     
-    private var entry: (any Entry)?
-    
-    @Published var icon: NSImage?
-    
-    @Published var error: (any Error)?
-    
-    @Published var loading = false
-    
-    @Published var title: String?
-    
-    @Published var ableToSave = false
-    
-    var url: URL?
-    
-    var anchorId: UUID?
-    
-    private let dominator = Dominator()
-    
-    var cabinet: OkamuraCabinet!
-    
-    func parse(_ text: String) async throws {
-        let path = Path(text)
+    func parse() async throws {
+        guard let p = path, !p.isEmpty else {
+            throw CraftError.emptyPath
+        }
+        
+        let path = Path(path ?? "")
         
         switch path {
         case .file(let url):
@@ -65,7 +71,7 @@ class CraftViewModel: ObservableObject {
         loading = true
         defer {
             loading = false
-            ableToSave = true
+            savable = true
         }
         
         let _ = try await updateTitle(path)
@@ -120,6 +126,7 @@ class CraftViewModel: ObservableObject {
     }
     
     enum CraftError: Error {
+        case emptyPath
         case invalidUrl(String)
     }
 }

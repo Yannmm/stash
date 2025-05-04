@@ -10,14 +10,11 @@ import SwiftUI
 // https://dribbble.com/shots/20559566-Link-input-with-preview
 
 struct AddressInputField: View {
-    let placeholder: String
-    @State var text: String
     @FocusState private var focused: Bool
     @StateObject var viewModel: CraftViewModel
     
     var body: some View {
         HStack(spacing: 6) {
-            
             if viewModel.loading {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: .red))
@@ -28,14 +25,14 @@ struct AddressInputField: View {
                     .foregroundColor(Color.primary)
                     .frame(width: 16, height: 16)
             } else {
-                Image(systemName: "link")
+                Image(systemName: "link.circle.fill")
                     .resizable()
                     .frame(width: 16, height: 16)
             }
             Divider()
-            TextField(placeholder, text: $text)
-                .textFieldStyle(.plain)
-                .focused($focused)
+            TextField("Drop or Enter Path to Create New Bookmark.", text: $viewModel.path ?? "")
+            .textFieldStyle(.plain)
+            .focused($focused)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
@@ -44,7 +41,7 @@ struct AddressInputField: View {
         .overlay(
             RoundedRectangle(cornerRadius: 6)
                 .stroke(focused ? Color.primary : Color(nsColor: .separatorColor),
-                        lineWidth: focused ? 2 : 0.5)
+                        lineWidth: 1)
         )
         .focusable()
         .onHover { isHovered in
@@ -57,18 +54,18 @@ struct AddressInputField: View {
         .onAppear {
             focused = true
         }
+        .onChange(of: viewModel.path ?? "", { _, value in
+            viewModel.parsable = !value.isEmpty
+            
+        })
         .onSubmit {
             Task {
                 do {
-                    try await viewModel.parse(text)
+                    try await viewModel.parse()
                 } catch {
-                    print(error)
+                    viewModel.error = error
                 }
             }
         }
     }
-}
-
-#Preview {
-//    AddressInputField()
 }

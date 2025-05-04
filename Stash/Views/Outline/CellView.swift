@@ -121,7 +121,7 @@ struct CellContent: View {
                     
                     Rectangle()
                         .frame(width: 1, height: 20)
-                        .foregroundColor(focused ? Color.primary : Color.clear)
+                        .foregroundColor(focused ? Color(NSColor.separatorColor) : Color.clear)
                         .animation(.easeInOut(duration: 0.2), value: focused)
                     
                     TextField("Input the title here...", text: $viewModel.title)
@@ -202,7 +202,7 @@ struct CellContent: View {
                     }) {
                         Image(systemName: "trash.circle")
                             .resizable()
-                            .frame(width: 20.0, height: 20.0)
+                            .frame(width: 18.0, height: 18.0)
                     }
                     .buttonStyle(.borderless)
                     .help("Delete item")
@@ -213,7 +213,7 @@ struct CellContent: View {
                         }) {
                             Image(systemName: "archivebox.circle")
                                 .resizable()
-                                .frame(width: 20.0, height: 20.0)
+                                .frame(width: 18.0, height: 18.0)
                         }
                         .buttonStyle(.borderless)
                         .help("Reveal in Finder")
@@ -229,16 +229,10 @@ struct CellContent: View {
                                 didCopy = false
                             }
                         }) {
-                            if didCopy {
-                                Image(systemName: "checkmark.circle.fill")
-                                    .resizable()
-                                    .frame(width: 20.0, height: 20.0)
-                                    .foregroundColor(.green)
-                            } else {
-                                Image(systemName: "rectangle.on.rectangle.circle")
-                                    .resizable()
-                                    .frame(width: 20.0, height: 20.0)
-                            }
+                            Image(systemName: "rectangle.on.rectangle.circle")
+                                .resizable()
+                                .frame(width: 18.0, height: 18.0)
+                                .if(didCopy, content: { $0.foregroundColor(.green) })
                         }
                         .buttonStyle(.borderless)
                         .help("Copy path")

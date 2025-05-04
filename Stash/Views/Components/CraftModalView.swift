@@ -9,7 +9,6 @@ import SwiftUI
 
 struct CraftModalView: View {
     @Environment(\.dismiss) var dismiss
-    @State var path: URL?
     @State private var errorMessage: String?
     @StateObject private var viewModel = CraftViewModel()
     @EnvironmentObject var cabinet: OkamuraCabinet
@@ -19,18 +18,8 @@ struct CraftModalView: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            TitleInputField(viewModel: viewModel)
-            
-            AddressInputField(placeholder: "Drop or enter path to create a new bookmark.",
-                              text: $path.wrappedValue?.absoluteString ?? "",
-                              viewModel: viewModel)
-            
-            HStack {
-                Button("Cancel") {
-                    dismiss()
-                }
-                
-                Button("Save") {
+            TitleInputField(title: $viewModel.title, icon: $viewModel.icon)
+                .onSubmit {
                     do {
                         try viewModel.save()
                     } catch {
@@ -38,8 +27,36 @@ struct CraftModalView: View {
                     }
                     dismiss()
                 }
-                .foregroundColor(.accentColor)
-                .disabled(!viewModel.ableToSave)
+            AddressInputField(viewModel: viewModel)
+            
+            HStack {
+                Button("Cancel") {
+                    dismiss()
+                }
+                if viewModel.savable {
+                    Button("Save") {
+                        do {
+                            try viewModel.save()
+                        } catch {
+                            self.error = error
+                        }
+                        dismiss()
+                    }
+                    .foregroundColor(.accentColor)
+                    .disabled(!viewModel.savable)
+                } else {
+                    Button("Parse") {
+                        Task {
+                            do {
+                                try await viewModel.parse()
+                            } catch {
+                                viewModel.error = error
+                            }
+                        }
+                    }
+                    .disabled(!viewModel.parsable)
+                    .if(viewModel.parsable, content: { $0.buttonStyle(.borderedProminent) })
+                }
             }
         }
         .padding()
