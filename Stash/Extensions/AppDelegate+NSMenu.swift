@@ -123,19 +123,19 @@ extension AppDelegate {
 }
 
 extension AppDelegate: NSMenuDelegate {
-    func menuNeedsUpdate(_ menu: NSMenu) {
-        let modifierFlags = NSEvent.modifierFlags
-        
-        for item in menu.items {
-            if modifierFlags.contains(.option) {
-                //                item.title = "Alternative Action"
-                print("ooooptions")
-            } else {
-                //                item.title = "Default Action"
-                print("default, no option")
-            }
-        }
-    }
+//    func menuNeedsUpdate(_ menu: NSMenu) {
+//        let modifierFlags = NSEvent.modifierFlags
+//        
+//        for item in menu.items {
+//            if modifierFlags.contains(.option) {
+//                //                item.title = "Alternative Action"
+//                print("ooooptions")
+//            } else {
+//                //                item.title = "Default Action"
+//                print("default, no option")
+//            }
+//        }
+//    }
 }
 
 

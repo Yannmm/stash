@@ -17,24 +17,15 @@ struct CraftModalView: View {
     @Binding var anchorId: UUID?
     
     var body: some View {
-        VStack(spacing: 16) {
-            TitleInputField(title: $viewModel.title, icon: $viewModel.icon)
-                .onSubmit {
-                    do {
-                        try viewModel.save()
-                    } catch {
-                        self.error = error
-                    }
-                    dismiss()
-                }
-            AddressInputField(viewModel: viewModel)
-            
-            HStack {
-                Button("Cancel") {
-                    dismiss()
-                }
-                if viewModel.savable {
-                    Button("Save") {
+        VStack(spacing: 0) {
+            Text("New Bookmark")
+                .font(.headline)
+                .padding(.vertical, 4)
+                .frame(maxWidth: .infinity)
+                .background(Color(nsColor: .windowBackgroundColor))
+            VStack(spacing: 8) {
+                TitleInputField(title: $viewModel.title, icon: $viewModel.icon)
+                    .onSubmit {
                         do {
                             try viewModel.save()
                         } catch {
@@ -42,25 +33,44 @@ struct CraftModalView: View {
                         }
                         dismiss()
                     }
-                    .foregroundColor(.accentColor)
-                    .disabled(!viewModel.savable)
-                    .if(viewModel.savable, content: { $0.buttonStyle(.borderedProminent) })
-                } else {
-                    Button("Parse") {
-                        Task {
+                AddressInputField(viewModel: viewModel)
+                
+                HStack {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    if viewModel.savable {
+                        Button("Save") {
                             do {
-                                try await viewModel.parse()
+                                try viewModel.save()
                             } catch {
-                                viewModel.error = error
+                                self.error = error
+                            }
+                            dismiss()
+                        }
+                        .foregroundColor(.accentColor)
+                        .disabled(!viewModel.savable)
+                        .if(viewModel.savable, content: { $0.buttonStyle(.borderedProminent) })
+                    } else {
+                        Button("Parse") {
+                            Task {
+                                do {
+                                    try await viewModel.parse()
+                                } catch {
+                                    viewModel.error = error
+                                }
                             }
                         }
+                        .disabled(!viewModel.parsable || viewModel.loading)
+                        .if(viewModel.parsable && !viewModel.loading, content: { $0.buttonStyle(.borderedProminent) })
                     }
-                    .disabled(!viewModel.parsable || viewModel.loading)
-                    .if(viewModel.parsable && !viewModel.loading, content: { $0.buttonStyle(.borderedProminent) })
                 }
+                .padding(.top, 8)
             }
+            .padding()
+            .background(.white)
         }
-        .padding()
+        .fixedSize(horizontal: false, vertical: true)
         .alert("Error", isPresented: .init(
             get: { errorMessage != nil },
             set: { if !$0 { errorMessage = nil } }

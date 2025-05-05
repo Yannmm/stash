@@ -30,7 +30,7 @@ struct AddressInputField: View {
                     .frame(width: 16, height: 16)
             }
             Divider()
-            TextField("Drop or Enter Path to Create New Bookmark.", text: $viewModel.path ?? "")
+            TextField("Drop or Enter Path to Create Bookmark.", text: $viewModel.path ?? "")
             .textFieldStyle(.plain)
             .focused($focused)
         }

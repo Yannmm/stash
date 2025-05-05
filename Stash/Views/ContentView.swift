@@ -6,6 +6,7 @@ struct ContentView: View {
     @EnvironmentObject var cabinet: OkamuraCabinet
     
     @State private var present = false
+    @State private var sheetHeight: CGFloat = .zero
     @State private var anchorId: UUID?
     @State private var error: Error?
     
@@ -37,6 +38,8 @@ struct ContentView: View {
                     .background(Color(NSColor.windowBackgroundColor))
                     .cornerRadius(8)
                     .interactiveDismissDisabled(true)
+                    .modifier(GetHeightModifier(height: $sheetHeight))
+                    .presentationDetents([.height(sheetHeight)])
             }
         }
         .alert("Error", isPresented: Binding(
@@ -52,3 +55,17 @@ struct ContentView: View {
 
 
 
+struct GetHeightModifier: ViewModifier {
+    @Binding var height: CGFloat
+    
+    func body(content: Content) -> some View {
+        content.background(
+            GeometryReader { geo -> Color in
+                DispatchQueue.main.async {
+                    height = geo.size.height
+                }
+                return Color.clear
+            }
+        )
+    }
+}

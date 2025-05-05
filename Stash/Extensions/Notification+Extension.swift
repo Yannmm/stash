@@ -12,5 +12,5 @@ extension NSNotification.Name {
     static let onDoubleTapRowView = NSNotification.Name("onDoubleTapRowView")
     static let onCmdKeyChange = NSNotification.Name("onCmdKeyChange")
     static let onShortcutKeyDown = NSNotification.Name("onShortcutKeyDown")
-    static let onExpandOrCollapseItem = NSNotification.Name("onExpandOrCollapseItem")
+    static let onOutlineViewRowCount = NSNotification.Name("onOutlineViewRowCount")
 }

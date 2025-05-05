@@ -46,10 +46,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         
-        NotificationCenter.default.addObserver(forName: .onExpandOrCollapseItem, object: nil, queue: nil) { [weak self] noti in
+        NotificationCenter.default.addObserver(forName: .onOutlineViewRowCount, object: nil, queue: nil) { [weak self] noti in
             guard let count = noti.object as? Int else { return }
             self?.outlineViewRowCount = count
-            self?.popover.contentSize = CGSize(width: 1000, height: count * 49 + 34)
+            self?.popover.contentSize = CGSize(width: 800, height: count * 49 + 34)
         }
         
         hotKeyMananger.register(shortcut: settingsViewModel.shortcut)
@@ -110,7 +110,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             popover.performClose(self)
         } else {
             let count = outlineViewRowCount ?? cabinet.storedEntries.filter({ $0.parentId == nil }).count
-            popover.contentSize = CGSize(width: 1000, height: count * 49 + 34)
+            popover.contentSize = CGSize(width: 800, height: count * 49 + 34)
             popover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
         }
     }

@@ -34,7 +34,7 @@ struct TitleInputField: View {
                 }
                 .animation(.easeInOut(duration: 0.3), value: icon)
                 Divider()
-                TextField("Input Title Here.", text: title ?? "")
+                TextField("Title Will Be Here.", text: title ?? "")
                     .textFieldStyle(.plain)
                     .focused($focused)
             }

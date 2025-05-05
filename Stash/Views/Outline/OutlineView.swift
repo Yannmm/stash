@@ -98,6 +98,7 @@ struct OutlineView: NSViewRepresentable {
         DispatchQueue.main.async {
             outlineView.reloadData()
             _expandIfNecessary(outlineView)
+            NotificationCenter.default.post(name: .onOutlineViewRowCount, object: outlineView.numberOfRows)
         }
     }
     
@@ -149,12 +150,12 @@ extension OutlineView {
         
         func outlineViewItemDidExpand(_ notification: Notification) {
             guard let outlineView = notification.object as? NSOutlineView else { return }
-            NotificationCenter.default.post(name: .onExpandOrCollapseItem, object: outlineView.numberOfRows)
+            NotificationCenter.default.post(name: .onOutlineViewRowCount, object: outlineView.numberOfRows)
         }
         
         func outlineViewItemDidCollapse(_ notification: Notification) {
             guard let outlineView = notification.object as? NSOutlineView else { return }
-            NotificationCenter.default.post(name: .onExpandOrCollapseItem, object: outlineView.numberOfRows)
+            NotificationCenter.default.post(name: .onOutlineViewRowCount, object: outlineView.numberOfRows)
         }
         
         func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
@@ -216,7 +217,7 @@ extension OutlineView {
         
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
             let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), expanded: NSEvent.modifierFlags.containsOnly(.command))
-                .frame(width: 1000))
+                .frame(width: 800))
             print("🐶 -> \(view.fittingSize.height)")
             return view.fittingSize.height
         }
