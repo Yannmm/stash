@@ -11,16 +11,18 @@ import SwiftUI
 
 struct AddressInputField: View {
     @FocusState private var focused: Bool
-    @StateObject var viewModel: CraftViewModel
+    @Binding var loading: Bool
+    @Binding var icon: NSImage?
+    @Binding var path: String?
     
     var body: some View {
         HStack(spacing: 6) {
-            if viewModel.loading {
+            if loading {
                 ProgressView()
                     .progressViewStyle(CircularProgressViewStyle(tint: .red))
                     .scaleEffect(0.5, anchor: .center)
                     .frame(width: 16, height: 16)
-            } else if let _ = viewModel.icon {
+            } else if let _ = icon {
                 Image(systemName: "checkmark.circle.fill")
                     .foregroundColor(Color.primary)
                     .frame(width: 16, height: 16)
@@ -30,7 +32,7 @@ struct AddressInputField: View {
                     .frame(width: 16, height: 16)
             }
             Divider()
-            TextField("Drop or Enter Path to Create Bookmark.", text: $viewModel.path ?? "")
+            TextField("Drop or Enter Path to Create Bookmark.", text: $path ?? "")
             .textFieldStyle(.plain)
             .focused($focused)
         }
@@ -53,18 +55,6 @@ struct AddressInputField: View {
         }
         .onAppear {
             focused = true
-        }
-        .onChange(of: viewModel.path ?? "", { _, value in
-            viewModel.parsable = !value.isEmpty
-        })
-        .onSubmit {
-            Task {
-                do {
-                    try await viewModel.parse()
-                } catch {
-                    viewModel.error = error
-                }
-            }
         }
     }
 }

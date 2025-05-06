@@ -52,36 +52,42 @@ class CraftViewModel: ObservableObject {
         }
     }
     
-    func parse() async throws {
-        guard let p = path, !p.isEmpty else {
-            throw CraftError.emptyPath
-        }
-        
-        let path = Path(path ?? "")
-        
-        switch path {
-        case .file(let url):
-            self.url = url
-        case .web(let url):
-            self.url = url
-        case .unknown:
-            return
-        }
-        
+    func parse() async {
         loading = true
         defer {
             loading = false
-            savable = true
         }
-        
-        let _ = try await updateTitle(path)
-        
-        async let _ = try updateImage(path)
+        do {
+            guard let p = path, !p.isEmpty else {
+                throw CraftError.emptyPath
+            }
+            
+            let path = Path(p)
+            
+            switch path {
+            case .file(let url):
+                self.url = url
+            case .web(let url):
+                self.url = url
+            case .unknown:
+                return
+            }
+            
+            let _ = try await updateTitle(path)
+            async let _ = try updateImage(path)
+            savable = true
+        } catch {
+            self.error = error
+        }
     }
     
-    func save() throws {
-        let b = Bookmark(id: UUID(), name: title!, url: url!)
-        try cabinet.relocate(entry: b, anchorId: anchorId)
+    func save() {
+        do {
+            let b = Bookmark(id: UUID(), name: title!, url: url!)
+            try cabinet.relocate(entry: b, anchorId: anchorId)
+        } catch {
+            self.error = error
+        }
     }
     
 
