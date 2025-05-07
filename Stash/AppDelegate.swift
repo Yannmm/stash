@@ -57,10 +57,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
         
-        NotificationCenter.default.addObserver(forName: .onOutlineViewRowCount, object: nil, queue: nil) { [weak self] noti in
+        NotificationCenter.default.addObserver(forName: .onOutlineViewRowCount, object: nil, queue: nil) { [unowned self] noti in
             guard let count = noti.object as? Int else { return }
-            self?.outlineViewRowCount = count
-            self?.popover.contentSize = CGSize(width: 800, height: count * 49 + 34)
+            self.outlineViewRowCount = count
+            self.popover.contentSize = self.editPopoverContentSize(count)
         }
     }
     
@@ -107,18 +107,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @objc private func quit() {}
     
-    func showDropWindow() {
-        dropWindow?.makeKeyAndOrderFront(nil)
-        NSApp.activate(ignoringOtherApps: false)
-    }
-    
     @objc func togglePopover() {
         if (popover.isShown) {
             popover.performClose(self)
         } else {
             let count = outlineViewRowCount ?? cabinet.storedEntries.filter({ $0.parentId == nil }).count
-            popover.contentSize = CGSize(width: 800, height: count * 49 + 34)
+            popover.contentSize = editPopoverContentSize(count)
             popover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
         }
+    }
+    
+    private func editPopoverContentSize(_ entryCount: Int) -> CGSize {
+        CGSize(width: 800, height: (entryCount < 3 ? 3 : entryCount) * 49 + 34)
     }
 }

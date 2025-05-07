@@ -10,6 +10,10 @@ struct ContentView: View {
     @State private var anchorId: UUID?
     @State private var error: Error?
     
+    private var welcome: Bool {
+        cabinet.storedEntries.count <= 0
+    }
+    
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
@@ -27,11 +31,18 @@ struct ContentView: View {
                         self.error = error
                     }
                 }
-                OutlineView(entries: $cabinet.storedEntries, anchorId: $anchorId, presentingModal: $present) {
-                    self.anchorId = $0
+                if welcome {
+                    Text("welcome")
+                        .frame(height: 147)
+                        .frame(maxWidth: .infinity)
+                        .background(Color.white)
+                } else {
+                    OutlineView(entries: $cabinet.storedEntries, anchorId: $anchorId, presentingModal: $present) {
+                        self.anchorId = $0
+                    }
+                    ModifierKeyMonitorView(listen: !present)
+                        .frame(width: 0, height: 0)
                 }
-                ModifierKeyMonitorView(listen: !present)
-                    .frame(width: 0, height: 0)
             }
             .sheet(isPresented: $present, onDismiss: nil) {
                 CraftModalView(anchorId: $anchorId)
