@@ -188,7 +188,7 @@ fileprivate extension OkamuraCabinet {
             try fileManager.createDirectory(at: appDirectory, withIntermediateDirectories: true, attributes: nil)
         }
         
-        return appDirectory
+        return appDirectory.appendingPathComponent("default.html")
     }
 
 }
