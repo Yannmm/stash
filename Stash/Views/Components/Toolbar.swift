@@ -24,13 +24,14 @@ struct Toolbar: View {
                     Image(systemName: "link.badge.plus")
                 }
                 .buttonStyle(.plain)
-                
+                .help("Create Bookmark")
                 Button(action: {
                     addFolder()
                 }) {
                     Image(systemName: "folder.badge.plus")
                 }
                 .buttonStyle(.plain)
+                .help("Create Group")
                 Spacer()
             }
             
