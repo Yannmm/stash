@@ -70,7 +70,12 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func load() throws {
-        guard let data = UserDefaults.standard.data(forKey: "cabinetEntries1") else { return }
+        let filePath = try getAppSupportDirectory(appName: "Stash")
+        
+        let htmlString = try String(contentsOf: filePath, encoding: .utf8)
+        let dominator = Dominator()
+        let data = try dominator.decompose(htmlString)
+        
         let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
         storedEntries = anyEntries.asEntries
         
