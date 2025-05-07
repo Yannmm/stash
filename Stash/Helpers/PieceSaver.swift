@@ -15,6 +15,8 @@ class PieceSaver {
         case icloudSync
         case launchOnLogin
         case showDockIcon
+        case recentEntries
+        case recentKeys
     }
 
     func save(for key: Key, value: Any?) {

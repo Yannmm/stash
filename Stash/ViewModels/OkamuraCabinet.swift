@@ -16,9 +16,11 @@ class OkamuraCabinet: ObservableObject {
     
     @Published private(set) var recentEntries: [(Bookmark, String)] = []
     
+    private let pieceSaver = PieceSaver()
+    
     static let shared = OkamuraCabinet()
     
-    init() {        
+    init() {
         Task {
             try await load()
         }
@@ -48,15 +50,13 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func save() throws {
-        let data = try JSONEncoder().encode(storedEntries.asAnyEntries)
-        
-        let data1 = try JSONEncoder().encode(recentEntries.map({ $0.0 }).asAnyEntries)
-        
-        // TODO: save to app documents
-        // Save to UserDefaults
-        UserDefaults.standard.set(data, forKey: "cabinetEntries1")
-        UserDefaults.standard.set(data1, forKey: "recent_entries")
-        UserDefaults.standard.set(recentEntries.map({ $0.1 }), forKey: "recent_keys")
+        let data1 = try JSONEncoder().encode(storedEntries.asAnyEntries)
+        let url = try getAppSupportDirectory(appName: "Stash")
+        try saveToDisk(data: data1, filePath: url)
+
+        let data2 = try JSONEncoder().encode(recentEntries.map({ $0.0 }).asAnyEntries)
+        pieceSaver.save(for: .recentEntries, value: data2)
+        pieceSaver.save(for: .recentKeys, value: recentEntries.map({ $0.1 }))
     }
     
     func delete(entry: any Entry) throws {
@@ -74,15 +74,17 @@ class OkamuraCabinet: ObservableObject {
         let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
         storedEntries = anyEntries.asEntries
         
-        if let data = UserDefaults.standard.data(forKey: "recent_entries"), let keys = UserDefaults.standard.object(forKey: "recent_keys") as? [String] {
+        
+        if let data: Data = pieceSaver.value(for: .recentEntries),
+           let keys: [String] = pieceSaver.value(for: .recentKeys) {
             let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
-            var aa = [(Bookmark, String)]()
+            var collector = [(Bookmark, String)]()
             for (index, entry) in anyEntries.asEntries.enumerated() {
                 if let bookmark = entry as? Bookmark, index <= keys.count - 1 {
-                    aa.append((bookmark, keys[index]))
+                    collector.append((bookmark, keys[index]))
                 }
             }
-            recentEntries = aa
+            recentEntries = collector
         }
     }
     
@@ -129,7 +131,6 @@ class OkamuraCabinet: ObservableObject {
         try save()
     }
     
-    // TODO: save recentEntries
     func asRecent(_ bookmark: Bookmark) throws {
         var b = bookmark
         b.parentId = nil
@@ -138,16 +139,12 @@ class OkamuraCabinet: ObservableObject {
         if (copy.count + 1) > leftyKeystrokes.count {
             copy = Array(copy[0...(leftyKeystrokes.count - 1)])
         }
-        
-        let kk = Array(copy.map({ $0.1 }))
-        
-        let kk2 = leftyKeystrokes.filter { !kk.contains($0) }
-        
-        if kk2.count > 0 {
-            copy.insert((b, kk2[0]), at: 0)
+        let existings = Array(copy.map({ $0.1 }))
+        let rest = leftyKeystrokes.filter { !existings.contains($0) }
+        if rest.count > 0 {
+            copy.insert((b, rest[0]), at: 0)
         }
         recentEntries = copy
-        
         try save()
     }
 }
@@ -163,24 +160,37 @@ extension OkamuraCabinet {
         try save()
     }
     
-    func export(to directoryPath: URL) throws -> URL {
+    func export(to directoryPath: URL) throws {
         let data = try JSONEncoder().encode(storedEntries.asAnyEntries)
         let filePath = directoryPath.appendingPathComponent("stash.html")
         try saveToDisk(data: data, filePath: filePath)
-        return filePath
     }
 }
 
 fileprivate extension OkamuraCabinet {
     func saveToDisk(data: Data, filePath: URL) throws {
         let json = try JSONSerialization.jsonObject(with: data)
-        
         let d = Dominator()
-        
         let string = try d.compose(json)
-        
         try string.write(to: filePath, atomically: true, encoding: .utf8)
     }
+    
+    func getAppSupportDirectory(appName: String) throws -> URL {
+        let fileManager = FileManager.default
+        
+        guard let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
+            throw SomeError.Save.missingApplicationSupportDirectory
+        }
+        
+        let appDirectory = appSupportURL.appendingPathComponent(appName, isDirectory: true)
+        
+        if !fileManager.fileExists(atPath: appDirectory.path) {
+            try fileManager.createDirectory(at: appDirectory, withIntermediateDirectories: true, attributes: nil)
+        }
+        
+        return appDirectory
+    }
+
 }
 
 extension OkamuraCabinet {
@@ -188,6 +198,7 @@ extension OkamuraCabinet {
         enum Save: Error {
             case missingFilePath
             case invalidJSON
+            case missingApplicationSupportDirectory
         }
         
         enum Parse: Error, LocalizedError {

@@ -241,7 +241,7 @@ struct CellContent: View {
             }
         }
         .padding(.vertical, 10)
-        .padding(.leading, 10)
+        .padding(.trailing, 10)
         .alert("Sure to Delete?", isPresented: $deleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Confirm", role: .destructive) {

@@ -23,20 +23,31 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     var hotKeyMananger: HotKeyManager { HotKeyManager.shared }
     
+    private let dominator = Dominator()
+    
     private var cancellables = Set<AnyCancellable>()
     
     private var outlineViewRowCount: Int?
     
     private var settingsWindow: NSWindow?
     
+    func applicationWillFinishLaunching(_ notification: Notification) {
+        NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
+        hotKeyMananger.register(shortcut: settingsViewModel.shortcut)
+    }
+    
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
         
-        HotKeyManager.shared.register(shortcut: settingsViewModel.shortcut)
-        
+        bind()
+    }
+    
+    private func bind() {
         Publishers.CombineLatest3(cabinet.$storedEntries, cabinet.$recentEntries, settingsViewModel.$collapseHistory)
             .sink { [weak self] tuple3 in
-                self?.statusItem?.menu = self?.generateMenu(from: tuple3.0, history: tuple3.1, collapseHistory: tuple3.2)
+                Task { @MainActor in
+                    self?.statusItem?.menu = self?.generateMenu(from: tuple3.0, history: tuple3.1, collapseHistory: tuple3.2)
+                }
             }
             .store(in: &cancellables)
         
@@ -51,11 +62,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self?.outlineViewRowCount = count
             self?.popover.contentSize = CGSize(width: 800, height: count * 49 + 34)
         }
-        
-        hotKeyMananger.register(shortcut: settingsViewModel.shortcut)
     }
-    
-    let dominator = Dominator()
     
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)

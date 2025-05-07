@@ -9,15 +9,6 @@ import AppKit
 import Combine
 import HotKey
 
-//        let hostingView = NSHostingView(rootView: SettingsView(shortcut: hotKeyMananger.shortcut,
-//                                                               viewModel: self.settingsViewModel,
-//                                                               onSelectImportFile: { [unowned self] in try self.cabinet.import(from: $0) },
-//                                                               onSelectExportDestination: { [unowned self] in try self.cabinet.export(to: $0) },
-//                                                               onReset: { [unowned self] in try self.cabinet.removeAll() },
-//                                                               onShowDockIconChange: { NSApp.setActivationPolicy($0 ? .regular : .accessory) }
-//                                                              ))
-
-
 class SettingsViewModel: ObservableObject {
     @Published var collapseHistory: Bool
     @Published var icloudSync: Bool
