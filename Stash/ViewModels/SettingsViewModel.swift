@@ -74,7 +74,7 @@ class SettingsViewModel: ObservableObject {
             .store(in: &cancellables)
         $showDockIcon
             .sink { [weak self] in
-                NSApp.setActivationPolicy($0 ? .regular : .accessory)
+//                NSApp.setActivationPolicy($0 ? .regular : .accessory)
                 self?.pieceSaver.save(for: .showDockIcon, value: $0)
             }
             .store(in: &cancellables)

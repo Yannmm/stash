@@ -96,7 +96,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
-//        settingsWindow?.isReleasedWhenClosed = false
+        settingsWindow?.isReleasedWhenClosed = false
         settingsWindow?.center()
         settingsWindow?.contentView = hostingView
         
@@ -107,9 +107,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             setupSettingsWindow()
             
         }
-        settingsWindow?.collectionBehavior = .canJoinAllSpaces
+        NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
-        
     }
     
     @objc private func quit() {}

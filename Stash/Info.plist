@@ -4,5 +4,7 @@
 <dict>
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
+    <key>LSUIElement</key>
+    <string>1</string>
 </dict>
 </plist>

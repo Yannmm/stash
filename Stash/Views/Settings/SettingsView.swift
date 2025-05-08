@@ -36,7 +36,7 @@ struct SettingsView: View {
             Section("General") {
                 Toggle("Launch on Login", isOn: $viewModel.launchOnLogin)
                 Toggle("iCloud Sync", isOn: $viewModel.icloudSync)
-                Toggle("Show Icon In Dock", isOn: $viewModel.showDockIcon)
+//                Toggle("Show Icon In Dock", isOn: $viewModel.showDockIcon)
                 HStack {
                     Text("Global Shortcut")
                     Spacer()
@@ -62,10 +62,11 @@ struct SettingsView: View {
                 .padding(.top, -4)
             }
             
-            // Check Update Section
-            Section("Data Management") {
+            Section("Data Management") {}
+                .padding(.bottom, -10)
+            Section {
                 HStack {
-                    Text(importDescription)
+                    Text("Select a File")
                     Spacer()
                     Button("Import") {
                         // Handle import
@@ -83,7 +84,21 @@ struct SettingsView: View {
                     }
                     .buttonStyle(.bordered)
                 }
-                
+            } footer: {
+                HStack {
+                    Text(importDescription)
+                        .foregroundColor(.secondary)
+                        .font(.caption)
+                        .multilineTextAlignment(.leading)
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.top, -4)
+            }
+
+            
+            // Check Update Section
+            Section {
                 HStack(spacing: 0) {
                     Text(exportDescription)
                     Spacer()
