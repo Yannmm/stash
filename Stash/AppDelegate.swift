@@ -11,9 +11,17 @@ import Combine
 import HotKey
 
 class AppDelegate: NSObject, NSApplicationDelegate {
-    var popover = NSPopover()
+    
     var statusItem: NSStatusItem?
     var dropWindow: NSWindow?
+    
+    private lazy var editPopover: NSPopover = {
+        let p = NSPopover()
+        let contentView = ContentView().environmentObject(cabinet)
+        p.behavior = .transient
+        p.contentViewController = NSHostingController(rootView: contentView)
+        return p
+    }()
     
     private lazy var settingsViewModel: SettingsViewModel = {
         let viewModel = SettingsViewModel(hotKeyManager: hotKeyMananger, cabinet: cabinet)
@@ -32,7 +40,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var settingsWindow: NSWindow?
     
     func applicationWillFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
+//        NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
         hotKeyMananger.register(shortcut: settingsViewModel.shortcut)
     }
     
@@ -60,17 +68,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NotificationCenter.default.addObserver(forName: .onOutlineViewRowCount, object: nil, queue: nil) { [unowned self] noti in
             guard let count = noti.object as? Int else { return }
             self.outlineViewRowCount = count
-            self.popover.contentSize = self.editPopoverContentSize(count)
+            self.editPopover.contentSize = self.editPopoverContentSize(count)
         }
     }
     
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        
-        let contentView = ContentView().environmentObject(cabinet)
-        popover.behavior = .transient
-        popover.contentViewController = NSHostingController(rootView: contentView)
-        
+                
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "square.stack.3d.up.fill", accessibilityDescription: nil)
             
@@ -92,7 +96,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
-        settingsWindow?.isReleasedWhenClosed = false
+//        settingsWindow?.isReleasedWhenClosed = false
         settingsWindow?.center()
         settingsWindow?.contentView = hostingView
         
@@ -101,19 +105,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func openSettings() {
         if settingsWindow == nil {
             setupSettingsWindow()
+            
         }
+        settingsWindow?.collectionBehavior = .canJoinAllSpaces
         settingsWindow?.makeKeyAndOrderFront(nil)
+        
     }
     
     @objc private func quit() {}
     
-    @objc func togglePopover() {
-        if (popover.isShown) {
-            popover.performClose(self)
+    @objc func edit() {
+        if (editPopover.isShown) {
+            editPopover.performClose(self)
         } else {
             let count = outlineViewRowCount ?? cabinet.storedEntries.filter({ $0.parentId == nil }).count
-            popover.contentSize = editPopoverContentSize(count)
-            popover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
+            editPopover.contentSize = editPopoverContentSize(count)
+            editPopover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
+            editPopover.contentViewController?.view.window?.makeKey()
         }
     }
     

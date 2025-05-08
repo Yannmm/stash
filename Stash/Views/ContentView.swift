@@ -32,10 +32,22 @@ struct ContentView: View {
                     }
                 }
                 if welcome {
-                    Text("welcome")
-                        .frame(height: 147)
-                        .frame(maxWidth: .infinity)
-                        .background(Color.white)
+                    HStack(alignment: .top, spacing: 0) {
+                        Text("Tap ")
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack(alignment: .firstTextBaseline, spacing: 0) {
+                                Image(systemName: "link.badge.plus")
+                                Text(" to Create Bookmark")
+                            }
+                            HStack(alignment: .firstTextBaseline, spacing: 0) {
+                                Image(systemName: "folder.badge.plus")
+                                Text(" to Create Group")
+                            }
+                        }
+                    }
+                    .frame(height: 147)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white)
                 } else {
                     OutlineView(entries: $cabinet.storedEntries, anchorId: $anchorId, presentingModal: $present) {
                         self.anchorId = $0

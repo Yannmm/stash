@@ -37,7 +37,7 @@ extension AppDelegate {
         g(menu: menu, entries: entries, parentId: nil, keyEquivalents: [])
         
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Edit", action: #selector(togglePopover), keyEquivalent: "E"))
+        menu.addItem(NSMenuItem(title: "Edit", action: #selector(edit), keyEquivalent: "E"))
         menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: "S"))
         
         return menu
