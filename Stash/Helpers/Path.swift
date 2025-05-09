@@ -31,7 +31,7 @@ extension Path {
         case let str where str.starts(with: "vnc"):
             self = .vnc(URL(string: str)!)
         default:
-            self = .unknown
+            self = .web(URL(string: Helper.normalizeUrl(lowercased))!)
         }
     }
     
