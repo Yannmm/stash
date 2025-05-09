@@ -6,7 +6,7 @@ struct SettingsView: View {
     @State private var isRecording = false
     @State private var resetAlert = false
     //    @State private var updateFrequency = UpdateFrequency.weekly
-    var importDescription: AttributedString {
+    var importDescription: AttributedString? {
         if let path = viewModel.importFromFile?.path {
             let tilde = (path as NSString).abbreviatingWithTildeInPath
             var a1 = AttributedString("Recently imported from: ")
@@ -14,11 +14,11 @@ struct SettingsView: View {
             let a2 = AttributedString(tilde)
             return a1 + a2
         } else {
-            return "Select a File"
+            return nil
         }
     }
     
-    var exportDescription: AttributedString {
+    var exportDescription: AttributedString? {
         if let path = viewModel.exportToDirectory?.path {
             let tilde = (path as NSString).abbreviatingWithTildeInPath
             var a1 = AttributedString("Recently exported to: ")
@@ -26,7 +26,7 @@ struct SettingsView: View {
             let a2 = AttributedString(tilde)
             return a1 + a2
         } else {
-            return "Select a Destination"
+            return nil
         }
     }
     
@@ -45,79 +45,81 @@ struct SettingsView: View {
                         shortcut: $viewModel.shortcut
                     )
                 }
-            }
-            Section {
-                Toggle(isOn: $viewModel.collapseHistory) {
-                    Text("Collapse History")
-                }
-            } footer: {
-                HStack {
-                    Text("Show or hide the list of recently-visited bookmarks at the top of menu.")
-                        .foregroundColor(.secondary)
-                        .font(.caption)
-                        .multilineTextAlignment(.leading)
-                    Spacer()
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, -4)
-            }
-            
-            Section("Data Management") {}
-                .padding(.bottom, -10)
-            Section {
-                HStack {
-                    Text("Select a File")
-                    Spacer()
-                    Button("Import") {
-                        // Handle import
-                        let panel = NSOpenPanel()
-                        panel.allowsMultipleSelection = false
-                        panel.canChooseDirectories = false
-                        panel.canCreateDirectories = false
-                        panel.canChooseFiles = true
-                        panel.allowedContentTypes = [.html]
-                        
-                        panel.begin { response in
-                            guard response == .OK, let url = panel.url else { return }
-                            viewModel.importFromFile = url
-                        }
+                VStack(alignment: .leading) {
+                    Toggle(isOn: $viewModel.collapseHistory) {
+                        Text("Collapse History")
                     }
-                    .buttonStyle(.bordered)
+                    HStack {
+                        Text("Show or hide the list of recently-visited bookmarks at the top of menu.")
+                            .foregroundColor(.secondary)
+                            .font(.caption)
+                            .multilineTextAlignment(.leading)
+                        Spacer()
+                    }
                 }
-            } footer: {
-                HStack {
-                    Text(importDescription)
-                        .foregroundColor(.secondary)
-                        .font(.caption)
-                        .multilineTextAlignment(.leading)
-                    Spacer()
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, -4)
             }
 
             
-            // Check Update Section
-            Section {
-                HStack(spacing: 0) {
-                    Text(exportDescription)
-                    Spacer()
-                    Button("Export") {
-                        // Handle import
-                        let panel = NSOpenPanel()
-                        panel.allowsMultipleSelection = false
-                        panel.canChooseDirectories = true
-                        panel.canCreateDirectories = true
-                        panel.canChooseFiles = false
-                        
-                        panel.begin { response in
-                            guard response == .OK, let url = panel.url else { return }
-                            viewModel.exportToDirectory = url
+            Section("Data Management") {
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text("Select a File")
+                        Spacer()
+                        Button("Import") {
+                            // Handle import
+                            let panel = NSOpenPanel()
+                            panel.allowsMultipleSelection = false
+                            panel.canChooseDirectories = false
+                            panel.canCreateDirectories = false
+                            panel.canChooseFiles = true
+                            panel.allowedContentTypes = [.html]
+                            
+                            panel.begin { response in
+                                guard response == .OK, let url = panel.url else { return }
+                                viewModel.importFromFile = url
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    if let desc = importDescription {
+                        HStack {
+                            Text(desc)
+                                .foregroundColor(.secondary)
+                                .font(.caption)
+                                .multilineTextAlignment(.leading)
+                            Spacer()
                         }
                     }
-                    .buttonStyle(.bordered)
                 }
-                
+                VStack(alignment: .leading) {
+                    HStack(spacing: 0) {
+                        Text("Select a Destination")
+                        Spacer()
+                        Button("Export") {
+                            // Handle import
+                            let panel = NSOpenPanel()
+                            panel.allowsMultipleSelection = false
+                            panel.canChooseDirectories = true
+                            panel.canCreateDirectories = true
+                            panel.canChooseFiles = false
+                            
+                            panel.begin { response in
+                                guard response == .OK, let url = panel.url else { return }
+                                viewModel.exportToDirectory = url
+                            }
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    if let desc = exportDescription {
+                        HStack {
+                            Text(desc)
+                                .foregroundColor(.secondary)
+                                .font(.caption)
+                                .multilineTextAlignment(.leading)
+                            Spacer()
+                        }
+                    }
+                }
                 HStack {
                     Text("Clear All Data")
                     Spacer()
@@ -138,6 +140,8 @@ struct SettingsView: View {
                     }
                 }
             }
+
+            
             
             // Check Update Section
             //            Section("Software Update") {
