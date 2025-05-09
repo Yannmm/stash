@@ -21,7 +21,9 @@ struct Bookmark {
 
 extension Bookmark: Entry {
     var icon: Icon {
-        if url.isFileURL {
+        if url.isVnc {
+          return .system("desktopcomputer")
+        } else if url.isFileURL {
             return .local(url)
         } else {
             if let furl = url.faviconUrl {

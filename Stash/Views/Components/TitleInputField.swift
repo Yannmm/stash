@@ -20,8 +20,9 @@ struct TitleInputField: View {
                 ZStack {
                     if let i = icon {
                         Image(nsImage: i)
-                            .resizable()
-                            .frame(width: 16, height: 16)
+//                            .resizable()
+                            .frame(width: 16)
+                            .aspectRatio(contentMode: .fit)
                             .transition(.opacity.combined(with: .scale))
                     } else {
                         Image(systemName: "questionmark.circle.dashed")

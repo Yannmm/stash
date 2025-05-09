@@ -23,4 +23,8 @@ extension URL {
     }
 }
 
-
+extension URL {
+    var isVnc: Bool {
+        self.scheme?.lowercased() == "vnc"
+    }
+}

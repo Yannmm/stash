@@ -10,6 +10,7 @@ import Foundation
 enum Path {
     case file(URL)
     case web(URL)
+    case vnc(URL)
     case unknown
 }
 
@@ -27,8 +28,10 @@ extension Path {
             fallthrough
         case let str where str.starts(with: "https"):
             self = .web(URL(string: str)!)
+        case let str where str.starts(with: "vnc"):
+            self = .vnc(URL(string: str)!)
         default:
-            self = .web(URL(string: Helper.normalizeUrl(lowercased))!)
+            self = .unknown
         }
     }
     

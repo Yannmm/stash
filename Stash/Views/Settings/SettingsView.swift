@@ -165,8 +165,18 @@ struct SettingsView: View {
             
             // About Section
             Section("About") {
-                Link("https://github.com/Yannmm/stash", destination: URL(string: "https://github.com/Yannmm/stash")!)
-                    .foregroundStyle(.secondary)
+                VStack(alignment: .leading) {
+                    Text("Stash is a open-source project. Issues and PRs are welcome.")
+                    Link("https://github.com/Yannmm/stash", destination: URL(string: "https://github.com/Yannmm/stash")!)
+                        .foregroundStyle(.secondary)
+                        .onHover { hovering in
+                            if hovering {
+                                NSCursor.pointingHand.push()
+                            } else {
+                                NSCursor.pop()
+                            }
+                        }
+                }
             }
         }
         .navigationTitle("Stash Settings")

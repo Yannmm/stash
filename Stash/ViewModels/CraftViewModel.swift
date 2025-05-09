@@ -69,8 +69,10 @@ class CraftViewModel: ObservableObject {
                 self.url = url
             case .web(let url):
                 self.url = url
+            case .vnc(let url):
+                self.url = url
             case .unknown:
-                return
+                throw CraftError.unsupportedUrl(p)
             }
             
             let _ = try await updateTitle(path)
@@ -98,6 +100,8 @@ class CraftViewModel: ObservableObject {
             let i = NSWorkspace.shared.icon(forFile: url.path)
             i.size = CGSize(width: 16, height: 16)
             icon = i
+        case .vnc(let _):
+            icon = NSImage(systemSymbolName: "desktopcomputer", accessibilityDescription: nil)
         case .web(let url):
             if let u = url.faviconUrl {
                 let image = try await withCheckedThrowingContinuation { continuation in
@@ -126,6 +130,8 @@ class CraftViewModel: ObservableObject {
             title = url.lastPathComponent
         case .web(let url):
             title = try await Dominator().fetchWebPageTitle(from: url)
+        case .vnc(let url):
+            title = url.absoluteString
         case .unknown:
             return
         }
@@ -134,6 +140,7 @@ class CraftViewModel: ObservableObject {
     enum CraftError: Error {
         case emptyPath
         case invalidUrl(String)
+        case unsupportedUrl(String)
     }
 }
 
