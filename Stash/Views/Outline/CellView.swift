@@ -110,7 +110,6 @@ struct CellContent: View {
                             Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
-                            //                                .frame(width: NSImage.Constant.side2)
                                 .frame(width: NSImage.Constant.side2, height: NSImage.Constant.side2)
                         }
                     } else {

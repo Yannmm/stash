@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import Combine
 import Kingfisher
 
 @MainActor
@@ -26,6 +27,8 @@ class CraftViewModel: ObservableObject {
     private var url: URL?
     var anchorId: UUID?
     
+    private var cancellables = Set<AnyCancellable>()
+    
     private let dominator = Dominator()
     
     var cabinet: OkamuraCabinet!
@@ -34,6 +37,7 @@ class CraftViewModel: ObservableObject {
     
     init(entry: (any Entry)? = nil) {
         self.entry = entry
+        bind()
         guard entry != nil else { return }
         
         self.title = entry?.name
@@ -50,6 +54,14 @@ class CraftViewModel: ObservableObject {
             
         default: break
         }
+    }
+    
+    private func bind() {
+        $path
+            .removeDuplicates()
+            .map({ _ in false })
+            .sink { [weak self] in self?.parsable = $0 }
+            .store(in: &cancellables)
     }
     
     func parse() async {
@@ -71,8 +83,8 @@ class CraftViewModel: ObservableObject {
                 self.url = url
             case .vnc(let url):
                 self.url = url
-            case .unknown:
-                throw CraftError.unsupportedUrl(p)
+            case .whatever(let url):
+                self.url = url
             }
             
             let _ = try await updateTitle(path)
@@ -100,8 +112,8 @@ class CraftViewModel: ObservableObject {
             let i = NSWorkspace.shared.icon(forFile: url.path)
             i.size = CGSize(width: 16, height: 16)
             icon = i
-        case .vnc(let _):
-            icon = NSImage(systemSymbolName: "desktopcomputer", accessibilityDescription: nil)
+        case .vnc(_):
+            icon = NSImage(systemSymbolName: "square.on.square.intersection.dashed", accessibilityDescription: nil) // square.on.square.intersection.dashed
         case .web(let url):
             if let u = url.faviconUrl {
                 let image = try await withCheckedThrowingContinuation { continuation in
@@ -117,10 +129,10 @@ class CraftViewModel: ObservableObject {
                 }
                 icon = image
             } else {
-                icon = NSImage(systemSymbolName: "link", accessibilityDescription: nil)
+                icon = NSImage(systemSymbolName: "globe", accessibilityDescription: nil)
             }
-        case .unknown:
-            return
+        case .whatever:
+            icon = NSImage(systemSymbolName: "link", accessibilityDescription: nil)
         }
     }
     
@@ -131,9 +143,11 @@ class CraftViewModel: ObservableObject {
         case .web(let url):
             title = try await Dominator().fetchWebPageTitle(from: url)
         case .vnc(let url):
+            var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
+            components?.scheme = nil
+            title = components?.string?.replacingOccurrences(of: "//", with: "") ?? url.absoluteString
+        case .whatever(let url):
             title = url.absoluteString
-        case .unknown:
-            return
         }
     }
     

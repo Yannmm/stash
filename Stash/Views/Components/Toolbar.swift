@@ -47,7 +47,6 @@ struct Toolbar: View {
         .onAppear {
             timer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { time in
                 let seconds = Calendar.current.component(.second, from: Date())
-                print(seconds % Constant.tips.count)
                 tip = Constant.tips[seconds % Constant.tips.count]
             }
         }

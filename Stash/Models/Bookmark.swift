@@ -22,7 +22,7 @@ struct Bookmark {
 extension Bookmark: Entry {
     var icon: Icon {
         if url.isVnc {
-          return .system("desktopcomputer")
+          return .system("square.on.square.intersection.dashed")
         } else if url.isFileURL {
             return .local(url)
         } else {

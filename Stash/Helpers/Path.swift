@@ -11,27 +11,36 @@ enum Path {
     case file(URL)
     case web(URL)
     case vnc(URL)
-    case unknown
+    case whatever(URL)
 }
 
 extension Path {
     init(_ string: String) {
-        let lowercased = string.lowercased()
-        switch lowercased {
-        case let str where str.starts(with: "file://"):
-            self = .file(URL(fileURLWithPath: lowercased))
-        case let str where str.starts(with: "~"):
-            self = .file(URL(fileURLWithPath: lowercased))
-        case let str where str.starts(with: "/"):
-            self = .file(URL(fileURLWithPath: lowercased))
-        case let str where str.starts(with: "http"):
-            fallthrough
-        case let str where str.starts(with: "https"):
-            self = .web(URL(string: str)!)
-        case let str where str.starts(with: "vnc"):
-            self = .vnc(URL(string: str)!)
-        default:
-            self = .web(URL(string: Helper.normalizeUrl(lowercased))!)
+        let url = URL(string: string)
+        
+        if let u = url, let scheme = u.scheme {
+            switch scheme {
+            case "file":
+                self = .file(URL(fileURLWithPath: string))
+            case "vnc":
+                self = .vnc(u)
+            case "http":
+                fallthrough
+            case "https":
+                self = .web(u)
+            default:
+                self = .whatever(u)
+            }
+        } else {
+            let lowercased = string.lowercased()
+            switch lowercased {
+            case let str where str.starts(with: "~"):
+                self = .file(URL(fileURLWithPath: lowercased))
+            case let str where str.starts(with: "/"):
+                self = .file(URL(fileURLWithPath: lowercased))
+            default:
+                self = .web(URL(string: Helper.normalizeUrl(lowercased))!)
+            }
         }
     }
     
