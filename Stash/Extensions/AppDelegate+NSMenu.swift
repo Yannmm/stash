@@ -108,7 +108,6 @@ extension AppDelegate {
                 }
             }
         } else {
-            // Set default folder icon for directories
             item.image = NSImage(systemSymbolName: "globe", accessibilityDescription: nil)
         }
     }

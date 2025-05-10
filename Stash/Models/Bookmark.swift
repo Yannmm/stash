@@ -29,7 +29,7 @@ extension Bookmark: Entry {
             if let furl = url.faviconUrl {
                 return .favicon(furl)
             } else {
-                return .system("link")
+                return .system("globe")
             }
         }
     }
