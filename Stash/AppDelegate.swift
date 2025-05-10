@@ -111,7 +111,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         settingsWindow?.makeKeyAndOrderFront(nil)
     }
     
-    @objc private func quit() {}
+    @objc func quit() {
+        NSApp.terminate(nil)
+    }
     
     @objc func edit() {
         if (editPopover.isShown) {
