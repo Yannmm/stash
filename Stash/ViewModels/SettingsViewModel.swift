@@ -74,7 +74,7 @@ class SettingsViewModel: ObservableObject {
             .store(in: &cancellables)
         $showDockIcon
             .sink { [weak self] in
-//                NSApp.setActivationPolicy($0 ? .regular : .accessory)
+                //                NSApp.setActivationPolicy($0 ? .regular : .accessory)
                 self?.pieceSaver.save(for: .showDockIcon, value: $0)
             }
             .store(in: &cancellables)
@@ -105,5 +105,24 @@ class SettingsViewModel: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+    }
+    
+    var versionDescription: String {
+        var result = " ("
+        
+        if let version = Bundle.main.version {
+            result += "v\(version)"
+        }
+        if let build = Bundle.main.buildNumber {
+            result += "·b\(build)"
+        }
+        if let date = Bundle.main.builDate {
+            let formatter = DateFormatter()
+            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            formatter.timeZone = .current
+            result += "·\(formatter.string(from: date))"
+        }
+        
+        return result + ")"
     }
 }

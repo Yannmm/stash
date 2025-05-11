@@ -164,9 +164,8 @@ struct SettingsView: View {
             //            }
             
             // About Section
-            Section("About") {
+            Section("About\(viewModel.versionDescription)") {
                 VStack(alignment: .leading) {
-                    Text("Stash is a open-source project. Issues and PRs are welcome.")
                     Link("https://github.com/Yannmm/stash", destination: URL(string: "https://github.com/Yannmm/stash")!)
                         .foregroundStyle(.secondary)
                         .onHover { hovering in
@@ -176,6 +175,7 @@ struct SettingsView: View {
                                 NSCursor.pop()
                             }
                         }
+                    Text("Stash is a open-source project. Issues and Pull Requests are welcome.")
                 }
             }
         }
@@ -200,5 +200,3 @@ struct SettingsView: View {
         case monthly = "Monthly"
     }
 }
-
-
