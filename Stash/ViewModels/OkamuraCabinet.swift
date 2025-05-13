@@ -252,5 +252,6 @@ extension OkamuraCabinet {
 // 1. launch on login
 // 2. 没有任何。bookmarks 时，menu太空 // create first bookmark // import from browsers
 // 5. 设置窗口有时无法到最前方
+// 6. use NSMetadataQuery to monitor file from icloud.
 // 3. 排序失去焦点问题
 // 4. 一段时间后，好像icloud中的文件被覆盖了
