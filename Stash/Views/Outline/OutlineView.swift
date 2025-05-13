@@ -89,13 +89,12 @@ struct OutlineView: NSViewRepresentable {
             .map({$0.parentId})
         else { return }
         
-        print("🐶 --> \(entries.map({$0.id.uuidString.suffix(4)})) 🌞 \(context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}))")
+//        print("🐶 --> \(entries.map({$0.id.uuidString.suffix(4)})) 🌞 \(context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}))")
         context.coordinator.parent = self
-        
-        guard let outlineView = nsView.documentView as? NSOutlineView else { return }
         
         // TODO: checkout this article. https://chris.eidhof.nl/post/view-representable/
         DispatchQueue.main.async {
+            guard let outlineView = nsView.documentView as? NSOutlineView else { return }
             outlineView.reloadData()
             _expandIfNecessary(outlineView)
             NotificationCenter.default.post(name: .onOutlineViewRowCount, object: outlineView.numberOfRows)
@@ -250,7 +249,7 @@ extension OutlineView {
             // End updates
             outlineView.endUpdates()
             
-            DispatchQueue.global().async { [weak self] in
+            DispatchQueue.main.async { [weak self] in
                 // TODO: handle error
                 try? self?.parent.cabinet.save()
             }

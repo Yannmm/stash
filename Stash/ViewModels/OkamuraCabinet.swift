@@ -55,9 +55,11 @@ class OkamuraCabinet: ObservableObject {
         try saveToDisk(data: data1, filePath: url)
         
         // In case for import
-        var copy = recentEntries
+        let copy = recentEntries
         let ids = storedEntries.map({ $0.id })
-        recentEntries = copy.filter({ ids.contains($0.0.id) })
+        DispatchQueue.main.async { [weak self] in
+            self?.recentEntries = copy.filter({ ids.contains($0.0.id) })
+        }
 
         let data2 = try JSONEncoder().encode(recentEntries.map({ $0.0 }).asAnyEntries)
         pieceSaver.save(for: .recentEntries, value: data2)
