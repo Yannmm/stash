@@ -257,6 +257,14 @@ extension OutlineView {
             return true
         }
         
+        func outlineView(_ outlineView: NSOutlineView, draggingSession session: NSDraggingSession, endedAt screenPoint: NSPoint, operation: NSDragOperation) {
+            // Restore proper event handling
+            print("🐶 --> Restore proper event handling")
+            DispatchQueue.main.async {
+                outlineView.window?.makeKey()
+            }
+        }
+        
         private func findItem(by id: String, in items: [any Entry]) -> (any Entry)? {
             for item in items {
                 if item.id.uuidString == id { return item }

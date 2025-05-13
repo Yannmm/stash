@@ -58,11 +58,13 @@ class SettingsViewModel: ObservableObject {
         shortcut = (key!, modifiers!)
         
         $collapseHistory
+            .dropFirst()
             .sink { [weak self] in
                 self?.pieceSaver.save(for: .collapseHistory, value: $0)
             }
             .store(in: &cancellables)
         $icloudSync
+            .dropFirst()
             .sink { [weak self] in
                 self?.pieceSaver.save(for: .icloudSync, value: $0)
                 do {
@@ -73,17 +75,20 @@ class SettingsViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         $launchOnLogin
+            .dropFirst()
             .sink { [weak self] in
                 self?.pieceSaver.save(for: .launchOnLogin, value: $0)
             }
             .store(in: &cancellables)
         $showDockIcon
+            .dropFirst()
             .sink { [weak self] in
                 //                NSApp.setActivationPolicy($0 ? .regular : .accessory)
                 self?.pieceSaver.save(for: .showDockIcon, value: $0)
             }
             .store(in: &cancellables)
         $shortcut
+            .dropFirst()
             .sink { [weak self] in
                 hotKeyManager.register(shortcut: $0)
                 self?.pieceSaver.save(for: .hotkey, value: $0.0.carbonKeyCode)
@@ -91,6 +96,7 @@ class SettingsViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         $importFromFile
+            .dropFirst()
             .compactMap({ $0 })
             .sink { [weak self] in
                 do {
@@ -101,6 +107,7 @@ class SettingsViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         $exportToDirectory
+            .dropFirst()
             .compactMap({ $0 })
             .sink { [weak self] in
                 do {

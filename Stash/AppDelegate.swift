@@ -47,12 +47,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
         
-        if let token = FileManager.default.ubiquityIdentityToken {
-            print("iCloud identity token: \(token)")
-        } else {
-            print("❌ No iCloud identity — user not signed in or entitlement missing")
-        }
-        
         bind()
     }
     
@@ -111,7 +105,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func openSettings() {
         if settingsWindow == nil {
             setupSettingsWindow()
-            
         }
         NSApp.activate(ignoringOtherApps: true)
         settingsWindow?.makeKeyAndOrderFront(nil)
@@ -127,8 +120,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             let count = outlineViewRowCount ?? cabinet.storedEntries.filter({ $0.parentId == nil }).count
             editPopover.contentSize = editPopoverContentSize(count)
+            NSApplication.shared.activate(ignoringOtherApps: true)
             editPopover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
-            editPopover.contentViewController?.view.window?.makeKey()
         }
     }
     
