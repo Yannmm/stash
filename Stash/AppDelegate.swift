@@ -47,6 +47,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         setupStatusItem()
         
+        if let token = FileManager.default.ubiquityIdentityToken {
+            print("iCloud identity token: \(token)")
+        } else {
+            print("❌ No iCloud identity — user not signed in or entitlement missing")
+        }
+        
         bind()
     }
     

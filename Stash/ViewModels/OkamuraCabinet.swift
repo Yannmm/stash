@@ -51,7 +51,7 @@ class OkamuraCabinet: ObservableObject {
     
     func save() throws {
         let data1 = try JSONEncoder().encode(storedEntries.asAnyEntries)
-        let url = try getAppSupportDirectory(appName: "Stash")
+        let url = try whereItIs()
         try saveToDisk(data: data1, filePath: url)
         
         // In case for import
@@ -77,9 +77,9 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func load() throws {
-        let filePath = try getAppSupportDirectory(appName: "Stash")
+        let url = try whereItIs()
         
-        let htmlString = try String(contentsOf: filePath, encoding: .utf8)
+        let htmlString = try String(contentsOf: url, encoding: .utf8)
         let dominator = Dominator()
         let data = try dominator.decompose(htmlString)
         
@@ -187,20 +187,41 @@ fileprivate extension OkamuraCabinet {
         try string.write(to: filePath, atomically: true, encoding: .utf8)
     }
     
-    func getAppSupportDirectory(appName: String) throws -> URL {
+    // TODO: copy the file from icloud or from local???
+    func whereItIs() throws -> URL {
+        do {
+            if let flag: Bool = pieceSaver.value(for: .icloudSync), flag {
+                return try icloudPath()
+            } else {
+                return try localPath()
+            }
+        } catch {
+            print("Error happend while try to get icloud path -> \(error)")
+            return try localPath()
+        }
+    }
+    
+    private func localPath() throws -> URL {
+        let fileManager = FileManager.default
+        guard let support = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { throw SomeError.Save.missingApplicationSupportDirectory}
+        let direcotry = support.appendingPathComponent("Stash", isDirectory: true)
+        if !fileManager.fileExists(atPath: direcotry.path) {
+            try fileManager.createDirectory(at: direcotry, withIntermediateDirectories: true, attributes: nil)
+        }
+        return direcotry.appendingPathComponent("default.html")
+    }
+
+    private func icloudPath() throws -> URL {
         let fileManager = FileManager.default
         
-        guard let appSupportURL = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
-            throw SomeError.Save.missingApplicationSupportDirectory
+        guard let container = fileManager.url(forUbiquityContainerIdentifier: nil) else { throw SomeError.Save.icloudContainerUnavailable  }
+
+        let documents = container.appendingPathComponent("Documents")
+        
+        if !fileManager.fileExists(atPath: documents.path) {
+            try fileManager.createDirectory(at: documents, withIntermediateDirectories: true, attributes: nil)
         }
-        
-        let appDirectory = appSupportURL.appendingPathComponent(appName, isDirectory: true)
-        
-        if !fileManager.fileExists(atPath: appDirectory.path) {
-            try fileManager.createDirectory(at: appDirectory, withIntermediateDirectories: true, attributes: nil)
-        }
-        
-        return appDirectory.appendingPathComponent("default.html")
+        return documents.appendingPathComponent("default.html")
     }
 
 }
@@ -211,6 +232,7 @@ extension OkamuraCabinet {
             case missingFilePath
             case invalidJSON
             case missingApplicationSupportDirectory
+            case icloudContainerUnavailable
         }
         
         enum Parse: Error, LocalizedError {

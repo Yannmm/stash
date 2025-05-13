@@ -65,6 +65,11 @@ class SettingsViewModel: ObservableObject {
         $icloudSync
             .sink { [weak self] in
                 self?.pieceSaver.save(for: .icloudSync, value: $0)
+                do {
+                    try self?.cabinet.save()
+                } catch {
+                    self?.error = error
+                }
             }
             .store(in: &cancellables)
         $launchOnLogin
@@ -118,7 +123,7 @@ class SettingsViewModel: ObservableObject {
         }
         if let date = Bundle.main.builDate {
             let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd HH:mm:ss"
+            formatter.dateFormat = "yyyy-MM-dd"
             formatter.timeZone = .current
             result += "·\(formatter.string(from: date))"
         }
