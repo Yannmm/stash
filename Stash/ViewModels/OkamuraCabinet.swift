@@ -18,12 +18,29 @@ class OkamuraCabinet: ObservableObject {
     
     private let pieceSaver = PieceSaver()
     
+    private let icloudMonitor = IcloudFileMonitor(filename: "default.html")
+    
     static let shared = OkamuraCabinet()
     
+    private var cancellables = Set<AnyCancellable>()
+    
     init() {
+        asyncLoad()
+        bind()
+    }
+    
+    private func asyncLoad() {
         Task {
-            try await load()
+            try load()
         }
+    }
+    
+    private func bind() {
+        icloudMonitor.$update
+            .compactMap({ $0 }).sink { [weak self] _ in
+                self?.asyncLoad()
+            }
+            .store(in: &cancellables)
     }
     
     func update(entry: any Entry) throws {
@@ -60,7 +77,7 @@ class OkamuraCabinet: ObservableObject {
         DispatchQueue.main.async { [weak self] in
             self?.recentEntries = copy.filter({ ids.contains($0.0.id) })
         }
-
+        
         let data2 = try JSONEncoder().encode(recentEntries.map({ $0.0 }).asAnyEntries)
         pieceSaver.save(for: .recentEntries, value: data2)
         pieceSaver.save(for: .recentKeys, value: recentEntries.map({ $0.1 }))
@@ -210,12 +227,12 @@ fileprivate extension OkamuraCabinet {
         }
         return direcotry.appendingPathComponent("default.html")
     }
-
+    
     private func icloudPath() throws -> URL {
         let fileManager = FileManager.default
         
         guard let container = fileManager.url(forUbiquityContainerIdentifier: nil) else { throw SomeError.Save.icloudContainerUnavailable  }
-
+        
         let documents = container.appendingPathComponent("Documents")
         
         if !fileManager.fileExists(atPath: documents.path) {
@@ -223,7 +240,7 @@ fileprivate extension OkamuraCabinet {
         }
         return documents.appendingPathComponent("default.html")
     }
-
+    
 }
 
 extension OkamuraCabinet {
