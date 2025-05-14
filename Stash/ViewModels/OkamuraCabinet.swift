@@ -37,7 +37,9 @@ class OkamuraCabinet: ObservableObject {
     
     private func bind() {
         icloudMonitor.$update
-            .compactMap({ $0 }).sink { [weak self] _ in
+            .compactMap({ $0 })
+            .combineLatest(Just(icloudSync).filter({ $0 }))
+            .sink { [weak self] _ in
                 self?.asyncLoad()
             }
             .store(in: &cancellables)
@@ -204,10 +206,11 @@ fileprivate extension OkamuraCabinet {
         try string.write(to: filePath, atomically: true, encoding: .utf8)
     }
     
+    var icloudSync: Bool { pieceSaver.value(for: .icloudSync) ?? true }
+    
     func whereItIs() throws -> URL {
         do {
-            let flag = pieceSaver.value(for: .icloudSync) ?? true
-            if flag {
+            if icloudSync {
                 return try icloudPath()
             } else {
                 return try localPath()
