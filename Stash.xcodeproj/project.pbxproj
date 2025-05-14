@@ -31,7 +31,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		7222C1C02D491BEC00096255 /* Stash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stash.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7222C1C02D491BEC00096255 /* Stashy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stashy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7222C1D32D491BEF00096255 /* StashTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StashTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7222C1DD2D491BEF00096255 /* StashUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StashUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -104,7 +104,7 @@
 		7222C1C12D491BEC00096255 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				7222C1C02D491BEC00096255 /* Stash.app */,
+				7222C1C02D491BEC00096255 /* Stashy.app */,
 				7222C1D32D491BEF00096255 /* StashTests.xctest */,
 				7222C1DD2D491BEF00096255 /* StashUITests.xctest */,
 			);
@@ -137,7 +137,7 @@
 				6DCEC8742DAC9A9B00089699 /* Glur */,
 			);
 			productName = Stash;
-			productReference = 7222C1C02D491BEC00096255 /* Stash.app */;
+			productReference = 7222C1C02D491BEC00096255 /* Stashy.app */;
 			productType = "com.apple.product-type.application";
 		};
 		7222C1D22D491BEF00096255 /* StashTests */ = {
@@ -432,6 +432,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Stash/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Stashy;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -442,7 +443,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rendezvousauoaradis.stash;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Stashy;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -464,6 +465,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Stash/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Stashy;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
@@ -474,7 +476,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 14.0;
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rendezvousauoaradis.stash;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_NAME = Stashy;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};

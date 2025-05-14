@@ -178,7 +178,7 @@ struct SettingsView: View {
                 }
             }
         }
-        .navigationTitle("Stash Settings")
+        .navigationTitle("Stashy Settings")
         .scrollIndicators(.hidden)
         .formStyle(.grouped)
         .padding()

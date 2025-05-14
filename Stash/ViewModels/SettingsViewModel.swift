@@ -38,7 +38,7 @@ class SettingsViewModel: ObservableObject {
         self.cabinet = cabinet
         collapseHistory = pieceSaver.value(for: .collapseHistory) ?? false
         icloudSync = pieceSaver.value(for: .icloudSync) ?? true
-        launchOnLogin = pieceSaver.value(for: .launchOnLogin) ?? false
+        launchOnLogin = RocketLauncher.shared.enabled
         showDockIcon = pieceSaver.value(for: .showDockIcon) ?? false
         
         var key: Key?
@@ -76,10 +76,13 @@ class SettingsViewModel: ObservableObject {
                 }
             }
             .store(in: &cancellables)
+        
+        // Handle launch at login changes
         $launchOnLogin
             .dropFirst()
-            .sink { [weak self] in
-                self?.pieceSaver.save(for: .launchOnLogin, value: $0)
+            .sink { [weak self] enabled in
+                RocketLauncher.shared.enabled = enabled
+                self?.pieceSaver.save(for: .launchOnLogin, value: enabled)
             }
             .store(in: &cancellables)
         $showDockIcon
