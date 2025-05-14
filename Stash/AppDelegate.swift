@@ -41,7 +41,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationWillFinishLaunching(_ notification: Notification) {
 //        NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
-        hotKeyMananger.register(shortcut: settingsViewModel.shortcut)
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {

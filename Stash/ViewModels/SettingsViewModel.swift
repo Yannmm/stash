@@ -16,7 +16,7 @@ class SettingsViewModel: ObservableObject {
     @Published var showDockIcon: Bool
     @Published var importFromFile: URL?
     @Published var exportToDirectory: URL?
-    @Published var shortcut: (Key, NSEvent.ModifierFlags)
+    @Published var shortcut: (Key, NSEvent.ModifierFlags)?
     @Published var error: Error?
     
     private var cancellables = Set<AnyCancellable>()
@@ -41,22 +41,11 @@ class SettingsViewModel: ObservableObject {
         launchOnLogin = RocketLauncher.shared.enabled
         showDockIcon = pieceSaver.value(for: .showDockIcon) ?? false
         
-        var key: Key?
-        if let saved: UInt32 = pieceSaver.value(for: .hotkey) {
-            key = Key(carbonKeyCode: saved)
+        if let code: UInt32 = pieceSaver.value(for: .hotkey),
+           let key = Key(carbonKeyCode: code),
+           let modifiers: UInt = pieceSaver.value(for: .hokeyModifiers) {
+            shortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
         }
-        if key == nil {
-            key = Key(string: "s")
-        }
-        
-        var modifiers: NSEvent.ModifierFlags?
-        if let saved: UInt = pieceSaver.value(for: .hokeyModifiers) {
-            modifiers = NSEvent.ModifierFlags(rawValue: saved)
-        }
-        if modifiers == nil {
-            modifiers = NSEvent.ModifierFlags([.shift, .command])
-        }
-        shortcut = (key!, modifiers!)
         
         $collapseHistory
             .dropFirst()
@@ -94,12 +83,21 @@ class SettingsViewModel: ObservableObject {
             .store(in: &cancellables)
         $shortcut
             .dropFirst()
+            .compactMap({ $0 })
             .sink { [weak self] in
                 hotKeyManager.register(shortcut: $0)
                 self?.pieceSaver.save(for: .hotkey, value: $0.0.carbonKeyCode)
                 self?.pieceSaver.save(for: .hokeyModifiers, value: $0.1.rawValue)
             }
             .store(in: &cancellables)
+        
+        $shortcut
+            .compactMap({ $0 })
+            .sink {
+                hotKeyManager.register(shortcut: $0)
+            }
+            .store(in: &cancellables)
+        
         $importFromFile
             .dropFirst()
             .compactMap({ $0 })

@@ -10,7 +10,7 @@ import HotKey
 
 struct KeyRecorderView: View {
     @Binding var isRecording: Bool
-    @Binding var shortcut: (Key, NSEvent.ModifierFlags)
+    @Binding var shortcut: (Key, NSEvent.ModifierFlags)?
     
     var body: some View {
         Button(action: {
@@ -36,6 +36,8 @@ struct KeyRecorderView: View {
     }
     
     private var shortcutString: String {
+        guard let shortcut = shortcut else { return "" }
+        
         let key = shortcut.0
         let modifiers = shortcut.1
         
