@@ -36,7 +36,6 @@ struct SettingsView: View {
             Section("General") {
                 Toggle("Launch on Login", isOn: $viewModel.launchOnLogin)
                 Toggle("iCloud Sync", isOn: $viewModel.icloudSync)
-//                Toggle("Show Icon In Dock", isOn: $viewModel.showDockIcon)
                 HStack {
                     Text("Global Shortcut")
                     Spacer()

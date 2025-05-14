@@ -217,7 +217,6 @@ extension OutlineView {
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
             let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), expanded: NSEvent.modifierFlags.containsOnly(.command))
                 .frame(width: 800))
-            print("🐶 -> \(view.fittingSize.height)")
             return view.fittingSize.height
         }
         
@@ -250,16 +249,17 @@ extension OutlineView {
             outlineView.endUpdates()
             
             DispatchQueue.main.async { [weak self] in
-                // TODO: handle error
-                try? self?.parent.cabinet.save()
+                do {
+                    try self?.parent.cabinet.save()
+                } catch {
+                    ErrorTracker.shared.add(error)
+                }
             }
             
             return true
         }
         
         func outlineView(_ outlineView: NSOutlineView, draggingSession session: NSDraggingSession, endedAt screenPoint: NSPoint, operation: NSDragOperation) {
-            // Restore proper event handling
-            print("🐶 --> Restore proper event handling")
             DispatchQueue.main.async {
                 outlineView.window?.makeKey()
             }
@@ -300,7 +300,6 @@ fileprivate extension OutlineView {
         }
         
         override func keyDown(with event: NSEvent) {
-            print("event.keyCode -> \(event.modifierFlags)")
             if event.keyCode == 53 { // 53 = Esc key
                 selectedRow == -1 ? super.keyDown(with: event) : deselectAll(nil)
             } else {

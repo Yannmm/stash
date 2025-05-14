@@ -92,6 +92,7 @@ class CraftViewModel: ObservableObject {
             savable = true
         } catch {
             self.error = error
+            ErrorTracker.shared.add(error)
         }
     }
     
@@ -101,6 +102,7 @@ class CraftViewModel: ObservableObject {
             try cabinet.relocate(entry: b, anchorId: anchorId)
         } catch {
             self.error = error
+            ErrorTracker.shared.add(error)
         }
     }
     

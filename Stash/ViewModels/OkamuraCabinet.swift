@@ -189,13 +189,14 @@ fileprivate extension OkamuraCabinet {
     
     func whereItIs() throws -> URL {
         do {
-            if let flag: Bool = pieceSaver.value(for: .icloudSync), flag {
+            let flag = pieceSaver.value(for: .icloudSync) ?? true
+            if flag {
                 return try icloudPath()
             } else {
                 return try localPath()
             }
         } catch {
-            print("Error happend while try to get icloud path -> \(error)")
+            defer { ErrorTracker.shared.add(error) }
             return try localPath()
         }
     }

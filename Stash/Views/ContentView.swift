@@ -29,6 +29,7 @@ struct ContentView: View {
                         }
                     } catch {
                         self.error = error
+                        ErrorTracker.shared.add(error)
                     }
                 }
                 if welcome {

@@ -29,6 +29,7 @@ class SettingsViewModel: ObservableObject {
             try cabinet.removeAll()
         } catch {
             self.error = error
+            ErrorTracker.shared.add(error)
         }
     }
     
@@ -36,7 +37,7 @@ class SettingsViewModel: ObservableObject {
         self.hotKeyManager = hotKeyManager
         self.cabinet = cabinet
         collapseHistory = pieceSaver.value(for: .collapseHistory) ?? false
-        icloudSync = pieceSaver.value(for: .icloudSync) ?? false
+        icloudSync = pieceSaver.value(for: .icloudSync) ?? true
         launchOnLogin = pieceSaver.value(for: .launchOnLogin) ?? false
         showDockIcon = pieceSaver.value(for: .showDockIcon) ?? false
         
@@ -71,6 +72,7 @@ class SettingsViewModel: ObservableObject {
                     try self?.cabinet.save()
                 } catch {
                     self?.error = error
+                    ErrorTracker.shared.add(error)
                 }
             }
             .store(in: &cancellables)
@@ -103,6 +105,7 @@ class SettingsViewModel: ObservableObject {
                     try self?.cabinet.import(from: $0)
                 } catch {
                     self?.error = error
+                    ErrorTracker.shared.add(error)
                 }
             }
             .store(in: &cancellables)
@@ -114,6 +117,7 @@ class SettingsViewModel: ObservableObject {
                     try self?.cabinet.export(to: $0)
                 } catch {
                     self?.error = error
+                    ErrorTracker.shared.add(error)
                 }
             }
             .store(in: &cancellables)

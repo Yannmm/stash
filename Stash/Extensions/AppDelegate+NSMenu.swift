@@ -103,9 +103,9 @@ extension AppDelegate {
                     item.image = value.image
                     item.image?.size = NSImage.Constant.size1
                 case .failure(let error):
-                    print("Error loading favicon: \(error)")
                     // Set fallback image
                     item.image = NSImage(systemSymbolName: "globe", accessibilityDescription: nil)
+                    ErrorTracker.shared.add(error)
                 }
             }
         } else {
@@ -115,8 +115,12 @@ extension AppDelegate {
     
     @objc private func action(_ sender: CustomMenuItem) {
         if let b = sender.object as? Bookmark {
-            // TODO: handle error
-            try? cabinet.asRecent(b)
+            do {
+                try cabinet.asRecent(b)
+            } catch {
+                ErrorTracker.shared.add(error)
+            }
+            
         }
         (sender.object as? Actionable)?.open()
     }

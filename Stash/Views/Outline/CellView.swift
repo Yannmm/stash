@@ -139,6 +139,7 @@ struct CellContent: View {
                         try viewModel.update()
                     } catch {
                         self.error = error
+                        ErrorTracker.shared.add(error)
                     }
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .onDoubleTapRowView)) { noti in
@@ -168,6 +169,7 @@ struct CellContent: View {
                             try cabinet.asRecent(tuple2.1)
                         } catch {
                             self.error = error
+                            ErrorTracker.shared.add(error)
                         }
                     } label: {
                         HStack {
@@ -249,6 +251,7 @@ struct CellContent: View {
                     try cabinet.delete(entry: e)
                 } catch {
                     self.error = error
+                    ErrorTracker.shared.add(error)
                 }
             }
         } message: {
