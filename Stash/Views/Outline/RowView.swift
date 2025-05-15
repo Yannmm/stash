@@ -12,10 +12,7 @@ class RowView: NSTableRowView {
     
     var id: UUID?
     
-    let ignoreMouseEvent: () -> Bool
-    
-    init(ignoreMouseEvent: @escaping () -> Bool) {
-        self.ignoreMouseEvent = ignoreMouseEvent
+    init() {
         super.init(frame: NSRect.zero)
     }
     

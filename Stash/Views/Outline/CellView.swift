@@ -259,7 +259,7 @@ struct CellContent: View {
         }
         .alert("Error", isPresented: Binding(
             get: { error != nil },
-            set: { x in }
+            set: { if !$0 { error = nil } }
         )) {
             Button("OK", role: .cancel) {}
         } message: {

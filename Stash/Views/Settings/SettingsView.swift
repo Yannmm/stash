@@ -5,6 +5,8 @@ struct SettingsView: View {
     @StateObject var viewModel: SettingsViewModel
     @State private var isRecording = false
     @State private var resetAlert = false
+    @State private var importNotice = false
+    @State private var howToExport: (String, String)?
     //    @State private var updateFrequency = UpdateFrequency.weekly
     var importDescription: AttributedString? {
         if let path = viewModel.importFromFile?.path {
@@ -13,9 +15,8 @@ struct SettingsView: View {
             a1.foregroundColor = .secondary
             let a2 = AttributedString(tilde)
             return a1 + a2
-        } else {
-            return nil
         }
+        return nil
     }
     
     var exportDescription: AttributedString? {
@@ -51,13 +52,11 @@ struct SettingsView: View {
                     HStack {
                         Text("Show or hide the list of recently-visited bookmarks at the top of menu.")
                             .foregroundColor(.secondary)
-                            .font(.caption)
                             .multilineTextAlignment(.leading)
                         Spacer()
                     }
                 }
             }
-
             
             Section("Data Management") {
                 VStack(alignment: .leading) {
@@ -65,6 +64,12 @@ struct SettingsView: View {
                         Text("Select a File")
                         Spacer()
                         Button("Import") {
+                            importNotice = true
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    .alert("Import from Browsers", isPresented: $importNotice) {
+                        Button("Continue") {
                             // Handle import
                             let panel = NSOpenPanel()
                             panel.allowsMultipleSelection = false
@@ -78,17 +83,43 @@ struct SettingsView: View {
                                 viewModel.importFromFile = url
                             }
                         }
-                        .buttonStyle(.bordered)
+                        Button("Cancel", role: .cancel) {}
+                    } message: {
+                        Text("You can export from browsers first then import to Stashy.")
+                    }
+                    .alert("How to Export Bookmarks from \(howToExport?.0 ?? "")", isPresented: Binding(
+                        get: { howToExport != nil },
+                        set: { if !$0 { howToExport = nil } }
+                    )) {
+                        Button("OK") {}
+                    } message: {
+                        Text(howToExport?.1 ?? "")
                     }
                     if let desc = importDescription {
                         HStack {
                             Text(desc)
                                 .foregroundColor(.secondary)
-                                .font(.caption)
                                 .multilineTextAlignment(.leading)
                             Spacer()
                         }
+                    } else {
+                        Text("Learn how to export bookmarks from [Chrome](Chrome), [Edge](Edge) or [Safari](Safari).")
+                            .foregroundColor(.secondary)
+                            .environment(\.openURL, OpenURLAction { url in
+                                let browser = url.absoluteString
+                                switch browser {
+                                case "Chrome":
+                                    howToExport = (browser, "Navigate to the Bookmarks Manager, click the three-dot menu, and select \"Export bookmarks\".")
+                                case "Edge":
+                                    howToExport = (browser, "Open the Favorites window, click the \"More\" button (three dots), then select \"Export Favorites.\".")
+                                case "Safari":
+                                    howToExport = (browser, "Go to File > Export > Bookmarks, choose a location to save the file, and click Save.")
+                                default: break
+                                }
+                                return .handled
+                            })
                     }
+                    
                 }
                 VStack(alignment: .leading) {
                     HStack(spacing: 0) {
@@ -113,7 +144,6 @@ struct SettingsView: View {
                         HStack {
                             Text(desc)
                                 .foregroundColor(.secondary)
-                                .font(.caption)
                                 .multilineTextAlignment(.leading)
                             Spacer()
                         }
@@ -139,7 +169,7 @@ struct SettingsView: View {
                     }
                 }
             }
-
+            
             
             
             // Check Update Section
@@ -174,7 +204,7 @@ struct SettingsView: View {
                                 NSCursor.pop()
                             }
                         }
-                    Text("Stash is a open-source project. Issues and Pull Requests are welcome.")
+                    Text("Stashy is a open-source project. Issues and Pull Requests are welcome.")
                 }
             }
         }
@@ -183,9 +213,12 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .padding()
         .frame(width: 400)
+        .onReceive(NotificationCenter.default.publisher(for: .onShouldOpenImportPanel)) { _ in
+            importNotice = true
+        }
         .alert("Error", isPresented: Binding(
             get: { viewModel.error != nil },
-            set: { _ in }
+            set: { if !$0 { viewModel.error = nil } }
         )) {
             Button("OK", role: .cancel) {}
         } message: {

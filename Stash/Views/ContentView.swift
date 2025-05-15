@@ -23,8 +23,7 @@ struct ContentView: View {
                         let directory = Group(id: UUID(), name: name)
                         try cabinet.relocate(entry: directory, anchorId: anchorId)
                         
-                        let deadlineTime = DispatchTime.now() + 0.25
-                        DispatchQueue.main.asyncAfter(deadline: deadlineTime) {
+                        DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.25)) {
                             NotificationCenter.default.post(name: .onDoubleTapRowView, object: directory)
                         }
                     } catch {
@@ -50,7 +49,7 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity)
                     .background(Color.white)
                 } else {
-                    OutlineView(entries: $cabinet.storedEntries, anchorId: $anchorId, presentingModal: $present) {
+                    OutlineView(entries: $cabinet.storedEntries, anchorId: $anchorId) {
                         self.anchorId = $0
                     }
                     ModifierKeyMonitorView(listen: !present)
@@ -66,9 +65,12 @@ struct ContentView: View {
                     .presentationDetents([.height(sheetHeight)])
             }
         }
+        .onReceive(NotificationCenter.default.publisher(for: .onShouldPresentBookmarkForm)) { _ in
+            present = true
+        }
         .alert("Error", isPresented: Binding(
             get: { error != nil },
-            set: { x in }
+            set: { if !$0 { error = nil } }
         )) {
             Button("OK", role: .cancel) {}
         } message: {

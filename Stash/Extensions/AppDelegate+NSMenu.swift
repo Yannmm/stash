@@ -15,6 +15,18 @@ extension AppDelegate {
     func generateMenu(from entries: [any Entry], history: [(any Entry, String)], collapseHistory: Bool) -> NSMenu {
         let menu = NSMenu()
         
+        addHistory(menu, history, collapseHistory)
+        
+        addEntries(menu, entries)
+        
+        if entries.count <= 0 { addGuide(menu) }
+        
+        addActions(menu)
+        
+        return menu
+    }
+    
+    private func addHistory(_ menu: NSMenu, _ history: [(any Entry, String)], _ collapseHistory: Bool ) {
         if !history.isEmpty {
             if collapseHistory {
                 let item = NSMenuItem(title: "Recently Visited", action: nil, keyEquivalent: "")
@@ -33,15 +45,27 @@ extension AppDelegate {
             }
             menu.addItem(NSMenuItem.separator())
         }
+    }
+    
+    private func addGuide(_ menu: NSMenu) {
+        let items = [
+            NSMenuItem(title: "Welcom to Stashy, you may start either way:", action: nil, keyEquivalent: ""),
+            NSMenuItem(title: "a> Create New Bookmark", action: #selector(createBookmark), keyEquivalent: ""),
+            NSMenuItem(title: "b> Import from Browsers", action: #selector(importFromBrowsers), keyEquivalent: "")
+        ] as [NSMenuItem]
         
-        g(menu: menu, entries: entries, parentId: nil, keyEquivalents: [])
-        
+        items.forEach { menu.addItem($0) }
+    }
+    
+    private func addActions(_ menu: NSMenu) {
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Edit", action: #selector(edit), keyEquivalent: "E"))
         menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: "S"))
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: ""))
-        
-        return menu
+    }
+    
+    private func addEntries(_ menu: NSMenu, _ entries: [any Entry]) {
+        g(menu: menu, entries: entries, parentId: nil, keyEquivalents: [])
     }
 
     private func g(menu: NSMenu, entries: [any Entry], parentId: UUID?, keyEquivalents: [String]) {
@@ -123,6 +147,20 @@ extension AppDelegate {
             
         }
         (sender.object as? Actionable)?.open()
+    }
+    
+    @objc private func createBookmark() {
+        edit()
+        DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.25)) {
+            NotificationCenter.default.post(name: .onShouldPresentBookmarkForm, object: nil)
+        }
+    }
+    
+    @objc private func importFromBrowsers() {
+        openSettings()
+        DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.25)) {
+            NotificationCenter.default.post(name: .onShouldOpenImportPanel, object: nil)
+        }
     }
 }
 

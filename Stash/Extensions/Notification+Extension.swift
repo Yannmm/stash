@@ -13,4 +13,6 @@ extension NSNotification.Name {
     static let onCmdKeyChange = NSNotification.Name("onCmdKeyChange")
     static let onShortcutKeyDown = NSNotification.Name("onShortcutKeyDown")
     static let onOutlineViewRowCount = NSNotification.Name("onOutlineViewRowCount")
+    static let onShouldPresentBookmarkForm = NSNotification.Name("onShouldPresentBookmarkForm")
+    static let onShouldOpenImportPanel = NSNotification.Name("onShouldOpenImportPanel")
 }

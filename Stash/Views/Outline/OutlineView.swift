@@ -12,8 +12,6 @@ import Cocoa
 struct OutlineView: NSViewRepresentable {
     @Binding var entries: [any Entry]
     @Binding var anchorId: UUID?
-    @Binding var presentingModal: Bool
-    
     @EnvironmentObject var cabinet: OkamuraCabinet
     
     let onSelectRow: (UUID?) -> Void
@@ -185,7 +183,7 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, rowViewForItem item: Any) -> NSTableRowView? {
-            let row = RowView() { [weak self] in self?.parent.presentingModal ?? false }
+            let row = RowView()
             row.id = (item as? (any Entry))?.id
             return row
         }
