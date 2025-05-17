@@ -49,9 +49,9 @@ extension AppDelegate {
     
     private func addGuide(_ menu: NSMenu) {
         let items = [
-            NSMenuItem(title: "Welcom to Stashy, you may start either way:", action: nil, keyEquivalent: ""),
-            NSMenuItem(title: "a> Create New Bookmark", action: #selector(createBookmark), keyEquivalent: ""),
-            NSMenuItem(title: "b> Import from Browsers", action: #selector(importFromBrowsers), keyEquivalent: "")
+            NSMenuItem(title: "Welcom to Stashy, you may start by:", action: nil, keyEquivalent: ""),
+            NSMenuItem(title: "🏷️ Create New Bookmark", action: #selector(createBookmark), keyEquivalent: ""),
+            NSMenuItem(title: "💾 Import from Browsers", action: #selector(importFromBrowsers), keyEquivalent: "")
         ] as [NSMenuItem]
         
         items.forEach { menu.addItem($0) }
