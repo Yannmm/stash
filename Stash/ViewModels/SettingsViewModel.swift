@@ -133,13 +133,6 @@ class SettingsViewModel: ObservableObject {
         if let build = Bundle.main.buildNumber {
             result += "·b\(build)"
         }
-        if let date = Bundle.main.builDate {
-            let formatter = DateFormatter()
-            formatter.dateFormat = "yyyy-MM-dd"
-            formatter.timeZone = .current
-            result += "·\(formatter.string(from: date))"
-        }
-        
         return result + ")"
     }
 }

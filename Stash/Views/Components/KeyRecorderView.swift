@@ -27,9 +27,11 @@ struct KeyRecorderView: View {
         .buttonStyle(.bordered)
         .onAppear {
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
-                guard isRecording, let key = Key(carbonKeyCode: UInt32(event.keyCode)) else { return event }
+                defer { isRecording = false }
+                guard isRecording,
+                      event.keyCode != 53,
+                      let key = Key(carbonKeyCode: UInt32(event.keyCode)) else { return event }
                 shortcut = (key, event.modifierFlags.intersection([.command, .option, .control, .shift]))
-                isRecording = false
                 return nil
             }
         }
