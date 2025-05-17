@@ -103,8 +103,11 @@ class OkamuraCabinet: ObservableObject {
         let data = try dominator.decompose(htmlString)
         
         let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
-        storedEntries = anyEntries.asEntries
         
+        // Move UI updates to main thread
+        DispatchQueue.main.async { [weak self] in
+            self?.storedEntries = anyEntries.asEntries
+        }
         
         if let data: Data = pieceSaver.value(for: .recentEntries),
            let keys: [String] = pieceSaver.value(for: .recentKeys) {
@@ -115,7 +118,10 @@ class OkamuraCabinet: ObservableObject {
                     collector.append((bookmark, keys[index]))
                 }
             }
-            recentEntries = collector
+            // Move UI updates to main thread
+            DispatchQueue.main.async { [weak self] in
+                self?.recentEntries = collector
+            }
         }
     }
     
