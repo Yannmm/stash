@@ -20,6 +20,8 @@ class OkamuraCabinet: ObservableObject {
     
     private let icloudMonitor = IcloudFileMonitor(filename: "default.html")
     
+    private let saving = CurrentValueSubject<Int, Never>(0)
+    
     static let shared = OkamuraCabinet()
     
     private var cancellables = Set<AnyCancellable>()
@@ -40,9 +42,22 @@ class OkamuraCabinet: ObservableObject {
             .compactMap({ $0 })
             .combineLatest(Just(icloudSync).filter({ $0 }))
             .sink { [weak self] _ in
-                self?.asyncLoad()
+                self?.saving.send(-1)
             }
             .store(in: &cancellables)
+        
+        saving
+            .dropFirst()
+            .scan(0) { accumulated, newValue in
+                accumulated + newValue
+            }
+            .filter({ $0 < 0 })
+            .sink { [weak self] value in
+                self?.asyncLoad()
+                print("Saving: \(value)")
+            }
+            .store(in: &cancellables)
+
     }
     
     func update(entry: any Entry) throws {
@@ -69,6 +84,7 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func save() throws {
+        saving.send(1)
         let data1 = try JSONEncoder().encode(storedEntries.asAnyEntries)
         let url = try whereItIs()
         try saveToDisk(data: data1, filePath: url)
