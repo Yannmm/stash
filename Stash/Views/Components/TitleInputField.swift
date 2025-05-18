@@ -57,6 +57,7 @@ struct TitleInputField: View {
                 focused = true
                 disabled = false
             } else {
+                guard !focused else { return }
                 focused = false
                 disabled = true
             }
