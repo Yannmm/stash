@@ -173,10 +173,11 @@ struct CellContent: View {
                         }
                     } label: {
                         HStack {
-                            Text(tuple2.0)
+                            (Text(tuple2.0) + Text(" ") + Text(tuple2.2))
                                 .font(.callout)
                                 .lineLimit(nil)
                                 .multilineTextAlignment(.leading)
+                            
                             Spacer()
                         }
                     }
@@ -267,7 +268,7 @@ struct CellContent: View {
         }
     }
     
-    var bookmarkAccessible: (AttributedString, Bookmark)? {
+    var bookmarkAccessible: (AttributedString, Bookmark, String)? {
         guard let bookmark = viewModel.entry as? Bookmark else { return nil }
         
         let components = URLComponents(url: bookmark.url, resolvingAgainstBaseURL: false)
@@ -285,12 +286,14 @@ struct CellContent: View {
         asPrefix.foregroundColor = .white
         asPrefix.backgroundColor = NSColor(Color.primary)
         
-        guard let path = components?.string else { return nil }
-        var asPath = AttributedString(path.replacingOccurrences(of: prefix, with: ""))
+        guard var path = components?.string else { return nil }
+        path = path.replacingOccurrences(of: prefix, with: "")
+        var asPath = AttributedString(path)
         asPath.font = .callout
         asPath.foregroundColor = .linkColor
         
-        return (asPrefix + AttributedString(" ") + asPath, bookmark)
+//        return (asPrefix + AttributedString(" ") + asPath, bookmark)
+        return (asPrefix, bookmark, path)
     }
     
     var gradientColors: [Color] {
