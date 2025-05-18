@@ -237,7 +237,7 @@ extension OutlineView {
                 children = parent.entries.filter({ $0.parentId == nil })
             }
             
-            if childIndex >= 0 && childIndex <= children.count, let index = parent.entries.firstIndex(where: { $0.id == children[childIndex].id }) {
+            if childIndex >= 0 && childIndex < children.count, let index = parent.entries.firstIndex(where: { $0.id == children[childIndex].id }) {
                 parent.entries.insert(draggedItem, at: index)
             } else {
                 parent.entries.append(draggedItem)

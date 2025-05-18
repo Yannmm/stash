@@ -20,11 +20,15 @@ class OkamuraCabinet: ObservableObject {
     
     private let icloudMonitor = IcloudFileMonitor(filename: "default.html")
     
-    private let saving = CurrentValueSubject<Int, Never>(0)
+    private let saving = PassthroughSubject<IcloudSignal, Never>()
     
     static let shared = OkamuraCabinet()
     
     private var cancellables = Set<AnyCancellable>()
+    
+    func icloudComing() {
+        saving.send(.increment)
+    }
     
     init() {
         asyncLoad()
@@ -42,19 +46,23 @@ class OkamuraCabinet: ObservableObject {
             .compactMap({ $0 })
             .combineLatest(Just(icloudSync).filter({ $0 }))
             .sink { [weak self] _ in
-                self?.saving.send(-1)
+                self?.saving.send(.increment)
             }
             .store(in: &cancellables)
         
         saving
             .dropFirst()
+            .map({ $0.rawValue })
             .scan(0) { accumulated, newValue in
                 accumulated + newValue
             }
-            .filter({ $0 < 0 })
+            .handleEvents(receiveOutput: { value in
+                print("doOnData: \(value)")
+            })
+            .filter({ $0 > 0 })
             .sink { [weak self] value in
                 self?.asyncLoad()
-                print("Saving: \(value)")
+                self?.saving.send(.decrement)
             }
             .store(in: &cancellables)
 
@@ -84,7 +92,7 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func save() throws {
-        saving.send(1)
+        defer { saving.send(.decrement) }
         let data1 = try JSONEncoder().encode(storedEntries.asAnyEntries)
         let url = try whereItIs()
         try saveToDisk(data: data1, filePath: url)
@@ -288,7 +296,13 @@ extension OkamuraCabinet {
             }
         }
     }
-    
+}
+
+extension OkamuraCabinet {
+    enum IcloudSignal: Int {
+        case increment = 1
+        case decrement = -1
+    }
 }
 
 // TODO
@@ -298,3 +312,7 @@ extension OkamuraCabinet {
 // 6. use NSMetadataQuery to monitor file from icloud.
 // 3. 排序失去焦点问题
 // 4. 一段时间后，好像icloud中的文件被覆盖了
+
+// a. 编辑时不能展开
+// b. 链接的反白
+// c. 从sub level 到 top level  crash
