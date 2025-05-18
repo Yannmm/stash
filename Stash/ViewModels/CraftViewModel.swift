@@ -143,7 +143,12 @@ class CraftViewModel: ObservableObject {
         case .file(let url):
             title = url.lastPathComponent
         case .web(let url):
-            title = try await Dominator().fetchWebPageTitle(from: url)
+            do {
+                title = try await Dominator().fetchWebPageTitle(from: url)
+            } catch {
+                title = url.absoluteString
+                ErrorTracker.shared.add(error)
+            }
         case .vnc(let url):
             var components = URLComponents(url: url, resolvingAgainstBaseURL: false)
             components?.scheme = nil
