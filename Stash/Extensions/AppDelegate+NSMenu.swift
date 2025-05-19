@@ -19,7 +19,7 @@ extension AppDelegate {
         
         addEntries(menu, entries)
         
-        if entries.count <= 0 { addGuide(menu) }
+        addGuide(menu, entries)
         
         addActions(menu)
         
@@ -47,18 +47,22 @@ extension AppDelegate {
         }
     }
     
-    private func addGuide(_ menu: NSMenu) {
-        let items = [
-            NSMenuItem(title: "Welcom to Stashy, you may start by:", action: nil, keyEquivalent: ""),
-            NSMenuItem(title: "🏷️ Create New Bookmark", action: #selector(createBookmark), keyEquivalent: ""),
-            NSMenuItem(title: "💾 Import from Browsers", action: #selector(importFromBrowsers), keyEquivalent: "")
+    private func addGuide(_ menu: NSMenu, _ entries: [any Entry]) {
+        var items = [
+            NSMenuItem(title: "Welcom to Stashy 🎉", action: nil, keyEquivalent: ""),
+            NSMenuItem(title: "Create New Bookmark", action: #selector(createBookmark), keyEquivalent: "C"),
+            NSMenuItem(title: "Import from Browser", action: #selector(importFromBrowsers), keyEquivalent: "I")
         ] as [NSMenuItem]
+        
+        if entries.count > 0 {
+            items.insert(NSMenuItem.separator(), at: 0)
+        }
         
         items.forEach { menu.addItem($0) }
     }
     
     private func addActions(_ menu: NSMenu) {
-        menu.addItem(NSMenuItem.separator())
+//        menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Edit", action: #selector(edit), keyEquivalent: "E"))
         menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: "S"))
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: ""))
