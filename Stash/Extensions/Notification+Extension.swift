@@ -15,4 +15,5 @@ extension NSNotification.Name {
     static let onOutlineViewRowCount = NSNotification.Name("onOutlineViewRowCount")
     static let onShouldPresentBookmarkForm = NSNotification.Name("onShouldPresentBookmarkForm")
     static let onShouldOpenImportPanel = NSNotification.Name("onShouldOpenImportPanel")
+    static let onRowViewSelectionChange = NSNotification.Name("onRowViewSelectionChange")
 }

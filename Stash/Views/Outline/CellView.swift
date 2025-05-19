@@ -52,6 +52,7 @@ struct CellContent: View {
     @FocusState private var focused: Bool
     
     @State private var expanded: Bool
+    @State private var selected: Bool = false
     @State private var error: Error?
     @State private var deleteAlert: Bool = false
     @State private var didCopy = false
@@ -151,6 +152,11 @@ struct CellContent: View {
                     let flag = (noti.object as? Bool) ?? false
                     expanded = flag
                 }
+                .onReceive(NotificationCenter.default.publisher(for: .onRowViewSelectionChange)) { noti in
+                    guard let id = noti.userInfo?["id"] as? UUID,
+                          let flag = noti.userInfo?["selected"] as? Bool else { return }
+                    selected = id == viewModel.entry?.id ? flag : false
+                }
                 .onChange(of: focused) { old, new in
                     guard !new else { return }
                     NotificationCenter.default.post(name: NSControl.textDidEndEditingNotification, object: nil)
@@ -173,13 +179,13 @@ struct CellContent: View {
                         }
                     } label: {
                         HStack {
-                            (Text(tuple2.0) + Text(" ") + Text(tuple2.2))
-                                .font(.callout)
+                            Text(tuple2.0)
                                 .lineLimit(nil)
                                 .multilineTextAlignment(.leading)
                             
                             Spacer()
                         }
+                        .foregroundColor(.red)
                     }
                     .buttonStyle(PlainButtonStyle())
                     .fixedSize(horizontal: false, vertical: true)
@@ -268,7 +274,7 @@ struct CellContent: View {
         }
     }
     
-    var bookmarkAccessible: (AttributedString, Bookmark, String)? {
+    var bookmarkAccessible: (AttributedString, Bookmark)? {
         guard let bookmark = viewModel.entry as? Bookmark else { return nil }
         
         let components = URLComponents(url: bookmark.url, resolvingAgainstBaseURL: false)
@@ -290,10 +296,9 @@ struct CellContent: View {
         path = path.replacingOccurrences(of: prefix, with: "")
         var asPath = AttributedString(path)
         asPath.font = .callout
-        asPath.foregroundColor = .linkColor
+        asPath.foregroundColor = selected ? .white : .linkColor
         
-//        return (asPrefix + AttributedString(" ") + asPath, bookmark)
-        return (asPrefix, bookmark, path)
+        return (asPrefix + AttributedString(" ") + asPath, bookmark)
     }
     
     var gradientColors: [Color] {

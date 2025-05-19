@@ -16,6 +16,13 @@ class RowView: NSTableRowView {
         super.init(frame: NSRect.zero)
     }
     
+    override
+    var isSelected: Bool {
+        didSet {
+            NotificationCenter.default.post(name: .onRowViewSelectionChange, object: nil, userInfo: ["id": id as Any, "selected": isSelected])
+        }
+    }
+    
     var isFocused = false {
         didSet {
             setNeedsDisplay(bounds)
