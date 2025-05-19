@@ -49,8 +49,6 @@ struct OutlineView: NSViewRepresentable {
         
         outlineView.target = context.coordinator
         
-        outlineView.doubleAction = #selector(context.coordinator.tableViewDoubleAction)
-        
         NotificationCenter.default.addObserver(forName: .onCmdKeyChange, object: nil, queue: nil) { _ in
             
             var indices = [Int]()
@@ -110,7 +108,10 @@ struct OutlineView: NSViewRepresentable {
 }
 
 extension OutlineView {
-    class Coordinator: NSObject, NSOutlineViewDataSource, NSOutlineViewDelegate {
+    class Coordinator: NSObject,
+                        NSOutlineViewDataSource,
+                        NSOutlineViewDelegate,
+                       OutlineViewDoubleClickDelegate {
         
         var parent: OutlineView
         
@@ -118,18 +119,16 @@ extension OutlineView {
             self.parent = parent
         }
         
-        @objc func tableViewDoubleAction(sender: AnyObject) {
+        func outlineView(_ outlineView: NSOutlineView, didDoubleClickRow row: Int) {
+            
             guard !NSEvent.modifierFlags.containsOnly(.command) else { return }
             
-            let outlineView = sender as! NSOutlineView
             
-            guard let entry = outlineView.item(atRow: outlineView.clickedRow) as? any Entry else { return }
+            guard let entry = outlineView.item(atRow: row) as? any Entry else { return }
             
-            //            https://peterfriese.dev/blog/2021/swiftui-list-focus/
-            // how to handle enter key event.
-            outlineView.deselectRow(outlineView.clickedRow)
+            outlineView.deselectRow(row)
             
-            let row = outlineView.rowView(atRow: outlineView.clickedRow, makeIfNecessary: true) as! RowView
+            let row = outlineView.rowView(atRow: row, makeIfNecessary: true) as! RowView
             row.isFocused = true
             
             NotificationCenter.default.post(name: .onDoubleTapRowView, object: entry)
@@ -310,9 +309,26 @@ fileprivate extension OutlineView {
             frame.origin.x += 10
             return frame
         }
+        
+        // Double tap action override
+        override func mouseDown(with event: NSEvent) {
+            let clickLocation = convert(event.locationInWindow, from: nil)
+            let row = self.row(at: clickLocation)
+
+            super.mouseDown(with: event) // Let normal behavior happen (selection, etc.)
+
+            if event.clickCount == 2 && row >= 0 {
+                if let delegate = self.delegate as? OutlineViewDoubleClickDelegate {
+                    delegate.outlineView(self, didDoubleClickRow: row)
+                }
+            }
+        }
     }
 }
 
-
-
+extension OutlineView {
+    protocol OutlineViewDoubleClickDelegate: NSOutlineViewDelegate {
+        func outlineView(_ outlineView: NSOutlineView, didDoubleClickRow row: Int)
+    }
+}
 
