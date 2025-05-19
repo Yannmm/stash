@@ -63,7 +63,7 @@ extension AppDelegate {
     
     private func addActions(_ menu: NSMenu) {
 //        menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Edit", action: #selector(edit), keyEquivalent: "E"))
+        menu.addItem(NSMenuItem(title: "Manage", action: #selector(edit), keyEquivalent: "M"))
         menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: "S"))
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: ""))
     }
