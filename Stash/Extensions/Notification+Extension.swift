@@ -16,4 +16,5 @@ extension NSNotification.Name {
     static let onShouldPresentBookmarkForm = NSNotification.Name("onShouldPresentBookmarkForm")
     static let onShouldOpenImportPanel = NSNotification.Name("onShouldOpenImportPanel")
     static let onRowViewSelectionChange = NSNotification.Name("onRowViewSelectionChange")
+    static let onEditPopoverClose = NSNotification.Name("onEditPopoverClose")
 }

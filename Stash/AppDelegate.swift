@@ -20,9 +20,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let contentView = ContentView().environmentObject(cabinet)
         p.behavior = .transient
         p.contentViewController = NSHostingController(rootView: contentView)
+        p.delegate = self
         return p
     }()
-    
+
     private lazy var settingsViewModel: SettingsViewModel = {
         let viewModel = SettingsViewModel(hotKeyManager: hotKeyMananger, cabinet: cabinet)
         return viewModel
@@ -128,3 +129,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         CGSize(width: 800, height: (entryCount < 3 ? 3 : entryCount) * 49 + 34)
     }
 }
+
+extension AppDelegate: NSPopoverDelegate {
+    func popoverDidClose(_ notification: Notification) {
+        NotificationCenter.default.post(name: .onEditPopoverClose, object: nil)
+    }
+}
+

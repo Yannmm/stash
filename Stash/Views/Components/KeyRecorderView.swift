@@ -38,7 +38,7 @@ struct KeyRecorderView: View {
     }
     
     private var shortcutString: String {
-        guard let shortcut = shortcut else { return "" }
+        guard let shortcut = shortcut else { return "None" }
         
         let key = shortcut.0
         let modifiers = shortcut.1

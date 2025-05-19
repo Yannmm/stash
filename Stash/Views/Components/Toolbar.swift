@@ -71,10 +71,14 @@ struct Toolbar: View {
 fileprivate extension Toolbar {
     struct Constant {
         static let tips = [
-            (Text("Tap ") + Text(Image(systemName: "link.badge.plus")) + Text(" to Create Bookmark")),
-            (Text("Tap ") + Text(Image(systemName: "folder.badge.plus")) + Text(" to Create Group")),
+            (Text("Tap ") +
+             Text(Image(systemName: "link.badge.plus")).font(.body) +
+             Text(" to Create Bookmark")),
+            (Text("Tap ") +
+             Text(Image(systemName: "folder.badge.plus")).font(.body) +
+             Text(" to Create Group")),
             Text("Hold CMD(⌘) Key for More"),
-            Text("Tap ESC Key to Deselect an Item"),
+            Text("Tap ESC Key to Deselect Item"),
         ]
     }
 }

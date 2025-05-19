@@ -71,6 +71,10 @@ struct OutlineView: NSViewRepresentable {
             }
         }
         
+        NotificationCenter.default.addObserver(forName: .onEditPopoverClose, object: nil, queue: nil) { _ in
+            outlineView.deselectAll(nil)
+        }
+        
         return scrollView
     }
     
@@ -80,12 +84,12 @@ struct OutlineView: NSViewRepresentable {
         guard entries.map({$0.id.uuidString.suffix(4)}) != context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)})
                 && entries
             .map({$0.parentId})
-        !=
-        context.coordinator.parent.entries
+                !=
+                context.coordinator.parent.entries
             .map({$0.parentId})
         else { return }
         
-//        print("🐶 --> \(entries.map({$0.id.uuidString.suffix(4)})) 🌞 \(context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}))")
+        //        print("🐶 --> \(entries.map({$0.id.uuidString.suffix(4)})) 🌞 \(context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}))")
         context.coordinator.parent = self
         
         // TODO: checkout this article. https://chris.eidhof.nl/post/view-representable/
@@ -109,8 +113,8 @@ struct OutlineView: NSViewRepresentable {
 
 extension OutlineView {
     class Coordinator: NSObject,
-                        NSOutlineViewDataSource,
-                        NSOutlineViewDelegate,
+                       NSOutlineViewDataSource,
+                       NSOutlineViewDelegate,
                        OutlineViewDoubleClickDelegate {
         
         var parent: OutlineView
@@ -314,9 +318,9 @@ fileprivate extension OutlineView {
         override func mouseDown(with event: NSEvent) {
             let clickLocation = convert(event.locationInWindow, from: nil)
             let row = self.row(at: clickLocation)
-
+            
             super.mouseDown(with: event) // Let normal behavior happen (selection, etc.)
-
+            
             if event.clickCount == 2 && row >= 0 {
                 if let delegate = self.delegate as? OutlineViewDoubleClickDelegate {
                     delegate.outlineView(self, didDoubleClickRow: row)
