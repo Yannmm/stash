@@ -44,9 +44,9 @@ class CraftViewModel: ObservableObject {
         switch entry {
         case let b as Bookmark:
             self.url = b.url
-//            Task {
-//                try await self.updateImage(url: b.url)
-//            }
+            //            Task {
+            //                try await self.updateImage(url: b.url)
+            //            }
             
         case let d as Group:
             self.icon = NSImage(systemSymbolName: "square.stack.3d.down.right.fill", accessibilityDescription: nil)
@@ -107,7 +107,7 @@ class CraftViewModel: ObservableObject {
         }
     }
     
-
+    
     
     private func updateImage(_ path: Path) async throws {
         switch path {
@@ -124,7 +124,13 @@ class CraftViewModel: ObservableObject {
                         // Do something with `result`
                         switch (result) {
                         case .success(let r):
-                            continuation.resume(returning: r.image)
+                            var image = r.image
+                            if r.data()?.count == 67646 { // size of https://favicone.com/default.ico
+                                image = NSImage(systemSymbolName: "globe", accessibilityDescription: nil)!
+                                let cacheKey = u.absoluteString
+                                ImageCache.default.store(image, forKey: cacheKey)
+                            }
+                            continuation.resume(returning: image)
                         case .failure(let e):
                             continuation.resume(throwing: e)
                         }

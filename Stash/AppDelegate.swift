@@ -9,6 +9,7 @@ import AppKit
 import SwiftUI
 import Combine
 import HotKey
+import Kingfisher
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     
@@ -42,6 +43,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     func applicationWillFinishLaunching(_ notification: Notification) {
 //        NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
+        
+        ImageCache.default.diskStorage.config.expiration = .days(7)
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
