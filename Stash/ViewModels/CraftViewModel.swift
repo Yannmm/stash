@@ -58,8 +58,9 @@ class CraftViewModel: ObservableObject {
     
     private func bind() {
         $path
+            .compactMap({ $0 })
             .removeDuplicates()
-            .map({ _ in false })
+            .map({ $0.count > 4 })
             .sink { [weak self] in self?.parsable = $0 }
             .store(in: &cancellables)
     }
