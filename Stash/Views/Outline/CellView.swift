@@ -89,7 +89,7 @@ struct CellContent: View {
     }
     
     var body: some View {
-        HStack(alignment: .top) {
+        HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
                     if let e = viewModel.entry {
