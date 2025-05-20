@@ -162,7 +162,10 @@ struct CellContent: View {
                 .onReceive(NotificationCenter.default.publisher(for: .onRowViewSelectionChange)) { noti in
                     guard let id = noti.userInfo?["id"] as? UUID,
                           let flag = noti.userInfo?["selected"] as? Bool else { return }
-                    selected = id == viewModel.entry?.id ? flag : false
+                    if id == viewModel.entry?.id {
+                        selected = flag
+                    }
+                    
                 }
                 
                 // Bottom border line
