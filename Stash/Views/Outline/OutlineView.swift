@@ -71,6 +71,12 @@ struct OutlineView: NSViewRepresentable {
             }
         }
         
+        
+        
+        NotificationCenter.default.addObserver(forName: NSControl.textDidBeginEditingNotification, object: nil, queue: nil) { _ in
+            print("NSControlTextDidBeginEditingNSControlTextDidBeginEditing")
+        }
+        
         NotificationCenter.default.addObserver(forName: .onEditPopoverClose, object: nil, queue: nil) { _ in
             outlineView.deselectAll(nil)
         }

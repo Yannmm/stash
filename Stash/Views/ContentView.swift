@@ -5,6 +5,8 @@ import Kingfisher
 struct ContentView: View {
     @EnvironmentObject var cabinet: OkamuraCabinet
     
+    @ObservedObject var focusMonitor = FocusMonitor()
+    
     @State private var present = false
     @State private var sheetHeight: CGFloat = .zero
     @State private var anchorId: UUID?
@@ -52,7 +54,11 @@ struct ContentView: View {
                     OutlineView(entries: $cabinet.storedEntries, anchorId: $anchorId) {
                         self.anchorId = $0
                     }
-                    ModifierKeyMonitorView(listen: !present)
+                    .environmentObject(focusMonitor)
+                    ModifierKeyMonitorView(on: Binding(
+                        get: { !(present || focusMonitor.isEditing) },
+                        set: { _ in }
+                    ))
                         .frame(width: 0, height: 0)
                 }
             }
@@ -75,6 +81,9 @@ struct ContentView: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(error?.localizedDescription ?? "")
+        }
+        .onChange(of: focusMonitor.isEditing) { x in
+            print(x)
         }
     }
 }

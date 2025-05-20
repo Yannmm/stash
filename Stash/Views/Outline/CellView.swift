@@ -47,6 +47,8 @@ struct CellContent: View {
     
     @EnvironmentObject var cabinet: OkamuraCabinet
     
+    @EnvironmentObject var focusMonitor: FocusMonitor
+    
     @ObservedObject var viewModel: CellViewModel
     
     @FocusState private var focused: Bool
@@ -134,6 +136,7 @@ struct CellContent: View {
                 }
                 .padding(.vertical, 4)
                 .onChange(of: focused) { oldValue, newValue in
+                    focusMonitor.isEditing = newValue
                     guard newValue != oldValue, !newValue else { return }
                     do {
                         try viewModel.update()
@@ -141,6 +144,10 @@ struct CellContent: View {
                         self.error = error
                         ErrorTracker.shared.add(error)
                     }
+                }
+                .onChange(of: focused) { old, new in
+                    guard !new else { return }
+                    NotificationCenter.default.post(name: NSControl.textDidEndEditingNotification, object: nil)
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .onDoubleTapRowView)) { noti in
                     let entry = noti.object as? any Entry
@@ -156,10 +163,6 @@ struct CellContent: View {
                     guard let id = noti.userInfo?["id"] as? UUID,
                           let flag = noti.userInfo?["selected"] as? Bool else { return }
                     selected = id == viewModel.entry?.id ? flag : false
-                }
-                .onChange(of: focused) { old, new in
-                    guard !new else { return }
-                    NotificationCenter.default.post(name: NSControl.textDidEndEditingNotification, object: nil)
                 }
                 
                 // Bottom border line
