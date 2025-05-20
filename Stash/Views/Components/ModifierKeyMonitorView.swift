@@ -45,6 +45,6 @@ class ModifierKeyManager {
     }
     
     private func handleModifierFlags(_ flags: NSEvent.ModifierFlags) {
-        NotificationCenter.default.post(name: .onCmdKeyChange, object: flags.contains(.command))
+        NotificationCenter.default.post(name: .onCmdKeyChange, object: flags.containsOnly(.command))
     }
 }

@@ -148,6 +148,7 @@ struct CellContent: View {
                     focused = true
                 }
                 .onReceive(NotificationCenter.default.publisher(for: .onCmdKeyChange)) { noti in
+                    guard !focused else { return }
                     let flag = (noti.object as? Bool) ?? false
                     expanded = flag
                 }
