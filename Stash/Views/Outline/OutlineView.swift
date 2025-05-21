@@ -222,10 +222,14 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
-            let view = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: item as? any Entry), expanded: NSEvent.modifierFlags.containsOnly(.command))
-                .frame(width: 800))
-            print("🐶🐶 -> \(view.fittingSize.height)")
-            return view.fittingSize.height
+            switch item {
+            case is Bookmark:
+                return 55
+            case is Group:
+                fallthrough
+            default:
+                return 45
+            }
         }
         
         func outlineView(_ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex: Int) -> Bool {
