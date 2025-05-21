@@ -18,4 +18,8 @@ extension Group: Entry {
     var icon: Icon {
         return .system("square.stack.3d.down.right.fill")
     }
+    
+    var shouldExpand: Bool { false }
+    
+    var height: CGFloat { CellView.Constant.groupHeight }
 }

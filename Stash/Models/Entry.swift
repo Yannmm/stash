@@ -7,7 +7,7 @@
 
 import Foundation
 
-protocol Entry: Identifiable, Equatable, Hashable {
+protocol Entry: Identifiable, Equatable, Hashable, Facade {
     var id: UUID { get }
     
     var name: String { get set }

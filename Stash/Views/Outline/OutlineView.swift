@@ -222,14 +222,7 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, heightOfRowByItem item: Any) -> CGFloat {
-            switch item {
-            case is Bookmark:
-                return 55
-            case is Group:
-                fallthrough
-            default:
-                return 45
-            }
+            (item as? any Entry)?.height ?? 0
         }
         
         func outlineView(_ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex: Int) -> Bool {
@@ -321,7 +314,7 @@ fileprivate extension OutlineView {
         
         override func frameOfOutlineCell(atRow row: Int) -> NSRect {
             var frame = super.frameOfOutlineCell(atRow: row)
-            frame.origin.x += 10
+            frame.origin.x += 5
             return frame
         }
         

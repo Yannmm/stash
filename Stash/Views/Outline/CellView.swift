@@ -27,8 +27,6 @@ class CellView: NSTableCellView {
     
     private var hostingView: NSHostingView<CellContent>!
     
-    
-    
     private func setup() {
         let content = NSHostingView(rootView: CellContent(viewModel: CellViewModel()))
         self.hostingView = content
@@ -42,5 +40,12 @@ class CellView: NSTableCellView {
             content.leadingAnchor.constraint(equalTo: self.leadingAnchor),
             content.trailingAnchor.constraint(equalTo: self.trailingAnchor)
         ])
+    }
+}
+
+extension CellView {
+    enum Constant {
+        static let bookmarkHeight = 60.0
+        static let groupHeight = 45.0
     }
 }

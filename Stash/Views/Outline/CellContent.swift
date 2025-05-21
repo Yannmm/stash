@@ -25,7 +25,7 @@ struct CellContent: View {
     
     @FocusState private var focused: Bool
     
-    @State private var expanded: Bool
+    @State private var expanded: Bool = false
     @State private var selected: Bool = false
     @State private var error: Error?
     @State private var deleteAlert: Bool = false
@@ -55,16 +55,10 @@ struct CellContent: View {
         return shouldShowDelete || shouldShowReveal || shouldShowCopy
     }
     
-    init(viewModel: CellViewModel, expanded: Bool = false) {
-        self.viewModel = viewModel
-        self.expanded = expanded
-    }
-    
     var body: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 0) {
-                title
-                address
+                title()
             }
             Spacer()
             actions
@@ -73,6 +67,39 @@ struct CellContent: View {
         .padding(.trailing, 10)
         .onAppear {
             viewModel.cabinet = cabinet
+        }
+        .onChange(of: focused) { oldValue, newValue in
+            focusMonitor.isEditing = newValue
+            guard newValue != oldValue, !newValue else { return }
+            do {
+                try viewModel.update()
+            } catch {
+                self.error = error
+                ErrorTracker.shared.add(error)
+            }
+        }
+        .onChange(of: focused) { old, new in
+            guard !new else { return }
+            NotificationCenter.default.post(name: NSControl.textDidEndEditingNotification, object: nil)
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .onDoubleTapRowView)) { noti in
+            let entry = noti.object as? any Entry
+            guard entry?.id == viewModel.entry?.id else { return }
+            focused = true
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .onCmdKeyChange)) { noti in
+            guard viewModel.entry?.shouldExpand ?? false else { return }
+            guard !focused else { return }
+            let flag = (noti.object as? Bool) ?? false
+            expanded = flag
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .onRowViewSelectionChange)) { noti in
+            guard let id = noti.userInfo?["id"] as? UUID,
+                  let flag = noti.userInfo?["selected"] as? Bool
+            else { return }
+            if id == viewModel.entry?.id {
+                selected = flag
+            }
         }
         .alert("Sure to Delete?", isPresented: $deleteAlert) {
             Button("Cancel", role: .cancel) { }
@@ -98,90 +125,82 @@ struct CellContent: View {
         }
     }
     
-    private var title: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 6) {
-                if let e = viewModel.entry {
-                    switch (e.icon) {
-                    case .system(let name):
-                        Image(systemName: name)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: NSImage.Constant.side2, height: NSImage.Constant.side2)
-                            .foregroundStyle(Color.primary)
-                    case .favicon(let url):
-                        KFImage.url(url)
-                            .loadDiskFileSynchronously()
-                            .onSuccess { result in  }
-                            .onFailure { error in }
-                            .onFailureImage(NSImage(systemSymbolName: "globe", accessibilityDescription: nil))
-                            .resizable()
-                            .frame(width: NSImage.Constant.side2, height: NSImage.Constant.side2)
-                    case .local(let url):
-                        Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: NSImage.Constant.side2, height: NSImage.Constant.side2)
-                    }
-                } else {
-                    Image(systemName: "folder.fill")
-                        .foregroundStyle(Color.primary)
+    @ViewBuilder
+    private func title() -> some View {
+        if expanded {
+//            HStack(spacing: 6) {
+//                icon(NSImage.Constant.side1)
+//                Text(viewModel.title)
+//                    .font(.subheadline)
+//                    .textFieldStyle(.plain)
+//                    .truncationMode(.middle)
+//            }
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(spacing: 6) {
+                    icon(NSImage.Constant.side1)
+                    Text(viewModel.title)
+                        .font(.body)
+                        .truncationMode(.middle)
                 }
+                address
+            }
+        } else {
+            VStack(spacing: 0) {
+                HStack(spacing: 6) {
+                    icon(NSImage.Constant.side2)
+                    Rectangle()
+                        .frame(width: 1, height: 20)
+                        .foregroundColor(focused ? Color(NSColor.separatorColor) : Color.clear)
+                        .animation(.easeInOut(duration: 0.2), value: focused)
+                    
+                    TextField("Input the title here...", text: $viewModel.title)
+                        .font(.title2)
+                        .textFieldStyle(.plain)
+                        .background(Color.clear)
+                        .focused($focused)
+                        .layoutPriority(1)
+                        .allowsHitTesting(false)
+                        .truncationMode(.tail)
+                }
+                .padding(.vertical, 4)
                 
-                
+                // Bottom border line
                 Rectangle()
-                    .frame(width: 1, height: 20)
-                    .foregroundColor(focused ? Color(NSColor.separatorColor) : Color.clear)
+                    .frame(height: 1)
+                    .foregroundColor(focused ? Color.primary : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
-                
-                TextField("Input the title here...", text: $viewModel.title)
-                    .font(.title3)
-                    .textFieldStyle(.plain)
-                    .background(Color.clear)
-                    .focused($focused)
-                    .layoutPriority(1)
-                    .allowsHitTesting(false)
-                    .truncationMode(.tail)
             }
-            .padding(.vertical, 4)
-            .onChange(of: focused) { oldValue, newValue in
-                focusMonitor.isEditing = newValue
-                guard newValue != oldValue, !newValue else { return }
-                do {
-                    try viewModel.update()
-                } catch {
-                    self.error = error
-                    ErrorTracker.shared.add(error)
-                }
+        }
+    }
+    
+    @ViewBuilder
+    private func icon(_ side: CGFloat) -> some View {
+        if let e = viewModel.entry {
+            switch (e.icon) {
+            case .system(let name):
+                Image(systemName: name)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: side, height: side)
+                    .foregroundStyle(Color.primary)
+            case .favicon(let url):
+                KFImage.url(url)
+                    .loadDiskFileSynchronously()
+                    .onSuccess { result in  }
+                    .onFailure { error in }
+                    .onFailureImage(NSImage(systemSymbolName: "globe", accessibilityDescription: nil))
+                    .resizable()
+                    .frame(width: side, height: side)
+            case .local(let url):
+                Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: side, height: side)
             }
-            .onChange(of: focused) { old, new in
-                guard !new else { return }
-                NotificationCenter.default.post(name: NSControl.textDidEndEditingNotification, object: nil)
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .onDoubleTapRowView)) { noti in
-                let entry = noti.object as? any Entry
-                guard entry?.id == viewModel.entry?.id else { return }
-                focused = true
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .onCmdKeyChange)) { noti in
-                guard !focused else { return }
-                let flag = (noti.object as? Bool) ?? false
-                expanded = flag
-            }
-            .onReceive(NotificationCenter.default.publisher(for: .onRowViewSelectionChange)) { noti in
-                guard let id = noti.userInfo?["id"] as? UUID,
-                      let flag = noti.userInfo?["selected"] as? Bool
-                else { return }
-                if id == viewModel.entry?.id {
-                    selected = flag
-                }
-            }
-            
-            // Bottom border line
-            Rectangle()
-                .frame(height: 1)
-                .foregroundColor(focused ? Color.primary : Color.clear)
-                .animation(.easeInOut(duration: 0.2), value: focused)
+        } else {
+            Image(systemName: "folder.fill")
+                .foregroundStyle(Color.primary)
+                .frame(width: NSImage.Constant.side2, height: NSImage.Constant.side2)
         }
     }
     
@@ -199,8 +218,8 @@ struct CellContent: View {
             } label: {
                 HStack {
                     Text(tuple2.0)
-                        .lineLimit(nil)
-                        .multilineTextAlignment(.leading)
+                        .truncationMode(.middle)
+                        .lineLimit(2)
                     
                     Spacer()
                 }
@@ -280,14 +299,14 @@ struct CellContent: View {
         }
         
         var asPrefix = AttributedString("\(prefix!)")
-        asPrefix.font = .callout
+        asPrefix.font = .body
         asPrefix.foregroundColor = .white
         asPrefix.backgroundColor = NSColor(Color.primary)
         
         guard var path = components?.string else { return nil }
         path = path.replacingOccurrences(of: prefix, with: "")
         var asPath = AttributedString(path)
-        asPath.font = .callout
+        asPath.font = .body
         asPath.foregroundColor = selected ? .white : .linkColor
         
         return (asPrefix + AttributedString(" ") + asPath, bookmark)

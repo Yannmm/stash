@@ -28,6 +28,10 @@ extension Bookmark: Entry {
             }
         }
     }
+    
+    var shouldExpand: Bool { true }
+    
+    var height: CGFloat { CellView.Constant.bookmarkHeight }
 }
 
 extension Bookmark: Actionable {
