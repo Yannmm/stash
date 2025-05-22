@@ -88,6 +88,9 @@ fileprivate extension Toolbar {
             (Text("Tap ") +
              Text(Image(systemName: "folder.badge.plus")).font(.body) +
              Text(" to Create Group")),
+            (Text("Tap ") +
+             Text(Image(systemName: "list.bullet.indent")).font(.body) +
+             Text(" to Expand / Collapse List")),
             Text("Hold CMD(⌘) Key for More"),
             Text("Tap ESC Key to Deselect Item"),
         ]
