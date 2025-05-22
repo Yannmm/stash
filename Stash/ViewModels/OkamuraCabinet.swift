@@ -329,3 +329,4 @@ extension OkamuraCabinet {
 
 // 1. save title for at leat 1 cahr
 // 2. in appdelegate, popover content size
+// 3. hold cmd key and scroll, if a group is off the screen and enter the screen, it will shrink.
