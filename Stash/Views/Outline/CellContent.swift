@@ -191,82 +191,89 @@ struct CellContent: View {
     
     @ViewBuilder
     private func address() -> some View {
-        if expanded, let tuple2 = bookmarkAccessible {
-            Button {
-                tuple2.1.open()
-                do {
-                    try cabinet.asRecent(tuple2.1)
-                } catch {
-                    self.error = error
-                    ErrorTracker.shared.add(error)
+        ZStack {
+            if expanded, let tuple2 = bookmarkAccessible {
+                Button {
+                    tuple2.1.open()
+                    do {
+                        try cabinet.asRecent(tuple2.1)
+                    } catch {
+                        self.error = error
+                        ErrorTracker.shared.add(error)
+                    }
+                } label: {
+                    HStack {
+                        Text(tuple2.0)
+                            .truncationMode(.middle)
+                            .lineLimit(2)
+                        Spacer()
+                    }
                 }
-            } label: {
-                HStack {
-                    Text(tuple2.0)
-                        .truncationMode(.middle)
-                        .lineLimit(2)
-                    
-                    Spacer()
+                .buttonStyle(PlainButtonStyle())
+                .fixedSize(horizontal: false, vertical: true)
+                .onHover { hovering in
+                    if hovering {
+                        NSCursor.pointingHand.push()
+                    } else {
+                        NSCursor.pop()
+                    }
                 }
-            }
-            .buttonStyle(PlainButtonStyle())
-            .fixedSize(horizontal: false, vertical: true)
-            .onHover { hovering in
-                if hovering {
-                    NSCursor.pointingHand.push()
-                } else {
-                    NSCursor.pop()
-                }
+                .transition(.move(edge: .bottom).combined(with: .opacity))
             }
         }
+        .animation(.easeInOut(duration: 0.25), value: expanded)
     }
-    
+
     @ViewBuilder
     private func actions() -> some View {
-        if shouldShowActions {
-            HStack(spacing: 10) {
-                Button(action: {
-                    deleteAlert = true
-                }) {
-                    Image(systemName: "trash.circle")
-                        .resizable()
-                        .frame(width: 18.0, height: 18.0)
-                }
-                .buttonStyle(.borderless)
-                .help("Delete item")
-                if shouldShowReveal {
+        ZStack {
+            if shouldShowActions {
+                HStack(spacing: 10) {
                     Button(action: {
-                        guard let a = viewModel.entry as? Actionable, a.revealable else { return }
-                        a.reveal()
+                        deleteAlert = true
                     }) {
-                        Image(systemName: "archivebox.circle")
+                        Image(systemName: "trash.circle")
                             .resizable()
                             .frame(width: 18.0, height: 18.0)
                     }
                     .buttonStyle(.borderless)
-                    .help("Reveal in Finder")
-                }
-                if shouldShowCopy {
-                    Button(action: {
-                        guard let e = viewModel.entry as? Bookmark else { return }
-                        let pasteBoard = NSPasteboard.general
-                        pasteBoard.clearContents()
-                        pasteBoard.writeObjects([e.url.absoluteString as NSString])
-                        didCopy = true
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                            didCopy = false
+                    .help("Delete item")
+                    if shouldShowReveal {
+                        Button(action: {
+                            guard let a = viewModel.entry as? Actionable, a.revealable else { return }
+                            a.reveal()
+                        }) {
+                            Image(systemName: "archivebox.circle")
+                                .resizable()
+                                .frame(width: 18.0, height: 18.0)
                         }
-                    }) {
-                        Image(systemName: "rectangle.on.rectangle.circle")
-                            .resizable()
-                            .frame(width: 18.0, height: 18.0)
-                            .if(didCopy, content: { $0.foregroundColor(.green) })
+                        .buttonStyle(.borderless)
+                        .help("Reveal in Finder")
                     }
-                    .buttonStyle(.borderless)
-                    .help("Copy path")
+                    if shouldShowCopy {
+                        Button(action: {
+                            guard let e = viewModel.entry as? Bookmark else { return }
+                            let pasteBoard = NSPasteboard.general
+                            pasteBoard.clearContents()
+                            pasteBoard.writeObjects([e.url.absoluteString as NSString])
+                            didCopy = true
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                                didCopy = false
+                            }
+                        }) {
+                            Image(systemName: "rectangle.on.rectangle.circle")
+                                .resizable()
+                                .frame(width: 18.0, height: 18.0)
+                                .if(didCopy, content: { $0.foregroundColor(.green) })
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Copy path")
+                    }
                 }
+                .transition(.move(edge: .trailing).combined(with: .opacity))
             }
         }
+        .animation(.easeInOut(duration: 0.25), value: expanded)
     }
     
     private var bookmarkAccessible: (AttributedString, Bookmark)? {
