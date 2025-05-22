@@ -57,11 +57,12 @@ struct CellContent: View {
     
     var body: some View {
         HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 2) {
                 title()
+                address()
             }
             Spacer()
-            actions
+            actions()
         }
         .padding(.vertical, 10)
         .padding(.trailing, 10)
@@ -83,6 +84,7 @@ struct CellContent: View {
             NotificationCenter.default.post(name: NSControl.textDidEndEditingNotification, object: nil)
         }
         .onReceive(NotificationCenter.default.publisher(for: .onDoubleTapRowView)) { noti in
+            guard !expanded else { return }
             let entry = noti.object as? any Entry
             guard entry?.id == viewModel.entry?.id else { return }
             focused = true
@@ -127,50 +129,33 @@ struct CellContent: View {
     
     @ViewBuilder
     private func title() -> some View {
-        if expanded {
-//            HStack(spacing: 6) {
-//                icon(NSImage.Constant.side1)
-//                Text(viewModel.title)
-//                    .font(.subheadline)
-//                    .textFieldStyle(.plain)
-//                    .truncationMode(.middle)
-//            }
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(spacing: 6) {
-                    icon(NSImage.Constant.side1)
-                    Text(viewModel.title)
-                        .font(.body)
-                        .truncationMode(.middle)
-                }
-                address
-            }
-        } else {
-            VStack(spacing: 0) {
-                HStack(spacing: 6) {
-                    icon(NSImage.Constant.side2)
-                    Rectangle()
-                        .frame(width: 1, height: 20)
-                        .foregroundColor(focused ? Color(NSColor.separatorColor) : Color.clear)
-                        .animation(.easeInOut(duration: 0.2), value: focused)
-                    
-                    TextField("Input the title here...", text: $viewModel.title)
-                        .font(.title2)
-                        .textFieldStyle(.plain)
-                        .background(Color.clear)
-                        .focused($focused)
-                        .layoutPriority(1)
-                        .allowsHitTesting(false)
-                        .truncationMode(.tail)
-                }
-                .padding(.vertical, 4)
+        VStack(spacing: 0) {
+            HStack(spacing: expanded ? 2 : 6) {
+                icon(expanded ? NSImage.Constant.side1:  NSImage.Constant.side2)
+                Rectangle()
+                    .frame(width: 1, height: 20)
+                    .foregroundColor(focused ? Color(NSColor.separatorColor) : Color.clear)
+                    .animation(.easeInOut(duration: 0.2), value: focused)
                 
-                // Bottom border line
+                TextField("Input the title here...", text: $viewModel.title)
+                    .font(expanded ? .body : .title2)
+                    .textFieldStyle(.plain)
+                    .background(Color.clear)
+                    .focused($focused)
+                    .layoutPriority(1)
+                    .allowsHitTesting(false)
+                    .truncationMode(.tail)
+            }
+            .padding(.vertical, expanded ? 0 : 4)
+            
+            if !expanded {
                 Rectangle()
                     .frame(height: 1)
                     .foregroundColor(focused ? Color.primary : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
             }
         }
+        .animation(.easeInOut(duration: 0.25), value: expanded)
     }
     
     @ViewBuilder
@@ -205,7 +190,7 @@ struct CellContent: View {
     }
     
     @ViewBuilder
-    var address: some View {
+    private func address() -> some View {
         if expanded, let tuple2 = bookmarkAccessible {
             Button {
                 tuple2.1.open()
@@ -223,7 +208,6 @@ struct CellContent: View {
                     
                     Spacer()
                 }
-                .foregroundColor(.red)
             }
             .buttonStyle(PlainButtonStyle())
             .fixedSize(horizontal: false, vertical: true)
@@ -238,7 +222,7 @@ struct CellContent: View {
     }
     
     @ViewBuilder
-    var actions: some View {
+    private func actions() -> some View {
         if shouldShowActions {
             HStack(spacing: 10) {
                 Button(action: {
