@@ -325,3 +325,7 @@ extension OkamuraCabinet {
 // 1. add id when saving files.
 // 2. animation when expanded
 // 3. 一键 expand / collapse
+
+
+// 1. save title for at leat 1 cahr
+// 2. in appdelegate, popover content size
