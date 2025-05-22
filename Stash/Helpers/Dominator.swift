@@ -113,7 +113,9 @@ extension Dominator {
         
         var children = [Any]()
         if h3s.count > 0 {
-            let header = try h3s.first()!.text()
+            let h3 = h3s.first()!
+            let name = try h3.text()
+            let id = try h3.attr("stash_id")
             guard let dl = try dt.select("> dl").first() else { return nil }
             let dts = try dl.select("> dt")
             try dts.map({ try decomposeDT($0) })
@@ -122,18 +124,21 @@ extension Dominator {
                     children.append(result)
                 }
             return [
-                "name": header,
+                "name": name,
                 "type": "directory",
+                "id": id,
                 "children": children
             ] as [String : Any]
         } else {
             let a = try dt.select("> a")
             let name = try a.text()
             let url = try a.attr("href")
+            let id = try a.attr("stash_id")
             return [
                 "name": name,
                 "type": "bookmark",
                 "url": url,
+                "id": id
             ]
         }
     }
@@ -193,23 +198,25 @@ extension Dominator {
         
         guard let type = json["type"] as? String else { return nil }
         
+        let name = json["name"] as? String ?? ""
+        let id = json["id"] as? String ?? ""
+        
         switch type {
         case "bookmark":
             let dt = Element(Tag("dt"), "")
-            let name = json["name"] as? String ?? ""
             let href = json["url"] as? String ?? ""
             let a = try Element(Tag("a"), "")
                 .text(name)
                 .attr("href", href)
+                .attr("stash_id", id)
             try dt.appendChild(a)
             return dt
         case "directory":
             let dt = Element(Tag("dt"), "")
-            
-            let name = json["name"] as? String ?? ""
-            let a = try Element(Tag("h3"), "")
+            let h3 = try Element(Tag("h3"), "")
                 .text(name)
-            try dt.appendChild(a)
+                .attr("stash_id", id)
+            try dt.appendChild(h3)
             
             let dl = Element(Tag("dl"), "")
             try dt.appendChild(dl)

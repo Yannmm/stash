@@ -37,7 +37,11 @@ class OkamuraCabinet: ObservableObject {
     
     private func asyncLoad() {
         Task {
-            try load()
+            do {
+                try load()
+            } catch {
+                ErrorTracker.shared.add(error)
+            }
         }
     }
     
@@ -320,4 +324,4 @@ extension OkamuraCabinet {
 
 // 1. add id when saving files.
 // 2. animation when expanded
-// 3.
+// 3. 一键 expand / collapse

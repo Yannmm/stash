@@ -43,7 +43,7 @@ struct AnyEntry: Codable {
     
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        id = try container.decodeIfPresent(UUID.self, forKey: .id) ?? UUID()
+        id = (try? container.decodeIfPresent(UUID.self, forKey: .id)) ?? UUID()
         name = try container.decode(String.self, forKey: .name)
         type = try container.decode(EntryType.self, forKey: .type)
         url = try container.decodeIfPresent(URL.self, forKey: .url)
