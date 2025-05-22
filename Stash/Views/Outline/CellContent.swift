@@ -58,7 +58,7 @@ struct CellContent: View {
     var body: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
-                title()
+                title(expanded && (viewModel.entry?.shouldExpand ?? false))
                 address()
             }
             Spacer()
@@ -68,6 +68,7 @@ struct CellContent: View {
         .padding(.trailing, 10)
         .onAppear {
             viewModel.cabinet = cabinet
+            expanded = NSEvent.modifierFlags.containsOnly(.command)
         }
         .onChange(of: focused) { oldValue, newValue in
             focusMonitor.isEditing = newValue
@@ -90,7 +91,6 @@ struct CellContent: View {
             focused = true
         }
         .onReceive(NotificationCenter.default.publisher(for: .onCmdKeyChange)) { noti in
-            guard viewModel.entry?.shouldExpand ?? false else { return }
             guard !focused else { return }
             let flag = (noti.object as? Bool) ?? false
             expanded = flag
@@ -128,17 +128,17 @@ struct CellContent: View {
     }
     
     @ViewBuilder
-    private func title() -> some View {
+    private func title(_ flag: Bool) -> some View {
         VStack(spacing: 0) {
-            HStack(spacing: expanded ? 2 : 6) {
-                icon(expanded ? NSImage.Constant.side1:  NSImage.Constant.side2)
+            HStack(spacing: flag ? 2 : 6) {
+                icon(flag ? NSImage.Constant.side1:  NSImage.Constant.side2)
                 Rectangle()
                     .frame(width: 1, height: 20)
                     .foregroundColor(focused ? Color(NSColor.separatorColor) : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
                 
                 TextField("Input the title here...", text: $viewModel.title)
-                    .font(expanded ? .body : .title2)
+                    .font(flag ? .body : .title2)
                     .textFieldStyle(.plain)
                     .background(Color.clear)
                     .focused($focused)
@@ -146,16 +146,16 @@ struct CellContent: View {
                     .allowsHitTesting(false)
                     .truncationMode(.tail)
             }
-            .padding(.vertical, expanded ? 0 : 4)
+            .padding(.vertical, flag ? 0 : 4)
             
-            if !expanded {
+            if !flag {
                 Rectangle()
                     .frame(height: 1)
                     .foregroundColor(focused ? Color.primary : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
             }
         }
-        .animation(.easeInOut(duration: 0.25), value: expanded)
+        .animation(.easeInOut(duration: 0.25), value: flag)
     }
     
     @ViewBuilder

@@ -12,13 +12,12 @@ class CellView: NSTableCellView {
     
     var entry: (any Entry)? {
         didSet {
-            hostingView.rootView = CellContent(viewModel: CellViewModel(entry: entry))
+            setup(entry)
         }
     }
     
     override init(frame frameRect: NSRect) {
         super.init(frame: CGRectZero)
-        setup()
     }
     
     required init?(coder: NSCoder) {
@@ -27,8 +26,11 @@ class CellView: NSTableCellView {
     
     private var hostingView: NSHostingView<CellContent>!
     
-    private func setup() {
-        let content = NSHostingView(rootView: CellContent(viewModel: CellViewModel()))
+    private func setup(_: (any Entry)?) {
+        hostingView?.removeFromSuperview()
+        hostingView?.prepareForReuse()
+        
+        let content = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: entry)))
         self.hostingView = content
         content.sizingOptions = .minSize
         self.addSubview(content)
