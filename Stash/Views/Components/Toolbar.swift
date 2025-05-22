@@ -39,6 +39,17 @@ struct Toolbar: View {
             (Text("Tip: ") + tip)
                 .font(.headline)
                 .frame(maxWidth: .infinity)
+            
+            HStack {
+                Spacer()
+                Button(action: {
+                    NotificationCenter.default.post(name: .onToggleOutlineView, object: nil)
+                }) {
+                    Image(systemName: "list.bullet.indent")
+                }
+                .buttonStyle(.plain)
+                .help("Expand / Collapse")
+            }
         }
         .padding(.horizontal)
         .padding(.vertical, 8)

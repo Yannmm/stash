@@ -71,10 +71,8 @@ struct OutlineView: NSViewRepresentable {
             }
         }
         
-        
-        
-        NotificationCenter.default.addObserver(forName: NSControl.textDidBeginEditingNotification, object: nil, queue: nil) { _ in
-            print("NSControlTextDidBeginEditingNSControlTextDidBeginEditing")
+        NotificationCenter.default.addObserver(forName: .onToggleOutlineView, object: nil, queue: nil) { _ in
+            toggle(outlineView)
         }
         
         NotificationCenter.default.addObserver(forName: .onEditPopoverClose, object: nil, queue: nil) { _ in
@@ -114,6 +112,31 @@ struct OutlineView: NSViewRepresentable {
            let entry2 = entries.findBy(id: lid) {
             outlineView.expandItem(entry2)
         }
+    }
+    
+    private func toggle(_ outlineView: NSOutlineView) {
+        if isThereAnyExpanded(outlineView) {
+            for row in (0..<outlineView.numberOfRows).reversed() {
+                if let item = outlineView.item(atRow: row), outlineView.isItemExpanded(item) {
+                    outlineView.collapseItem(item, collapseChildren: true)
+                }
+            }
+        } else {
+            for row in (0..<outlineView.numberOfRows).reversed() {
+                if let item = outlineView.item(atRow: row), outlineView.isExpandable(item) {
+                    outlineView.expandItem(item, expandChildren: true)
+                }
+            }
+        }
+    }
+    
+    private func isThereAnyExpanded(_ outlineView: NSOutlineView) -> Bool {
+        for row in 0..<outlineView.numberOfRows {
+            if let item = outlineView.item(atRow: row), outlineView.isExpandable(item), outlineView.isItemExpanded(item) {
+                return true
+            }
+        }
+        return false
     }
 }
 

@@ -17,4 +17,5 @@ extension NSNotification.Name {
     static let onShouldOpenImportPanel = NSNotification.Name("onShouldOpenImportPanel")
     static let onRowViewSelectionChange = NSNotification.Name("onRowViewSelectionChange")
     static let onEditPopoverClose = NSNotification.Name("onEditPopoverClose")
+    static let onToggleOutlineView = NSNotification.Name("onToggleOutlineView")
 }
