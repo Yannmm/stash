@@ -13,6 +13,7 @@ struct OutlineView: NSViewRepresentable {
     @Binding var entries: [any Entry]
     @Binding var anchorId: UUID?
     @EnvironmentObject var cabinet: OkamuraCabinet
+    @EnvironmentObject var focusMonitor: FocusMonitor
     
     let onSelectRow: (UUID?) -> Void
     
@@ -101,7 +102,7 @@ struct OutlineView: NSViewRepresentable {
             guard let outlineView = nsView.documentView as? NSOutlineView else { return }
             outlineView.reloadData()
             _expandIfNecessary(outlineView)
-            NotificationCenter.default.post(name: .onOutlineViewRowCount, object: outlineView.numberOfRows)
+            calculateHeight(outlineView)
         }
     }
     
@@ -112,6 +113,13 @@ struct OutlineView: NSViewRepresentable {
            let entry2 = entries.findBy(id: lid) {
             outlineView.expandItem(entry2)
         }
+    }
+    func calculateHeight(_ outlineView: NSOutlineView) {
+        var height: CGFloat = 0.0
+        for index in 0..<outlineView.numberOfRows {
+            height += outlineView.delegate?.outlineView?(outlineView, heightOfRowByItem: outlineView.item(atRow: index) as Any) ?? 0.0
+        }
+        NotificationCenter.default.post(name: .onOutlineViewRowCount, object: height)
     }
     
     private func toggle(_ outlineView: NSOutlineView) {
@@ -179,12 +187,12 @@ extension OutlineView {
         
         func outlineViewItemDidExpand(_ notification: Notification) {
             guard let outlineView = notification.object as? NSOutlineView else { return }
-            NotificationCenter.default.post(name: .onOutlineViewRowCount, object: outlineView.numberOfRows)
+            parent.calculateHeight(outlineView)
         }
         
         func outlineViewItemDidCollapse(_ notification: Notification) {
             guard let outlineView = notification.object as? NSOutlineView else { return }
-            NotificationCenter.default.post(name: .onOutlineViewRowCount, object: outlineView.numberOfRows)
+            parent.calculateHeight(outlineView)
         }
         
         func outlineView(_ outlineView: NSOutlineView, child index: Int, ofItem item: Any?) -> Any {
@@ -206,7 +214,7 @@ extension OutlineView {
             var cell: CellView! = outlineView.makeView(withIdentifier: identifier, owner: self) as? CellView
             
             if cell == nil {
-                cell = CellView()
+                cell = CellView(focusMonitor: parent.focusMonitor)
                 cell?.identifier = identifier
             }
             

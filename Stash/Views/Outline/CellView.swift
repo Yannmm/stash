@@ -16,7 +16,10 @@ class CellView: NSTableCellView {
         }
     }
     
-    override init(frame frameRect: NSRect) {
+    let focusMonitor: FocusMonitor
+    
+    init(focusMonitor: FocusMonitor) {
+        self.focusMonitor = focusMonitor
         super.init(frame: CGRectZero)
     }
     
@@ -24,13 +27,13 @@ class CellView: NSTableCellView {
         fatalError("init(coder:) has not been implemented")
     }
     
-    private var hostingView: NSHostingView<CellContent>!
+    private var hostingView: NSHostingView<AnyView>!
     
     private func setup(_: (any Entry)?) {
         hostingView?.removeFromSuperview()
         hostingView?.prepareForReuse()
         
-        let content = NSHostingView(rootView: CellContent(viewModel: CellViewModel(entry: entry)))
+        let content = NSHostingView(rootView: AnyView(CellContent(viewModel: CellViewModel(entry: entry)).environmentObject(focusMonitor)))
         self.hostingView = content
         content.sizingOptions = .minSize
         self.addSubview(content)

@@ -32,11 +32,11 @@ struct CellContent: View {
     @State private var didCopy = false
     
     var shouldShowDelete: Bool {
-        return expanded
+        return expanded && !focusMonitor.isEditing
     }
     
     var shouldShowCopy: Bool {
-        if let _ = viewModel.entry as? Bookmark, expanded {
+        if let _ = viewModel.entry as? Bookmark, expanded, !focusMonitor.isEditing {
             return true
         } else {
             return false
@@ -44,7 +44,7 @@ struct CellContent: View {
     }
     
     var shouldShowReveal: Bool {
-        if let a = viewModel.entry as? Actionable, a.revealable, expanded {
+        if let a = viewModel.entry as? Actionable, a.revealable, expanded, !focusMonitor.isEditing {
             return true
         } else {
             return false
@@ -55,10 +55,14 @@ struct CellContent: View {
         return shouldShowDelete || shouldShowReveal || shouldShowCopy
     }
     
+    var shouldAddAddress: Bool {
+        expanded && (viewModel.entry?.shouldExpand ?? false) && !focusMonitor.isEditing
+    }
+    
     var body: some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 2) {
-                title(expanded && (viewModel.entry?.shouldExpand ?? false))
+                title(shouldAddAddress)
                 address()
             }
             Spacer()
@@ -69,6 +73,7 @@ struct CellContent: View {
         .onAppear {
             viewModel.cabinet = cabinet
             expanded = NSEvent.modifierFlags.containsOnly(.command)
+            focused = false
         }
         .onChange(of: focused) { oldValue, newValue in
             focusMonitor.isEditing = newValue
@@ -84,6 +89,9 @@ struct CellContent: View {
             guard !new else { return }
             NotificationCenter.default.post(name: NSControl.textDidEndEditingNotification, object: nil)
         }
+        .onChange(of: focusMonitor.isEditing, { _, newValue in
+            expanded = false
+        })
         .onReceive(NotificationCenter.default.publisher(for: .onDoubleTapRowView)) { noti in
             guard !expanded else { return }
             let entry = noti.object as? any Entry
@@ -192,7 +200,7 @@ struct CellContent: View {
     @ViewBuilder
     private func address() -> some View {
         ZStack {
-            if expanded, let tuple2 = bookmarkAccessible {
+            if shouldAddAddress, let tuple2 = bookmarkAccessible {
                 Button {
                     tuple2.1.open()
                     do {

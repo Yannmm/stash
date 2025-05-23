@@ -82,9 +82,6 @@ struct ContentView: View {
         } message: {
             Text(error?.localizedDescription ?? "")
         }
-        .onChange(of: focusMonitor.isEditing) { x in
-            print(x)
-        }
     }
 }
 

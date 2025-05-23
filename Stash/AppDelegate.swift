@@ -24,11 +24,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         p.delegate = self
         return p
     }()
-
+    
     private lazy var settingsViewModel: SettingsViewModel = {
         let viewModel = SettingsViewModel(hotKeyManager: hotKeyMananger, cabinet: cabinet)
         return viewModel
-    }()    
+    }()
     var cabinet: OkamuraCabinet { OkamuraCabinet.shared }
     
     var hotKeyMananger: HotKeyManager { HotKeyManager.shared }
@@ -37,12 +37,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private var cancellables = Set<AnyCancellable>()
     
-    private var outlineViewRowCount: Int?
+    private var outlineViewHeight: CGFloat?
     
     private var settingsWindow: NSWindow?
     
     func applicationWillFinishLaunching(_ notification: Notification) {
-//        NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
+        //        NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
         
         ImageCache.default.diskStorage.config.expiration = .days(1)
     }
@@ -69,15 +69,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         
         NotificationCenter.default.addObserver(forName: .onOutlineViewRowCount, object: nil, queue: nil) { [unowned self] noti in
-            guard let count = noti.object as? Int else { return }
-            self.outlineViewRowCount = count
-            self.editPopover.contentSize = self.editPopoverContentSize(count)
+            guard let height = noti.object as? CGFloat else { return }
+            editPopoverContentSize(height)
         }
     }
     
     private func setupStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-                
+        
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "square.stack.3d.up.fill", accessibilityDescription: nil)
             
@@ -121,15 +120,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if (editPopover.isShown) {
             editPopover.performClose(self)
         } else {
-            let count = outlineViewRowCount ?? cabinet.storedEntries.filter({ $0.parentId == nil }).count
-            editPopover.contentSize = editPopoverContentSize(count)
+            editPopoverContentSize(nil)
             NSApplication.shared.activate(ignoringOtherApps: true)
             editPopover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
         }
     }
     
-    private func editPopoverContentSize(_ entryCount: Int) -> CGSize {
-        CGSize(width: 800, height: (entryCount < 3 ? 3 : entryCount) * 49 + 34)
+    private func editPopoverContentSize(_ height: CGFloat?) {
+        let h = height
+        ?? outlineViewHeight
+        ?? cabinet.storedEntries
+            .filter({ $0.parentId == nil })
+            .map({ $0.height })
+            .reduce(0, { $0 + $1 })
+        outlineViewHeight = h
+        self.editPopover.contentSize = CGSize(width: 800, height: h <= 180 ? 180 : h + 34)
     }
 }
 
