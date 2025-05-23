@@ -138,7 +138,7 @@ struct CellContent: View {
     @ViewBuilder
     private func title(_ flag: Bool) -> some View {
         VStack(spacing: 0) {
-            HStack(spacing: flag ? 2 : 6) {
+            HStack(spacing: flag ? 2 : 5) {
                 icon(flag ? NSImage.Constant.side1:  NSImage.Constant.side2)
                 Rectangle()
                     .frame(width: 1, height: 20)
@@ -178,7 +178,11 @@ struct CellContent: View {
                     .foregroundStyle(Color.primary)
             case .favicon(let url):
                 KFImage.url(url)
+                    .appendProcessor(EmptyFaviconReplacer())
+                    .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2)
+                    .cacheOriginalImage()
                     .loadDiskFileSynchronously()
+                    .forceRefresh()
                     .onSuccess { result in  }
                     .onFailure { error in }
                     .onFailureImage(NSImage(systemSymbolName: "globe", accessibilityDescription: nil))
@@ -190,10 +194,6 @@ struct CellContent: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(width: side, height: side)
             }
-        } else {
-            Image(systemName: "folder.fill")
-                .foregroundStyle(Color.primary)
-                .frame(width: NSImage.Constant.side2, height: NSImage.Constant.side2)
         }
     }
     
