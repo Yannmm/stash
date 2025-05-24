@@ -194,18 +194,18 @@ struct SettingsView: View {
             
             // About Section
             Section("About\(viewModel.versionDescription)") {
-                VStack(alignment: .leading) {
-                    Link("https://github.com/Yannmm/stash", destination: URL(string: "https://github.com/Yannmm/stash")!)
-                        .foregroundStyle(.secondary)
-                        .onHover { hovering in
-                            if hovering {
-                                NSCursor.pointingHand.push()
-                            } else {
-                                NSCursor.pop()
-                            }
-                        }
-                    Text("Stashy is a open-source project. Issues and Pull Requests are welcome.")
-                }
+//                VStack(alignment: .leading) {
+//                    Link("https://github.com/Yannmm/stash", destination: URL(string: "https://github.com/Yannmm/stash")!)
+//                        .foregroundStyle(.secondary)
+//                        .onHover { hovering in
+//                            if hovering {
+//                                NSCursor.pointingHand.push()
+//                            } else {
+//                                NSCursor.pop()
+//                            }
+//                        }
+//                    Text("Stashy is a open-source project. Issues and Pull Requests are welcome.")
+//                }
             }
         }
         .navigationTitle("Stashy Settings")
