@@ -1,0 +1,19 @@
+// TODO
+// 1. launch on login ✅
+// 2. 没有任何。bookmarks 时，menu太空 // create first bookmark // import from browsers ✅
+// 5. 设置窗口有时无法到最前方
+// 6. use NSMetadataQuery to monitor file from icloud. ✅
+// 3. 排序失去焦点问题
+// 4. 一段时间后，好像icloud中的文件被覆盖了 ✅
+// 5. 编辑时不能展开 ✅
+// 6. 链接的反白 ✅
+// 7. 从sub level 到 top level  crash ✅
+// 8. add id when saving files. ✅
+// 9. animation when expanded ✅
+// 10. 一键 expand / collapse ✅
+// 11. save title for at leat 1 cahr
+// 12. in appdelegate, popover content size ✅
+// 13. hold cmd key and scroll, if a group is off the screen and enter the screen, it will shrink. ✅
+// 14. change craft view model, the icon should enum, use kingfisher to display
+// 15. render empty_favion to frist character of the domain in processor
+// 16.

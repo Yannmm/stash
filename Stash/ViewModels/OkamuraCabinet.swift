@@ -308,28 +308,3 @@ extension OkamuraCabinet {
         case decrement = -1
     }
 }
-
-// TODO
-// 1. launch on login ✅
-// 2. 没有任何。bookmarks 时，menu太空 // create first bookmark // import from browsers ✅
-// 5. 设置窗口有时无法到最前方
-// 6. use NSMetadataQuery to monitor file from icloud. ✅
-// 3. 排序失去焦点问题
-// 4. 一段时间后，好像icloud中的文件被覆盖了 ✅
-
-// a. 编辑时不能展开 ✅
-// b. 链接的反白 ✅
-// c. 从sub level 到 top level  crash ✅
-
-
-// 1. add id when saving files. ✅
-// 2. animation when expanded ✅
-// 3. 一键 expand / collapse ✅
-
-
-// 1. save title for at leat 1 cahr
-// 2. in appdelegate, popover content size ✅
-// 3. hold cmd key and scroll, if a group is off the screen and enter the screen, it will shrink. ✅
-// 4. change craft view model, the icon should enum, use kingfisher to display
-// 5. render empty_favion to frist character of the domain in processor
-// 6.
