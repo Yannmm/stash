@@ -108,37 +108,20 @@ extension AppDelegate {
         }
     }
     
-    private func setFavicon(_ url: URL?, _ item: NSMenuItem) {
-        // 1. Create proper URL
-        if let url = url {
-            // 2. Configure proper size
-            //            let processor = ResizingImageProcessor(referenceSize: CGSize(width: 32, height: 32), mode: .aspectFit)
-            
-            // 3. Use proper Kingfisher options
-            let options: KingfisherOptionsInfo = [
-                .processor(EmptyFaviconReplacer(url: url)),
-                .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2),
-                .cacheOriginalImage,
-            ]
-            
-            // 4. Set image with completion handler to ensure it's set
-            item.kf.setImage(
-                with: url,
-                options: options
-            ) { result in
-                switch result {
-                case .success(let value):
-                    item.image = value.image
-                    item.image?.size = NSImage.Constant.size1
-                case .failure(let error):
-                    // Set fallback image
-                    item.image = NSImage(systemSymbolName: "globe", accessibilityDescription: nil)
-                    ErrorTracker.shared.add(error)
-                }
-            }
-        } else {
-            item.image = NSImage(systemSymbolName: "globe", accessibilityDescription: nil)
-        }
+    private func setFavicon(_ url: URL, _ item: NSMenuItem) {
+        let options: KingfisherOptionsInfo = [
+            .processor(EmptyFaviconReplacer(url: url)),
+            .processor(ResizingImageProcessor(referenceSize: CGSize(width: NSImage.Constant.side1, height: NSImage.Constant.side1), mode: .aspectFit)),
+            .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2),
+            .cacheOriginalImage,
+            .onFailureImage(NSImage(systemSymbolName: "star", accessibilityDescription: nil))
+        ]
+        
+        // 4. Set image with completion handler to ensure it's set
+        item.kf.setImage(
+            with: url,
+            options: options
+        )
     }
     
     @objc private func action(_ sender: CustomMenuItem) {

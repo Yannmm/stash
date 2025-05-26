@@ -46,6 +46,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         // TODO: remove this line
         ImageCache.default.diskStorage.config.expiration = .days(1)
+        ImageCache.default.clearDiskCache()
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
