@@ -12,3 +12,18 @@ enum Icon: Codable {
     case system(String)
     case local(URL)
 }
+
+extension Icon: Equatable {
+    static func == (lhs: Self, rhs: Self) -> Bool {
+        switch (lhs, rhs) {
+        case (let .favicon(a), let .favicon(b)):
+            return a == b
+        case (let .system(a), let .system(b)):
+            return  a == b
+        case (let .local(a), let .local(b)):
+            return a == b
+        default:
+            return false
+        }
+    }
+}

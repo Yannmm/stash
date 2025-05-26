@@ -6,24 +6,47 @@
 //
 
 import SwiftUI
+import Kingfisher
 
 struct TitleInputField: View {
     @FocusState private var focused: Bool
     @Environment(\.dismiss) var dismiss
     @State private var disabled: Bool = true
     var title: Binding<String?>
-    @Binding var icon: NSImage?
+    @Binding var icon: Icon?
     
     var body: some View {
         VStack(spacing: 4) {
             HStack(spacing: 6) {
                 ZStack {
                     if let i = icon {
-                        Image(nsImage: i)
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(height: 16)
-                            .transition(.opacity.combined(with: .scale))
+                        switch (i) {
+                        case .system(let name):
+                            Image(systemName: name)
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
+                                .foregroundStyle(Color.primary)
+                        case .favicon(let url):
+                            KFImage.url(url)
+//                                .appendProcessor(EmptyFaviconReplacer())
+                                .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2)
+                                .cacheOriginalImage()
+                                .loadDiskFileSynchronously()
+                                .forceRefresh()
+                                .onSuccess { result in  }
+                                .onFailure { error in
+                                    print("123123")
+                                }
+                                .onFailureImage(NSImage(systemSymbolName: "globe", accessibilityDescription: nil))
+                                .resizable()
+                                .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
+                        case .local(let url):
+                            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                                .resizable()
+                                .aspectRatio(contentMode: .fit)
+                                .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
+                        }
                     } else {
                         Image(systemName: "questionmark.circle.dashed")
                             .resizable()

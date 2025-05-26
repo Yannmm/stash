@@ -12,7 +12,7 @@ import SwiftUI
 struct AddressInputField: View {
     @FocusState private var focused: Bool
     @Binding var loading: Bool
-    @Binding var icon: NSImage?
+    @Binding var icon: Icon?
     @Binding var path: String?
     
     var body: some View {

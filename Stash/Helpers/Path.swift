@@ -65,6 +65,4 @@ extension Path {
     }
 }
 
-extension Path: Equatable {
-    
-}
+extension Path: Equatable {}

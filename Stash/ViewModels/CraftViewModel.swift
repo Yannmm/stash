@@ -11,7 +11,7 @@ import Kingfisher
 
 @MainActor
 class CraftViewModel: ObservableObject {
-    @Published var icon: NSImage?
+    @Published var icon: Icon?
     @Published var error: (any Error)?
     @Published var loading = false
     @Published var title: String?
@@ -41,19 +41,7 @@ class CraftViewModel: ObservableObject {
         guard entry != nil else { return }
         
         self.title = entry?.name
-        switch entry {
-        case let b as Bookmark:
-            self.url = b.url
-            //            Task {
-            //                try await self.updateImage(url: b.url)
-            //            }
-            
-        case let d as Group:
-            self.icon = NSImage(systemSymbolName: "square.stack.3d.down.right.fill", accessibilityDescription: nil)
-            break
-            
-        default: break
-        }
+        self.icon = entry?.icon
     }
     
     private func bind() {
@@ -112,36 +100,17 @@ class CraftViewModel: ObservableObject {
     private func updateImage(_ path: Path) async throws {
         switch path {
         case .file(let url):
-            let i = NSWorkspace.shared.icon(forFile: url.path)
-            i.size = CGSize(width: 16, height: 16)
-            icon = i
+            icon = .local(url)
         case .vnc(_):
-            icon = NSImage(systemSymbolName: "square.on.square.intersection.dashed", accessibilityDescription: nil) // square.on.square.intersection.dashed
+            icon = .system("square.on.square.intersection.dashed")
         case .web(let url):
-            if let u = url.faviconUrl {
-                let image = try await withCheckedThrowingContinuation { continuation in
-                    KingfisherManager.shared.retrieveImage(with: u) { result in
-                        // Do something with `result`
-                        switch (result) {
-                        case .success(let r):
-                            var image = r.image
-                            if r.data()?.count == 67646 { // size of https://favicone.com/default.ico
-                                image = NSImage(systemSymbolName: "globe", accessibilityDescription: nil)!
-                                let cacheKey = u.absoluteString
-                                ImageCache.default.store(image, forKey: cacheKey)
-                            }
-                            continuation.resume(returning: image)
-                        case .failure(let e):
-                            continuation.resume(throwing: e)
-                        }
-                    }
-                }
-                icon = image
+            if let furl = url.faviconUrl {
+                icon =  .favicon(furl)
             } else {
-                icon = NSImage(systemSymbolName: "globe", accessibilityDescription: nil)
+                icon = .system("globe")
             }
         case .whatever:
-            icon = NSImage(systemSymbolName: "link", accessibilityDescription: nil)
+            icon = .system("link")
         }
     }
     
