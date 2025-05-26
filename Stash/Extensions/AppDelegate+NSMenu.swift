@@ -110,11 +110,11 @@ extension AppDelegate {
     
     private func setFavicon(_ url: URL, _ item: NSMenuItem) {
         let options: KingfisherOptionsInfo = [
-            .processor(EmptyFaviconReplacer(url: url)),
-            .processor(ResizingImageProcessor(referenceSize: CGSize(width: NSImage.Constant.side1, height: NSImage.Constant.side1), mode: .aspectFit)),
+            .processor(EmptyFaviconReplacer(url: url) |>
+                       ResizingImageProcessor(referenceSize: CGSize(width: NSImage.Constant.side1, height: NSImage.Constant.side1), mode: .aspectFit)),
             .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2),
             .cacheOriginalImage,
-            .onFailureImage(NSImage(systemSymbolName: "star", accessibilityDescription: nil))
+            .onFailureImage(NSImage(systemSymbolName: "globe", accessibilityDescription: nil))
         ]
         
         // 4. Set image with completion handler to ensure it's set

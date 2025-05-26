@@ -15,5 +15,6 @@
 // 12. in appdelegate, popover content size ✅
 // 13. hold cmd key and scroll, if a group is off the screen and enter the screen, it will shrink. ✅
 // 14. change craft view model, the icon should enum, use kingfisher to display ✅
-// 15. render empty_favion to frist character of the domain in processor
+// 15. render empty_favion to frist character of the domain in processor ✅
 // 16. in manage view, edit an entry's title, input `x`, enter to save. double tap again, clear text, enter to save. the retsult should be x, not the first time ttile. ✅
+// 17. support import from hungrymark.
