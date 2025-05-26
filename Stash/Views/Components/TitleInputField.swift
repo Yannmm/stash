@@ -29,15 +29,13 @@ struct TitleInputField: View {
                                 .foregroundStyle(Color.primary)
                         case .favicon(let url):
                             KFImage.url(url)
-//                                .appendProcessor(EmptyFaviconReplacer())
+                                .appendProcessor(EmptyFaviconReplacer(url: url))
                                 .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2)
                                 .cacheOriginalImage()
                                 .loadDiskFileSynchronously()
                                 .forceRefresh()
-                                .onSuccess { result in  }
-                                .onFailure { error in
-                                    print("123123")
-                                }
+                                .onSuccess { result in }
+                                .onFailure { error in }
                                 .onFailureImage(NSImage(systemSymbolName: "globe", accessibilityDescription: nil))
                                 .resizable()
                                 .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)

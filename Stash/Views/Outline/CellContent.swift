@@ -178,12 +178,12 @@ struct CellContent: View {
                     .foregroundStyle(Color.primary)
             case .favicon(let url):
                 KFImage.url(url)
-                    .appendProcessor(EmptyFaviconReplacer())
+                    .appendProcessor(EmptyFaviconReplacer(url: url))
                     .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2)
                     .cacheOriginalImage()
                     .loadDiskFileSynchronously()
                     .forceRefresh()
-                    .onSuccess { result in  }
+                    .onSuccess { result in }
                     .onFailure { error in }
                     .onFailureImage(NSImage(systemSymbolName: "globe", accessibilityDescription: nil))
                     .resizable()

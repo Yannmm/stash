@@ -9,6 +9,8 @@ import Kingfisher
 import AppKit
 
 struct EmptyFaviconReplacer: ImageProcessor {
+    let url: URL
+    
     var identifier: String { "com.rendezvousauoaradis.stash.empty-favicon-replacer" }
     
     func process(item: Kingfisher.ImageProcessItem, options: Kingfisher.KingfisherParsedOptionsInfo) -> Kingfisher.KFCrossPlatformImage? {

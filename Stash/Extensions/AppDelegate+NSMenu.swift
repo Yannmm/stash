@@ -116,7 +116,7 @@ extension AppDelegate {
             
             // 3. Use proper Kingfisher options
             let options: KingfisherOptionsInfo = [
-                .processor(EmptyFaviconReplacer()),
+                .processor(EmptyFaviconReplacer(url: url)),
                 .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2),
                 .cacheOriginalImage,
             ]
