@@ -44,6 +44,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
         //        NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
         
+        // TODO: remove this line
         ImageCache.default.diskStorage.config.expiration = .days(1)
     }
     

@@ -85,13 +85,8 @@ struct OutlineView: NSViewRepresentable {
     
     
     func updateNSView(_ nsView: NSScrollView, context: Context) {
-        // TODO: combine id & parent id
         guard entries.map({$0.id.uuidString.suffix(4)}) != context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)})
-                && entries
-            .map({$0.parentId})
-                !=
-                context.coordinator.parent.entries
-            .map({$0.parentId})
+                && entries.map({$0.parentId}) != context.coordinator.parent.entries .map({$0.parentId})
         else { return }
         
         //        print("🐶 --> \(entries.map({$0.id.uuidString.suffix(4)})) 🌞 \(context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}))")

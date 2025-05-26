@@ -22,11 +22,9 @@ class CellViewModel: ObservableObject {
     func update() throws {
         guard var e = entry else { return }
         guard e.name != title else { return }
-        guard !title.trim().isEmpty else {
-            title = e.name
-            return
-        }
+        if title.trim().isEmpty { title = e.name }
         e.name = title
         try cabinet.update(entry: e)
+        entry = e
     }
 }
