@@ -103,7 +103,7 @@ struct SettingsView: View {
                             Spacer()
                         }
                     } else {
-                        Text("Learn how to export bookmarks from [Chrome](Chrome), [Edge](Edge) or [Safari](Safari).")
+                        Text("Learn how to export bookmarks from [Chrome](Chrome), [Edge](Edge) or [Safari](Safari).\nOr click [here](Hungrymark) to import from Hungrymark.")
                             .foregroundColor(.secondary)
                             .environment(\.openURL, OpenURLAction { url in
                                 let browser = url.absoluteString
@@ -114,6 +114,24 @@ struct SettingsView: View {
                                     howToExport = (browser, "Open the Favorites window, click the \"More\" button (three dots), then select \"Export Favorites.\".")
                                 case "Safari":
                                     howToExport = (browser, "Go to File > Export > Bookmarks, choose a location to save the file, and click Save.")
+                                case "Hungrymark":
+                                    let panel = NSOpenPanel()
+                                    panel.allowsMultipleSelection = false
+                                    panel.canChooseDirectories = false
+                                    panel.canCreateDirectories = false
+                                    panel.canChooseFiles = true
+                                    panel.allowedContentTypes = [.text]
+                                    
+                                    panel.begin { response in
+                                        guard response == .OK, let url = panel.url else { return }
+                                        let parser = HungrymarkParser()
+                                        let text = try! String(contentsOf: url)
+                                        
+                                        let root = parser.parse(text: text)
+//                                        let node = Node.nested(root)
+
+//                                        printAsJSON(node: node)
+                                    }
                                 default: break
                                 }
                                 return .handled

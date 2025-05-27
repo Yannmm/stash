@@ -20,6 +20,14 @@ struct AnyEntry: Codable {
     let url: URL?
     var children: [AnyEntry]
     
+    init(id: UUID?, name: String, type: EntryType, url: URL?, children: [AnyEntry]) {
+        self.id = id ?? UUID()
+        self.name = name
+        self.type = type
+        self.url = url
+        self.children = children
+    }
+    
     init(_ entry: any Entry) {
         self.id = entry.id
         self.name = entry.name
