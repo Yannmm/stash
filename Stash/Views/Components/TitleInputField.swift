@@ -36,7 +36,7 @@ struct TitleInputField: View {
                                 .forceRefresh()
                                 .onSuccess { result in }
                                 .onFailure { error in }
-                                .onFailureImage(NSImage(systemSymbolName: "globe", accessibilityDescription: nil))
+                                .onFailureImage(NSImage.drawFavicon(from: url.firstDomainLetter))
                                 .resizable()
                                 .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
                         case .local(let url):

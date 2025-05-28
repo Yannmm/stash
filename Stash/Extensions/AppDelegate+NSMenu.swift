@@ -114,7 +114,11 @@ extension AppDelegate {
                        ResizingImageProcessor(referenceSize: CGSize(width: NSImage.Constant.side1, height: NSImage.Constant.side1), mode: .aspectFit)),
             .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2),
             .cacheOriginalImage,
-            .onFailureImage(NSImage(systemSymbolName: "globe", accessibilityDescription: nil))
+            .onFailureImage({
+                let image = NSImage.drawFavicon(from: url.firstDomainLetter)
+                image.size = CGSize(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
+                return image
+            }())
         ]
         
         // 4. Set image with completion handler to ensure it's set

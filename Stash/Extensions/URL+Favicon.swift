@@ -28,3 +28,13 @@ extension URL {
         self.scheme?.lowercased() == "vnc"
     }
 }
+
+extension URL {
+    var firstDomainLetter: String {
+        var text = "?"
+        if let comps = path.split(separator: "/").first?.lowercased() {
+            text = (comps.hasPrefix("www.") ? String(comps.dropFirst(4).first ?? "?") : String(comps.first ?? "?")).uppercased()
+        }
+        return text
+    }
+}

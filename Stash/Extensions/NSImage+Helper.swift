@@ -9,6 +9,41 @@ import Cocoa
 import SwiftUI
 
 extension NSImage {
+    static func drawFavicon(from text: String) -> NSImage {
+        // Create a new image with black background and white "X"
+        let size = NSSize(width: 32, height: 32)
+        let image = NSImage(size: size)
+        
+        image.lockFocus()
+        
+        // Create rounded rect path
+        let cornerRadius: CGFloat = 6
+        let path = NSBezierPath(roundedRect: NSRect(origin: .zero, size: size), xRadius: cornerRadius, yRadius: cornerRadius)
+        
+        // Fill black background with rounded corners
+        NSColor.black.setFill()
+        path.fill()
+        
+        let font = NSFont.systemFont(ofSize: 22, weight: .bold)
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: NSColor.white
+        ]
+        
+        let textSize = text.size(withAttributes: attributes)
+        let point = NSPoint(
+            x: (size.width - textSize.width) / 2,
+            y: (size.height - textSize.height) / 2
+        )
+        
+        text.draw(at: point, withAttributes: attributes)
+        
+        image.unlockFocus()
+        return image
+    }
+}
+
+extension NSImage {
     func roundCorners(radius: CGFloat) -> NSImage? {
         // Create a new image with the same size as the input image
         let size = self.size

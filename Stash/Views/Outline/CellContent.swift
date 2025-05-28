@@ -185,7 +185,7 @@ struct CellContent: View {
                     .forceRefresh()
                     .onSuccess { result in }
                     .onFailure { error in }
-                    .onFailureImage(NSImage(systemSymbolName: "globe", accessibilityDescription: nil))
+                    .onFailureImage(NSImage.drawFavicon(from: url.firstDomainLetter))
                     .resizable()
                     .frame(width: side, height: side)
             case .local(let url):
