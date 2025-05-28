@@ -104,13 +104,15 @@ class OkamuraCabinet: ObservableObject {
         // In case for import
         let copy = recentEntries
         let ids = storedEntries.map({ $0.id })
-        DispatchQueue.main.async { [weak self] in
-            self?.recentEntries = copy.filter({ ids.contains($0.0.id) })
-        }
+        let recents = copy.filter({ ids.contains($0.0.id) })
         
-        let data2 = try JSONEncoder().encode(recentEntries.map({ $0.0 }).asAnyEntries)
+        let data2 = try JSONEncoder().encode(recents.map({ $0.0 }).asAnyEntries)
         pieceSaver.save(for: .recentEntries, value: data2)
-        pieceSaver.save(for: .recentKeys, value: recentEntries.map({ $0.1 }))
+        pieceSaver.save(for: .recentKeys, value: recents.map({ $0.1 }))
+        
+        DispatchQueue.main.async { [weak self] in
+            self?.recentEntries = recents
+        }
     }
     
     func delete(entry: any Entry) throws {
@@ -222,6 +224,13 @@ extension OkamuraCabinet {
         
         let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
         self.storedEntries = anyEntries.asEntries
+        try save()
+    }
+    
+    func importHungrymarks(from filePath: URL) throws {
+        let parser = HungrymarkParser()
+        let text = try String(contentsOf: filePath)
+        self.storedEntries = parser.parse(text: text)
         try save()
     }
     

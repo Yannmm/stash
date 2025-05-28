@@ -44,7 +44,7 @@ class HungrymarkParser {
         }
     }
     
-    func parse(text: String) -> [Dummy] {
+    func parse(text: String) -> [any Entry] {
         let lines = text.components(separatedBy: .newlines)
         
         var root = [Dummy]()
@@ -54,7 +54,7 @@ class HungrymarkParser {
            insert(&root, r.0, r.1)
         }
 
-        return root
+        return root.map({ $0.asAnyEntry() }).asEntries
     }
 }
 

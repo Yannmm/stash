@@ -9,7 +9,7 @@ struct SettingsView: View {
     @State private var howToExport: (String, String)?
     //    @State private var updateFrequency = UpdateFrequency.weekly
     var importDescription: AttributedString? {
-        if let path = viewModel.importFromFile?.path {
+        if let path = viewModel.importFromFile?.1.path {
             let tilde = (path as NSString).abbreviatingWithTildeInPath
             var a1 = AttributedString("Recently imported from: ")
             a1.foregroundColor = .secondary
@@ -80,7 +80,7 @@ struct SettingsView: View {
                             
                             panel.begin { response in
                                 guard response == .OK, let url = panel.url else { return }
-                                viewModel.importFromFile = url
+                                viewModel.importFromFile = (true, url)
                             }
                         }
                         Button("Cancel", role: .cancel) {}
@@ -124,13 +124,7 @@ struct SettingsView: View {
                                     
                                     panel.begin { response in
                                         guard response == .OK, let url = panel.url else { return }
-                                        let parser = HungrymarkParser()
-                                        let text = try! String(contentsOf: url)
-                                        
-                                        let root = parser.parse(text: text)
-//                                        let node = Node.nested(root)
-
-//                                        printAsJSON(node: node)
+                                        viewModel.importFromFile = (false, url)
                                     }
                                 default: break
                                 }

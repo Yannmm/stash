@@ -14,7 +14,7 @@ class SettingsViewModel: ObservableObject {
     @Published var icloudSync: Bool
     @Published var launchOnLogin: Bool
     @Published var showDockIcon: Bool
-    @Published var importFromFile: URL?
+    @Published var importFromFile: (Bool, URL)?
     @Published var exportToDirectory: URL?
     @Published var shortcut: (Key, NSEvent.ModifierFlags)?
     @Published var error: Error?
@@ -27,6 +27,15 @@ class SettingsViewModel: ObservableObject {
     func reset() {
         do {
             try cabinet.removeAll()
+        } catch {
+            self.error = error
+            ErrorTracker.shared.add(error)
+        }
+    }
+    
+    func importHungrymarks(_ filePath: URL) {
+        do {
+            try cabinet.importHungrymarks(from: filePath)
         } catch {
             self.error = error
             ErrorTracker.shared.add(error)
@@ -99,11 +108,14 @@ class SettingsViewModel: ObservableObject {
             .store(in: &cancellables)
         
         $importFromFile
-            .dropFirst()
             .compactMap({ $0 })
             .sink { [weak self] in
                 do {
-                    try self?.cabinet.import(from: $0)
+                    if $0.0 {
+                        try self?.cabinet.import(from: $0.1)
+                    } else {
+                        try self?.cabinet.importHungrymarks(from: $0.1)
+                    }
                 } catch {
                     self?.error = error
                     ErrorTracker.shared.add(error)
