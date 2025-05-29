@@ -8,7 +8,7 @@
 import SwiftUI
 import Cocoa
 
-// MARK: - NSOutlineView Wrapper
+// https://chris.eidhof.nl/post/view-representable/
 struct OutlineView: NSViewRepresentable {
     @Binding var entries: [any Entry]
     @Binding var anchorId: UUID?
@@ -92,7 +92,6 @@ struct OutlineView: NSViewRepresentable {
         //        print("🐶 --> \(entries.map({$0.id.uuidString.suffix(4)})) 🌞 \(context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}))")
         context.coordinator.parent = self
         
-        // TODO: checkout this article. https://chris.eidhof.nl/post/view-representable/
         DispatchQueue.main.async {
             guard let outlineView = nsView.documentView as? NSOutlineView else { return }
             outlineView.reloadData()
