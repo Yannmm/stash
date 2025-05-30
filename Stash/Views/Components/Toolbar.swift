@@ -92,6 +92,7 @@ fileprivate extension Toolbar {
              Text(Image(systemName: "list.bullet.indent")).font(.body) +
              Text(" to Expand / Collapse List")),
             Text("Hold CMD(⌘) Key for More"),
+            Text("Double Tap an Item to Rename"),
             Text("Tap ESC Key to Deselect Item"),
         ]
     }
