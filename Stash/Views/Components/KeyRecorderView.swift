@@ -28,6 +28,9 @@ struct KeyRecorderView: View {
         .onAppear {
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
                 defer { isRecording = false }
+                if event.keyCode == 53 {
+                    shortcut = nil
+                }
                 guard isRecording,
                       event.keyCode != 53,
                       let key = Key(carbonKeyCode: UInt32(event.keyCode)) else { return event }

@@ -92,11 +92,14 @@ class SettingsViewModel: ObservableObject {
             .store(in: &cancellables)
         $shortcut
             .dropFirst()
-            .compactMap({ $0 })
-            .sink { [weak self] in
-                hotKeyManager.register(shortcut: $0)
-                self?.pieceSaver.save(for: .hotkey, value: $0.0.carbonKeyCode)
-                self?.pieceSaver.save(for: .hokeyModifiers, value: $0.1.rawValue)
+            .sink { [weak self] tuple2 in
+                if let t2 = tuple2 {
+                    hotKeyManager.register(shortcut: t2)
+                } else {
+                    hotKeyManager.unregister()
+                }
+                self?.pieceSaver.save(for: .hotkey, value: tuple2?.0.carbonKeyCode)
+                self?.pieceSaver.save(for: .hokeyModifiers, value: tuple2?.1.rawValue)
             }
             .store(in: &cancellables)
         

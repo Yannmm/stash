@@ -19,4 +19,8 @@ class HotKeyManager {
             NotificationCenter.default.post(name: .onShortcutKeyDown, object: nil)
         })
     }
+    
+    func unregister() {
+        self.hotKey = nil
+    }
 }
