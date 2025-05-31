@@ -15,9 +15,9 @@ struct Group {
 }
 
 extension Group: Entry {
-    var icon: Icon {
-        return .system("square.stack.3d.down.right.fill")
-    }
+    var icon: Icon { .system("square.stack.3d.down.right.fill") }
+    
+    var container: Bool { true }
     
     var shouldExpand: Bool { false }
     

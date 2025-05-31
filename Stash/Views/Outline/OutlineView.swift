@@ -85,7 +85,7 @@ struct OutlineView: NSViewRepresentable {
     
     
     func updateNSView(_ nsView: NSScrollView, context: Context) {
-//        print("🐶 --> \(entries.map({$0.id.uuidString.suffix(4)})) 🌞 \(context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}))")
+        //        print("🐶 --> \(entries.map({$0.id.uuidString.suffix(4)})) 🌞 \(context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)}))")
         
         guard entries.map({$0.id.uuidString.suffix(4)}) != context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)})
                 || entries.map({$0.parentId}) != context.coordinator.parent.entries .map({$0.parentId})
@@ -243,7 +243,14 @@ extension OutlineView {
             return pasteboardItem
         }
         
-        func outlineView(_ outlineView: NSOutlineView, validateDrop info: NSDraggingInfo, proposedItem: Any?, proposedChildIndex: Int) -> NSDragOperation {
+        func outlineView(_ outlineView: NSOutlineView, validateDrop info: NSDraggingInfo, proposedItem item: Any?, proposedChildIndex index: Int) -> NSDragOperation {
+            if let target = item as? any Entry {
+                guard target.container else {
+                    // Prevent drop on non-group item
+                    outlineView.setDropItem(nil, dropChildIndex: -1) // Reset the drop location
+                    return []
+                }
+            }
             return .move
         }
         

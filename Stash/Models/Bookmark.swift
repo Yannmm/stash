@@ -29,6 +29,8 @@ extension Bookmark: Entry {
         }
     }
     
+    var container: Bool { false }
+    
     var shouldExpand: Bool { true }
     
     var height: CGFloat { CellView.Constant.bookmarkHeight }

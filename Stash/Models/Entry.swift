@@ -17,6 +17,8 @@ protocol Entry: Identifiable, Equatable, Hashable, Facade {
     var location: UUID? { get }
     
     var icon: Icon { get }
+    
+    var container: Bool { get }
 }
 
 extension Entry {
