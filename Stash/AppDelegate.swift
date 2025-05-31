@@ -136,7 +136,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .map({ $0.height })
             .reduce(0, { $0 + $1 })
         outlineViewHeight = h
-        self.editPopover.contentSize = CGSize(width: 800, height: h <= 180 ? 180 : h + 34)
+        self.editPopover.contentSize = CGSize(width: 800, height: (h <= 200 ? 200 : h) + 34)
     }
 }
 
