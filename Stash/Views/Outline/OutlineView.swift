@@ -244,7 +244,14 @@ extension OutlineView {
         }
         
         func outlineView(_ outlineView: NSOutlineView, validateDrop info: NSDraggingInfo, proposedItem item: Any?, proposedChildIndex index: Int) -> NSDragOperation {
+            guard let pasteboardItem = info.draggingPasteboard.pasteboardItems?.first,
+                  let pid = pasteboardItem.string(forType: .string),
+                  var draggedItem = findItem(by: pid, in: parent.entries) else { return [] }
+            
             if let target = item as? any Entry {
+                guard draggedItem.id != target.id else {
+                    return []
+                }
                 guard target.container else {
                     // Prevent drop on non-group item
                     outlineView.setDropItem(nil, dropChildIndex: -1) // Reset the drop location
@@ -263,10 +270,10 @@ extension OutlineView {
                   let pid = pasteboardItem.string(forType: .string),
                   var draggedItem = findItem(by: pid, in: parent.entries) else { return false }
             
+            let toIndex = childIndex
+            
             // Begin updates for animation
             outlineView.beginUpdates()
-            
-            parent.entries.removeAll(where: { $0.id == draggedItem.id })
             
             var children = [any Entry]()
             if let targetParent = item as? any Entry {
@@ -277,10 +284,19 @@ extension OutlineView {
                 children = parent.entries.filter({ $0.parentId == nil })
             }
             
-            if childIndex >= 0 && childIndex < children.count, let index = parent.entries.firstIndex(where: { $0.id == children[childIndex].id }) {
+            let orignalIndex = parent.entries.firstIndex(where: { $0.id == draggedItem.id })
+            
+            if toIndex >= 0 && toIndex < children.count,
+               let index = parent.entries.firstIndex(where: { $0.id == children[toIndex].id }) {
                 parent.entries.insert(draggedItem, at: index)
             } else {
                 parent.entries.append(draggedItem)
+            }
+            
+            if let fromIndex = children.firstIndex(where: { $0.id == draggedItem.id }),
+               let oi = orignalIndex
+                {
+                parent.entries.remove(at: toIndex > fromIndex ? oi : oi + 1)
             }
             
             // End updates
@@ -306,9 +322,6 @@ extension OutlineView {
         private func findItem(by id: String, in items: [any Entry]) -> (any Entry)? {
             for item in items {
                 if item.id.uuidString == id { return item }
-                if let found = findItem(by: id, in: item.children(among: parent.entries)) {
-                    return found
-                }
             }
             return nil
         }

@@ -42,13 +42,13 @@ class OkamuraCabinet: ObservableObject {
     }
     
     private func bind() {
-        icloudMonitor.$update
-            .compactMap({ $0 })
-            .combineLatest(Just(icloudSync).filter({ $0 }))
-            .sink { [weak self] _ in
-                self?.saving.send(.increment)
-            }
-            .store(in: &cancellables)
+//        icloudMonitor.$update
+//            .compactMap({ $0 })
+//            .combineLatest(Just(icloudSync).filter({ $0 }))
+//            .sink { [weak self] _ in
+//                self?.saving.send(.increment)
+//            }
+//            .store(in: &cancellables)
         
         saving
             .dropFirst()
