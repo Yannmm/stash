@@ -26,10 +26,6 @@ class OkamuraCabinet: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     
-    func icloudComing() {
-        saving.send(.increment)
-    }
-    
     init() {
         asyncLoad()
         bind()
