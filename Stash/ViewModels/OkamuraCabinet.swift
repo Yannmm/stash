@@ -18,7 +18,8 @@ class OkamuraCabinet: ObservableObject {
     
     private let pieceSaver = PieceSaver()
     
-    private let icloudMonitor = IcloudFileMonitor(filename: "default.html")
+//    private let icloudMonitor = IcloudFileMonitor(filename: "default.html")
+    private var icloudMonitor: IcloudFileMonitor?
     
     private let saving = PassthroughSubject<IcloudSignal, Never>()
     
@@ -28,6 +29,7 @@ class OkamuraCabinet: ObservableObject {
     
     init() {
         asyncLoad()
+        monitorIcloudIfNecessary()
         bind()
     }
     
@@ -41,6 +43,10 @@ class OkamuraCabinet: ObservableObject {
         }
     }
     
+    private func monitorIcloudIfNecessary() {
+        
+    }
+    
     private func bind() {
 //        icloudMonitor.$update
 //            .compactMap({ $0 })
@@ -50,6 +56,7 @@ class OkamuraCabinet: ObservableObject {
 //            }
 //            .store(in: &cancellables)
         
+        // TODO: remove saving
         saving
             .dropFirst()
             .map({ $0.rawValue })
@@ -94,8 +101,8 @@ class OkamuraCabinet: ObservableObject {
     func save() throws {
         defer { saving.send(.decrement) }
         let data1 = try JSONEncoder().encode(storedEntries.asAnyEntries)
-        let url = try whereItIs()
-        try saveToDisk(data: data1, filePath: url)
+        let urls = try whereItIs()
+        try saveToDisk(data: data1, filePath: urls.0, sidecarPath: urls.1)
         
         // In case for import
         let copy = recentEntries
@@ -122,9 +129,9 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func load() throws {
-        let url = try whereItIs()
+        let urls = try whereItIs()
         
-        let htmlString = try String(contentsOf: url, encoding: .utf8)
+        let htmlString = try String(contentsOf: urls.0, encoding: .utf8)
         let dominator = Dominator()
         let data = try dominator.decompose(htmlString)
         
@@ -238,25 +245,29 @@ extension OkamuraCabinet {
 }
 
 fileprivate extension OkamuraCabinet {
-    func saveToDisk(data: Data, filePath: URL) throws {
+    func saveToDisk(data: Data, filePath: URL, sidecarPath: URL? = nil) throws {
         let json = try JSONSerialization.jsonObject(with: data)
         let d = Dominator()
         let string = try d.compose(json)
         try string.write(to: filePath, atomically: true, encoding: .utf8)
+        if let path = sidecarPath, let appId: UUID = pieceSaver.value(for: .appIdentifier) {
+            try appId.uuidString.write(to: path, atomically: true, encoding: .utf8)
+        }
     }
     
     var icloudSync: Bool { pieceSaver.value(for: .icloudSync) ?? true }
     
-    func whereItIs() throws -> URL {
+    // (stash.html path, icloud sidecar path?)
+    func whereItIs() throws -> (URL, URL?) {
         do {
             if icloudSync {
                 return try icloudPath()
             } else {
-                return try localPath()
+                return (try localPath(), nil)
             }
         } catch {
             defer { ErrorTracker.shared.add(error) }
-            return try localPath()
+            return (try localPath(), nil)
         }
     }
     
@@ -270,7 +281,7 @@ fileprivate extension OkamuraCabinet {
         return direcotry.appendingPathComponent("default.html")
     }
     
-    private func icloudPath() throws -> URL {
+    private func icloudPath() throws -> (URL, URL) {
         let fileManager = FileManager.default
         
         guard let container = fileManager.url(forUbiquityContainerIdentifier: nil) else { throw SomeError.Save.icloudContainerUnavailable  }
@@ -280,7 +291,7 @@ fileprivate extension OkamuraCabinet {
         if !fileManager.fileExists(atPath: documents.path) {
             try fileManager.createDirectory(at: documents, withIntermediateDirectories: true, attributes: nil)
         }
-        return documents.appendingPathComponent("default.html")
+        return (documents.appendingPathComponent("default.html"), documents.appendingPathComponent("default.html.sidecar"))
     }
     
 }
@@ -313,3 +324,10 @@ extension OkamuraCabinet {
         case decrement = -1
     }
 }
+
+// 1. 启动时存入一个uuid
+// 2. 每当 save 时，创建一个文件，并写入上面的 uuid （如果 enable icloud sync）
+// 3. 开启 icloud sync 时，执行一遍 2
+// 3. 启动时，开始监听上述文件，（如果 enable icloud sync）
+// 4. 如果上述文件有变化，则读取内容，比较uuid
+// 5. 一致，忽略，不一致，reload stash.html

@@ -17,6 +17,7 @@ class PieceSaver {
         case showDockIcon
         case recentEntries
         case recentKeys
+        case appIdentifier
     }
 
     func save(for key: Key, value: Any?) {

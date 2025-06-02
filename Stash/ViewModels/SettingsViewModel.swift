@@ -56,6 +56,12 @@ class SettingsViewModel: ObservableObject {
             shortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
         }
         
+        self.setAppIdentifier()
+        
+        bind()
+    }
+    
+    private func bind() {
         $collapseHistory
             .dropFirst()
             .sink { [weak self] in
@@ -94,9 +100,9 @@ class SettingsViewModel: ObservableObject {
             .dropFirst()
             .sink { [weak self] tuple2 in
                 if let t2 = tuple2 {
-                    hotKeyManager.register(shortcut: t2)
+                    self?.hotKeyManager.register(shortcut: t2)
                 } else {
-                    hotKeyManager.unregister()
+                    self?.hotKeyManager.unregister()
                 }
                 self?.pieceSaver.save(for: .hotkey, value: tuple2?.0.carbonKeyCode)
                 self?.pieceSaver.save(for: .hokeyModifiers, value: tuple2?.1.rawValue)
@@ -105,8 +111,8 @@ class SettingsViewModel: ObservableObject {
         
         $shortcut
             .compactMap({ $0 })
-            .sink {
-                hotKeyManager.register(shortcut: $0)
+            .sink { [weak self] in
+                self?.hotKeyManager.register(shortcut: $0)
             }
             .store(in: &cancellables)
         
@@ -149,5 +155,10 @@ class SettingsViewModel: ObservableObject {
             result += "·b\(build)"
         }
         return result + ")"
+    }
+    
+    private func setAppIdentifier() {
+        guard let id: UUID? = pieceSaver.value(for: .appIdentifier), id == nil else { return }
+        pieceSaver.save(for: .appIdentifier, value: UUID())
     }
 }
