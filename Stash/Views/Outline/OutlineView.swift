@@ -268,35 +268,53 @@ extension OutlineView {
         func outlineView(_ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex: Int) -> Bool {
             guard let pasteboardItem = info.draggingPasteboard.pasteboardItems?.first,
                   let pid = pasteboardItem.string(forType: .string),
-                  var draggedItem = findItem(by: pid, in: parent.entries) else { return false }
+                  var target = findItem(by: pid, in: parent.entries) else { return false }
             
-            let toIndex = childIndex
+            let container = item as? any Entry
+            
+            let toIndex = childIndex < 0 ? 0 : childIndex
             
             // Begin updates for animation
             outlineView.beginUpdates()
             
+            if (container == nil && target.parentId == nil) || container?.id == target.parentId { // shift position
+                
+            } else { // change level
+                target.parentId = container?.id
+            }
+            
+            let children1 = container == nil ? parent.entries.filter({ $0.parentId == nil }) : container!.children(among: parent.entries)
+            
+            
+            
             var children = [any Entry]()
-            if let targetParent = item as? any Entry {
-                draggedItem.parentId = targetParent.id
-                children = targetParent.children(among: parent.entries)
+            if let container = item as? any Entry {
+
+                target.parentId = container.id
+                children = container.children(among: parent.entries)
             } else {
-                draggedItem.parentId = nil
+                target.parentId = nil
                 children = parent.entries.filter({ $0.parentId == nil })
             }
             
-            let orignalIndex = parent.entries.firstIndex(where: { $0.id == draggedItem.id })
+            let orignalIndex = parent.entries.firstIndex(where: { $0.id == target.id })
             
             if toIndex >= 0 && toIndex < children.count,
                let index = parent.entries.firstIndex(where: { $0.id == children[toIndex].id }) {
-                parent.entries.insert(draggedItem, at: index)
+                parent.entries.insert(target, at: index)
+                
+                if
+                   let oi = orignalIndex
+                    {
+                    parent.entries.remove(at: toIndex > index ? oi : oi + 1)
+                }
             } else {
-                parent.entries.append(draggedItem)
-            }
-            
-            if let fromIndex = children.firstIndex(where: { $0.id == draggedItem.id }),
-               let oi = orignalIndex
-                {
-                parent.entries.remove(at: toIndex > fromIndex ? oi : oi + 1)
+                parent.entries.append(target)
+                if
+                   let oi = orignalIndex
+                    {
+                    parent.entries.remove(at: oi)
+                }
             }
             
             // End updates
@@ -304,8 +322,8 @@ extension OutlineView {
             
             DispatchQueue.main.async { [weak self] in
                 do {
-                    outlineView.window?.makeFirstResponder(nil)
                     try self?.parent.cabinet.save()
+                    outlineView.window?.makeFirstResponder(nil)
                 } catch {
                     ErrorTracker.shared.add(error)
                 }

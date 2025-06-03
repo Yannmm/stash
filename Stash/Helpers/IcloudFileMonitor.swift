@@ -30,8 +30,7 @@ class IcloudFileMonitor {
     private func setup() {
         NotificationCenter.default
             .publisher(for: .NSMetadataQueryDidUpdate, object: query)
-            .debounce(for: .seconds(2), scheduler: RunLoop.main)
-            .dropFirst()
+            .debounce(for: .seconds(15), scheduler: RunLoop.main)
             .sink(receiveValue: onUpdate)
             .store(in: &cancellables)
         

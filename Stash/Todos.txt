@@ -20,4 +20,7 @@
 // 17. support import from hungrymark. ✅
 // 18. 拖动后，popover cannot tap to dismiss ✅
 // 19. icloud monitor counter mismatch when consective change the data. ✅
+// 20. in manage view, why it took so long to show icons
+// 21. drag a group into another group, somethign is wrong.
+// 22. 创建一个 group，焦点仍然在的问题
 
