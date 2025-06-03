@@ -270,32 +270,44 @@ extension OutlineView {
                   let pid = pasteboardItem.string(forType: .string),
                   var target = findItem(by: pid, in: parent.entries) else { return false }
             
+            let fromIndex = parent.entries.firstIndex(where: { $0.id == target.id })
+            
             let container = item as? any Entry
             
-            let toIndex = childIndex < 0 ? 0 : childIndex
+            
             
             // Begin updates for animation
             outlineView.beginUpdates()
             
-            if (container == nil && target.parentId == nil) || container?.id == target.parentId { // shift position
-                
+            let children = container == nil ? parent.entries.filter({ $0.parentId == nil }) : container!.children(among: parent.entries)
+            
+            let toIndex = childIndex < 0 ? children.count : childIndex 
+            
+            if (container == nil && target.parentId == nil) || container?.id == target.parentId { // same level shift position
+                if let index = parent.entries.firstIndex(where: { $0.id == children[toIndex].id }) {
+                    parent.entries.insert(target, at: index)
+                } else {
+                    print("this is impossible")
+                }
+                parent.entries.remove(at: fromIndex!)
             } else { // change level
                 target.parentId = container?.id
+                
             }
             
-            let children1 = container == nil ? parent.entries.filter({ $0.parentId == nil }) : container!.children(among: parent.entries)
             
             
             
-            var children = [any Entry]()
-            if let container = item as? any Entry {
-
-                target.parentId = container.id
-                children = container.children(among: parent.entries)
-            } else {
-                target.parentId = nil
-                children = parent.entries.filter({ $0.parentId == nil })
-            }
+            
+//            var children = [any Entry]()
+//            if let container = item as? any Entry {
+//
+//                target.parentId = container.id
+//                children = container.children(among: parent.entries)
+//            } else {
+//                target.parentId = nil
+//                children = parent.entries.filter({ $0.parentId == nil })
+//            }
             
             let orignalIndex = parent.entries.firstIndex(where: { $0.id == target.id })
             
