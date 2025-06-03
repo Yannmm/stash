@@ -74,6 +74,7 @@ class SettingsViewModel: ObservableObject {
                 self?.pieceSaver.save(for: .icloudSync, value: $0)
                 do {
                     try self?.cabinet.save()
+                    self?.cabinet.monitorIcloud()
                 } catch {
                     self?.error = error
                     ErrorTracker.shared.add(error)
@@ -159,6 +160,6 @@ class SettingsViewModel: ObservableObject {
     
     private func setAppIdentifier() {
         guard let id: UUID? = pieceSaver.value(for: .appIdentifier), id == nil else { return }
-        pieceSaver.save(for: .appIdentifier, value: UUID())
+        pieceSaver.save(for: .appIdentifier, value: UUID().uuidString)
     }
 }

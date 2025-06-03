@@ -18,3 +18,6 @@
 // 15. render empty_favion to frist character of the domain in processor ✅
 // 16. in manage view, edit an entry's title, input `x`, enter to save. double tap again, clear text, enter to save. the retsult should be x, not the first time ttile. ✅
 // 17. support import from hungrymark. ✅
+// 18. 拖动后，popover cannot tap to dismiss ✅
+// 19. icloud monitor counter mismatch when consective change the data. ✅
+

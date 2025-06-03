@@ -246,7 +246,7 @@ extension OutlineView {
         func outlineView(_ outlineView: NSOutlineView, validateDrop info: NSDraggingInfo, proposedItem item: Any?, proposedChildIndex index: Int) -> NSDragOperation {
             guard let pasteboardItem = info.draggingPasteboard.pasteboardItems?.first,
                   let pid = pasteboardItem.string(forType: .string),
-                  var draggedItem = findItem(by: pid, in: parent.entries) else { return [] }
+                  let draggedItem = findItem(by: pid, in: parent.entries) else { return [] }
             
             if let target = item as? any Entry {
                 guard draggedItem.id != target.id else {
@@ -304,6 +304,7 @@ extension OutlineView {
             
             DispatchQueue.main.async { [weak self] in
                 do {
+                    outlineView.window?.makeFirstResponder(nil)
                     try self?.parent.cabinet.save()
                 } catch {
                     ErrorTracker.shared.add(error)

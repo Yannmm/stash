@@ -18,10 +18,9 @@ class OkamuraCabinet: ObservableObject {
     
     private let pieceSaver = PieceSaver()
     
-//    private let icloudMonitor = IcloudFileMonitor(filename: "default.html")
     private var icloudMonitor: IcloudFileMonitor?
     
-    private let saving = PassthroughSubject<IcloudSignal, Never>()
+    private var icloudMonitorSubscription: AnyCancellable?
     
     static let shared = OkamuraCabinet()
     
@@ -29,8 +28,7 @@ class OkamuraCabinet: ObservableObject {
     
     init() {
         asyncLoad()
-        monitorIcloudIfNecessary()
-        bind()
+        monitorIcloud()
     }
     
     private func asyncLoad() {
@@ -43,36 +41,32 @@ class OkamuraCabinet: ObservableObject {
         }
     }
     
-    private func monitorIcloudIfNecessary() {
-        
-    }
-    
-    private func bind() {
-//        icloudMonitor.$update
-//            .compactMap({ $0 })
-//            .combineLatest(Just(icloudSync).filter({ $0 }))
-//            .sink { [weak self] _ in
-//                self?.saving.send(.increment)
-//            }
-//            .store(in: &cancellables)
-        
-        // TODO: remove saving
-        saving
-            .dropFirst()
-            .map({ $0.rawValue })
-            .scan(0) { accumulated, newValue in
-                accumulated + newValue
-            }
-            .handleEvents(receiveOutput: { value in
-                print("doOnData: \(value)")
-            })
-            .filter({ $0 > 0 })
-            .sink { [weak self] value in
-                self?.asyncLoad()
-                self?.saving.send(.decrement)
-            }
-            .store(in: &cancellables)
-
+    func monitorIcloud() {
+        icloudMonitorSubscription?.cancel()
+        icloudMonitor = nil
+        if icloudSync {
+            icloudMonitor = IcloudFileMonitor(filename: Constant.sidecarFileName)
+            icloudMonitorSubscription = icloudMonitor?.$onChange
+                .compactMap({ $0 })
+                .combineLatest(Just(icloudSync).filter({ $0 }))
+                .tryMap({ try String(contentsOf: $0.0, encoding: .utf8) })
+                .catch { error -> AnyPublisher<String, Never> in
+                    ErrorTracker.shared.add(error)
+                    return Empty().eraseToAnyPublisher()
+                }
+                .map({ UUID(uuidString: $0) })
+                .combineLatest(Just<String?>(pieceSaver.value(for: .appIdentifier))
+                    .compactMap({ $0 })
+                    .map({ UUID(uuidString: $0) }))
+                .handleEvents(receiveOutput: { value in
+                    print("doOnData: \(value)")
+                })
+                .filter({ $0.0 != $0.1 })
+                .delay(for: .seconds(2), scheduler: RunLoop.main)
+                .sink(receiveValue: { [weak self] _ in
+                    self?.asyncLoad()
+                })
+        }
     }
     
     func update(entry: any Entry) throws {
@@ -99,7 +93,6 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func save() throws {
-        defer { saving.send(.decrement) }
         let data1 = try JSONEncoder().encode(storedEntries.asAnyEntries)
         let urls = try whereItIs()
         try saveToDisk(data: data1, filePath: urls.0, sidecarPath: urls.1)
@@ -250,8 +243,14 @@ fileprivate extension OkamuraCabinet {
         let d = Dominator()
         let string = try d.compose(json)
         try string.write(to: filePath, atomically: true, encoding: .utf8)
-        if let path = sidecarPath, let appId: UUID = pieceSaver.value(for: .appIdentifier) {
-            try appId.uuidString.write(to: path, atomically: true, encoding: .utf8)
+        if let path = sidecarPath, let appId: String = pieceSaver.value(for: .appIdentifier) {
+            DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 2) {
+                do {
+                    try appId.write(to: path, atomically: true, encoding: .utf8)
+                } catch {
+                    ErrorTracker.shared.add(error)
+                }
+            }
         }
     }
     
@@ -278,7 +277,7 @@ fileprivate extension OkamuraCabinet {
         if !fileManager.fileExists(atPath: direcotry.path) {
             try fileManager.createDirectory(at: direcotry, withIntermediateDirectories: true, attributes: nil)
         }
-        return direcotry.appendingPathComponent("default.html")
+        return direcotry.appendingPathComponent(Constant.stashFileName)
     }
     
     private func icloudPath() throws -> (URL, URL) {
@@ -291,7 +290,7 @@ fileprivate extension OkamuraCabinet {
         if !fileManager.fileExists(atPath: documents.path) {
             try fileManager.createDirectory(at: documents, withIntermediateDirectories: true, attributes: nil)
         }
-        return (documents.appendingPathComponent("default.html"), documents.appendingPathComponent("default.html.sidecar"))
+        return (documents.appendingPathComponent(Constant.stashFileName), documents.appendingPathComponent(Constant.sidecarFileName))
     }
     
 }
@@ -319,9 +318,9 @@ extension OkamuraCabinet {
 }
 
 extension OkamuraCabinet {
-    enum IcloudSignal: Int {
-        case increment = 1
-        case decrement = -1
+    enum Constant {
+        static let stashFileName = "default.html"
+        static let sidecarFileName = "default.html.sidecar"
     }
 }
 

@@ -11,7 +11,7 @@ import Combine
 class IcloudFileMonitor {
     private let filename: String
     
-    @Published var update: URL?
+    @Published var onChange: URL?
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -44,7 +44,7 @@ class IcloudFileMonitor {
         for item in query.results {
             if let item = item as? NSMetadataItem,
                let url = item.value(forAttribute: NSMetadataItemURLKey) as? URL {
-                self.update = url
+                self.onChange = url
             }
         }
         
