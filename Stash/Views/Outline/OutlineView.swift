@@ -268,66 +268,31 @@ extension OutlineView {
         func outlineView(_ outlineView: NSOutlineView, acceptDrop info: NSDraggingInfo, item: Any?, childIndex: Int) -> Bool {
             guard let pasteboardItem = info.draggingPasteboard.pasteboardItems?.first,
                   let pid = pasteboardItem.string(forType: .string),
-                  var target = findItem(by: pid, in: parent.entries) else { return false }
-            
-            let fromIndex = parent.entries.firstIndex(where: { $0.id == target.id })
+                  var target = findItem(by: pid, in: parent.entries),
+                  let fromIndex = parent.entries.firstIndex(where: { $0.id == target.id })else { return false }
             
             let container = item as? any Entry
             
+            if (container == nil && target.parentId == nil) || container?.id == target.parentId {
+                // same level shift position
+            } else {
+                // change level
+                target.parentId = container?.id
+            }
             
+            let children = container == nil ? parent.entries.filter({ $0.parentId == nil }) : container!.children(among: parent.entries)
+            let flag = childIndex >= children.count
+            let lastIndex = parent.entries.count - 1
+            var toIndex = children.count <= 0 ?
+            lastIndex :
+            (parent.entries.firstIndex(where: { $0.id == children[flag ? children.count - 1 : (childIndex < 0 ? 0 : childIndex)].id }) ?? lastIndex)
+            if flag { toIndex += 1 }
             
             // Begin updates for animation
             outlineView.beginUpdates()
-            
-            let children = container == nil ? parent.entries.filter({ $0.parentId == nil }) : container!.children(among: parent.entries)
-            
-            let toIndex = childIndex < 0 ? children.count : childIndex 
-            
-            if (container == nil && target.parentId == nil) || container?.id == target.parentId { // same level shift position
-                if let index = parent.entries.firstIndex(where: { $0.id == children[toIndex].id }) {
-                    parent.entries.insert(target, at: index)
-                } else {
-                    print("this is impossible")
-                }
-                parent.entries.remove(at: fromIndex!)
-            } else { // change level
-                target.parentId = container?.id
-                
-            }
-            
-            
-            
-            
-            
-//            var children = [any Entry]()
-//            if let container = item as? any Entry {
-//
-//                target.parentId = container.id
-//                children = container.children(among: parent.entries)
-//            } else {
-//                target.parentId = nil
-//                children = parent.entries.filter({ $0.parentId == nil })
-//            }
-            
-            let orignalIndex = parent.entries.firstIndex(where: { $0.id == target.id })
-            
-            if toIndex >= 0 && toIndex < children.count,
-               let index = parent.entries.firstIndex(where: { $0.id == children[toIndex].id }) {
-                parent.entries.insert(target, at: index)
-                
-                if
-                   let oi = orignalIndex
-                    {
-                    parent.entries.remove(at: toIndex > index ? oi : oi + 1)
-                }
-            } else {
-                parent.entries.append(target)
-                if
-                   let oi = orignalIndex
-                    {
-                    parent.entries.remove(at: oi)
-                }
-            }
+
+            parent.entries.insert(target, at: toIndex)
+            parent.entries.remove(at: fromIndex < toIndex ? fromIndex : fromIndex + 1)
             
             // End updates
             outlineView.endUpdates()
