@@ -182,7 +182,6 @@ struct CellContent: View {
                     .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2)
                     .cacheOriginalImage()
                     .loadDiskFileSynchronously()
-                    .forceRefresh()
                     .onSuccess { result in }
                     .onFailure { error in }
                     .onFailureImage(NSImage.drawFavicon(from: url.firstDomainLetter))
