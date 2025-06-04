@@ -98,6 +98,7 @@ struct OutlineView: NSViewRepresentable {
             outlineView.reloadData()
             _expandIfNecessary(outlineView)
             calculateHeight(outlineView)
+            onSelectRow(nil)
         }
     }
     
