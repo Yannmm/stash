@@ -9,37 +9,58 @@ import Cocoa
 import SwiftUI
 
 extension NSImage {
+    private static let faviconCache = NSCache<NSString, NSImage>()
+    private static let faviconQueue = DispatchQueue(label: "com.rendezvousauoaradis.stash.favicon")
+    private static let faviconFont = NSFont.systemFont(ofSize: 22, weight: .bold)
+    private static let faviconAttributes: [NSAttributedString.Key: Any] = [
+        .font: faviconFont,
+        .foregroundColor: NSColor.white
+    ]
+    
     static func drawFavicon(from text: String) -> NSImage {
-        // Create a new image with black background and white "X"
-        let size = NSSize(width: 32, height: 32)
-        let image = NSImage(size: size)
+        let cacheKey = text as NSString
         
-        image.lockFocus()
+        // Check cache first
+        if let cachedImage = faviconCache.object(forKey: cacheKey) {
+            return cachedImage
+        }
         
-        // Create rounded rect path
-        let cornerRadius: CGFloat = 6
-        let path = NSBezierPath(roundedRect: NSRect(origin: .zero, size: size), xRadius: cornerRadius, yRadius: cornerRadius)
-        
-        // Fill black background with rounded corners
-        NSColor.black.setFill()
-        path.fill()
-        
-        let font = NSFont.systemFont(ofSize: 22, weight: .bold)
-        let attributes: [NSAttributedString.Key: Any] = [
-            .font: font,
-            .foregroundColor: NSColor.white
-        ]
-        
-        let textSize = text.size(withAttributes: attributes)
-        let point = NSPoint(
-            x: (size.width - textSize.width) / 2,
-            y: (size.height - textSize.height) / 2
-        )
-        
-        text.draw(at: point, withAttributes: attributes)
-        
-        image.unlockFocus()
-        return image
+        // Create image on serial queue to ensure thread safety
+        return faviconQueue.sync { () -> NSImage in
+            // Double-check cache in case another thread created it while we were waiting
+            if let cachedImage = faviconCache.object(forKey: cacheKey) {
+                return cachedImage
+            }
+            
+            // Create a new image with black background and white text
+            let size = NSSize(width: 32, height: 32)
+            let image = NSImage(size: size)
+            
+            image.lockFocus()
+            
+            // Create rounded rect path
+            let cornerRadius: CGFloat = 6
+            let path = NSBezierPath(roundedRect: NSRect(origin: .zero, size: size), xRadius: cornerRadius, yRadius: cornerRadius)
+            
+            // Fill black background with rounded corners
+            NSColor.black.setFill()
+            path.fill()
+            
+            let textSize = text.size(withAttributes: faviconAttributes)
+            let point = NSPoint(
+                x: (size.width - textSize.width) / 2,
+                y: (size.height - textSize.height) / 2
+            )
+            
+            text.draw(at: point, withAttributes: faviconAttributes)
+            
+            image.unlockFocus()
+            
+            // Cache the result
+            faviconCache.setObject(image, forKey: cacheKey)
+            
+            return image
+        }
     }
 }
 
