@@ -124,7 +124,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         } else {
             editPopoverContentSize(nil)
             NSApplication.shared.activate(ignoringOtherApps: true)
-            editPopover.show(relativeTo: statusItem!.button!.bounds, of: statusItem!.button!, preferredEdge: .minY)
+            editPopover.show(relativeTo: .zero, of: statusItem!.button!, preferredEdge: .minY)
         }
     }
     

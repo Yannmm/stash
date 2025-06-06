@@ -51,7 +51,7 @@ extension AppDelegate {
         var items = [
             NSMenuItem(title: "Welcom to Stashy 🎉", action: nil, keyEquivalent: ""),
             NSMenuItem(title: "Create New Bookmark", action: #selector(createBookmark), keyEquivalent: "C"),
-            NSMenuItem(title: "Import from Browser", action: #selector(importFromBrowsers), keyEquivalent: "I")
+            NSMenuItem(title: "Import from File", action: #selector(importFromBrowsers), keyEquivalent: "I")
         ] as [NSMenuItem]
         
         if entries.count > 0 {
