@@ -11,6 +11,7 @@ struct Toolbar: View {
     @Binding var present: Bool
     @State var tip = Constant.tips[0]
     @State private var timer: Timer?
+    @State private var tipIndex = 0
     
     let addFolder: () -> Void
     
@@ -56,9 +57,9 @@ struct Toolbar: View {
         .frame(maxWidth: .infinity)
         .background(Color(nsColor: .windowBackgroundColor))
         .onAppear {
-            timer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { time in
-                let seconds = Calendar.current.component(.second, from: Date())
-                tip = Constant.tips[seconds % Constant.tips.count]
+            timer = Timer.scheduledTimer(withTimeInterval: 3, repeats: true) { _ in
+                tipIndex = (tipIndex + 1) % Constant.tips.count
+                tip = Constant.tips[tipIndex]
             }
         }
         .onDisappear {
@@ -91,7 +92,7 @@ fileprivate extension Toolbar {
             (Text("Tap ") +
              Text(Image(systemName: "list.bullet.indent")).font(.body) +
              Text(" to Expand / Collapse List")),
-            Text("Hold CMD(⌘) Key for More"),
+            Text("Hold CMD(⌘) Key for More Actions"),
             Text("Double Tap an Item to Rename"),
             Text("Tap ESC Key to Deselect Item"),
         ]

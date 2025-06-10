@@ -26,6 +26,7 @@
 // 23. faster custom drawing favicon ✅
 // 24. limit to .txt when import from hungrymark. ✅
 // 25. dark mode, manage view background is still white. ✅
-// 26. tip cannot completely loop through
+// 26. tip cannot completely loop through ✅
 // 27. some chrome bookmarks file is not supported. ✅
+// 28. add firefox to import section
 
