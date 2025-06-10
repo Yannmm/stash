@@ -57,7 +57,7 @@ struct CraftModalView: View {
                 .padding(.top, 8)
             }
             .padding()
-            .background(.white)
+            .background(Color(nsColor: .windowBackgroundColor))
         }
         .fixedSize(horizontal: false, vertical: true)
         .onAppear {

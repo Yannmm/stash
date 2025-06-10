@@ -27,8 +27,9 @@ struct AddressInputField: View {
                     .foregroundColor(Color.primary)
                     .frame(width: 16, height: 16)
             } else {
-                Image(systemName: "link.circle.fill")
+                Image(systemName: "link.circle")
                     .resizable()
+                    .foregroundColor(.secondary)
                     .frame(width: 16, height: 16)
             }
             Divider()

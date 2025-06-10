@@ -62,16 +62,15 @@ struct TitleInputField: View {
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Color.clear)
+            .background(Color(nsColor: .controlBackgroundColor))
             .cornerRadius(6)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(focused ? Color.primary : Color(nsColor: .separatorColor),
+                            lineWidth: 1)
+            )
             .focusable()
             .disabled(disabled)
-            
-            // Bottom border line
-            Rectangle()
-                .frame(height: 1)  // Thicker when focused
-                .foregroundColor(focused ? Color.primary : Color(nsColor: .separatorColor))
-                .animation(.easeInOut(duration: 0.2), value: focused)
         }
         .onChange(of: title.wrappedValue ?? "") { _, newValue in
             if !newValue.isEmpty {
