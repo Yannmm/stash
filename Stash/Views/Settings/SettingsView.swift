@@ -69,7 +69,7 @@ struct SettingsView: View {
                         }
                         .buttonStyle(.bordered)
                     }
-                    .alert("Import from Browsers", isPresented: $importNotice) {
+                    .alert("Import from File", isPresented: $importNotice) {
                         Button("Continue") {
                             // Handle import
                             let panel = NSOpenPanel()
@@ -104,7 +104,7 @@ struct SettingsView: View {
                             Spacer()
                         }
                     } else {
-                        Text("Learn how to export bookmarks from [Chrome](Chrome), [Edge](Edge) or [Safari](Safari).\nOr click [here](Hungrymark) to import from Hungrymark.")
+                        Text("Learn how to export bookmarks from [Chrome](Chrome), [Edge](Edge), [Firefox](Firefox) or [Safari](Safari).\nOr click [here](Hungrymark) to import from Hungrymark.")
                             .foregroundColor(.secondary)
                             .environment(\.openURL, OpenURLAction { url in
                                 let browser = url.absoluteString
@@ -115,6 +115,8 @@ struct SettingsView: View {
                                     howToExport = (browser, "Open the Favorites window, click the \"More\" button (three dots), then select \"Export Favorites.\".")
                                 case "Safari":
                                     howToExport = (browser, "Go to File > Export > Bookmarks, choose a location to save the file, and click Save.")
+                                case "Firefox":
+                                    howToExport = (browser, "Open the Firefox Library, navigate to \"Import and Backup\", and select \"Export Bookmarks to HTML\".")
                                 case "Hungrymark":
                                     let panel = NSOpenPanel()
                                     panel.allowsMultipleSelection = false
