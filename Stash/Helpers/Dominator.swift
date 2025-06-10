@@ -98,9 +98,10 @@ extension Dominator {
         }
         
         let document = try SwiftSoup.parse(html)
-        let allElements: Elements = try document.select("body > dt")
+        let elements = try document.select("body > dl > dt")
+        (try document.select("body > dt")).forEach({ elements.add($0) })
         
-        let json = try collect(allElements)
+        let json = try collect(elements)
         let pretty = try JSONSerialization.data(
             withJSONObject: json,
             options: [.prettyPrinted, .withoutEscapingSlashes])

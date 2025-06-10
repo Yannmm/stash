@@ -23,6 +23,9 @@
 // 20. in manage view, why it took so long to show icons ✅
 // 21. drag a group into another group, somethign is wrong. ✅
 // 22. 创建一个 group，焦点仍然在的问题 ✅
-// 23. faster custom drawing favicon
-// 24. limit to .txt when import from hungrymark.
+// 23. faster custom drawing favicon ✅
+// 24. limit to .txt when import from hungrymark. ✅
+// 25. dark mode, manage view background is still white.
+// 26. tip cannot completely loop through
+// 27. some chrome bookmarks file is not supported.
 
