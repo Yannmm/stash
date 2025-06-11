@@ -210,16 +210,30 @@ struct SettingsView: View {
             // About Section
             Section("About\(viewModel.versionDescription)") {
                 VStack(alignment: .leading) {
-                    Link("https://github.com/Yannmm/stash", destination: URL(string: "https://github.com/Yannmm/stash")!)
-                        .foregroundStyle(.secondary)
-                        .onHover { hovering in
-                            if hovering {
-                                NSCursor.pointingHand.push()
-                            } else {
-                                NSCursor.pop()
+//                    Link("https://github.com/Yannmm/stash", destination: URL(string: "https://github.com/Yannmm/stash")!)
+//                        .foregroundStyle(.secondary)
+//                        .onHover { hovering in
+//                            if hovering {
+//                                NSCursor.pointingHand.push()
+//                            } else {
+//                                NSCursor.pop()
+//                            }
+//                        }
+                    Text("[Stashy](stash) is a open-source project. To provide feedback, you may [log issues](repo) or [write email](email) to \(Constant.email).")
+                        .foregroundColor(.secondary)
+                        .environment(\.openURL, OpenURLAction { url in
+                            let browser = url.absoluteString
+                            switch browser {
+                            case "stash":
+                                NSWorkspace.shared.open(URL(string: "https://github.com/Yannmm/stash")!)
+                            case "repo":
+                                NSWorkspace.shared.open(URL(string: "https://github.com/Yannmm/stash/issues")!)
+                            case "email":
+                                email()
+                            default: break
                             }
-                        }
-                    Text("Stashy is a open-source project. Issues and Pull Requests are welcome.")
+                            return .handled
+                        })
                 }
             }
             
@@ -250,5 +264,44 @@ struct SettingsView: View {
         case daily = "Daily"
         case weekly = "Weekly"
         case monthly = "Monthly"
+    }
+    
+    private func email() {
+        let email = Constant.email
+        let subject = "Feedback for Stashy App"
+        let body = """
+        Hi Stashy Team,
+
+        I'd like to share some feedback about the app:
+
+        1. What I liked:
+           - 
+
+        2. What could be improved:
+           - 
+
+        3. Any bugs or issues I encountered:
+           - 
+
+        Device Information:
+        - App Version: x.x.x
+        - macOS Version: macOS xx.x
+        - Device Model: 
+
+        Thanks for making Stashy!
+
+        Best regards,
+        """
+
+        let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+        let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
+
+        if let url = URL(string: "mailto:\(email)?subject=\(encodedSubject)&body=\(encodedBody)") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+    
+    enum Constant {
+        static let email = "yannmm@foxmail.com"
     }
 }
