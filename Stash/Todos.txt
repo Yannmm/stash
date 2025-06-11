@@ -30,5 +30,8 @@
 // 27. some chrome bookmarks file is not supported. ✅
 // 28. add firefox to import section ✅
 // 29. add repo address to settings ✅
-// 30. add feedback method
+// 30. add feedback method ✅
+// 31. import pocket csv
+// 32. allow user to choose to add or replace new bookmarks
+// 33. when import, alert user this will replace current bookmarks. ask user to export first or not
 
