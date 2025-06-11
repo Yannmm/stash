@@ -28,5 +28,7 @@
 // 25. dark mode, manage view background is still white. ✅
 // 26. tip cannot completely loop through ✅
 // 27. some chrome bookmarks file is not supported. ✅
-// 28. add firefox to import section
+// 28. add firefox to import section ✅
+// 29. add repo address to settings ✅
+// 30. add feedback method
 
