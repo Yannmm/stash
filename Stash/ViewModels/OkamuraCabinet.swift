@@ -230,10 +230,12 @@ extension OkamuraCabinet {
         try save()
     }
     
-    func export(to directoryPath: URL) throws {
+    @discardableResult
+    func export(to directoryPath: URL, suffix: String? = nil) throws -> URL {
         let data = try JSONEncoder().encode(storedEntries.asAnyEntries)
-        let filePath = directoryPath.appendingPathComponent("stash.html")
+        let filePath = directoryPath.appendingPathComponent("stash\(suffix ?? "").html")
         try saveToDisk(data: data, filePath: filePath)
+        return filePath
     }
 }
 

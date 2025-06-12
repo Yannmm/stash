@@ -6,6 +6,7 @@ struct SettingsView: View {
     @StateObject var viewModel: SettingsViewModel
     @State private var isRecording = false
     @State private var resetAlert = false
+    @State private var afterResetAlert = false
     @State private var importNotice = false
     @State private var howToExport: (String, String)?
     //    @State private var updateFrequency = UpdateFrequency.weekly
@@ -21,7 +22,7 @@ struct SettingsView: View {
     }
     
     var exportDescription: AttributedString? {
-        if let path = viewModel.exportToDirectory?.path {
+        if let path = viewModel.exportToFile?.path {
             let tilde = (path as NSString).abbreviatingWithTildeInPath
             var a1 = AttributedString("Recently exported to: ")
             a1.foregroundColor = .secondary
@@ -150,7 +151,7 @@ struct SettingsView: View {
                             
                             panel.begin { response in
                                 guard response == .OK, let url = panel.url else { return }
-                                viewModel.exportToDirectory = url
+                                viewModel.exportDestinationDirectory = url
                             }
                         }
                         .buttonStyle(.bordered)
@@ -177,10 +178,21 @@ struct SettingsView: View {
                     .alert("Sure to Reset?", isPresented: $resetAlert) {
                         Button("Cancel", role: .cancel) { }
                         Button("Confirm", role: .destructive) {
-                            viewModel.reset()
+                            do {
+                                try viewModel.export()
+                                try viewModel.reset()
+                                afterResetAlert = true
+                            } catch {
+                                viewModel.error = error
+                            }
                         }
                     } message: {
                         Text("This action cannot be undone. All your data will be permanently deleted.")
+                    }
+                    .alert("Done Data Reset", isPresented: $afterResetAlert) {
+                        Button("Cancel", role: .cancel) { }
+                    } message: {
+                        Text("A backup file is exported to \"Downloads\" folder, just in case 😉")
                     }
                 }
             }

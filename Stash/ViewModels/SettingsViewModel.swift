@@ -15,7 +15,8 @@ class SettingsViewModel: ObservableObject {
     @Published var launchOnLogin: Bool
     @Published var showDockIcon: Bool
     @Published var importFromFile: (Bool, URL)?
-    @Published var exportToDirectory: URL?
+    @Published var exportDestinationDirectory: URL?
+    @Published var exportToFile: URL?
     @Published var shortcut: (Key, NSEvent.ModifierFlags)?
     @Published var error: Error?
     
@@ -24,13 +25,23 @@ class SettingsViewModel: ObservableObject {
     private let hotKeyManager: HotKeyManager
     private let cabinet: OkamuraCabinet
     
-    func reset() {
-        do {
-            try cabinet.removeAll()
-        } catch {
-            self.error = error
-            ErrorTracker.shared.add(error)
+    private lazy var timestampFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX") // Ensures consistent formatting
+        formatter.dateFormat = "yyyy-MM-dd'T'HH_mm_ssZ"
+        return formatter
+    }()
+    
+    func reset() throws {
+        try cabinet.removeAll()
+    }
+    
+    
+    func export() throws {
+        guard let downloads = FileManager.default.urls(for: .downloadsDirectory, in: .userDomainMask).first else {
+            throw SomeError.missingDownloadsUrl
         }
+        exportDestinationDirectory = downloads
     }
     
     func importHungrymarks(_ filePath: URL) {
@@ -38,7 +49,6 @@ class SettingsViewModel: ObservableObject {
             try cabinet.importHungrymarks(from: filePath)
         } catch {
             self.error = error
-            ErrorTracker.shared.add(error)
         }
     }
     
@@ -77,7 +87,6 @@ class SettingsViewModel: ObservableObject {
                     self?.cabinet.monitorIcloud()
                 } catch {
                     self?.error = error
-                    ErrorTracker.shared.add(error)
                 }
             }
             .store(in: &cancellables)
@@ -128,21 +137,24 @@ class SettingsViewModel: ObservableObject {
                     }
                 } catch {
                     self?.error = error
-                    ErrorTracker.shared.add(error)
                 }
             }
             .store(in: &cancellables)
-        $exportToDirectory
+        $exportDestinationDirectory
             .dropFirst()
             .compactMap({ $0 })
-            .sink { [weak self] in
+            .sink { [unowned self] in
                 do {
-                    try self?.cabinet.export(to: $0)
+                    self.exportToFile = try self.cabinet.export(to: $0, suffix: "_\(self.timestampFormatter.string(from: Date.now))")
                 } catch {
-                    self?.error = error
-                    ErrorTracker.shared.add(error)
+                    self.error = error
                 }
             }
+            .store(in: &cancellables)
+        
+        $error
+            .compactMap({ $0 })
+            .sink { ErrorTracker.shared.add($0)}
             .store(in: &cancellables)
     }
     
@@ -161,5 +173,11 @@ class SettingsViewModel: ObservableObject {
     private func setAppIdentifier() {
         guard let id: UUID? = pieceSaver.value(for: .appIdentifier), id == nil else { return }
         pieceSaver.save(for: .appIdentifier, value: UUID().uuidString)
+    }
+}
+
+extension SettingsViewModel {
+    enum SomeError: Error, LocalizedError {
+        case missingDownloadsUrl
     }
 }
