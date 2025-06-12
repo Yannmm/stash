@@ -34,4 +34,4 @@
 // 31. import pocket csv
 // 32. allow user to choose to add or replace new bookmarks
 // 33. when import, alert user this will replace current bookmarks. ask user to export first or not
-
+// 34. 指定浏览器打开
