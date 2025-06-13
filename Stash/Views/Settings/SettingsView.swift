@@ -71,25 +71,11 @@ struct SettingsView: View {
                         .buttonStyle(.bordered)
                     }
                     .alert("Import from File", isPresented: $importNotice) {
-                        Button("Continue") {
-                            // Handle import
-                            let panel = NSOpenPanel()
-                            panel.allowsMultipleSelection = false
-                            panel.canChooseDirectories = false
-                            panel.canCreateDirectories = false
-                            panel.canChooseFiles = true
-                            panel.allowedContentTypes = [.html]
-                            
-                            panel.begin { response in
-                                guard response == .OK, let url = panel.url else { return }
-                                do {
-                                    try viewModel.export()
-                                    try viewModel.import(url)
-                                    fileBackupNotice = "Done Import"
-                                } catch {
-                                    viewModel.error = error
-                                }
-                            }
+                        Button("Add") {
+                            handleImport(false)
+                        }
+                        Button("Replace", role: .destructive) {
+                            handleImport(true)
                         }
                         Button("Cancel", role: .cancel) {}
                     } message: {
@@ -114,7 +100,13 @@ struct SettingsView: View {
                             }
                             Divider()
                         }
-                        Text("Learn how to export bookmarks from [Chrome](Chrome), [Edge](Edge), [Firefox](Firefox) or [Safari](Safari).\nOr click [here](Hungrymark) to import from Hungrymark.")
+                        Text("""
+                            Learn how to export bookmarks from [Chrome](Chrome), [Edge](Edge), [Firefox](Firefox) or [Safari](Safari).
+                            
+                            Click [here](Hungrymark) to import from Hungrymark.
+                            
+                            Click [here](Pocket) to import from Pocket.
+                            """)
                             .foregroundColor(.secondary)
                             .environment(\.openURL, OpenURLAction { url in
                                 let browser = url.absoluteString
@@ -145,6 +137,8 @@ struct SettingsView: View {
                                             viewModel.error = error
                                         }
                                     }
+                                case "Pocket":
+                                    print("import from pocket")
                                 default: break
                                 }
                                 return .handled
@@ -294,6 +288,34 @@ struct SettingsView: View {
         case daily = "Daily"
         case weekly = "Weekly"
         case monthly = "Monthly"
+    }
+    
+    private func handleImport(_ replace: Bool) {
+        // Handle import
+        let panel = NSOpenPanel()
+        panel.allowsMultipleSelection = false
+        panel.canChooseDirectories = false
+        panel.canCreateDirectories = false
+        panel.canChooseFiles = true
+        panel.allowedContentTypes = [.html]
+        
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            if replace {
+                do {
+                    try viewModel.export()
+                    try viewModel.import(url)
+                    fileBackupNotice = "Done Import"
+                } catch {
+                    viewModel.error = error
+                }
+            } else {
+                // 1. parse the file
+                // 2. create a new group of file name, add the newly parsed bookmark under the group
+                // 3. tell user we are done
+                // 4. handle error if necessary
+            }
+        }
     }
     
     private func email() {
