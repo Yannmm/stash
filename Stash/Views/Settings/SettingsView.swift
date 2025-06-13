@@ -6,12 +6,12 @@ struct SettingsView: View {
     @StateObject var viewModel: SettingsViewModel
     @State private var isRecording = false
     @State private var resetAlert = false
-    @State private var afterResetAlert = false
+    @State private var fileBackupNotice: String?
     @State private var importNotice = false
     @State private var howToExport: (String, String)?
     //    @State private var updateFrequency = UpdateFrequency.weekly
     var importDescription: AttributedString? {
-        if let path = viewModel.importFromFile?.1.path {
+        if let path = viewModel.importFromFile?.path {
             let tilde = (path as NSString).abbreviatingWithTildeInPath
             var a1 = AttributedString("Recently imported from: ")
             a1.foregroundColor = .secondary
@@ -82,7 +82,13 @@ struct SettingsView: View {
                             
                             panel.begin { response in
                                 guard response == .OK, let url = panel.url else { return }
-                                viewModel.importFromFile = (true, url)
+                                do {
+                                    try viewModel.export()
+                                    try viewModel.import(url)
+                                    fileBackupNotice = "Done Import"
+                                } catch {
+                                    viewModel.error = error
+                                }
                             }
                         }
                         Button("Cancel", role: .cancel) {}
@@ -97,14 +103,17 @@ struct SettingsView: View {
                     } message: {
                         Text(howToExport?.1 ?? "")
                     }
-                    if let desc = importDescription {
-                        HStack {
-                            Text(desc)
-                                .foregroundColor(.secondary)
-                                .multilineTextAlignment(.leading)
-                            Spacer()
+                    
+                    VStack(alignment: .leading) {
+                        if let desc = importDescription {
+                            HStack {
+                                Text(desc)
+                                    .foregroundColor(.secondary)
+                                    .multilineTextAlignment(.leading)
+                                Spacer()
+                            }
+                            Divider()
                         }
-                    } else {
                         Text("Learn how to export bookmarks from [Chrome](Chrome), [Edge](Edge), [Firefox](Firefox) or [Safari](Safari).\nOr click [here](Hungrymark) to import from Hungrymark.")
                             .foregroundColor(.secondary)
                             .environment(\.openURL, OpenURLAction { url in
@@ -128,7 +137,13 @@ struct SettingsView: View {
                                     
                                     panel.begin { response in
                                         guard response == .OK, let url = panel.url else { return }
-                                        viewModel.importFromFile = (false, url)
+                                        do {
+                                            try viewModel.export()
+                                            try viewModel.importHungrymarks(url)
+                                            fileBackupNotice = "Done Import"
+                                        } catch {
+                                            viewModel.error = error
+                                        }
                                     }
                                 default: break
                                 }
@@ -181,7 +196,7 @@ struct SettingsView: View {
                             do {
                                 try viewModel.export()
                                 try viewModel.reset()
-                                afterResetAlert = true
+                                fileBackupNotice = "Done Reset"
                             } catch {
                                 viewModel.error = error
                             }
@@ -189,12 +204,15 @@ struct SettingsView: View {
                     } message: {
                         Text("This action cannot be undone. All your data will be permanently deleted.")
                     }
-                    .alert("Done Data Reset", isPresented: $afterResetAlert) {
-                        Button("Cancel", role: .cancel) { }
-                    } message: {
-                        Text("A backup file is exported to \"Downloads\" folder, just in case 😉")
-                    }
                 }
+            }
+            .alert(fileBackupNotice ?? "", isPresented: Binding(
+                get: { fileBackupNotice != nil },
+                set: { if !$0 { fileBackupNotice = nil } }
+            )) {
+                Button("OK") { }
+            } message: {
+                Text("Original file is exported to \"Downloads\" as backup, just in case 😉")
             }
             
             
@@ -222,15 +240,15 @@ struct SettingsView: View {
             // About Section
             Section("About\(viewModel.versionDescription)") {
                 VStack(alignment: .leading) {
-//                    Link("https://github.com/Yannmm/stash", destination: URL(string: "https://github.com/Yannmm/stash")!)
-//                        .foregroundStyle(.secondary)
-//                        .onHover { hovering in
-//                            if hovering {
-//                                NSCursor.pointingHand.push()
-//                            } else {
-//                                NSCursor.pop()
-//                            }
-//                        }
+                    //                    Link("https://github.com/Yannmm/stash", destination: URL(string: "https://github.com/Yannmm/stash")!)
+                    //                        .foregroundStyle(.secondary)
+                    //                        .onHover { hovering in
+                    //                            if hovering {
+                    //                                NSCursor.pointingHand.push()
+                    //                            } else {
+                    //                                NSCursor.pop()
+                    //                            }
+                    //                        }
                     Text("[Stashy](stash) is a open-source project. To provide feedback, you may [log issues](repo) or [write email](email) to \(Constant.email).")
                         .foregroundColor(.secondary)
                         .environment(\.openURL, OpenURLAction { url in
@@ -283,31 +301,31 @@ struct SettingsView: View {
         let subject = "Feedback for Stashy App"
         let body = """
         Hi Stashy Team,
-
+        
         I'd like to share some feedback about the app:
-
+        
         1. What I liked:
            - 
-
+        
         2. What could be improved:
            - 
-
+        
         3. Any bugs or issues I encountered:
            - 
-
+        
         Device Information:
         - App Version: x.x.x
         - macOS Version: macOS xx.x
         - Device Model: 
-
+        
         Thanks for making Stashy!
-
+        
         Best regards,
         """
-
+        
         let encodedSubject = subject.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
         let encodedBody = body.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? ""
-
+        
         if let url = URL(string: "mailto:\(email)?subject=\(encodedSubject)&body=\(encodedBody)") {
             NSWorkspace.shared.open(url)
         }

@@ -14,7 +14,7 @@ class SettingsViewModel: ObservableObject {
     @Published var icloudSync: Bool
     @Published var launchOnLogin: Bool
     @Published var showDockIcon: Bool
-    @Published var importFromFile: (Bool, URL)?
+    @Published var importFromFile: URL?
     @Published var exportDestinationDirectory: URL?
     @Published var exportToFile: URL?
     @Published var shortcut: (Key, NSEvent.ModifierFlags)?
@@ -44,12 +44,14 @@ class SettingsViewModel: ObservableObject {
         exportDestinationDirectory = downloads
     }
     
-    func importHungrymarks(_ filePath: URL) {
-        do {
-            try cabinet.importHungrymarks(from: filePath)
-        } catch {
-            self.error = error
-        }
+    func `import`(_ filePath: URL) throws {
+        try cabinet.import(from: filePath)
+        self.importFromFile = filePath
+    }
+    
+    func importHungrymarks(_ filePath: URL) throws {
+        try cabinet.importHungrymarks(from: filePath)
+        self.importFromFile = filePath
     }
     
     init(hotKeyManager: HotKeyManager, cabinet: OkamuraCabinet) {
@@ -126,20 +128,20 @@ class SettingsViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        $importFromFile
-            .compactMap({ $0 })
-            .sink { [weak self] in
-                do {
-                    if $0.0 {
-                        try self?.cabinet.import(from: $0.1)
-                    } else {
-                        try self?.cabinet.importHungrymarks(from: $0.1)
-                    }
-                } catch {
-                    self?.error = error
-                }
-            }
-            .store(in: &cancellables)
+//        $importFromFile
+//            .compactMap({ $0 })
+//            .sink { [weak self] in
+//                do {
+//                    if $0.0 {
+//                        try self?.cabinet.import(from: $0.1)
+//                    } else {
+//                        try self?.cabinet.importHungrymarks(from: $0.1)
+//                    }
+//                } catch {
+//                    self?.error = error
+//                }
+//            }
+//            .store(in: &cancellables)
         $exportDestinationDirectory
             .dropFirst()
             .compactMap({ $0 })
