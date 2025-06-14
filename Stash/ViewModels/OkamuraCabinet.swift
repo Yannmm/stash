@@ -78,6 +78,7 @@ class OkamuraCabinet: ObservableObject {
     
     func relocate(entry: any Entry, anchorId: UUID?) throws {
         if let index = storedEntries.firstIndex(where: { $0.id == entry.id }) {
+            // Seems this never happens
             storedEntries.remove(at: index)
         }
         
@@ -213,7 +214,7 @@ class OkamuraCabinet: ObservableObject {
 }
 
 extension OkamuraCabinet {
-    func `import`(from filePath: URL) throws {
+    func `import`(from filePath: URL, replace: Bool) throws {
         let content = try String(contentsOf: filePath, encoding: .utf8)
         var entries = [any Entry]()
         switch content.checkFileType() {
@@ -226,13 +227,24 @@ extension OkamuraCabinet {
             let parser = HungrymarkParser()
             entries = parser.parse(text: content)
         }
-        self.storedEntries = entries
-        try save()
-    }
-    
-    // Append from file
-    func append(from filePath: URL) throws {
         
+        if !replace {
+            let name = String(filePath.lastPathComponent.split(separator: ".")[0])
+            let group = Group(id: UUID(), name: name)
+            var entries = entries.map({ e in
+                var copy = e
+                if copy.parentId == nil {
+                    copy.parentId = group.id
+                }
+                return copy
+            })
+            entries.insert(group, at: 0)
+            storedEntries.append(contentsOf: entries)
+        } else {
+            self.storedEntries = entries
+        }
+        
+        try save()
     }
     
     @discardableResult

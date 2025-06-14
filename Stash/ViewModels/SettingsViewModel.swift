@@ -44,8 +44,8 @@ class SettingsViewModel: ObservableObject {
         exportDestinationDirectory = downloads
     }
     
-    func `import`(_ filePath: URL) throws {
-        try cabinet.import(from: filePath)
+    func `import`(_ filePath: URL, replace: Bool) throws {
+        try cabinet.import(from: filePath, replace: replace)
         self.importFromFile = filePath
     }
     

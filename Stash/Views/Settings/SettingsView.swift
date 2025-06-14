@@ -7,6 +7,7 @@ struct SettingsView: View {
     @State private var isRecording = false
     @State private var resetAlert = false
     @State private var fileBackupNotice: String?
+    @State private var mergeNotice: String?
     @State private var importNotice = false
     @State private var howToExport: (String, String)?
     //    @State private var updateFrequency = UpdateFrequency.weekly
@@ -31,6 +32,11 @@ struct SettingsView: View {
         } else {
             return nil
         }
+    }
+    
+    var mergeInGroup: String? {
+        guard let path = viewModel.importFromFile else { return nil }
+        return String(path.lastPathComponent.split(separator: ".")[0])
     }
     
     var body: some View {
@@ -71,7 +77,7 @@ struct SettingsView: View {
                         .buttonStyle(.bordered)
                     }
                     .alert("Import from File", isPresented: $importNotice) {
-                        Button("Add") {
+                        Button("Merge") {
                             handleImport(false)
                         }
                         Button("Replace", role: .destructive) {
@@ -202,7 +208,14 @@ struct SettingsView: View {
             } message: {
                 Text("Original file is exported to \"Downloads\" as backup, just in case 😉")
             }
-            
+            .alert(mergeNotice ?? "", isPresented: Binding(
+                get: { mergeNotice != nil },
+                set: { if !$0 { mergeNotice = nil } }
+            )) {
+                Button("OK") { }
+            } message: {
+                Text("Find them in Group \"\(mergeInGroup ?? "")\" at root level.")
+            }
             
             
             // Check Update Section
@@ -298,6 +311,7 @@ struct SettingsView: View {
             if replace {
                 self.import(url)
             } else {
+                self.merge(url)
                 // 1. parse the file
                 // 2. create a new group of file name, add the newly parsed bookmark under the group
                 // 3. tell user we are done
@@ -309,8 +323,17 @@ struct SettingsView: View {
     private func `import`(_ url: URL) {
         do {
             try viewModel.export()
-            try viewModel.import(url)
+            try viewModel.import(url, replace: true)
             fileBackupNotice = "Done Import"
+        } catch {
+            viewModel.error = error
+        }
+    }
+    
+    private func merge(_ url: URL) {
+        do {
+            try self.viewModel.import(url, replace: false)
+            mergeNotice = "Done Merge"
         } catch {
             viewModel.error = error
         }
