@@ -129,13 +129,7 @@ struct SettingsView: View {
                                     
                                     panel.begin { response in
                                         guard response == .OK, let url = panel.url else { return }
-                                        do {
-                                            try viewModel.export()
-                                            try viewModel.importHungrymarks(url)
-                                            fileBackupNotice = "Done Import"
-                                        } catch {
-                                            viewModel.error = error
-                                        }
+                                        self.import(url)
                                     }
                                 case "Pocket":
                                     print("import from pocket")
@@ -302,19 +296,23 @@ struct SettingsView: View {
         panel.begin { response in
             guard response == .OK, let url = panel.url else { return }
             if replace {
-                do {
-                    try viewModel.export()
-                    try viewModel.import(url)
-                    fileBackupNotice = "Done Import"
-                } catch {
-                    viewModel.error = error
-                }
+                self.import(url)
             } else {
                 // 1. parse the file
                 // 2. create a new group of file name, add the newly parsed bookmark under the group
                 // 3. tell user we are done
                 // 4. handle error if necessary
             }
+        }
+    }
+    
+    private func `import`(_ url: URL) {
+        do {
+            try viewModel.export()
+            try viewModel.import(url)
+            fileBackupNotice = "Done Import"
+        } catch {
+            viewModel.error = error
         }
     }
     

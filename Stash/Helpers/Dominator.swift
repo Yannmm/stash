@@ -93,7 +93,7 @@ extension Dominator {
     /// Browser bookmarks import
     // Tested: Safari, Chrome
     func decompose(_ html: String) throws -> Data  {
-        guard isBookmarkFile(html) else {
+        guard html.isNetscapeBookmarkFile() else {
             throw SomeError.Decompose.invalidDoctype
         }
         
@@ -153,14 +153,6 @@ extension Dominator {
             })
         return collector
     }
-    
-    private func isBookmarkFile(_ html: String) -> Bool {
-        if let range = html.range(of: #"(?i)<!DOCTYPE\s+NETSCAPE-Bookmark-file-1>"#, options: .regularExpression) {
-            let doctype = html[range].lowercased()
-            return doctype.caseInsensitiveCompare(Constant.bookmarkDoctype) == .orderedSame
-        }
-        return false
-    }
 }
 
 extension Dominator {
@@ -192,7 +184,7 @@ extension Dominator {
         // Get HTML as string
         let htmlString =  try html.outerHtml()
         
-        return Constant.bookmarkDoctype + "\n" + htmlString
+        return String.Constant.bookmarkDoctype + "\n" + htmlString
     }
     
     private func composeDT(_ json: [String: Any]) throws -> Element? {
@@ -245,9 +237,5 @@ extension Dominator {
             case unexpectedType(String)
             case invalidJSON
         }
-    }
-    
-    enum Constant {
-        static let bookmarkDoctype = "<!DOCTYPE netscape-bookmark-file-1>"
     }
 }

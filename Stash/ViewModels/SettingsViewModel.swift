@@ -49,11 +49,6 @@ class SettingsViewModel: ObservableObject {
         self.importFromFile = filePath
     }
     
-    func importHungrymarks(_ filePath: URL) throws {
-        try cabinet.importHungrymarks(from: filePath)
-        self.importFromFile = filePath
-    }
-    
     init(hotKeyManager: HotKeyManager, cabinet: OkamuraCabinet) {
         self.hotKeyManager = hotKeyManager
         self.cabinet = cabinet

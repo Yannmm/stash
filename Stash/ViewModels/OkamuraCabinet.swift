@@ -214,20 +214,25 @@ class OkamuraCabinet: ObservableObject {
 
 extension OkamuraCabinet {
     func `import`(from filePath: URL) throws {
-        let htmlString = try String(contentsOf: filePath, encoding: .utf8)
-        let dominator = Dominator()
-        let data = try dominator.decompose(htmlString)
-        
-        let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
-        self.storedEntries = anyEntries.asEntries
+        let content = try String(contentsOf: filePath, encoding: .utf8)
+        var entries = [any Entry]()
+        switch content.checkFileType() {
+        case .netscape:
+            let dominator = Dominator()
+            let data = try dominator.decompose(content)
+            let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
+            entries = anyEntries.asEntries
+        case .hungrymarks:
+            let parser = HungrymarkParser()
+            entries = parser.parse(text: content)
+        }
+        self.storedEntries = entries
         try save()
     }
     
-    func importHungrymarks(from filePath: URL) throws {
-        let parser = HungrymarkParser()
-        let text = try String(contentsOf: filePath)
-        self.storedEntries = parser.parse(text: text)
-        try save()
+    // Append from file
+    func append(from filePath: URL) throws {
+        
     }
     
     @discardableResult
