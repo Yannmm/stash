@@ -6,7 +6,7 @@ struct SettingsView: View {
     @StateObject var viewModel: SettingsViewModel
     @State private var isRecording = false
     @State private var resetAlert = false
-    @State private var fileBackupNotice: String?
+    @State private var fileBackupNotice: (String, Bool)?
     @State private var appendNotice: String?
     @State private var importFileType: String.FileType?
     @State private var howToExport: (String, String)?
@@ -103,26 +103,26 @@ struct SettingsView: View {
                             Learn how to export bookmarks from [Chrome](Chrome), [Edge](Edge), [Firefox](Firefox) or [Safari](Safari).
                             Or import from [Pocket](Pocket) and [Hungrymark](Hungrymark).
                             """)
-                            .foregroundColor(.secondary)
-                            .environment(\.openURL, OpenURLAction { url in
-                                let browser = url.absoluteString
-                                switch browser {
-                                case "Chrome":
-                                    howToExport = (browser, "Navigate to the Bookmarks Manager, click the three-dot menu, and select \"Export bookmarks\".")
-                                case "Edge":
-                                    howToExport = (browser, "Open the Favorites window, click the \"More\" button (three dots), then select \"Export Favorites.\".")
-                                case "Safari":
-                                    howToExport = (browser, "Go to File > Export > Bookmarks, choose a location to save the file, and click Save.")
-                                case "Firefox":
-                                    howToExport = (browser, "Open the Firefox Library, navigate to \"Import and Backup\", and select \"Export Bookmarks to HTML\".")
-                                case "Hungrymark":
-                                    importFileType = .hungrymarks
-                                case "Pocket":
-                                    importFileType = .pocket
-                                default: break
-                                }
-                                return .handled
-                            })
+                        .foregroundColor(.secondary)
+                        .environment(\.openURL, OpenURLAction { url in
+                            let browser = url.absoluteString
+                            switch browser {
+                            case "Chrome":
+                                howToExport = (browser, "Navigate to the Bookmarks Manager, click the three-dot menu, and select \"Export bookmarks\".")
+                            case "Edge":
+                                howToExport = (browser, "Open the Favorites window, click the \"More\" button (three dots), then select \"Export Favorites.\".")
+                            case "Safari":
+                                howToExport = (browser, "Go to File > Export > Bookmarks, choose a location to save the file, and click Save.")
+                            case "Firefox":
+                                howToExport = (browser, "Open the Firefox Library, navigate to \"Import and Backup\", and select \"Export Bookmarks to HTML\".")
+                            case "Hungrymark":
+                                importFileType = .hungrymarks
+                            case "Pocket":
+                                importFileType = .pocket
+                            default: break
+                            }
+                            return .handled
+                        })
                     }
                     
                 }
@@ -172,7 +172,7 @@ struct SettingsView: View {
                     do {
                         try viewModel.export()
                         try viewModel.reset()
-                        fileBackupNotice = "Done Reset"
+                        fileBackupNotice = ("Done Reset", true)
                     } catch {
                         viewModel.error = error
                     }
@@ -184,11 +184,17 @@ struct SettingsView: View {
                 get: { importFileType != nil },
                 set: { if !$0 { importFileType = nil } }
             )) {
-                Button("Append") {
-                    handleImport(false, importFileType)
-                }
-                Button("Replace", role: .destructive) {
-                    handleImport(true, importFileType)
+                if viewModel.empty {
+                    Button("Add") {
+                        handleImport(true, importFileType)
+                    }
+                } else {
+                    Button("Append") {
+                        handleImport(false, importFileType)
+                    }
+                    Button("Replace", role: .destructive) {
+                        handleImport(true, importFileType)
+                    }
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
@@ -202,13 +208,13 @@ struct SettingsView: View {
             } message: {
                 Text(howToExport?.1 ?? "")
             }
-            .alert(fileBackupNotice ?? "", isPresented: Binding(
+            .alert(fileBackupNotice?.0 ?? "", isPresented: Binding(
                 get: { fileBackupNotice != nil },
                 set: { if !$0 { fileBackupNotice = nil } }
             )) {
                 Button("OK") { }
             } message: {
-                Text("Original file is exported to \"Downloads\" as backup, just in case 😉")
+                Text((fileBackupNotice?.1 ?? false) ? "Original file is exported to \"Downloads\" as backup, just in case 😉" : "")
             }
             .alert(appendNotice ?? "", isPresented: Binding(
                 get: { appendNotice != nil },
@@ -328,9 +334,10 @@ struct SettingsView: View {
     
     private func `import`(_ url: URL, _ fileType: String.FileType) {
         do {
-            try viewModel.export()
+            let flag = viewModel.empty
+            if !flag { try viewModel.export() }
             try viewModel.import(url, fileType: fileType, replace: true)
-            fileBackupNotice = "Done Import"
+            fileBackupNotice = ("Done Import", !flag)
         } catch {
             viewModel.error = error
         }

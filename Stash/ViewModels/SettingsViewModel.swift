@@ -25,6 +25,8 @@ class SettingsViewModel: ObservableObject {
     private let hotKeyManager: HotKeyManager
     private let cabinet: OkamuraCabinet
     
+    var empty: Bool { cabinet.storedEntries.isEmpty }
+    
     private lazy var timestampFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "en_US_POSIX") // Ensures consistent formatting
