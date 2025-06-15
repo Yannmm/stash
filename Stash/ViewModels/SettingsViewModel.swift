@@ -44,8 +44,8 @@ class SettingsViewModel: ObservableObject {
         exportDestinationDirectory = downloads
     }
     
-    func `import`(_ filePath: URL, replace: Bool) throws {
-        try cabinet.import(from: filePath, replace: replace)
+    func `import`(_ filePath: URL, fileType: String.FileType, replace: Bool) throws {
+        try cabinet.import(from: filePath, fileType: fileType, replace: replace)
         self.importFromFile = filePath
     }
     
@@ -123,20 +123,6 @@ class SettingsViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-//        $importFromFile
-//            .compactMap({ $0 })
-//            .sink { [weak self] in
-//                do {
-//                    if $0.0 {
-//                        try self?.cabinet.import(from: $0.1)
-//                    } else {
-//                        try self?.cabinet.importHungrymarks(from: $0.1)
-//                    }
-//                } catch {
-//                    self?.error = error
-//                }
-//            }
-//            .store(in: &cancellables)
         $exportDestinationDirectory
             .dropFirst()
             .compactMap({ $0 })
@@ -176,5 +162,6 @@ class SettingsViewModel: ObservableObject {
 extension SettingsViewModel {
     enum SomeError: Error, LocalizedError {
         case missingDownloadsUrl
+        case missingImportFileType
     }
 }

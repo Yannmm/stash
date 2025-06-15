@@ -32,11 +32,12 @@
 // 29. add repo address to settings ✅
 // 30. add feedback method ✅
 // 31. import pocket csv
-// 32. allow user to choose to add or replace new bookmarks
-// 33. when import, alert user this will replace current bookmarks. ask user to export first (Downloads folder)
+// 32. allow user to choose to add or replace new bookmarks ✅
+// 33. when import, alert user this will replace current bookmarks. ask user to export first (Downloads folder) ✅
 // 34. 指定浏览器打开
 // 35. add onre more button for group to move its children one level up
 // 36. when deleting an item, mention the name in alert.
-// 37. when exported file, file name should be timestamped.
+// 37. when exported file, file name should be timestamped. ✅
 // 38. export backup file to downloads when user reset data. ✅
 // 39. keep desction below import even after import done. ✅
+// 40. if import one file for multiple times, since id are same, error will occur.

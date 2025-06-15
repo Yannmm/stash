@@ -8,7 +8,7 @@ struct SettingsView: View {
     @State private var resetAlert = false
     @State private var fileBackupNotice: String?
     @State private var mergeNotice: String?
-    @State private var importNotice = false
+    @State private var importFileType: String.FileType?
     @State private var howToExport: (String, String)?
     //    @State private var updateFrequency = UpdateFrequency.weekly
     var importDescription: AttributedString? {
@@ -37,6 +37,18 @@ struct SettingsView: View {
     var mergeInGroup: String? {
         guard let path = viewModel.importFromFile else { return nil }
         return String(path.lastPathComponent.split(separator: ".")[0])
+    }
+    
+    var importNotice: (String, String)? {
+        guard let t = importFileType else { return nil }
+        switch t {
+        case .netscape:
+            return ("Import from File", "Export from another Stashy or browsers first.")
+        case .hungrymarks:
+            return ("Import from Hungrymarks", "Go to Settings > Bookmark Files (iCloud/Default > Reveal in Finder, locate the file and save it.)")
+        case .pocket:
+            return ("Import from Pocket", "Go to \"https://getpocket.com/export\", and click \"Export CSV file\" to download your Pocket saves first.")
+        }
     }
     
     var body: some View {
@@ -72,28 +84,9 @@ struct SettingsView: View {
                         Text("Select a File")
                         Spacer()
                         Button("Import") {
-                            importNotice = true
+                            importFileType = .netscape
                         }
                         .buttonStyle(.bordered)
-                    }
-                    .alert("Import from File", isPresented: $importNotice) {
-                        Button("Merge") {
-                            handleImport(false)
-                        }
-                        Button("Replace", role: .destructive) {
-                            handleImport(true)
-                        }
-                        Button("Cancel", role: .cancel) {}
-                    } message: {
-                        Text("You can export from browsers first then import to Stashy.")
-                    }
-                    .alert("How to Export Bookmarks from \(howToExport?.0 ?? "")", isPresented: Binding(
-                        get: { howToExport != nil },
-                        set: { if !$0 { howToExport = nil } }
-                    )) {
-                        Button("OK") {}
-                    } message: {
-                        Text(howToExport?.1 ?? "")
                     }
                     
                     VStack(alignment: .leading) {
@@ -108,10 +101,7 @@ struct SettingsView: View {
                         }
                         Text("""
                             Learn how to export bookmarks from [Chrome](Chrome), [Edge](Edge), [Firefox](Firefox) or [Safari](Safari).
-                            
-                            Click [here](Hungrymark) to import from Hungrymark.
-                            
-                            Click [here](Pocket) to import from Pocket.
+                            Or import from [Pocket](Pocket) and [Hungrymark](Hungrymark).
                             """)
                             .foregroundColor(.secondary)
                             .environment(\.openURL, OpenURLAction { url in
@@ -126,19 +116,9 @@ struct SettingsView: View {
                                 case "Firefox":
                                     howToExport = (browser, "Open the Firefox Library, navigate to \"Import and Backup\", and select \"Export Bookmarks to HTML\".")
                                 case "Hungrymark":
-                                    let panel = NSOpenPanel()
-                                    panel.allowsMultipleSelection = false
-                                    panel.canChooseDirectories = false
-                                    panel.canCreateDirectories = false
-                                    panel.canChooseFiles = true
-                                    panel.allowedContentTypes = [UTType(filenameExtension: "txt")!]
-                                    
-                                    panel.begin { response in
-                                        guard response == .OK, let url = panel.url else { return }
-                                        self.import(url)
-                                    }
+                                    importFileType = .hungrymarks
                                 case "Pocket":
-                                    print("import from pocket")
+                                    importFileType = .pocket
                                 default: break
                                 }
                                 return .handled
@@ -184,21 +164,43 @@ struct SettingsView: View {
                             .foregroundColor(Color(nsColor: .systemRed))
                     })
                     .buttonStyle(.bordered)
-                    .alert("Sure to Reset?", isPresented: $resetAlert) {
-                        Button("Cancel", role: .cancel) { }
-                        Button("Confirm", role: .destructive) {
-                            do {
-                                try viewModel.export()
-                                try viewModel.reset()
-                                fileBackupNotice = "Done Reset"
-                            } catch {
-                                viewModel.error = error
-                            }
-                        }
-                    } message: {
-                        Text("This action cannot be undone. All your data will be permanently deleted.")
+                }
+            }
+            .alert("Sure to Reset?", isPresented: $resetAlert) {
+                Button("Cancel", role: .cancel) { }
+                Button("Confirm", role: .destructive) {
+                    do {
+                        try viewModel.export()
+                        try viewModel.reset()
+                        fileBackupNotice = "Done Reset"
+                    } catch {
+                        viewModel.error = error
                     }
                 }
+            } message: {
+                Text("This action cannot be undone. All your data will be permanently deleted.")
+            }
+            .alert(importNotice?.0 ?? "", isPresented: Binding(
+                get: { importFileType != nil },
+                set: { if !$0 { importFileType = nil } }
+            )) {
+                Button("Merge") {
+                    handleImport(false)
+                }
+                Button("Replace", role: .destructive) {
+                    handleImport(true)
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text(importNotice?.1 ?? "")
+            }
+            .alert("How to Export Bookmarks from \(howToExport?.0 ?? "")", isPresented: Binding(
+                get: { howToExport != nil },
+                set: { if !$0 { howToExport = nil } }
+            )) {
+                Button("OK") {}
+            } message: {
+                Text(howToExport?.1 ?? "")
             }
             .alert(fileBackupNotice ?? "", isPresented: Binding(
                 get: { fileBackupNotice != nil },
@@ -216,7 +218,6 @@ struct SettingsView: View {
             } message: {
                 Text("Find them in Group \"\(mergeInGroup ?? "")\" at root level.")
             }
-            
             
             // Check Update Section
             //            Section("Software Update") {
@@ -279,7 +280,7 @@ struct SettingsView: View {
         .padding()
         .frame(width: 400)
         .onReceive(NotificationCenter.default.publisher(for: .onShouldOpenImportPanel)) { _ in
-            importNotice = true
+            importFileType = .netscape
         }
         .alert("Error", isPresented: Binding(
             get: { viewModel.error != nil },
@@ -304,14 +305,18 @@ struct SettingsView: View {
         panel.canChooseDirectories = false
         panel.canCreateDirectories = false
         panel.canChooseFiles = true
-        panel.allowedContentTypes = [.html]
+        panel.allowedContentTypes = importFileType?.contentTypes ?? []
         
         panel.begin { response in
             guard response == .OK, let url = panel.url else { return }
+            guard let fileType = importFileType else {
+                self.viewModel.error = SettingsViewModel.SomeError.missingImportFileType
+                return
+            }
             if replace {
-                self.import(url)
+                self.import(url, fileType)
             } else {
-                self.merge(url)
+                self.merge(url, fileType)
                 // 1. parse the file
                 // 2. create a new group of file name, add the newly parsed bookmark under the group
                 // 3. tell user we are done
@@ -320,19 +325,19 @@ struct SettingsView: View {
         }
     }
     
-    private func `import`(_ url: URL) {
+    private func `import`(_ url: URL, _ fileType: String.FileType) {
         do {
             try viewModel.export()
-            try viewModel.import(url, replace: true)
+            try viewModel.import(url, fileType: fileType, replace: true)
             fileBackupNotice = "Done Import"
         } catch {
             viewModel.error = error
         }
     }
     
-    private func merge(_ url: URL) {
+    private func merge(_ url: URL, _ fileType: String.FileType) {
         do {
-            try self.viewModel.import(url, replace: false)
+            try self.viewModel.import(url, fileType: fileType, replace: false)
             mergeNotice = "Done Merge"
         } catch {
             viewModel.error = error

@@ -214,10 +214,10 @@ class OkamuraCabinet: ObservableObject {
 }
 
 extension OkamuraCabinet {
-    func `import`(from filePath: URL, replace: Bool) throws {
+    func `import`(from filePath: URL, fileType: String.FileType, replace: Bool) throws {
         let content = try String(contentsOf: filePath, encoding: .utf8)
         var entries = [any Entry]()
-        switch content.checkFileType() {
+        switch fileType {
         case .netscape:
             let dominator = Dominator()
             let data = try dominator.decompose(content)
@@ -226,6 +226,8 @@ extension OkamuraCabinet {
         case .hungrymarks:
             let parser = HungrymarkParser()
             entries = parser.parse(text: content)
+        case .pocket:
+            fatalError()
         }
         
         if !replace {
