@@ -231,6 +231,9 @@ extension OkamuraCabinet {
         }
         
         if !replace {
+            var conflictIds = [(UUID, UUID)]()
+            let ids = Set(storedEntries.map({ $0.id }))
+            
             let name = String(filePath.lastPathComponent.split(separator: ".")[0])
             let group = Group(id: UUID(), name: name)
             var entries = entries.map({ e in
@@ -238,8 +241,26 @@ extension OkamuraCabinet {
                 if copy.parentId == nil {
                     copy.parentId = group.id
                 }
+                
+                if ids.contains(copy.id) {
+                    let newId = UUID()
+                    conflictIds.append((copy.id, newId))
+                    copy.id = newId
+                }
+                
                 return copy
             })
+            
+            for t2 in conflictIds {
+                entries = entries.map({ e in
+                    var copy = e
+                    if copy.parentId == t2.0 {
+                        copy.parentId = t2.1
+                    }
+                    return e
+                })
+            }
+            
             entries.insert(group, at: 0)
             storedEntries.append(contentsOf: entries)
         } else {

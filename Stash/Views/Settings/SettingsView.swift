@@ -7,7 +7,7 @@ struct SettingsView: View {
     @State private var isRecording = false
     @State private var resetAlert = false
     @State private var fileBackupNotice: String?
-    @State private var mergeNotice: String?
+    @State private var appendNotice: String?
     @State private var importFileType: String.FileType?
     @State private var howToExport: (String, String)?
     //    @State private var updateFrequency = UpdateFrequency.weekly
@@ -34,7 +34,7 @@ struct SettingsView: View {
         }
     }
     
-    var mergeInGroup: String? {
+    var appendAsGroup: String? {
         guard let path = viewModel.importFromFile else { return nil }
         return String(path.lastPathComponent.split(separator: ".")[0])
     }
@@ -184,11 +184,11 @@ struct SettingsView: View {
                 get: { importFileType != nil },
                 set: { if !$0 { importFileType = nil } }
             )) {
-                Button("Merge") {
-                    handleImport(false)
+                Button("Append") {
+                    handleImport(false, importFileType)
                 }
                 Button("Replace", role: .destructive) {
-                    handleImport(true)
+                    handleImport(true, importFileType)
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
@@ -210,13 +210,13 @@ struct SettingsView: View {
             } message: {
                 Text("Original file is exported to \"Downloads\" as backup, just in case 😉")
             }
-            .alert(mergeNotice ?? "", isPresented: Binding(
-                get: { mergeNotice != nil },
-                set: { if !$0 { mergeNotice = nil } }
+            .alert(appendNotice ?? "", isPresented: Binding(
+                get: { appendNotice != nil },
+                set: { if !$0 { appendNotice = nil } }
             )) {
                 Button("OK") { }
             } message: {
-                Text("Find them in Group \"\(mergeInGroup ?? "")\" at root level.")
+                Text("Find them in Group \"\(appendAsGroup ?? "")\" at root level.")
             }
             
             // Check Update Section
@@ -298,25 +298,26 @@ struct SettingsView: View {
         case monthly = "Monthly"
     }
     
-    private func handleImport(_ replace: Bool) {
+    private func handleImport(_ replace: Bool, _ fileType: String.FileType?) {
+        guard let fileType = fileType else {
+            self.viewModel.error = SettingsViewModel.SomeError.missingImportFileType
+            return
+        }
+        
         // Handle import
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
         panel.canCreateDirectories = false
         panel.canChooseFiles = true
-        panel.allowedContentTypes = importFileType?.contentTypes ?? []
+        panel.allowedContentTypes = fileType.contentTypes
         
         panel.begin { response in
             guard response == .OK, let url = panel.url else { return }
-            guard let fileType = importFileType else {
-                self.viewModel.error = SettingsViewModel.SomeError.missingImportFileType
-                return
-            }
             if replace {
                 self.import(url, fileType)
             } else {
-                self.merge(url, fileType)
+                self.append(url, fileType)
                 // 1. parse the file
                 // 2. create a new group of file name, add the newly parsed bookmark under the group
                 // 3. tell user we are done
@@ -335,10 +336,10 @@ struct SettingsView: View {
         }
     }
     
-    private func merge(_ url: URL, _ fileType: String.FileType) {
+    private func append(_ url: URL, _ fileType: String.FileType) {
         do {
             try self.viewModel.import(url, fileType: fileType, replace: false)
-            mergeNotice = "Done Merge"
+            appendNotice = "Done Append"
         } catch {
             viewModel.error = error
         }

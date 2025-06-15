@@ -9,7 +9,7 @@ import Foundation
 
 /// Logical group
 struct Group {
-    let id: UUID
+    var id: UUID
     var name: String
     var parentId: UUID?
 }

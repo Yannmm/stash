@@ -8,7 +8,7 @@
 import Cocoa
 
 struct Bookmark {
-    let id: UUID
+    var id: UUID
     var name: String
     var parentId: UUID?
     let url: URL
