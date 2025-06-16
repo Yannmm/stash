@@ -111,7 +111,7 @@ struct CellContent: View {
                 selected = flag
             }
         }
-        .alert("Sure to Delete?", isPresented: $deleteAlert) {
+        .alert("Sure to Delete \"\(viewModel.entry?.name ?? "")\"?", isPresented: $deleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Confirm", role: .destructive) {
                 guard let e = viewModel.entry else { return }
