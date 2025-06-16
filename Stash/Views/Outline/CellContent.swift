@@ -35,8 +35,16 @@ struct CellContent: View {
         return expanded && !focusMonitor.isEditing
     }
     
+    var shouldShowUnbox: Bool {
+        if let e = viewModel.entry, e.unboxable, expanded, !focusMonitor.isEditing {
+            return true
+        } else {
+            return false
+        }
+    }
+    
     var shouldShowCopy: Bool {
-        if let _ = viewModel.entry as? Bookmark, expanded, !focusMonitor.isEditing {
+        if let e = viewModel.entry, e.copyable, expanded, !focusMonitor.isEditing {
             return true
         } else {
             return false
@@ -44,7 +52,7 @@ struct CellContent: View {
     }
     
     var shouldShowReveal: Bool {
-        if let a = viewModel.entry as? Actionable, a.revealable, expanded, !focusMonitor.isEditing {
+        if let e = viewModel.entry, e.revealable, expanded, !focusMonitor.isEditing {
             return true
         } else {
             return false
@@ -52,7 +60,7 @@ struct CellContent: View {
     }
     
     var shouldShowActions: Bool {
-        return shouldShowDelete || shouldShowReveal || shouldShowCopy
+        return shouldShowDelete || shouldShowReveal || shouldShowCopy || shouldShowUnbox
     }
     
     var shouldAddAddress: Bool {
@@ -245,12 +253,24 @@ struct CellContent: View {
                     }
                     .buttonStyle(.borderless)
                     .help("Delete item")
-                    if shouldShowReveal {
+                    if shouldShowUnbox {
                         Button(action: {
-                            guard let a = viewModel.entry as? Actionable, a.revealable else { return }
-                            a.reveal()
+                            guard let e = viewModel.entry, e.unboxable else { return }
+                            e.unbox()
                         }) {
                             Image(systemName: "archivebox.circle")
+                                .resizable()
+                                .frame(width: 18.0, height: 18.0)
+                        }
+                        .buttonStyle(.borderless)
+                        .help("Unbox content of the group.")
+                    }
+                    if shouldShowReveal {
+                        Button(action: {
+                            guard let e = viewModel.entry, e.revealable else { return }
+                            e.reveal()
+                        }) {
+                            Image(systemName: "folder.circle")
                                 .resizable()
                                 .frame(width: 18.0, height: 18.0)
                         }
@@ -259,10 +279,10 @@ struct CellContent: View {
                     }
                     if shouldShowCopy {
                         Button(action: {
-                            guard let e = viewModel.entry as? Bookmark else { return }
+                            guard let e = viewModel.entry, e.copyable, let url = e.valueToCopy else { return }
                             let pasteBoard = NSPasteboard.general
                             pasteBoard.clearContents()
-                            pasteBoard.writeObjects([e.url.absoluteString as NSString])
+                            pasteBoard.writeObjects([url as NSString])
                             didCopy = true
                             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
                                 didCopy = false

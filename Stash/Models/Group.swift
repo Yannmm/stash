@@ -23,3 +23,11 @@ extension Group: Entry {
     
     var height: CGFloat { CellView.Constant.groupHeight }
 }
+
+extension Group {
+    var unboxable: Bool { true }
+    
+    func unbox() {
+        print(11111123)
+    }
+}

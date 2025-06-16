@@ -36,7 +36,7 @@ extension Bookmark: Entry {
     var height: CGFloat { CellView.Constant.bookmarkHeight }
 }
 
-extension Bookmark: Actionable {
+extension Bookmark {
     func open() {
         NSWorkspace.shared.open(url)
     }
@@ -47,5 +47,9 @@ extension Bookmark: Actionable {
     }
     
     var revealable: Bool { url.isFileURL }
+    
+    var copyable: Bool { true }
+    
+    var valueToCopy: String? { url.absoluteString }
 }
 
