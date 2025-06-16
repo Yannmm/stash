@@ -257,7 +257,7 @@ extension OkamuraCabinet {
                     if copy.parentId == t2.0 {
                         copy.parentId = t2.1
                     }
-                    return e
+                    return copy
                 })
             }
             
@@ -273,7 +273,7 @@ extension OkamuraCabinet {
     @discardableResult
     func export(to directoryPath: URL, suffix: String? = nil) throws -> URL {
         let data = try JSONEncoder().encode(storedEntries.asAnyEntries)
-        let filePath = directoryPath.appendingPathComponent("stash\(suffix ?? "").html")
+        let filePath = directoryPath.appendingPathComponent("stashy\(suffix ?? "").html")
         try saveToDisk(data: data, filePath: filePath)
         return filePath
     }
