@@ -26,8 +26,4 @@ extension Group: Entry {
 
 extension Group {
     var unboxable: Bool { true }
-    
-    func unbox() {
-        print(11111123)
-    }
 }

@@ -20,7 +20,7 @@ protocol Actionable {
     
     func reveal()
     
-    func unbox()
+//    func unbox()
 }
 
 extension Actionable {
@@ -36,5 +36,5 @@ extension Actionable {
     
     func reveal() {}
     
-    func unbox() {}
+//    func unbox() {}
 }

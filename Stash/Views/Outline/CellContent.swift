@@ -18,17 +18,13 @@ enum Focusable: Hashable {
 struct CellContent: View {
     
     @EnvironmentObject var cabinet: OkamuraCabinet
-    
     @EnvironmentObject var focusMonitor: FocusMonitor
-    
     @ObservedObject var viewModel: CellViewModel
-    
     @FocusState private var focused: Bool
-    
     @State private var expanded: Bool = false
     @State private var selected: Bool = false
-    @State private var error: Error?
     @State private var deleteAlert: Bool = false
+    @State private var ungroupAlert: Bool = false
     @State private var didCopy = false
     
     var shouldShowDelete: Bool {
@@ -89,8 +85,7 @@ struct CellContent: View {
             do {
                 try viewModel.update()
             } catch {
-                self.error = error
-                ErrorTracker.shared.add(error)
+                viewModel.error = error
             }
         }
         .onChange(of: focused) { old, new in
@@ -119,6 +114,19 @@ struct CellContent: View {
                 selected = flag
             }
         }
+        .alert("Sure to Ungroup?", isPresented: $ungroupAlert) {
+            Button("Cancel", role: .cancel) { }
+            Button("Confirm", role: .destructive) {
+                guard let e = viewModel.entry, e.unboxable else { return }
+                do {
+                    try viewModel.ungroup(e )
+                } catch {
+                    viewModel.error = error
+                }
+            }
+        } message: {
+            Text("Its content will drop in place.")
+        }
         .alert("Sure to Delete \"\(viewModel.entry?.name ?? "")\"?", isPresented: $deleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Confirm", role: .destructive) {
@@ -126,20 +134,19 @@ struct CellContent: View {
                 do {
                     try cabinet.delete(entry: e)
                 } catch {
-                    self.error = error
-                    ErrorTracker.shared.add(error)
+                    viewModel.error = error
                 }
             }
         } message: {
             Text("This action cannot be undone. The item will be permanently deleted.")
         }
         .alert("Error", isPresented: Binding(
-            get: { error != nil },
-            set: { if !$0 { error = nil } }
+            get: { viewModel.error != nil },
+            set: { if !$0 { viewModel.error = nil } }
         )) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(error?.localizedDescription ?? "")
+            Text(viewModel.error?.localizedDescription ?? "")
         }
     }
     
@@ -213,8 +220,7 @@ struct CellContent: View {
                     do {
                         try cabinet.asRecent(tuple2.1)
                     } catch {
-                        self.error = error
-                        ErrorTracker.shared.add(error)
+                        viewModel.error = error
                     }
                 } label: {
                     HStack {
@@ -255,15 +261,14 @@ struct CellContent: View {
                     .help("Delete item")
                     if shouldShowUnbox {
                         Button(action: {
-                            guard let e = viewModel.entry, e.unboxable else { return }
-                            e.unbox()
+                            ungroupAlert = true
                         }) {
                             Image(systemName: "archivebox.circle")
                                 .resizable()
                                 .frame(width: 18.0, height: 18.0)
                         }
                         .buttonStyle(.borderless)
-                        .help("Unbox content of the group.")
+                        .help("Ungroup the content.")
                     }
                     if shouldShowReveal {
                         Button(action: {

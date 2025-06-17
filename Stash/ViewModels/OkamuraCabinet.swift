@@ -93,6 +93,22 @@ class OkamuraCabinet: ObservableObject {
         try save()
     }
     
+    // Does not make any effect for a Bookmark
+    func ungroup(entry: any Entry) throws {
+        let parentId = entry.parentId
+        storedEntries = storedEntries
+            .filter({ $0.id != entry.id })
+            .map({ e in
+                var copy = e
+                if copy.parentId == entry.id {
+                    copy.parentId = parentId
+                }
+                return copy
+            })
+        
+        try save()
+    }
+    
     func save() throws {
         let data1 = try JSONEncoder().encode(storedEntries.asAnyEntries)
         let urls = try whereItIs()
