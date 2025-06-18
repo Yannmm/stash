@@ -160,14 +160,19 @@ struct CellContent: View {
                     .foregroundColor(focused ? Color(NSColor.separatorColor) : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
                 
-                TextField("Input the title here...", text: $viewModel.title)
-                    .font(flag ? .body : .title2)
-                    .textFieldStyle(.plain)
-                    .background(Color.clear)
+//                TextField("Input the title here...", text: $viewModel.title)
+//                    .font(flag ? .body : .title2)
+//                    .textFieldStyle(.plain)
+//                    .background(Color.clear)
+//                    .focused($focused)
+//                    .layoutPriority(1)
+//                    .allowsHitTesting(false)
+//                    .truncationMode(.tail)
+                
+
+                EmphasisTextField(text: $viewModel.title)
+                    .font(flag ? NSFont.systemFont(ofSize: NSFont.systemFontSize) : NSFont.systemFont(ofSize: NSFont.systemFontSize + 5))
                     .focused($focused)
-                    .layoutPriority(1)
-                    .allowsHitTesting(false)
-                    .truncationMode(.tail)
             }
             .padding(.vertical, flag ? 0 : 4)
             
