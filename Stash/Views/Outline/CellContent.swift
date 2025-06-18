@@ -173,6 +173,15 @@ struct CellContent: View {
                 EmphasisTextField(text: $viewModel.title)
                     .font(flag ? NSFont.systemFont(ofSize: NSFont.systemFontSize) : NSFont.systemFont(ofSize: NSFont.systemFontSize + 5))
                     .focused($focused)
+                    .onChange(of: viewModel.title) { _ in
+                        updateSuggestions()
+                    }
+                    .overlay(
+                                    suggestionOverlayView
+                                        .offset(y: 36) // offset to appear below the TextField
+                                        .opacity(showSuggestions ? 1 : 0)
+                                    , alignment: .topLeading
+                                )
             }
             .padding(.vertical, flag ? 0 : 4)
             
@@ -185,6 +194,56 @@ struct CellContent: View {
         }
         .animation(.easeInOut(duration: 0.25), value: flag)
     }
+    
+    @State private var suggestions: [String] = []
+        @State private var showSuggestions = false
+        @State private var currentWord = ""
+    
+    let allTags = ["swift", "ios", "xcode", "swiftui", "apple", "macos"]
+    private var suggestionOverlayView: some View {
+            VStack(alignment: .leading, spacing: 0) {
+                ForEach(suggestions, id: \.self) { suggestion in
+                    Text("#\(suggestion)")
+                        .padding(.horizontal)
+                        .padding(.vertical, 6)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color(NSColor.controlBackgroundColor))
+                        .onTapGesture {
+                            insertSuggestion(suggestion)
+                        }
+                }
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill(Color(NSColor.windowBackgroundColor))
+                    .shadow(color: Color.black.opacity(0.15), radius: 6, x: 0, y: 4)
+            )
+            .frame(maxWidth: 240)
+            .zIndex(1)
+        }
+        
+        private func updateSuggestions() {
+            if let hashtag = currentHashtagFragment() {
+                suggestions = allTags.filter { $0.hasPrefix(hashtag.lowercased()) }
+                showSuggestions = !suggestions.isEmpty
+            } else {
+                showSuggestions = false
+            }
+        }
+        
+        private func currentHashtagFragment() -> String? {
+            guard let range = viewModel.title.range(of: "#[^\\s#]*$", options: .regularExpression) else {
+                return nil
+            }
+            return String(viewModel.title[range].dropFirst())
+        }
+        
+        private func insertSuggestion(_ suggestion: String) {
+            if let range = viewModel.title.range(of: "#[^\\s#]*$", options: .regularExpression) {
+                viewModel.title.replaceSubrange(range, with: "#\(suggestion)")
+                showSuggestions = false
+            }
+        }
     
     @ViewBuilder
     private func icon(_ side: CGFloat) -> some View {
