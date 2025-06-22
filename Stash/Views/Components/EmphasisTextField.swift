@@ -46,7 +46,6 @@ struct EmphasisTextField: NSViewRepresentable {
         textField.lineBreakMode = .byTruncatingMiddle
         textField.usesSingleLineMode = true
         textField.stringValue = text
-        
         return textField
     }
     
@@ -61,7 +60,7 @@ struct EmphasisTextField: NSViewRepresentable {
         // Move cursor to end if it just became first responder
         DispatchQueue.main.async {
             if let editor = nsView.currentEditor() {
-                let range = NSRange(location: editor.string.count, length: 0)
+                let range = NSRange(location: (editor.string as NSString).length, length: 0)
                 editor.selectedRange = range
                 editor.scrollRangeToVisible(range)
             }
