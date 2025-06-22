@@ -170,7 +170,7 @@ struct CellContent: View {
 //                    .truncationMode(.tail)
                 
 
-                EmphasisTextField(text: $viewModel.title)
+                HashtagTextField(text: $viewModel.title)
                     .font(flag ? NSFont.systemFont(ofSize: NSFont.systemFontSize) : NSFont.systemFont(ofSize: NSFont.systemFontSize + 5))
                     .focused($focused)
             }

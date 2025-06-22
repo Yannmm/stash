@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct EmphasisTextField: NSViewRepresentable {
+struct HashtagTextField: NSViewRepresentable {
     @Binding var text: String
     
     var font: NSFont?
@@ -15,9 +15,9 @@ struct EmphasisTextField: NSViewRepresentable {
     var onCommit: () -> Void = {}
     
     internal class Coordinator: NSObject, NSTextFieldDelegate {
-        var parent: EmphasisTextField
+        var parent: HashtagTextField
         
-        init(_ parent: EmphasisTextField) {
+        init(_ parent: HashtagTextField) {
             self.parent = parent
         }
         
@@ -68,8 +68,8 @@ struct EmphasisTextField: NSViewRepresentable {
     }
 }
 
-extension EmphasisTextField {
-    func font(_ font: NSFont) -> EmphasisTextField {
+extension HashtagTextField {
+    func font(_ font: NSFont) -> HashtagTextField {
         var copy = self
         copy.font = font
         return copy
