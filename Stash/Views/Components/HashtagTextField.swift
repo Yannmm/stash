@@ -79,9 +79,24 @@ struct HashtagTextField: NSViewRepresentable {
                 let fieldEditor = textField.window?.fieldEditor(false, for: textField) as? NSTextView else { return }
             
             let selectedRange = fieldEditor.selectedRange()
-            let rect = fieldEditor.firstRect(forCharacterRange: selectedRange, actualRange: nil)
-            let localRect = fieldEditor.convert(rect, to: nil) // convert to window coords
-            popover.show(relativeTo: rect, of: textField, preferredEdge: .minY)
+            let cursorRect = fieldEditor.firstRect(forCharacterRange: selectedRange, actualRange: nil)
+            
+            // Convert the cursor rect from screen coordinates to text field coordinates
+            guard let window = textField.window else { return }
+            let windowRect = window.convertFromScreen(cursorRect)
+            let localRect = textField.convert(windowRect, from: nil)
+            
+            // Create an anchor rect that represents the cursor position within the text field
+            // We'll use the full height of the text field as the anchor
+            let anchorRect = NSRect(
+                x: max(0, localRect.origin.x - 5), // Cursor X position with small offset
+                y: textField.bounds.minY, // Top of text field
+                width: 10, // Small width around cursor
+                height: textField.bounds.height // Full height of text field
+            )
+            
+            // Use minY to show below the anchor rect
+            popover.show(relativeTo: textField.bounds, of: textField, preferredEdge: .minY)
         }
         
         private lazy var popover: NSPopover = {
@@ -94,6 +109,8 @@ struct HashtagTextField: NSViewRepresentable {
 
                     popover.contentViewController = hintViewController
                     popover.behavior = .semitransient // or .transient
+            
+            popover.contentSize = CGSize(width: 100, height: 200)
             
             return popover
         }()
