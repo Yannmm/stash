@@ -61,11 +61,10 @@ struct HashtagTextField: NSViewRepresentable {
             let text = textField.stringValue
             if let range = text.range(of: #"(?<=\s)#\w*$"#, options: .regularExpression) {
                 print("Matched:", text[range])
-                // Show popover
+                // Show suggestions menu
                 showSuggestions(textField)
-            } else {
-                popover.performClose(nil)
             }
+            // Note: NSMenu closes automatically when user clicks elsewhere
             
             parent.text = textField.stringValue
         }
@@ -81,39 +80,30 @@ struct HashtagTextField: NSViewRepresentable {
             let selectedRange = fieldEditor.selectedRange()
             let cursorRect = fieldEditor.firstRect(forCharacterRange: selectedRange, actualRange: nil)
             
-            // Convert the cursor rect from screen coordinates to text field coordinates
-            guard let window = textField.window else { return }
-            let windowRect = window.convertFromScreen(cursorRect)
-            let localRect = textField.convert(windowRect, from: nil)
+            // Create suggestion menu
+            let menu = NSMenu()
+            menu.addItem(withTitle: "#work", action: #selector(insertHashtag(_:)), keyEquivalent: "")
+            menu.addItem(withTitle: "#personal", action: #selector(insertHashtag(_:)), keyEquivalent: "")
+            menu.addItem(withTitle: "#project", action: #selector(insertHashtag(_:)), keyEquivalent: "")
+            menu.addItem(withTitle: "#urgent", action: #selector(insertHashtag(_:)), keyEquivalent: "")
             
-            // Create an anchor rect that represents the cursor position within the text field
-            // We'll use the full height of the text field as the anchor
-            let anchorRect = NSRect(
-                x: max(0, localRect.origin.x - 5), // Cursor X position with small offset
-                y: textField.bounds.minY, // Top of text field
-                width: 10, // Small width around cursor
-                height: textField.bounds.height // Full height of text field
-            )
+            // Set target for menu items
+            for item in menu.items {
+                item.target = self
+            }
             
-            // Use minY to show below the anchor rect
-            popover.show(relativeTo: textField.bounds, of: textField, preferredEdge: .minY)
+            // Show menu at cursor position
+            menu.popUp(positioning: nil, at: NSPoint(x: cursorRect.origin.x, y: cursorRect.origin.y + cursorRect.height), in: nil)
         }
         
-        private lazy var popover: NSPopover = {
-            // Setup the popover
-            let popover = NSPopover()
-                    let hintViewController = NSViewController()
-                    hintViewController.view = NSView(frame: NSRect(x: 0, y: 0, width: 150, height: 50))
-                    hintViewController.view.wantsLayer = true
-                    hintViewController.view.layer?.backgroundColor = NSColor.systemYellow.cgColor
+        @objc func insertHashtag(_ sender: NSMenuItem) {
+            // Insert the selected hashtag into the text
+            let hashtag = sender.title
+            // You can implement the insertion logic here
+            print("Selected hashtag: \(hashtag)")
+        }
+        
 
-                    popover.contentViewController = hintViewController
-                    popover.behavior = .semitransient // or .transient
-            
-            popover.contentSize = CGSize(width: 100, height: 200)
-            
-            return popover
-        }()
     }
 }
 
