@@ -63,7 +63,7 @@ struct HashtagTextField: NSViewRepresentable {
             if let range = text.range(of: #"(^|(?<=\s))#\w*$"#, options: .regularExpression) {
                 _suggest(textField)
             } else {
-//                hideSuggestions()
+                //                hideSuggestions()
             }
             parent.text = textField.stringValue
         }
@@ -73,56 +73,146 @@ struct HashtagTextField: NSViewRepresentable {
         }
         
         func _suggest(_ textField: NSTextField) {
-            guard let fieldEditor = textField.window?.fieldEditor(false, for: textField) as? NSTextView else { return }
-            let selectedRange = fieldEditor.selectedRange()
-            let cursorRect = fieldEditor.firstRect(forCharacterRange: selectedRange, actualRange: nil)
-            makeSuggestionsView(anchor: cursorRect)
-        }
-        
-        private func makeSuggestionsView(anchor: NSRect) {
-            if panel == nil {
-                let width: CGFloat = 120
-                let itemHeight: CGFloat = 22
-                let height = CGFloat(["#Apple", "#Banana", "#Cherry"].count) * itemHeight
-                
-                let panelRect = NSRect(
-                    x: anchor.origin.x,
-                    y: anchor.origin.y - height,
-                    width: width,
-                    height: height
-                )
-                
-                panel = NSPanel(
-                    contentRect: panelRect,
-                    styleMask: [.borderless, .nonactivatingPanel],
-                    backing: .buffered,
-                    defer: false
-                )
-                
-                panel.level = .popUpMenu
-                panel.isOpaque = true
-                panel.backgroundColor = NSColor.controlBackgroundColor
-                panel.hasShadow = true
-                panel.worksWhenModal = true
-                panel.becomesKeyOnlyIfNeeded = false
-                panel.acceptsMouseMovedEvents = true
+            //            guard let fieldEditor = textField.window?.fieldEditor(false, for: textField) as? NSTextView else { return }
+            //            let selectedRange = fieldEditor.selectedRange()
+            //            let cursorRect = fieldEditor.firstRect(forCharacterRange: selectedRange, actualRange: nil)
+            //            createSuggestionWindow(at: cursorRect)
+            guard let window = textField.window,
+                  let textView = window.fieldEditor(true, for: textField) as? NSTextView else {
+                return
             }
             
+            let fullText = textView.string as NSString
             
-            // Create content view
-            panel?.contentViewController = NSHostingController(rootView: SuggestionListView(onTap: { suggestion in
-                print("xxxx -> \(suggestion)")
-            }))
+            // Find the last "#" character
+            let range = fullText.range(of: "#", options: .backwards)
+            guard
+                range.location != NSNotFound else {
+                return
+            }
             
-            panel?.orderFront(nil)
+            // Get the bounding rect for that character
+            let glyphRange = textView.layoutManager?.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
+            guard let glyphRange = glyphRange,
+                  let layoutManager = textView.layoutManager,
+                  let textContainer = textView.textContainer else {
+                return
+            }
+            
+            var rect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
+            rect.origin = textView.textContainerOrigin + rect.origin
+            
+            // Convert to screen coordinates
+            let windowRect = textView.convert(rect, to: nil)
+            let screenRect = textView.window?.convertToScreen(windowRect)
+            
+            guard let screenRect = screenRect else { return }
+            
+            
+            //            makeSuggestionsView(anchor: screenRect)
+            
+            createSuggestionWindow(at: screenRect)
+            
         }
         
-        func hideSuggestions() {
-            //            print("Hiding suggestions panel")
+        func createSuggestionWindow(at cursorRect: NSRect) {
+            print("createSuggestionWindow called with cursorRect: \(cursorRect)")
+            
+            // Close existing panel if any
             panel?.close()
-            panel = nil
-            //            print("Suggestions panel closed and cleared")
+            
+            // Create suggestions
+            let suggestions = ["#work", "#personal", "#project", "#urgent"]
+            
+            // Calculate panel size
+            let panelWidth: CGFloat = 120
+            let itemHeight: CGFloat = 22
+            let panelHeight = CGFloat(suggestions.count) * itemHeight
+            
+            // Position panel below cursor
+            let panelRect = NSRect(
+                x: cursorRect.origin.x,
+                y: cursorRect.origin.y - 150,
+                width: 200,
+                height: 150
+            )
+            
+            print("Panel rect: \(panelRect)")
+            
+            // Create panel that doesn't steal focus
+            panel = NSPanel(
+                contentRect: panelRect,
+                styleMask: [.borderless, .nonactivatingPanel],
+                backing: .buffered,
+                defer: false
+            )
+            
+            panel.level = .popUpMenu
+            panel.isOpaque = true
+            panel.backgroundColor = NSColor.controlBackgroundColor
+            panel.hasShadow = true
+            panel.worksWhenModal = true
+            panel.becomesKeyOnlyIfNeeded = false
+            panel.acceptsMouseMovedEvents = true
+            
+            // Create content view
+            //            let contentView = SuggestionListView(suggestions: suggestions, coordinator: self)
+            
+            //            panel.contentView = contentView
+            panel.contentViewController = NSHostingController(rootView: SuggestionListView1(onTap: { x in }))
+            panel.orderFront(nil)
+            
+            print("Panel created and ordered front")
+            
+            //            suggestionsPanel = panel
         }
+        
+        //        private func makeSuggestionsView(anchor: NSRect) {
+        //            let width: CGFloat = 120
+        //            let itemHeight: CGFloat = 22
+        //            let height = CGFloat(["#Apple", "#Banana", "#Cherry"].count) * itemHeight
+        //
+        //            let panelRect = NSRect(
+        //                x: anchor.origin.x,
+        //                y: anchor.origin.y - 300,
+        //                width: 200,
+        //                height: 150
+        //            )
+        //            if panel == nil {
+        //
+        //
+        //                panel = NSPanel(
+        //                    contentRect: panelRect,
+        //                    styleMask: [.borderless, .nonactivatingPanel],
+        //                    backing: .buffered,
+        //                    defer: false
+        //                )
+        //
+        //                panel.level = .popUpMenu
+        //                panel.isOpaque = true
+        //                panel.backgroundColor = NSColor.controlBackgroundColor
+        //                panel.hasShadow = true
+        //                panel.worksWhenModal = true
+        //                panel.becomesKeyOnlyIfNeeded = false
+        //                panel.acceptsMouseMovedEvents = true
+        //                panel.setFrame(panelRect, display: true)
+        //            } else {
+        //                panel.setFrame(panelRect, display: true)
+        //            }
+        //
+        //
+        //            // Create content view
+        //            panel?.contentViewController = NSHostingController(rootView: SuggestionListView1(onTap: { x in }))
+        //
+        //            panel?.orderFront(nil)
+        //        }
+        //
+        //        func hideSuggestions() {
+        //            //            print("Hiding suggestions panel")
+        //            panel?.close()
+        //            panel = nil
+        //            //            print("Suggestions panel closed and cleared")
+        //        }
         
         //        func insertHashtag(_ hashtag: String) {
         //            print("🔸 Inserting hashtag: '\(hashtag)'")
@@ -159,81 +249,6 @@ struct HashtagTextField: NSViewRepresentable {
         //    }
     }
     
-    //class SuggestionListView: NSView {
-    //    private let suggestions: [String]
-    //    private weak var coordinator: HashtagTextField.Coordinator?
-    //
-    //    init(suggestions: [String], coordinator: HashtagTextField.Coordinator) {
-    //        self.suggestions = suggestions
-    //        self.coordinator = coordinator
-    //        super.init(frame: .zero)
-    //        setupView()
-    //    }
-    //
-    //    required init?(coder: NSCoder) {
-    //        fatalError("init(coder:) has not been implemented")
-    //    }
-    //
-    //    private func setupView() {
-    //        wantsLayer = true
-    //        layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
-    //        layer?.cornerRadius = 6
-    //        layer?.borderWidth = 1
-    //        layer?.borderColor = NSColor.separatorColor.cgColor
-    //
-    //        let stackView = NSStackView()
-    //        stackView.orientation = .vertical
-    //        stackView.spacing = 1
-    //        stackView.translatesAutoresizingMaskIntoConstraints = false
-    //
-    //        for (index, suggestion) in suggestions.enumerated() {
-    //            let button = NSButton()
-    //            button.title = suggestion
-    //            button.target = self
-    //            button.action = #selector(suggestionSelected(_:))
-    //            button.bezelStyle = .texturedRounded
-    //            button.isBordered = true
-    //            button.alignment = .left
-    //            button.tag = index
-    //
-    //            // Configure button for proper mouse interaction
-    //            button.isEnabled = true
-    //            button.allowsMixedState = false
-    //
-    //            // Set explicit height
-    //            button.heightAnchor.constraint(equalToConstant: 22).isActive = true
-    //
-    //            // Make sure button can receive mouse events
-    //            button.translatesAutoresizingMaskIntoConstraints = false
-    //
-    //            // Debug button setup
-    //            print("Created button: '\(suggestion)' with target: \(String(describing: button.target)) action: \(String(describing: button.action))")
-    //
-    //            stackView.addArrangedSubview(button)
-    //        }
-    //
-    //        addSubview(stackView)
-    //        NSLayoutConstraint.activate([
-    //            stackView.topAnchor.constraint(equalTo: topAnchor, constant: 4),
-    //            stackView.leadingAnchor.constraint(equalTo: leadingAnchor, constant: 4),
-    //            stackView.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -4),
-    //            stackView.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -4)
-    //        ])
-    //
-    //        print("SuggestionListView setup completed with \(suggestions.count) suggestions")
-    //    }
-    //
-    //    @objc private func suggestionSelected(_ sender: NSButton) {
-    //        guard let coordinator = coordinator else {
-    //            print("No coordinator available")
-    //            return
-    //        }
-    //        let suggestion = suggestions[sender.tag]
-    //        print("Selected suggestion: \(suggestion)")
-    //        coordinator.insertHashtag(suggestion)
-    //        coordinator.hideSuggestions()
-    //    }
-    //}
 }
 
 extension HashtagTextField {
@@ -244,10 +259,10 @@ extension HashtagTextField {
     }
 }
 
-struct SuggestionListView: View {
+struct SuggestionListView1: View {
     let onTap: (String) -> Void
     let suggestions = ["#Apple", "#Banana", "#Cherry"]
-
+    
     var body: some View {
         List(suggestions, id: \.self) { fruit in
             Text(fruit)
@@ -256,5 +271,11 @@ struct SuggestionListView: View {
                 }
         }
         .frame(width: 200, height: 150)
+    }
+}
+
+extension CGPoint {
+    static func + (lhs: CGPoint, rhs: CGPoint) -> CGPoint {
+        return CGPoint(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
     }
 }
