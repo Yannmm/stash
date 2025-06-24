@@ -88,9 +88,8 @@ struct CellContent: View {
                 viewModel.error = error
             }
         }
-        .onChange(of: focused) { old, new in
-            guard !new else { return }
-            NotificationCenter.default.post(name: NSControl.textDidEndEditingNotification, object: nil)
+        .onChange(of: focused) { _, new in
+            NotificationCenter.default.post(name: new ? .onCellBecomeFirstResponder : .onCellResignFirstResponder, object: nil)
         }
         .onChange(of: focusMonitor.isEditing, { _, newValue in
             expanded = false
@@ -160,16 +159,16 @@ struct CellContent: View {
                     .foregroundColor(focused ? Color(NSColor.separatorColor) : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
                 
-//                TextField("Input the title here...", text: $viewModel.title)
-//                    .font(flag ? .body : .title2)
-//                    .textFieldStyle(.plain)
-//                    .background(Color.clear)
-//                    .focused($focused)
-//                    .layoutPriority(1)
-//                    .allowsHitTesting(false)
-//                    .truncationMode(.tail)
+                //                TextField("Input the title here...", text: $viewModel.title)
+                //                    .font(flag ? .body : .title2)
+                //                    .textFieldStyle(.plain)
+                //                    .background(Color.clear)
+                //                    .focused($focused)
+                //                    .layoutPriority(1)
+                //                    .allowsHitTesting(false)
+                //                    .truncationMode(.tail)
                 
-
+                
                 HashtagTextField(text: $viewModel.title)
                     .font(flag ? NSFont.systemFont(ofSize: NSFont.systemFontSize) : NSFont.systemFont(ofSize: NSFont.systemFontSize + 5))
                     .focused($focused)
@@ -249,7 +248,7 @@ struct CellContent: View {
         }
         .animation(.easeInOut(duration: 0.25), value: expanded)
     }
-
+    
     @ViewBuilder
     private func actions() -> some View {
         ZStack {

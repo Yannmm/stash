@@ -63,7 +63,7 @@ struct OutlineView: NSViewRepresentable {
             outlineView.noteHeightOfRows(withIndexesChanged: IndexSet(indices))
         }
         
-        NotificationCenter.default.addObserver(forName: NSControl.textDidEndEditingNotification, object: nil, queue: nil) { _ in
+        NotificationCenter.default.addObserver(forName: .onCellResignFirstResponder, object: nil, queue: nil) { _ in
             guard let view = outlineView.window?.firstResponder as? NSView, view.isDescendant(of: outlineView) else { return }
             
             for index in 0..<outlineView.numberOfRows {
@@ -291,7 +291,7 @@ extension OutlineView {
             
             // Begin updates for animation
             outlineView.beginUpdates()
-
+            
             parent.entries.insert(target, at: toIndex)
             parent.entries.remove(at: fromIndex < toIndex ? fromIndex : fromIndex + 1)
             

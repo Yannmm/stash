@@ -74,6 +74,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             guard let height = noti.object as? CGFloat else { return }
             editPopoverContentSize(height)
         }
+        
+        NotificationCenter.default.addObserver(forName: .onCellBecomeFirstResponder, object: nil, queue: nil) { [weak self] _ in
+            self?.editPopover.behavior = .applicationDefined
+        }
+        
+        NotificationCenter.default.addObserver(forName: .onCellResignFirstResponder, object: nil, queue: nil) { [weak self] _ in
+            self?.editPopover.behavior = .transient
+        }
     }
     
     private func setupStatusItem() {
