@@ -63,7 +63,7 @@ struct HashtagTextField: NSViewRepresentable {
             if let range = text.range(of: #"(^|(?<=\s))#\w*$"#, options: .regularExpression) {
                 _suggest(textField)
             } else {
-                //                hideSuggestions()
+                _disposePanel()
             }
             parent.text = textField.stringValue
         }
@@ -72,76 +72,61 @@ struct HashtagTextField: NSViewRepresentable {
             parent.onCommit()
         }
         
-        func _suggest(_ textField: NSTextField) {
+        private func _suggest(_ textField: NSTextField) {
+            let anchorRect = _whereToAnchor(textField)
+            _makePanel(anchorRect)
+        }
+        
+        private func _whereToAnchor(_ textField: NSTextField) -> NSRect {
             //            guard let fieldEditor = textField.window?.fieldEditor(false, for: textField) as? NSTextView else { return }
             //            let selectedRange = fieldEditor.selectedRange()
             //            let cursorRect = fieldEditor.firstRect(forCharacterRange: selectedRange, actualRange: nil)
             //            createSuggestionWindow(at: cursorRect)
             guard let window = textField.window,
                   let textView = window.fieldEditor(true, for: textField) as? NSTextView else {
-                return
+                return NSRect.zero
             }
             
             let fullText = textView.string as NSString
             
             // Find the last "#" character
             let range = fullText.range(of: "#", options: .backwards)
-            guard
-                range.location != NSNotFound else {
-                return
-            }
+            guard range.location != NSNotFound else { return NSRect.zero }
             
             // Get the bounding rect for that character
-            let glyphRange = textView.layoutManager?.glyphRange(forCharacterRange: range, actualCharacterRange: nil)
-            guard let glyphRange = glyphRange,
+            guard let glyphRange = textView.layoutManager?.glyphRange(forCharacterRange: range, actualCharacterRange: nil),
                   let layoutManager = textView.layoutManager,
-                  let textContainer = textView.textContainer else {
-                return
-            }
+                  let textContainer = textView.textContainer else { return NSRect.zero }
             
-            var rect = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
-            rect.origin = textView.textContainerOrigin + rect.origin
-            
-            // Convert to screen coordinates
-            let windowRect = textView.convert(rect, to: nil)
-            let screenRect = textView.window?.convertToScreen(windowRect)
-            
-            guard let screenRect = screenRect else { return }
-            
-            
-            //            makeSuggestionsView(anchor: screenRect)
-            
-            createSuggestionWindow(at: screenRect)
-            
+            var rect1 = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
+            rect1.origin = textView.textContainerOrigin + rect1.origin
+            let rect2 = textView.convert(rect1, to: nil)
+            let rect3 = textView.window?.convertToScreen(rect2)
+            guard let result = rect3 else { return NSRect.zero }
+            return result
         }
         
-        func createSuggestionWindow(at cursorRect: NSRect) {
-            print("createSuggestionWindow called with cursorRect: \(cursorRect)")
-            
-            // Close existing panel if any
-            panel?.close()
-            
-            // Create suggestions
-            let suggestions = ["#work", "#personal", "#project", "#urgent"]
-            
+        private func _makePanel(_ anchorRect: NSRect) {
+            _disposePanel()
+            _setupPanel(anchorRect)
+        }
+        
+        private func _setupPanel(_ anchorRect: NSRect) {
             // Calculate panel size
             let panelWidth: CGFloat = 120
             let itemHeight: CGFloat = 22
-            let panelHeight = CGFloat(suggestions.count) * itemHeight
+            //            let panelHeight = CGFloat(suggestions.count) * itemHeight
             
             // Position panel below cursor
-            let panelRect = NSRect(
-                x: cursorRect.origin.x,
-                y: cursorRect.origin.y - 150,
+            let contentRect = NSRect(
+                x: anchorRect.origin.x,
+                y: anchorRect.origin.y - 150,
                 width: 200,
                 height: 150
             )
             
-            print("Panel rect: \(panelRect)")
-            
-            // Create panel that doesn't steal focus
             panel = NSPanel(
-                contentRect: panelRect,
+                contentRect: contentRect,
                 styleMask: [.borderless, .nonactivatingPanel],
                 backing: .buffered,
                 defer: false
@@ -149,22 +134,23 @@ struct HashtagTextField: NSViewRepresentable {
             
             panel.level = .popUpMenu
             panel.isOpaque = true
-            panel.backgroundColor = NSColor.controlBackgroundColor
+            panel.backgroundColor = NSColor.clear
             panel.hasShadow = true
             panel.worksWhenModal = true
             panel.becomesKeyOnlyIfNeeded = false
             panel.acceptsMouseMovedEvents = true
-            
-            // Create content view
-            //            let contentView = SuggestionListView(suggestions: suggestions, coordinator: self)
-            
-            //            panel.contentView = contentView
             panel.contentViewController = NSHostingController(rootView: SuggestionListView1(onTap: { x in }))
+//            if let contentView = panel.contentView {
+//                contentView.wantsLayer = true
+//                contentView.layer?.cornerRadius = 12
+//                contentView.layer?.masksToBounds = true
+//            }
             panel.orderFront(nil)
-            
-            print("Panel created and ordered front")
-            
-            //            suggestionsPanel = panel
+        }
+        
+        private func _disposePanel() {
+            panel?.close()
+            panel = nil
         }
         
         //        private func makeSuggestionsView(anchor: NSRect) {
@@ -271,6 +257,9 @@ struct SuggestionListView1: View {
                 }
         }
         .frame(width: 200, height: 150)
+        .background(Color(nsColor: .controlBackgroundColor))
+        .cornerRadius(12)
+        
     }
 }
 
