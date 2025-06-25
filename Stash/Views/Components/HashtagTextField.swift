@@ -69,12 +69,14 @@ struct HashtagTextField: NSViewRepresentable {
         }
         
         func controlTextDidEndEditing(_ obj: Notification) {
+            print("结束编辑")
             parent.onCommit()
+            
         }
         
         private func _suggest(_ textField: NSTextField) {
             let anchorRect = _whereToAnchor(textField)
-            _makePanel(anchorRect)
+            _makePanel(anchorRect, textField)
         }
         
         private func _whereToAnchor(_ textField: NSTextField) -> NSRect {
@@ -87,10 +89,8 @@ struct HashtagTextField: NSViewRepresentable {
                 return NSRect.zero
             }
             
-            let fullText = textView.string as NSString
-            
             // Find the last "#" character
-            let range = fullText.range(of: "#", options: .backwards)
+            let range = (textView.string as NSString).range(of: "#", options: .backwards)
             guard range.location != NSNotFound else { return NSRect.zero }
             
             // Get the bounding rect for that character
@@ -106,12 +106,12 @@ struct HashtagTextField: NSViewRepresentable {
             return result
         }
         
-        private func _makePanel(_ anchorRect: NSRect) {
+        private func _makePanel(_ anchorRect: NSRect, _ textField: NSTextField) {
             _disposePanel()
-            _setupPanel(anchorRect)
+            _setupPanel(anchorRect, textField)
         }
         
-        private func _setupPanel(_ anchorRect: NSRect) {
+        private func _setupPanel(_ anchorRect: NSRect, _ textField: NSTextField) {
             // Calculate panel size
             let panelWidth: CGFloat = 120
             let itemHeight: CGFloat = 22
@@ -139,12 +139,10 @@ struct HashtagTextField: NSViewRepresentable {
             panel.worksWhenModal = true
             panel.becomesKeyOnlyIfNeeded = false
             panel.acceptsMouseMovedEvents = true
-            panel.contentViewController = NSHostingController(rootView: SuggestionListView1(onTap: { x in }))
-//            if let contentView = panel.contentView {
-//                contentView.wantsLayer = true
-//                contentView.layer?.cornerRadius = 12
-//                contentView.layer?.masksToBounds = true
-//            }
+            panel.contentViewController = NSHostingController(rootView: SuggestionListView1(onTap: { [weak self] hashtag in
+                self?._insert(hashtag, textField)
+                self?._disposePanel()
+            }))
             panel.orderFront(nil)
         }
         
@@ -153,88 +151,20 @@ struct HashtagTextField: NSViewRepresentable {
             panel = nil
         }
         
-        //        private func makeSuggestionsView(anchor: NSRect) {
-        //            let width: CGFloat = 120
-        //            let itemHeight: CGFloat = 22
-        //            let height = CGFloat(["#Apple", "#Banana", "#Cherry"].count) * itemHeight
-        //
-        //            let panelRect = NSRect(
-        //                x: anchor.origin.x,
-        //                y: anchor.origin.y - 300,
-        //                width: 200,
-        //                height: 150
-        //            )
-        //            if panel == nil {
-        //
-        //
-        //                panel = NSPanel(
-        //                    contentRect: panelRect,
-        //                    styleMask: [.borderless, .nonactivatingPanel],
-        //                    backing: .buffered,
-        //                    defer: false
-        //                )
-        //
-        //                panel.level = .popUpMenu
-        //                panel.isOpaque = true
-        //                panel.backgroundColor = NSColor.controlBackgroundColor
-        //                panel.hasShadow = true
-        //                panel.worksWhenModal = true
-        //                panel.becomesKeyOnlyIfNeeded = false
-        //                panel.acceptsMouseMovedEvents = true
-        //                panel.setFrame(panelRect, display: true)
-        //            } else {
-        //                panel.setFrame(panelRect, display: true)
-        //            }
-        //
-        //
-        //            // Create content view
-        //            panel?.contentViewController = NSHostingController(rootView: SuggestionListView1(onTap: { x in }))
-        //
-        //            panel?.orderFront(nil)
-        //        }
-        //
-        //        func hideSuggestions() {
-        //            //            print("Hiding suggestions panel")
-        //            panel?.close()
-        //            panel = nil
-        //            //            print("Suggestions panel closed and cleared")
-        //        }
-        
-        //        func insertHashtag(_ hashtag: String) {
-        //            print("🔸 Inserting hashtag: '\(hashtag)'")
-        //            guard let textField = currentTextField else {
-        //                print("❌ No current text field available")
-        //                return
-        //            }
-        //
-        //            // Replace the partial hashtag with the selected one
-        //            let text = textField.stringValue
-        //            print("🔸 Current text: '\(text)'")
-        //
-        //            // Use the same regex pattern as in controlTextDidChange
-        //            if let range = text.range(of: #"(^|(?<=\s))#\w*$"#, options: .regularExpression) {
-        //                let newText = text.replacingCharacters(in: range, with: hashtag)
-        //                textField.stringValue = newText
-        //                parent.text = newText
-        //                print("✅ Updated text to: '\(newText)'")
-        //
-        //                // Move cursor to end of inserted hashtag
-        //                if let editor = textField.currentEditor() {
-        //                    let newPosition = newText.count
-        //                    editor.selectedRange = NSRange(location: newPosition, length: 0)
-        //                    print("✅ Moved cursor to position: \(newPosition)")
-        //                }
-        //            } else {
-        //                print("❌ No hashtag pattern found to replace")
-        //            }
-        //
-        //            print("✅ Text field remains focused and active - only closing suggestion panel")
-        //        }
-        //
-        //
-        //    }
+        private func _insert(_ hashtag: String, _ textField: NSTextField) {
+            let text = textField.stringValue
+            if let range = text.range(of: #"(^|(?<=\s))#\w*$"#, options: .regularExpression) {
+                let newText = text.replacingCharacters(in: range, with: hashtag)
+                textField.stringValue = newText
+                if let editor = textField.currentEditor() {
+                    let range = NSRange(location: (editor.string as NSString).length, length: 0)
+                    editor.selectedRange = range
+                    editor.scrollRangeToVisible(range)
+                }
+                parent.text = newText
+            }
+        }
     }
-    
 }
 
 extension HashtagTextField {
@@ -256,6 +186,7 @@ struct SuggestionListView1: View {
                     onTap(fruit)
                 }
         }
+        .listStyle(.inset)
         .frame(width: 200, height: 150)
         .background(Color(nsColor: .controlBackgroundColor))
         .cornerRadius(12)
