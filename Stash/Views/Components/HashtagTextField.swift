@@ -80,17 +80,15 @@ struct HashtagTextField: NSViewRepresentable {
         }
         
         private func _whereToAnchor(_ textField: NSTextField) -> NSRect {
-            //            guard let fieldEditor = textField.window?.fieldEditor(false, for: textField) as? NSTextView else { return }
-            //            let selectedRange = fieldEditor.selectedRange()
-            //            let cursorRect = fieldEditor.firstRect(forCharacterRange: selectedRange, actualRange: nil)
-            //            createSuggestionWindow(at: cursorRect)
             guard let window = textField.window,
                   let textView = window.fieldEditor(true, for: textField) as? NSTextView else {
                 return NSRect.zero
             }
             
-            // Find the last "#" character
-            let range = (textView.string as NSString).range(of: "#", options: .backwards)
+            // Find the first "#" character to the left of cursor
+            let cursor = textView.selectedRange().location
+            let text = (textView.string as NSString).substring(to: cursor)
+            let range = (text as NSString).range(of: "#", options: .backwards)
             guard range.location != NSNotFound else { return NSRect.zero }
             
             // Get the bounding rect for that character
@@ -152,12 +150,23 @@ struct HashtagTextField: NSViewRepresentable {
         }
         
         private func _insert(_ hashtag: String, _ textField: NSTextField) {
-            let text = textField.stringValue
+            // Find the first "#" character to the left of cursor
+            guard let window = textField.window,
+                  let textView = window.fieldEditor(true, for: textField) as? NSTextView else {
+                return
+            }
+            let cursor = textView.selectedRange().location
+            let text = (textView.string as NSString).substring(to: cursor)
+//            let range = (text as NSString).range(of: "#", options: .backwards)
+//            guard range.location != NSNotFound else { return }
+            let rest = (textView.string as NSString).substring(from: cursor)
+            
             if let range = text.range(of: #"(^|(?<=\s))#\w*$"#, options: .regularExpression) {
-                let newText = text.replacingCharacters(in: range, with: hashtag)
+                let inserted = text.replacingCharacters(in: range, with: hashtag)
+                let newText = inserted + rest
                 textField.stringValue = newText
                 if let editor = textField.currentEditor() {
-                    let range = NSRange(location: (editor.string as NSString).length, length: 0)
+                    let range = NSRange(location: (inserted as NSString).length, length: 0)
                     editor.selectedRange = range
                     editor.scrollRangeToVisible(range)
                 }
