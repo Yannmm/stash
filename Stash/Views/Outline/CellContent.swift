@@ -16,7 +16,6 @@ enum Focusable: Hashable {
 }
 
 struct CellContent: View {
-    
     @EnvironmentObject var cabinet: OkamuraCabinet
     @EnvironmentObject var focusMonitor: FocusMonitor
     @ObservedObject var viewModel: CellViewModel
@@ -26,6 +25,7 @@ struct CellContent: View {
     @State private var deleteAlert: Bool = false
     @State private var ungroupAlert: Bool = false
     @State private var didCopy = false
+    
     
     var shouldShowDelete: Bool {
         return expanded && !focusMonitor.isEditing
@@ -169,9 +169,10 @@ struct CellContent: View {
                 //                    .truncationMode(.tail)
                 
                 
-                HashtagTextField(text: $viewModel.title)
+                HashtagTextField(text: $viewModel.title, focused: focused)
                     .font(flag ? NSFont.systemFont(ofSize: NSFont.systemFontSize) : NSFont.systemFont(ofSize: NSFont.systemFontSize + 5))
                     .focused($focused)
+                    .environmentObject(HashtagManager(cabinet: cabinet))
             }
             .padding(.vertical, flag ? 0 : 4)
             

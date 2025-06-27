@@ -210,7 +210,7 @@ extension OutlineView {
             var cell: CellView! = outlineView.makeView(withIdentifier: identifier, owner: self) as? CellView
             
             if cell == nil {
-                cell = CellView(focusMonitor: parent.focusMonitor)
+                cell = CellView(focusMonitor: parent.focusMonitor, cabinet: parent.cabinet)
                 cell?.identifier = identifier
             }
             

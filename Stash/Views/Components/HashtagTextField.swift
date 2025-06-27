@@ -6,9 +6,12 @@
 //
 
 import SwiftUI
+import Combine
 
 struct HashtagTextField: NSViewRepresentable {
+    @EnvironmentObject var hashtagManager: HashtagManager
     @Binding var text: String
+    let focused: Bool
     var font: NSFont?
     var onCommit: () -> Void = {}
     
@@ -30,17 +33,23 @@ struct HashtagTextField: NSViewRepresentable {
         return textField
     }
     
-    func updateNSView(_ nsView: NSTextField, context: Context) {
-        nsView.font = font
-        guard nsView.window?.firstResponder != nsView.currentEditor() else {
+    func updateNSView(_ textField: NSTextField, context: Context) {
+        print("改变啦 -> \(focused)")
+        textField.font = font
+        
+        if let coordinator = textField.delegate as? Coordinator, !focused {
+            coordinator.hide()
+        }
+        
+        guard textField.window?.firstResponder != textField.currentEditor() else {
             // Already focused; do nothing.
             return
         }
-        nsView.stringValue = text
+        textField.stringValue = text
         
         // Move cursor to end if it just became first responder
         DispatchQueue.main.async {
-            if let editor = nsView.currentEditor() {
+            if let editor = textField.currentEditor() {
                 let range = NSRange(location: (editor.string as NSString).length, length: 0)
                 editor.selectedRange = range
                 editor.scrollRangeToVisible(range)
@@ -49,9 +58,11 @@ struct HashtagTextField: NSViewRepresentable {
     }
     
     internal class Coordinator: NSObject, NSTextFieldDelegate {
-        var parent: HashtagTextField
-        //        weak var currentTextField: NSTextField?
+        private var parent: HashtagTextField
+        
         private var panel: NSPanel!
+        
+        private var cancellables = Set<AnyCancellable>()
         
         init(_ parent: HashtagTextField) {
             self.parent = parent
@@ -61,55 +72,62 @@ struct HashtagTextField: NSViewRepresentable {
             guard let textField = obj.object as? NSTextField else { return }
             let text = textField.stringValue
             if let range = text.range(of: #"(^|(?<=\s))#\w*$"#, options: .regularExpression) {
-                _suggest(textField)
+                show(textField)
             } else {
-                _disposePanel()
+                hide()
             }
             parent.text = textField.stringValue
         }
         
         func controlTextDidEndEditing(_ obj: Notification) {
-            print("结束编辑")
             parent.onCommit()
             
         }
         
-        private func _suggest(_ textField: NSTextField) {
-            let anchorRect = _whereToAnchor(textField)
-            _makePanel(anchorRect, textField)
+        private func show(_ textField: NSTextField) {
+            if let anchor = _whereToAnchor(textField) {
+                _makePanel(anchor, textField)
+            } else {
+                hide()
+            }
         }
         
-        private func _whereToAnchor(_ textField: NSTextField) -> NSRect {
+        private func _whereToAnchor(_ textField: NSTextField) -> (NSRect, String)? {
             guard let window = textField.window,
                   let textView = window.fieldEditor(true, for: textField) as? NSTextView else {
-                return NSRect.zero
+                return nil
             }
             
             // Find the first "#" character to the left of cursor
             let cursor = textView.selectedRange().location
             let text = (textView.string as NSString).substring(to: cursor)
+            
             let range = (text as NSString).range(of: "#", options: .backwards)
-            guard range.location != NSNotFound else { return NSRect.zero }
+            guard range.location != NSNotFound else { return nil }
+            
+            let hashtag = (textView.string as NSString).substring(with: NSRange(location: range.location, length: cursor - range.location))
+            
+            parent.hashtagManager.filter = hashtag
             
             // Get the bounding rect for that character
             guard let glyphRange = textView.layoutManager?.glyphRange(forCharacterRange: range, actualCharacterRange: nil),
                   let layoutManager = textView.layoutManager,
-                  let textContainer = textView.textContainer else { return NSRect.zero }
+                  let textContainer = textView.textContainer else { return nil }
             
             var rect1 = layoutManager.boundingRect(forGlyphRange: glyphRange, in: textContainer)
             rect1.origin = textView.textContainerOrigin + rect1.origin
             let rect2 = textView.convert(rect1, to: nil)
             let rect3 = textView.window?.convertToScreen(rect2)
-            guard let result = rect3 else { return NSRect.zero }
-            return result
+            guard let result = rect3 else { return nil }
+            return (result, hashtag)
         }
         
-        private func _makePanel(_ anchorRect: NSRect, _ textField: NSTextField) {
-            _disposePanel()
-            _setupPanel(anchorRect, textField)
+        private func _makePanel(_ anchor: (NSRect, String), _ textField: NSTextField) {
+            hide()
+            _setupPanel(anchor, textField)
         }
         
-        private func _setupPanel(_ anchorRect: NSRect, _ textField: NSTextField) {
+        private func _setupPanel(_ anchor: (NSRect, String), _ textField: NSTextField) {
             // Calculate panel size
             let panelWidth: CGFloat = 120
             let itemHeight: CGFloat = 22
@@ -117,8 +135,8 @@ struct HashtagTextField: NSViewRepresentable {
             
             // Position panel below cursor
             let contentRect = NSRect(
-                x: anchorRect.origin.x,
-                y: anchorRect.origin.y - 150,
+                x: anchor.0.origin.x,
+                y: anchor.0.origin.y - 150,
                 width: 200,
                 height: 150
             )
@@ -137,14 +155,15 @@ struct HashtagTextField: NSViewRepresentable {
             panel.worksWhenModal = true
             panel.becomesKeyOnlyIfNeeded = false
             panel.acceptsMouseMovedEvents = true
+            
             panel.contentViewController = NSHostingController(rootView: SuggestionListView1(onTap: { [weak self] hashtag in
                 self?._insert(hashtag, textField)
-                self?._disposePanel()
-            }))
+                self?.hide()
+            }).environmentObject(parent.hashtagManager))
             panel.orderFront(nil)
         }
         
-        private func _disposePanel() {
+        func hide() {
             panel?.close()
             panel = nil
         }
@@ -157,8 +176,8 @@ struct HashtagTextField: NSViewRepresentable {
             }
             let cursor = textView.selectedRange().location
             let text = (textView.string as NSString).substring(to: cursor)
-//            let range = (text as NSString).range(of: "#", options: .backwards)
-//            guard range.location != NSNotFound else { return }
+            //            let range = (text as NSString).range(of: "#", options: .backwards)
+            //            guard range.location != NSNotFound else { return }
             let rest = (textView.string as NSString).substring(from: cursor)
             
             if let range = text.range(of: #"(^|(?<=\s))#\w*$"#, options: .regularExpression) {
@@ -186,10 +205,10 @@ extension HashtagTextField {
 
 struct SuggestionListView1: View {
     let onTap: (String) -> Void
-    let suggestions = ["#Apple", "#Banana", "#Cherry"]
+    @EnvironmentObject var hashtagManager: HashtagManager
     
     var body: some View {
-        List(suggestions, id: \.self) { fruit in
+        List(hashtagManager.hashtags, id: \.self) { fruit in
             Text(fruit)
                 .onTapGesture {
                     onTap(fruit)
@@ -199,7 +218,6 @@ struct SuggestionListView1: View {
         .frame(width: 200, height: 150)
         .background(Color(nsColor: .controlBackgroundColor))
         .cornerRadius(12)
-        
     }
 }
 
