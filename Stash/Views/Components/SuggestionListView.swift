@@ -13,14 +13,13 @@ struct SuggestionListView: View {
 
     @State private var activeIndex: Int = 0
     @State private var isHovering: Bool = false
-    @FocusState private var isFocused: Bool
+//    @FocusState private var isFocused: Bool
+    
     
     var body: some View {
         List(Array(hashtagManager.hashtags.enumerated()), id: \.offset) { index, fruit in
                 Text(fruit)
                     .background(activeIndex == index ? Color.accentColor.opacity(0.3) : Color.clear)
-//                    .cornerRadius(6)
-//                    .contentShape(Rectangle())
                     .onTapGesture {
                         activeIndex = index
                         isHovering = false
@@ -36,25 +35,38 @@ struct SuggestionListView: View {
         .frame(width: 200, height: 150)
         .background(Color(nsColor: .controlBackgroundColor))
         .cornerRadius(12)
-        .focusable(true)
-        .focused($isFocused)
-        .onAppear {
-            isFocused = true
-        }
-        .onKeyDown { event in
-            guard isFocused else { return }
-
-            isHovering = false // stop tracking mouse once keys are used
-
-            switch event.keyCode {
-            case 125: // ↓ Down arrow
+//        .focusable(true)
+//        .focused($isFocused)
+//        .onAppear {
+//            isFocused = true
+//        }
+//        .onChange(of: hashtagManager.focused, { _, newValue in
+//            print("改变 ！！！ -》 \(newValue)")
+//            isFocused = hashtagManager.focused
+//        })
+        .onReceive(hashtagManager.$navigateByKeyboard, perform: { value in
+            guard let direction = value else { return }
+            switch direction {
+            case .down: // ↓ Down arrow
                 activeIndex = (activeIndex + 1) % hashtagManager.hashtags.count
-            case 126: // ↑ Up arrow
+            case .up: // ↑ Up arrow
                 activeIndex = (activeIndex - 1 + hashtagManager.hashtags.count) % hashtagManager.hashtags.count
-            default:
-                break
             }
-        }
+        })
+//        .onKeyDown { event in
+////            guard isFocused else { return }
+//
+//            isHovering = false // stop tracking mouse once keys are used
+//
+//            switch event.keyCode {
+//            case 125: // ↓ Down arrow
+//                activeIndex = (activeIndex + 1) % hashtagManager.hashtags.count
+//            case 126: // ↑ Up arrow
+//                activeIndex = (activeIndex - 1 + hashtagManager.hashtags.count) % hashtagManager.hashtags.count
+//            default:
+//                break
+//            }
+//        }
     }
 }
 

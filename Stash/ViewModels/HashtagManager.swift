@@ -6,12 +6,13 @@
 //
 
 import Combine
-import Foundation
+import AppKit
 
 class HashtagManager: ObservableObject {
     let cabinet: OkamuraCabinet
     @Published var hashtags: [String] = []
     @Published var filter: String = ""
+    @Published var navigateByKeyboard: ArrowKey?
     private var cancellables = Set<AnyCancellable>()
     private let regex = try! NSRegularExpression(pattern: "#[a-zA-Z0-9_]+")
     
@@ -43,5 +44,12 @@ class HashtagManager: ObservableObject {
                 self.hashtags = result
             }
             .store(in: &cancellables)
+    }
+}
+
+extension HashtagManager {
+    enum ArrowKey {
+        case up
+        case down
     }
 }

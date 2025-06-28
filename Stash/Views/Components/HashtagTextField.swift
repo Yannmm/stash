@@ -36,7 +36,6 @@ struct HashtagTextField: NSViewRepresentable {
     }
     
     func updateNSView(_ textField: NSTextField, context: Context) {
-        print("改变啦 -> \(focused)")
         textField.font = font
         
         if let coordinator = textField.delegate as? Coordinator, !focused {
@@ -84,6 +83,21 @@ struct HashtagTextField: NSViewRepresentable {
         func controlTextDidEndEditing(_ obj: Notification) {
             parent.onCommit()
             
+        }
+        
+        func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+            switch commandSelector {
+            case #selector(NSResponder.moveDown(_:)):
+                parent.hashtagManager.navigateByKeyboard = .down
+                return true
+            case #selector(NSResponder.moveUp(_:)):
+                parent.hashtagManager.navigateByKeyboard = .up
+                return true
+            default:
+                return false
+            }
+            
+            todo: implement enter to select an item.
         }
         
         private func show(_ textField: NSTextField) {
@@ -150,7 +164,7 @@ struct HashtagTextField: NSViewRepresentable {
                 defer: false
             )
             
-            panel.level = .popUpMenu
+            panel.level = .statusBar
             panel.isOpaque = true
             panel.backgroundColor = NSColor.clear
             panel.hasShadow = true

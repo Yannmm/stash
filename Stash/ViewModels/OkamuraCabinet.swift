@@ -58,9 +58,6 @@ class OkamuraCabinet: ObservableObject {
                 .combineLatest(Just<String?>(pieceSaver.value(for: .appIdentifier))
                     .compactMap({ $0 })
                     .map({ UUID(uuidString: $0) }))
-                .handleEvents(receiveOutput: { value in
-                    print("doOnData: \(value)")
-                })
                 .filter({ $0.0 != $0.1 })
                 .delay(for: .seconds(2), scheduler: RunLoop.main)
                 .sink(receiveValue: { [weak self] _ in
