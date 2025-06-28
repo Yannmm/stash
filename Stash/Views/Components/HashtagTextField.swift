@@ -15,6 +15,8 @@ struct HashtagTextField: NSViewRepresentable {
     var font: NSFont?
     var onCommit: () -> Void = {}
     
+    @State private var selectedIndex = 0
+    
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
@@ -156,7 +158,7 @@ struct HashtagTextField: NSViewRepresentable {
             panel.becomesKeyOnlyIfNeeded = false
             panel.acceptsMouseMovedEvents = true
             
-            panel.contentViewController = NSHostingController(rootView: SuggestionListView1(onTap: { [weak self] hashtag in
+            panel.contentViewController = NSHostingController(rootView: SuggestionListView(onTap: { [weak self] hashtag in
                 self?._insert(hashtag, textField)
                 self?.hide()
             }).environmentObject(parent.hashtagManager))
@@ -200,29 +202,5 @@ extension HashtagTextField {
         var copy = self
         copy.font = font
         return copy
-    }
-}
-
-struct SuggestionListView1: View {
-    let onTap: (String) -> Void
-    @EnvironmentObject var hashtagManager: HashtagManager
-    
-    var body: some View {
-        List(hashtagManager.hashtags, id: \.self) { fruit in
-            Text(fruit)
-                .onTapGesture {
-                    onTap(fruit)
-                }
-        }
-        .listStyle(.inset)
-        .frame(width: 200, height: 150)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(12)
-    }
-}
-
-extension CGPoint {
-    static func + (lhs: CGPoint, rhs: CGPoint) -> CGPoint {
-        return CGPoint(x: lhs.x + rhs.x, y: lhs.y + rhs.y)
     }
 }
