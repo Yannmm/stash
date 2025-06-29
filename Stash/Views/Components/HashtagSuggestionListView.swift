@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-struct SuggestionListView: View {
+struct HashtagSuggestionListView: View {
     let onTap: (String) -> Void
     @EnvironmentObject var hashtagManager: HashtagViewModel
     
@@ -18,20 +18,31 @@ struct SuggestionListView: View {
     var body: some View {
         ScrollViewReader { proxy in
             List(Array(hashtagManager.hashtags.enumerated()), id: \.offset) { index, fruit in
-                Text(fruit)
-                    .background(activeIndex == index ? Color.accentColor.opacity(0.3) : Color.clear)
-                    .onTapGesture {
+                HStack {
+                    Text(fruit)
+                        .foregroundColor(.secondary)
+                        .padding(EdgeInsets(top: 8, leading: 10, bottom: 8, trailing: 10))
+                    Spacer() // Fill remaining space
+                    
+                todo: 离开焦点，自动保存title
+                }
+                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                .listRowSeparator(.hidden)
+                .listRowBackground(activeIndex == index ? Color.primary.opacity(0.3) : Color.clear)
+                .frame(maxWidth: .infinity)
+                .onTapGesture {
+                    activeIndex = index
+                    isHovering = false
+                }
+                .onHover { hovering in
+                    isHovering = hovering
+                    if hovering {
                         activeIndex = index
-                        isHovering = false
                     }
-                    .onHover { hovering in
-                        isHovering = hovering
-                        if hovering {
-                            activeIndex = index
-                        }
-                    }
+                }
             }
-            .listStyle(.inset)
+            .listStyle(.plain)
+            .padding(0)
             .frame(width: 200, height: 150)
             .background(Color(nsColor: .controlBackgroundColor))
             .cornerRadius(6)

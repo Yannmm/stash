@@ -172,7 +172,7 @@ struct HashtagTextField: NSViewRepresentable {
             panel.becomesKeyOnlyIfNeeded = false
             panel.acceptsMouseMovedEvents = true
             
-            panel.contentViewController = NSHostingController(rootView: SuggestionListView(onTap: { [weak self] hashtag in
+            panel.contentViewController = NSHostingController(rootView: HashtagSuggestionListView(onTap: { [weak self] hashtag in
                 self?._insert(hashtag, textField)
                 self?.hide()
             }).environmentObject(parent.hashtagManager))
