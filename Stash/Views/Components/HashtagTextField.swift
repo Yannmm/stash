@@ -9,7 +9,7 @@ import SwiftUI
 import Combine
 
 struct HashtagTextField: NSViewRepresentable {
-    @EnvironmentObject var hashtagManager: HashtagManager
+    @EnvironmentObject var hashtagManager: HashtagViewModel
     @Binding var text: String
     let focused: Bool
     var font: NSFont?
@@ -85,7 +85,6 @@ struct HashtagTextField: NSViewRepresentable {
         }
         
         func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
-            print("xx -> \(commandSelector)")
             switch commandSelector {
             case #selector(NSResponder.moveDown(_:)):
                 parent.hashtagManager.setKeyboard(.down)

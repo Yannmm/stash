@@ -9,14 +9,15 @@ import SwiftUI
 
 struct SuggestionListView: View {
     let onTap: (String) -> Void
-    @EnvironmentObject var hashtagManager: HashtagManager
-
+    @EnvironmentObject var hashtagManager: HashtagViewModel
+    
     @State private var activeIndex: Int?
     @State private var isHovering: Bool = false
     
     
     var body: some View {
-        List(Array(hashtagManager.hashtags.enumerated()), id: \.offset) { index, fruit in
+        ScrollViewReader { proxy in
+            List(Array(hashtagManager.hashtags.enumerated()), id: \.offset) { index, fruit in
                 Text(fruit)
                     .background(activeIndex == index ? Color.accentColor.opacity(0.3) : Color.clear)
                     .onTapGesture {
@@ -30,23 +31,28 @@ struct SuggestionListView: View {
                         }
                     }
             }
-        .listStyle(.inset)
-        .frame(width: 200, height: 150)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .cornerRadius(12)
-        .onReceive(hashtagManager.keyboard, perform: { value in
-//            print("xx -> \(activeIndex), \(value)")
-            guard let direction = value else { return }
-            switch direction {
-            case .down: // ↓ Down arrow
-                activeIndex = activeIndex == nil ? 0 : (activeIndex! + 1) % hashtagManager.hashtags.count
-            case .up: // ↑ Up arrow
-                // TODO: might out of range
-                activeIndex = activeIndex == nil ? 0 : (activeIndex! - 1 + hashtagManager.hashtags.count) % hashtagManager.hashtags.count
-            case .enter:
-                onTap(hashtagManager.hashtags[activeIndex ?? 0])
+            .listStyle(.inset)
+            .frame(width: 200, height: 150)
+            .background(Color(nsColor: .controlBackgroundColor))
+            .cornerRadius(6)
+            .onChange(of: activeIndex) { index in
+                withAnimation(.easeInOut(duration: 0.15)) {
+                    proxy.scrollTo(index, anchor: .center)
+                }
             }
-        })
+            .onReceive(hashtagManager.keyboard, perform: { value in
+                guard let direction = value else { return }
+                switch direction {
+                case .down: // ↓ Down arrow
+                    activeIndex = activeIndex == nil ? 0 : (activeIndex! + 1) % hashtagManager.hashtags.count
+                case .up: // ↑ Up arrow
+                    // TODO: might out of range
+                    activeIndex = activeIndex == nil ? 0 : (activeIndex! - 1 + hashtagManager.hashtags.count) % hashtagManager.hashtags.count
+                case .enter:
+                    onTap(hashtagManager.hashtags[activeIndex ?? 0])
+                }
+            })
+        }
     }
 }
 
@@ -56,7 +62,7 @@ import SwiftUI
 
 struct KeyDownViewModifier: ViewModifier {
     let handler: (NSEvent) -> Void
-
+    
     func body(content: Content) -> some View {
         content
             .background(KeyDownRepresentable(handler: handler)) // ✅ fix here

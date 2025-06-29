@@ -8,12 +8,12 @@
 import Combine
 import AppKit
 
-class HashtagManager: ObservableObject {
+class HashtagViewModel: ObservableObject {
     let cabinet: OkamuraCabinet
     @Published var hashtags: [String] = []
     @Published var filter: String = ""
     private var cancellables = Set<AnyCancellable>()
-    private let regex = try! NSRegularExpression(pattern: "#[a-zA-Z0-9_]+")
+    private let regex = try! NSRegularExpression(pattern: "#[\\p{L}\\p{N}_]+")
     
     let _keyboard = PassthroughSubject<Keyboard?, Never>()
     var keyboard: AnyPublisher<Keyboard?, Never> { _keyboard.eraseToAnyPublisher() }
@@ -52,7 +52,7 @@ class HashtagManager: ObservableObject {
     }
 }
 
-extension HashtagManager {
+extension HashtagViewModel {
     enum Keyboard {
         case up
         case down

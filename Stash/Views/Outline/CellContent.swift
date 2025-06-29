@@ -172,7 +172,7 @@ struct CellContent: View {
                 HashtagTextField(text: $viewModel.title, focused: focused)
                     .font(flag ? NSFont.systemFont(ofSize: NSFont.systemFontSize) : NSFont.systemFont(ofSize: NSFont.systemFontSize + 5))
                     .focused($focused)
-                    .environmentObject(HashtagManager(cabinet: cabinet))
+                    .environmentObject(HashtagViewModel(cabinet: cabinet))
             }
             .padding(.vertical, flag ? 0 : 4)
             
