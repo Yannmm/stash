@@ -12,9 +12,14 @@ class HashtagManager: ObservableObject {
     let cabinet: OkamuraCabinet
     @Published var hashtags: [String] = []
     @Published var filter: String = ""
-    @Published var navigateByKeyboard: ArrowKey?
     private var cancellables = Set<AnyCancellable>()
     private let regex = try! NSRegularExpression(pattern: "#[a-zA-Z0-9_]+")
+    
+    let _keyboard = PassthroughSubject<Keyboard?, Never>()
+    var keyboard: AnyPublisher<Keyboard?, Never> { _keyboard.eraseToAnyPublisher() }
+    func setKeyboard(_ value: Keyboard?) {
+        _keyboard.send(value)
+    }
     
     init(cabinet: OkamuraCabinet) {
         self.cabinet = cabinet
@@ -48,8 +53,9 @@ class HashtagManager: ObservableObject {
 }
 
 extension HashtagManager {
-    enum ArrowKey {
+    enum Keyboard {
         case up
         case down
+        case enter
     }
 }

@@ -82,22 +82,23 @@ struct HashtagTextField: NSViewRepresentable {
         
         func controlTextDidEndEditing(_ obj: Notification) {
             parent.onCommit()
-            
         }
         
         func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
+            print("xx -> \(commandSelector)")
             switch commandSelector {
             case #selector(NSResponder.moveDown(_:)):
-                parent.hashtagManager.navigateByKeyboard = .down
+                parent.hashtagManager.setKeyboard(.down)
                 return true
             case #selector(NSResponder.moveUp(_:)):
-                parent.hashtagManager.navigateByKeyboard = .up
+                parent.hashtagManager.setKeyboard(.up)
+                return true
+            case #selector(NSResponder.insertNewline(_:)):
+                parent.hashtagManager.setKeyboard(.enter)
                 return true
             default:
                 return false
             }
-            
-            todo: implement enter to select an item.
         }
         
         private func show(_ textField: NSTextField) {

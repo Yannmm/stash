@@ -11,9 +11,8 @@ struct SuggestionListView: View {
     let onTap: (String) -> Void
     @EnvironmentObject var hashtagManager: HashtagManager
 
-    @State private var activeIndex: Int = 0
+    @State private var activeIndex: Int?
     @State private var isHovering: Bool = false
-//    @FocusState private var isFocused: Bool
     
     
     var body: some View {
@@ -35,38 +34,19 @@ struct SuggestionListView: View {
         .frame(width: 200, height: 150)
         .background(Color(nsColor: .controlBackgroundColor))
         .cornerRadius(12)
-//        .focusable(true)
-//        .focused($isFocused)
-//        .onAppear {
-//            isFocused = true
-//        }
-//        .onChange(of: hashtagManager.focused, { _, newValue in
-//            print("改变 ！！！ -》 \(newValue)")
-//            isFocused = hashtagManager.focused
-//        })
-        .onReceive(hashtagManager.$navigateByKeyboard, perform: { value in
+        .onReceive(hashtagManager.keyboard, perform: { value in
+//            print("xx -> \(activeIndex), \(value)")
             guard let direction = value else { return }
             switch direction {
             case .down: // ↓ Down arrow
-                activeIndex = (activeIndex + 1) % hashtagManager.hashtags.count
+                activeIndex = activeIndex == nil ? 0 : (activeIndex! + 1) % hashtagManager.hashtags.count
             case .up: // ↑ Up arrow
-                activeIndex = (activeIndex - 1 + hashtagManager.hashtags.count) % hashtagManager.hashtags.count
+                // TODO: might out of range
+                activeIndex = activeIndex == nil ? 0 : (activeIndex! - 1 + hashtagManager.hashtags.count) % hashtagManager.hashtags.count
+            case .enter:
+                onTap(hashtagManager.hashtags[activeIndex ?? 0])
             }
         })
-//        .onKeyDown { event in
-////            guard isFocused else { return }
-//
-//            isHovering = false // stop tracking mouse once keys are used
-//
-//            switch event.keyCode {
-//            case 125: // ↓ Down arrow
-//                activeIndex = (activeIndex + 1) % hashtagManager.hashtags.count
-//            case 126: // ↑ Up arrow
-//                activeIndex = (activeIndex - 1 + hashtagManager.hashtags.count) % hashtagManager.hashtags.count
-//            default:
-//                break
-//            }
-//        }
     }
 }
 
