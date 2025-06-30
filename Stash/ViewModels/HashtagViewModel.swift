@@ -10,8 +10,9 @@ import AppKit
 
 class HashtagViewModel: ObservableObject {
     let cabinet: OkamuraCabinet
+    @Published var title: String?
     @Published var hashtags: [String] = []
-    @Published var filter: String = ""
+    @Published var filter: String?
     private var cancellables = Set<AnyCancellable>()
     private let regex = try! NSRegularExpression(pattern: "#[\\p{L}\\p{N}_]+")
     private let regex2 = try! NSRegularExpression(pattern: "#[\\p{L}\\p{N}_]*")
@@ -42,9 +43,17 @@ class HashtagViewModel: ObservableObject {
             .map({ Set($0) })
             .map({ Array($0).sorted(by: { $0 < $1 }) })
         
-        Publishers.CombineLatest(all, $filter)
-            .map { all, filter in
-                all.filter({ $0.contains(filter) })
+        title 还没用上
+        
+        Publishers.CombineLatest3(all, $filter, $title)
+            .map { all, filter, title in
+                all.filter({
+                    if let f = filter {
+                        return $0.contains(f)
+                    } else {
+                        return true
+                    }
+                })
             }
             .sink { [unowned self] result in
                 self.hashtags = result

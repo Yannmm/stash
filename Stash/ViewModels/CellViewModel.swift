@@ -12,11 +12,12 @@ class CellViewModel: ObservableObject {
     @Published var title: String
     @Published var error: Error?
     
-    var cabinet: OkamuraCabinet!
+    let cabinet: OkamuraCabinet
     
     private var cancellables = Set<AnyCancellable>()
     
-    init(entry: (any Entry)? = nil) {
+    init(entry: (any Entry)? = nil, cabinet: OkamuraCabinet) {
+        self.cabinet = cabinet
         self.entry = entry
         self.title = entry?.name ?? ""
         

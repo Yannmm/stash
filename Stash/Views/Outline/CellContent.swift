@@ -19,13 +19,13 @@ struct CellContent: View {
     @EnvironmentObject var cabinet: OkamuraCabinet
     @EnvironmentObject var focusMonitor: FocusMonitor
     @ObservedObject var viewModel: CellViewModel
+    @ObservedObject var hashtagViewModel: HashtagViewModel
     @FocusState private var focused: Bool
     @State private var expanded: Bool = false
     @State private var selected: Bool = false
     @State private var deleteAlert: Bool = false
     @State private var ungroupAlert: Bool = false
     @State private var didCopy = false
-    
     
     var shouldShowDelete: Bool {
         return expanded && !focusMonitor.isEditing
@@ -75,7 +75,6 @@ struct CellContent: View {
         .padding(.vertical, 10)
         .padding(.trailing, 10)
         .onAppear {
-            viewModel.cabinet = cabinet
             expanded = NSEvent.modifierFlags.containsOnly(.command)
             focused = false
         }
@@ -93,6 +92,9 @@ struct CellContent: View {
         }
         .onChange(of: focusMonitor.isEditing, { _, newValue in
             expanded = false
+        })
+        .onChange(of: viewModel.title, { _, newValue in
+            hashtagViewModel.title = newValue
         })
         .onReceive(NotificationCenter.default.publisher(for: .onDoubleTapRowView)) { noti in
             guard !expanded else { return }
@@ -172,7 +174,7 @@ struct CellContent: View {
                 HashtagTextField(text: $viewModel.title, focused: focused)
                     .font(flag ? NSFont.systemFont(ofSize: NSFont.systemFontSize) : NSFont.systemFont(ofSize: NSFont.systemFontSize + 5))
                     .focused($focused)
-                    .environmentObject(HashtagViewModel(cabinet: cabinet))
+                    .environmentObject(hashtagViewModel)
             }
             .padding(.vertical, flag ? 0 : 4)
             
