@@ -9,7 +9,7 @@ import SwiftUI
 import Combine
 
 struct HashtagTextField: NSViewRepresentable {
-    @EnvironmentObject var hashtagManager: HashtagViewModel
+    @EnvironmentObject var viewModel: HashtagViewModel
     @Binding var text: String
     let focused: Bool
     var font: NSFont?
@@ -38,6 +38,8 @@ struct HashtagTextField: NSViewRepresentable {
     func updateNSView(_ textField: NSTextField, context: Context) {
         textField.font = font
         
+        context.coordinator.monitorCursor(focused, textField)
+        
         if let coordinator = textField.delegate as? Coordinator, !focused {
             coordinator.hide()
         }
@@ -65,8 +67,34 @@ struct HashtagTextField: NSViewRepresentable {
         
         private var cancellables = Set<AnyCancellable>()
         
+        private var observer: NSObjectProtocol?
+        
         init(_ parent: HashtagTextField) {
             self.parent = parent
+        }
+        
+        deinit {
+            if let o = observer {
+                NotificationCenter.default.removeObserver(o)
+                observer = nil
+            }
+        }
+        
+        func monitorCursor(_ focused: Bool, _ textField: NSTextField) {
+            if focused, let editor = textField.currentEditor() as? NSTextView {
+                observer = NotificationCenter.default.addObserver(
+                    forName: NSTextView.didChangeSelectionNotification,
+                    object: editor,
+                    queue: .main
+                ) { [weak self] notification in
+                    self?.hide()
+                }
+            } else {
+                if let o = observer {
+                    NotificationCenter.default.removeObserver(o)
+                    observer = nil
+                }
+            }
         }
         
         func controlTextDidChange(_ obj: Notification) {
@@ -87,13 +115,13 @@ struct HashtagTextField: NSViewRepresentable {
         func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
             switch commandSelector {
             case #selector(NSResponder.moveDown(_:)):
-                parent.hashtagManager.setKeyboard(.down)
+                parent.viewModel.setKeyboard(.down)
                 return true
             case #selector(NSResponder.moveUp(_:)):
-                parent.hashtagManager.setKeyboard(.up)
+                parent.viewModel.setKeyboard(.up)
                 return true
             case #selector(NSResponder.insertNewline(_:)):
-                parent.hashtagManager.setKeyboard(.enter)
+                parent.viewModel.setKeyboard(.enter)
                 return true
             default:
                 return false
@@ -123,7 +151,7 @@ struct HashtagTextField: NSViewRepresentable {
             
             let hashtag = (textView.string as NSString).substring(with: NSRange(location: range.location, length: cursor - range.location))
             
-            parent.hashtagManager.filter = hashtag
+            parent.viewModel.filter = hashtag
             
             // Get the bounding rect for that character
             guard let glyphRange = textView.layoutManager?.glyphRange(forCharacterRange: range, actualCharacterRange: nil),
@@ -175,7 +203,7 @@ struct HashtagTextField: NSViewRepresentable {
             panel.contentViewController = NSHostingController(rootView: HashtagSuggestionListView(onTap: { [weak self] hashtag in
                 self?._insert(hashtag, textField)
                 self?.hide()
-            }).environmentObject(parent.hashtagManager))
+            }).environmentObject(parent.viewModel))
             panel.orderFront(nil)
         }
         
@@ -185,27 +213,18 @@ struct HashtagTextField: NSViewRepresentable {
         }
         
         private func _insert(_ hashtag: String, _ textField: NSTextField) {
-            // Find the first "#" character to the left of cursor
             guard let window = textField.window,
                   let textView = window.fieldEditor(true, for: textField) as? NSTextView else {
                 return
             }
             let cursor = textView.selectedRange().location
-            let text = (textView.string as NSString).substring(to: cursor)
-            //            let range = (text as NSString).range(of: "#", options: .backwards)
-            //            guard range.location != NSNotFound else { return }
-            let rest = (textView.string as NSString).substring(from: cursor)
-            
-            if let range = text.range(of: #"(^|(?<=\s))#\w*$"#, options: .regularExpression) {
-                let inserted = text.replacingCharacters(in: range, with: hashtag)
-                let newText = inserted + rest
-                textField.stringValue = newText
+            if let result = parent.viewModel.insert(text: textView.string, hashtag: hashtag, cursorLocation: cursor) {
+                textField.stringValue = result.0
                 if let editor = textField.currentEditor() {
-                    let range = NSRange(location: (inserted as NSString).length, length: 0)
-                    editor.selectedRange = range
-                    editor.scrollRangeToVisible(range)
+                    editor.selectedRange = result.1
+                    editor.scrollRangeToVisible(result.1)
                 }
-                parent.text = newText
+                parent.text = result.0
             }
         }
     }

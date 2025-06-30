@@ -14,6 +14,7 @@ class HashtagViewModel: ObservableObject {
     @Published var filter: String = ""
     private var cancellables = Set<AnyCancellable>()
     private let regex = try! NSRegularExpression(pattern: "#[\\p{L}\\p{N}_]+")
+    private let regex2 = try! NSRegularExpression(pattern: "#[\\p{L}\\p{N}_]*")
     
     let _keyboard = PassthroughSubject<Keyboard?, Never>()
     var keyboard: AnyPublisher<Keyboard?, Never> { _keyboard.eraseToAnyPublisher() }
@@ -49,6 +50,21 @@ class HashtagViewModel: ObservableObject {
                 self.hashtags = result
             }
             .store(in: &cancellables)
+    }
+    
+    func insert(text: String, hashtag: String, cursorLocation: Int) -> (String, NSRange)? {
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        let matches = self.regex2.matches(in: text, range: range)
+        if let cursored = matches.filter({ (cursorLocation >= $0.range.location)
+            && (cursorLocation <= $0.range.location + $0.range.length) }).first,
+           let range = Range(cursored.range, in: text) {
+            let updated = text.replacingCharacters(in: range, with: hashtag)
+            let cursorRange = NSRange(updated.range(of: hashtag)!, in: updated)
+            let cursorRange1 = NSRange(location: cursorRange.location + cursorRange.length, length: 0)
+            return (updated, cursorRange1)
+        } else {
+            return nil
+        }
     }
 }
 

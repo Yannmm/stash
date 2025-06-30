@@ -9,7 +9,7 @@ import SwiftUI
 
 struct HashtagSuggestionListView: View {
     let onTap: (String) -> Void
-    @EnvironmentObject var hashtagManager: HashtagViewModel
+    @EnvironmentObject var viewModel: HashtagViewModel
     
     @State private var activeIndex: Int?
     @State private var isHovering: Bool = false
@@ -17,14 +17,13 @@ struct HashtagSuggestionListView: View {
     
     var body: some View {
         ScrollViewReader { proxy in
-            List(Array(hashtagManager.hashtags.enumerated()), id: \.offset) { index, fruit in
+            List(Array(viewModel.hashtags.enumerated()), id: \.offset) { index, fruit in
                 HStack {
                     Text(fruit)
+                        .bold()
                         .foregroundColor(.secondary)
                         .padding(EdgeInsets(top: 8, leading: 10, bottom: 8, trailing: 10))
                     Spacer() // Fill remaining space
-                    
-                todo: 离开焦点，自动保存title
                 }
                 .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                 .listRowSeparator(.hidden)
@@ -51,75 +50,18 @@ struct HashtagSuggestionListView: View {
                     proxy.scrollTo(index, anchor: .center)
                 }
             }
-            .onReceive(hashtagManager.keyboard, perform: { value in
+            .onReceive(viewModel.keyboard, perform: { value in
                 guard let direction = value else { return }
                 switch direction {
                 case .down: // ↓ Down arrow
-                    activeIndex = activeIndex == nil ? 0 : (activeIndex! + 1) % hashtagManager.hashtags.count
+                    activeIndex = activeIndex == nil ? 0 : (activeIndex! + 1) % viewModel.hashtags.count
                 case .up: // ↑ Up arrow
                     // TODO: might out of range
-                    activeIndex = activeIndex == nil ? 0 : (activeIndex! - 1 + hashtagManager.hashtags.count) % hashtagManager.hashtags.count
+                    activeIndex = activeIndex == nil ? 0 : (activeIndex! - 1 + viewModel.hashtags.count) % viewModel.hashtags.count
                 case .enter:
-                    onTap(hashtagManager.hashtags[activeIndex ?? 0])
+                    onTap(viewModel.hashtags[activeIndex ?? 0])
                 }
             })
-        }
-    }
-}
-
-
-
-import SwiftUI
-
-struct KeyDownViewModifier: ViewModifier {
-    let handler: (NSEvent) -> Void
-    
-    func body(content: Content) -> some View {
-        content
-            .background(KeyDownRepresentable(handler: handler)) // ✅ fix here
-    }
-}
-
-extension View {
-    func onKeyDown(perform handler: @escaping (NSEvent) -> Void) -> some View {
-        self.modifier(KeyDownViewModifier(handler: handler))
-    }
-}
-
-struct KeyDownRepresentable: NSViewRepresentable {
-    let handler: (NSEvent) -> Void
-    
-    func makeNSView(context: Context) -> NSView {
-        let view = KeyDownView(handler: handler)
-        return view
-    }
-    
-    func updateNSView(_ nsView: NSView, context: Context) {
-        // No update needed
-    }
-    
-    class KeyDownView: NSView {
-        let handler: (NSEvent) -> Void
-        
-        init(handler: @escaping (NSEvent) -> Void) {
-            self.handler = handler
-            super.init(frame: .zero)
-        }
-        
-        required init?(coder: NSCoder) {
-            fatalError("init(coder:) has not been implemented")
-        }
-        
-        override var acceptsFirstResponder: Bool { true }
-        
-        override func keyDown(with event: NSEvent) {
-            handler(event)
-        }
-        
-        override func viewDidMoveToWindow() {
-            DispatchQueue.main.async { [weak self] in
-                self?.window?.makeFirstResponder(self)
-            }
         }
     }
 }
