@@ -76,13 +76,10 @@ extension AppDelegate {
         menu.delegate = self
 
         for (index, entry) in entries.filter({ $0.parentId == parentId }).enumerated() {
-            let actionable = entry is Actionable
-            let item = CustomMenuItem(title: entry.name, action: actionable ? #selector(action(_:)) : nil, keyEquivalent: "", with: entry)
-            if actionable {
-                item.keyEquivalentModifierMask = []
-                if index <= keyEquivalents.count - 1 {
-                    item.keyEquivalent = keyEquivalents[index]
-                }
+            let item = CustomMenuItem(title: entry.name, action: #selector(action(_:)), keyEquivalent: "", with: entry)
+            item.keyEquivalentModifierMask = []
+            if index <= keyEquivalents.count - 1 {
+                item.keyEquivalent = keyEquivalents[index]
             }
             
             switch entry.icon {
