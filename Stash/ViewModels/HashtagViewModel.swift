@@ -29,25 +29,32 @@ class HashtagViewModel: ObservableObject {
     }
     
     private func bind() {
-        let all =  cabinet.$storedEntries
-            .map {
-                $0
-                    .map({ $0.name })
-                    .map({ [unowned self] text in
-                        let nsrange = NSRange(text.startIndex..<text.endIndex, in: text)
-                        let matches = self.regex.matches(in: text, range: nsrange)
-                        return matches.map { String(text[Range($0.range, in: text)!]) }
-                    })
-                    .flatMap({ $0 })
-            }
-            .map({ Set($0) })
-            .map({ Array($0).sorted(by: { $0 < $1 }) })
+        func _extract(_ source: some Publisher<[String], Never>) -> some Publisher<Set<String>, Never> {
+            source
+                .map {
+                    $0
+                        .map({ [unowned self] text in
+                            let nsrange = NSRange(text.startIndex..<text.endIndex, in: text)
+                            let matches = self.regex.matches(in: text, range: nsrange)
+                            return matches.map { String(text[Range($0.range, in: text)!]) }
+                        })
+                        .flatMap({ $0 })
+                }
+                .map({ Set($0) })
+        }
         
-        title 还没用上
+        let existings = _extract($title.map({ $0.map({ o in [o] }) ?? [] }))
         
-        Publishers.CombineLatest3(all, $filter, $title)
-            .map { all, filter, title in
-                all.filter({
+        let all =  _extract(cabinet.$storedEntries.map({ $0.map({ $0.name }) }))
+        
+        let rest = Publishers.CombineLatest(existings, all).map { a, b in
+            b.subtracting(a)
+        }
+        .map({ Array($0).sorted(by: { $0 < $1 }) })
+        
+        Publishers.CombineLatest(rest, $filter)
+            .map { rest, filter in
+                rest.filter({
                     if let f = filter {
                         return $0.contains(f)
                     } else {
