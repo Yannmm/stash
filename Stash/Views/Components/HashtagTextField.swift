@@ -109,7 +109,7 @@ struct HashtagTextField: NSViewRepresentable {
             }
             parent.text = textField.stringValue
         }
-        
+        移除重复的标签，一个 title 中
         func controlTextDidEndEditing(_ obj: Notification) {
             parent.onCommit()
         }
