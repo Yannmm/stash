@@ -14,8 +14,6 @@ class HashtagViewModel: ObservableObject {
     @Published var hashtags: [String] = []
     @Published var filter: String?
     private var cancellables = Set<AnyCancellable>()
-    private let regex = try! NSRegularExpression(pattern: "#[\\p{L}\\p{N}_]+")
-    private let regex2 = try! NSRegularExpression(pattern: "#[\\p{L}\\p{N}_]*")
     
     let _keyboard = PassthroughSubject<Keyboard?, Never>()
     var keyboard: AnyPublisher<Keyboard?, Never> { _keyboard.eraseToAnyPublisher() }
@@ -33,9 +31,9 @@ class HashtagViewModel: ObservableObject {
             source
                 .map {
                     $0
-                        .map({ [unowned self] text in
+                        .map({ text in
                             let nsrange = NSRange(text.startIndex..<text.endIndex, in: text)
-                            let matches = self.regex.matches(in: text, range: nsrange)
+                            let matches = Constant.regex2.matches(in: text, range: nsrange)
                             return matches.map { String(text[Range($0.range, in: text)!]) }
                         })
                         .flatMap({ $0 })
@@ -52,11 +50,11 @@ class HashtagViewModel: ObservableObject {
         }
         .map({ Array($0).sorted(by: { $0 < $1 }) })
         
-        Publishers.CombineLatest(rest, $filter)
+        Publishers.CombineLatest(rest, $filter.map({ $0?.lowercased() }))
             .map { rest, filter in
                 rest.filter({
                     if let f = filter {
-                        return $0.contains(f)
+                        return $0.lowercased().contains(f)
                     } else {
                         return true
                     }
@@ -68,12 +66,21 @@ class HashtagViewModel: ObservableObject {
             .store(in: &cancellables)
     }
     
-    func insert(text: String, hashtag: String, cursorLocation: Int) -> (String, NSRange)? {
+    @discardableResult
+    func findCursoredRange(text: String, cursorLocation: Int) -> NSRange? {
         let range = NSRange(text.startIndex..<text.endIndex, in: text)
-        let matches = self.regex2.matches(in: text, range: range)
+        let matches = Constant.regex1.matches(in: text, range: range)
         if let cursored = matches.filter({ (cursorLocation >= $0.range.location)
-            && (cursorLocation <= $0.range.location + $0.range.length) }).first,
-           let range = Range(cursored.range, in: text) {
+            && (cursorLocation <= $0.range.location + $0.range.length) }).first {
+            return cursored.range
+        } else {
+            return nil
+        }
+    }
+    
+    func insert(text: String, hashtag: String, cursorLocation: Int) -> (String, NSRange)? {
+        if let cursored = findCursoredRange(text: text, cursorLocation: cursorLocation),
+           let range = Range(cursored, in: text) {
             let updated = text.replacingCharacters(in: range, with: hashtag)
             let cursorRange = NSRange(updated.range(of: hashtag)!, in: updated)
             let cursorRange1 = NSRange(location: cursorRange.location + cursorRange.length, length: 0)
@@ -89,5 +96,15 @@ extension HashtagViewModel {
         case up
         case down
         case enter
+    }
+}
+
+extension HashtagViewModel {
+    enum Constant {
+        static let pattern1 = "#[^\\s]*"
+        static let regex1 = try! NSRegularExpression(pattern: pattern1)
+        
+        static let pattern2 = "#[^\\s]+"
+        static let regex2 = try! NSRegularExpression(pattern: pattern2)
     }
 }

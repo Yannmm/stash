@@ -11,11 +11,10 @@ import Combine
 struct HashtagTextField: NSViewRepresentable {
     @EnvironmentObject var viewModel: HashtagViewModel
     @Binding var text: String
+    @State var suggestionIndex: Int?
     let focused: Bool
     var font: NSFont?
     var onCommit: () -> Void = {}
-    
-    @State private var selectedIndex = 0
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -23,15 +22,17 @@ struct HashtagTextField: NSViewRepresentable {
     
     func makeNSView(context: Context) -> NSTextField {
         let textField = NSTextField()
+        
         textField.delegate = context.coordinator
         textField.isEditable = true
         textField.isBordered = false
         textField.backgroundColor = .clear
-        textField.focusRingType = .none
+        //        textField.focusRingType = .none
         textField.font = font
         textField.lineBreakMode = .byTruncatingMiddle
         textField.usesSingleLineMode = true
         textField.stringValue = text
+        textField.focusRingType = .none
         return textField
     }
     
@@ -98,12 +99,13 @@ struct HashtagTextField: NSViewRepresentable {
         }
         
         func controlTextDidChange(_ obj: Notification) {
-            guard let textField = obj.object as? NSTextField else { return }
-            let text = textField.stringValue
-            if let range = text.range(of: #"(^|(?<=\s))#\w*$"#, options: .regularExpression) {
+            guard let textField = obj.object as? NSTextField, let cursor = getCursor(textField) else { return }
+            if let _ = parent.viewModel.findCursoredRange(text: textField.stringValue, cursorLocation: cursor.0) {
                 show(textField)
+                print("showshowshowshowshow")
             } else {
                 hide()
+                print("hidehidehidehide")
             }
             parent.text = textField.stringValue
         }
@@ -121,6 +123,7 @@ struct HashtagTextField: NSViewRepresentable {
                 parent.viewModel.setKeyboard(.up)
                 return true
             case #selector(NSResponder.insertNewline(_:)):
+                guard parent.suggestionIndex != nil else { return false }
                 parent.viewModel.setKeyboard(.enter)
                 return true
             default:
@@ -136,21 +139,14 @@ struct HashtagTextField: NSViewRepresentable {
             }
         }
         
-        private func _whereToAnchor(_ textField: NSTextField) -> (NSRect, String)? {
-            guard let window = textField.window,
-                  let textView = window.fieldEditor(true, for: textField) as? NSTextView else {
-                return nil
-            }
+        private func _whereToAnchor(_ textField: NSTextField) -> NSRect? {
+            guard let cursor = getCursor(textField),
+                  let range = parent.viewModel.findCursoredRange(text: textField.stringValue, cursorLocation: cursor.0) else { return nil }
             
-            // Find the first "#" character to the left of cursor
-            let cursor = textView.selectedRange().location
-            let text = (textView.string as NSString).substring(to: cursor)
+            let textView = cursor.1
+            let hashtag = (textView.string as NSString).substring(with: range)
             
-            let range = (text as NSString).range(of: "#", options: .backwards)
-            guard range.location != NSNotFound else { return nil }
-            
-            let hashtag = (textView.string as NSString).substring(with: NSRange(location: range.location, length: cursor - range.location))
-            
+            print("目前的 hashtag 是 \(hashtag)")
             parent.viewModel.filter = hashtag
             
             // Get the bounding rect for that character
@@ -163,24 +159,20 @@ struct HashtagTextField: NSViewRepresentable {
             let rect2 = textView.convert(rect1, to: nil)
             let rect3 = textView.window?.convertToScreen(rect2)
             guard let result = rect3 else { return nil }
-            return (result, hashtag)
+            return result
         }
         
-        private func _makePanel(_ anchor: (NSRect, String), _ textField: NSTextField) {
+        private func _makePanel(_ anchor: NSRect, _ textField: NSTextField) {
             hide()
             _setupPanel(anchor, textField)
         }
         
-        private func _setupPanel(_ anchor: (NSRect, String), _ textField: NSTextField) {
-            // Calculate panel size
-            let panelWidth: CGFloat = 120
-            let itemHeight: CGFloat = 22
-            //            let panelHeight = CGFloat(suggestions.count) * itemHeight
+        private func _setupPanel(_ anchor: NSRect, _ textField: NSTextField) {
+            guard !parent.viewModel.hashtags.isEmpty else { return }
             
-            // Position panel below cursor
             let contentRect = NSRect(
-                x: anchor.0.origin.x,
-                y: anchor.0.origin.y - 150,
+                x: anchor.origin.x,
+                y: anchor.origin.y - 150,
                 width: 200,
                 height: 150
             )
@@ -200,7 +192,7 @@ struct HashtagTextField: NSViewRepresentable {
             panel.becomesKeyOnlyIfNeeded = false
             panel.acceptsMouseMovedEvents = true
             
-            panel.contentViewController = NSHostingController(rootView: HashtagSuggestionListView(onTap: { [weak self] hashtag in
+            panel.contentViewController = NSHostingController(rootView: HashtagSuggestionListView(index: parent.$suggestionIndex, onTap: { [weak self] hashtag in
                 self?._insert(hashtag, textField)
                 self?.hide()
             }).environmentObject(parent.viewModel))
@@ -213,12 +205,8 @@ struct HashtagTextField: NSViewRepresentable {
         }
         
         private func _insert(_ hashtag: String, _ textField: NSTextField) {
-            guard let window = textField.window,
-                  let textView = window.fieldEditor(true, for: textField) as? NSTextView else {
-                return
-            }
-            let cursor = textView.selectedRange().location
-            if let result = parent.viewModel.insert(text: textView.string, hashtag: hashtag, cursorLocation: cursor) {
+            guard let cursor = getCursor(textField)?.0 else { return }
+            if let result = parent.viewModel.insert(text: textField.stringValue, hashtag: hashtag, cursorLocation: cursor) {
                 textField.stringValue = result.0
                 if let editor = textField.currentEditor() {
                     editor.selectedRange = result.1
@@ -226,6 +214,14 @@ struct HashtagTextField: NSViewRepresentable {
                 }
                 parent.text = result.0
             }
+        }
+        
+        private func getCursor(_ textField: NSTextField) -> (Int, NSTextView)? {
+            guard let window = textField.window,
+                  let textView = window.fieldEditor(true, for: textField) as? NSTextView else {
+                return nil
+            }
+            return (textView.selectedRange().location, textView)
         }
     }
 }
