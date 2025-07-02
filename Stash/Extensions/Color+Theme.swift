@@ -9,10 +9,6 @@ import SwiftUICore
 import AppKit
 
 extension Color {
-//    static var primary: Color {
-//        return Color(hex: 0x7766E8)
-//    }
-    
     static var accent: Color {
         return Color(hex: 0xD3D3D3)
     }
@@ -22,13 +18,9 @@ extension Color {
     }
     
     static var primary: Color {
-        return Color(NSColor(name: nil) { appearance in
-            if appearance.name == .darkAqua || appearance.name == .vibrantDark {
-                return NSColor(Color(hex: 0xB0A8FF)) // Dark background
-            } else {
-                return NSColor(Color(hex: 0x7766E8)) // Light background
-            }
-        })
+        let currentAppearance = NSApp.effectiveAppearance
+        let isDarkMode = currentAppearance.name == .darkAqua || currentAppearance.name == .vibrantDark
+        return isDarkMode ? Color(hex: 0xB0A8FF) : Color(hex: 0x7766E8)
     }
 }
 

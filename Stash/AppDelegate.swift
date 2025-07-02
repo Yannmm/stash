@@ -45,8 +45,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         //        NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
         
         // TODO: remove this line
-//        ImageCache.default.diskStorage.config.expiration = .days(1)
-//        ImageCache.default.clearDiskCache()
+        //        ImageCache.default.diskStorage.config.expiration = .days(1)
+        //        ImageCache.default.clearDiskCache()
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -56,13 +56,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func bind() {
-        Publishers.CombineLatest3(cabinet.$storedEntries, cabinet.$recentEntries, settingsViewModel.$collapseHistory)
-            .sink { [weak self] tuple3 in
-                Task { @MainActor in
-                    self?.statusItem?.menu = self?.generateMenu(from: tuple3.0, history: tuple3.1, collapseHistory: tuple3.2)
-                }
+        Publishers.CombineLatest3(cabinet.$storedEntries,
+                                  cabinet.$recentEntries,
+                                  settingsViewModel.$collapseHistory)
+        .sink { [weak self] tuple3 in
+            Task { @MainActor in
+                self?.statusItem?.menu = self?.generateMenu(from: tuple3.0, history: tuple3.1, collapseHistory: tuple3.2)
             }
-            .store(in: &cancellables)
+        }
+        .store(in: &cancellables)
         
         NotificationCenter.default.addObserver(forName: .onShortcutKeyDown, object: nil, queue: nil) { [weak self] _ in
             if let button = self?.statusItem?.button {
