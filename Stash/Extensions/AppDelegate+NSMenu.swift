@@ -157,7 +157,7 @@ extension AppDelegate {
         let attributed = NSMutableAttributedString(string: title)
         
         let attributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor: NSColor.systemBlue,
+            .foregroundColor: NSColor(.primary),
 //            .font: NSFont.systemFont(ofSize: 16, weight: .thin)
         ]
         for match in title.hashtagMatches {

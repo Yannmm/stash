@@ -6,11 +6,12 @@
 //
 
 import SwiftUICore
+import AppKit
 
 extension Color {
-    static var primary: Color {
-        return Color(hex: 0x7766E8)
-    }
+//    static var primary: Color {
+//        return Color(hex: 0x7766E8)
+//    }
     
     static var accent: Color {
         return Color(hex: 0xD3D3D3)
@@ -18,6 +19,16 @@ extension Color {
     
     static var text: Color {
         return Color(hex: 0x2B2D31)
+    }
+    
+    static var primary: Color {
+        return Color(NSColor(name: nil) { appearance in
+            if appearance.name == .darkAqua || appearance.name == .vibrantDark {
+                return NSColor(Color(hex: 0xB0A8FF)) // Dark background
+            } else {
+                return NSColor(Color(hex: 0x7766E8)) // Light background
+            }
+        })
     }
 }
 
