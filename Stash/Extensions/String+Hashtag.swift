@@ -21,8 +21,12 @@ extension String {
 
 extension String {
     var hashtags: [String] {
+        return hashtagMatches.map { String(self[Range($0.range, in: self)!]) }
+    }
+    
+    var hashtagMatches: [NSTextCheckingResult] {
         let nsrange = NSRange(self.startIndex..<self.endIndex, in: self)
         let matches = String.RegexConstant.regex2.matches(in: self, range: nsrange)
-        return matches.map { String(self[Range($0.range, in: self)!]) }
+        return matches
     }
 }

@@ -77,6 +77,8 @@ extension AppDelegate {
 
         for (index, entry) in entries.filter({ $0.parentId == parentId }).enumerated() {
             let item = CustomMenuItem(title: entry.name, action: #selector(action(_:)), keyEquivalent: "", with: entry)
+            item.attributedTitle = highlightHashtags(entry.name)
+            
             item.keyEquivalentModifierMask = []
             if index <= keyEquivalents.count - 1 {
                 item.keyEquivalent = keyEquivalents[index]
@@ -149,6 +151,19 @@ extension AppDelegate {
         DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.25)) {
             NotificationCenter.default.post(name: .onShouldOpenImportPanel, object: nil)
         }
+    }
+    
+    private func highlightHashtags(_ title: String) -> NSAttributedString {
+        let attributed = NSMutableAttributedString(string: title)
+        
+        let attributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: NSColor.systemBlue,
+//            .font: NSFont.systemFont(ofSize: 16, weight: .thin)
+        ]
+        for match in title.hashtagMatches {
+            attributed.addAttributes(attributes, range: match.range)
+        }
+        return attributed
     }
 }
 
