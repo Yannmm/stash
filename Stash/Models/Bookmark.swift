@@ -38,7 +38,13 @@ extension Bookmark: Entry {
 
 extension Bookmark {
     func open() {
-        NSWorkspace.shared.open(url)
+        let browser = name.hashtags
+            .map({ $0.split(separator: "#").last })
+            .compactMap({ $0 })
+            .map({ String.Browser(rawValue: String($0)) })
+            .compactMap({ $0 })
+            .last
+        NSWorkspace.shared.openURL(url, withPreferredBrowser: browser?.name)
     }
     
     func reveal() {
@@ -52,4 +58,5 @@ extension Bookmark {
     
     var valueToCopy: String? { url.absoluteString }
 }
+
 

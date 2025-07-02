@@ -33,7 +33,7 @@ class HashtagViewModel: ObservableObject {
                     $0
                         .map({ text in
                             let nsrange = NSRange(text.startIndex..<text.endIndex, in: text)
-                            let matches = Constant.regex2.matches(in: text, range: nsrange)
+                            let matches = String.RegexConstant.regex2.matches(in: text, range: nsrange)
                             return matches.map { String(text[Range($0.range, in: text)!]) }
                         })
                         .flatMap({ $0 })
@@ -43,7 +43,7 @@ class HashtagViewModel: ObservableObject {
         
         let existings = _extract($title.map({ $0.map({ o in [o] }) ?? [] }))
         
-        let all =  _extract(cabinet.$storedEntries.map({ $0.map({ $0.name }) }))
+        let all =  _extract(cabinet.$storedEntries.map({ $0.map({ $0.name }) })).map({ $0.union(String.RegexConstant.predefinedHashtags) })
         
         let rest = Publishers.CombineLatest(existings, all).map { a, b in
             b.subtracting(a)
@@ -69,7 +69,7 @@ class HashtagViewModel: ObservableObject {
     @discardableResult
     func findCursoredRange(text: String, cursorLocation: Int) -> NSRange? {
         let range = NSRange(text.startIndex..<text.endIndex, in: text)
-        let matches = Constant.regex1.matches(in: text, range: range)
+        let matches = String.RegexConstant.regex1.matches(in: text, range: range)
         if let cursored = matches.filter({ (cursorLocation >= $0.range.location)
             && (cursorLocation <= $0.range.location + $0.range.length) }).first {
             return cursored.range
@@ -96,15 +96,5 @@ extension HashtagViewModel {
         case up
         case down
         case enter
-    }
-}
-
-extension HashtagViewModel {
-    enum Constant {
-        static let pattern1 = "#[^\\s]*"
-        static let regex1 = try! NSRegularExpression(pattern: pattern1)
-        
-        static let pattern2 = "#[^\\s]+"
-        static let regex2 = try! NSRegularExpression(pattern: pattern2)
     }
 }

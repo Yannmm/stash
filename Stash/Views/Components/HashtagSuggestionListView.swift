@@ -21,8 +21,7 @@ struct HashtagSuggestionListView: View {
                     Text(fruit)
                         .lineLimit(1)
                         .truncationMode(.middle)
-                        .bold()
-                        .foregroundColor(.secondary)
+                        .font(.system(size: 18, weight: .thin))
                         .padding(EdgeInsets(top: 8, leading: 10, bottom: 8, trailing: 10))
                     Spacer() // Fill remaining space
                 }
