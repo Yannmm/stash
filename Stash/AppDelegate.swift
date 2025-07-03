@@ -56,9 +56,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func bind() {
-        Publishers.CombineLatest3(cabinet.$storedEntries,
+        还要适配 outine view
+        Publishers.CombineLatest4(cabinet.$storedEntries,
                                   cabinet.$recentEntries,
-                                  settingsViewModel.$collapseHistory)
+                                  settingsViewModel.$collapseHistory,
+                                  NSApp.publisher(for: \.effectiveAppearance))
         .sink { [weak self] tuple3 in
             Task { @MainActor in
                 self?.statusItem?.menu = self?.generateMenu(from: tuple3.0, history: tuple3.1, collapseHistory: tuple3.2)
