@@ -34,7 +34,7 @@
 // 31. import pocket csv
 // 32. allow user to choose to add or replace new bookmarks ✅
 // 33. when import, alert user this will replace current bookmarks. ask user to export first (Downloads folder) ✅
-// 34. 指定浏览器打开
+// 34. 指定浏览器打开 ✅
 // 35. add onre more button for group to move its children one level up ✅
 // 36. when deleting an item, mention the name in alert. ✅
 // 37. when exported file, file name should be timestamped. ✅
@@ -43,7 +43,7 @@
 // 40. if import one file for multiple times, since id are same, error will occur. (try fix, still got issue when import same file twice.) ✅
 // 41. pre-fill info at email template.
 // 42. if export file more than once, the export description does not update.
-// 43. when edit a title, if dismiss popover, next time the focused is still there.
+// 43. when edit a title, if dismiss popover, next time the focused is still there. ✅
 // 44. search?
 // 45. hashtag system part1 (title hashtag) ✅
 // 46. open with browder specified by hashtag ✅

@@ -32,6 +32,7 @@ struct HashtagTextField: NSViewRepresentable {
         textField.lineBreakMode = .byTruncatingMiddle
         textField.usesSingleLineMode = true
         textField.focusRingType = .none
+        textField.stringValue = text
         return textField
     }
     
