@@ -47,3 +47,4 @@
 // 44. search?
 // 45. hashtag system part1 (title hashtag) ✅
 // 46. open with browder specified by hashtag ✅
+// 47. when delete a group, hint user to ungroup it. ✅
