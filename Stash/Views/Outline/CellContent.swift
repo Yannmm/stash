@@ -16,6 +16,7 @@ enum Focusable: Hashable {
 }
 
 struct CellContent: View {
+    @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var cabinet: OkamuraCabinet
     @EnvironmentObject var focusMonitor: FocusMonitor
     @ObservedObject var viewModel: CellViewModel

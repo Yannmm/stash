@@ -10,6 +10,7 @@ import SwiftUI
 // https://dribbble.com/shots/20559566-Link-input-with-preview
 
 struct AddressInputField: View {
+    @Environment(\.colorScheme) var colorScheme
     @FocusState private var focused: Bool
     @Binding var loading: Bool
     @Binding var icon: Icon?

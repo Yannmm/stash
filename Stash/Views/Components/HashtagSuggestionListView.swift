@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct HashtagSuggestionListView: View {
+    @Environment(\.colorScheme) var colorScheme
     @Binding var index: Int?
     let onTap: (String) -> Void
     @EnvironmentObject var viewModel: HashtagViewModel
