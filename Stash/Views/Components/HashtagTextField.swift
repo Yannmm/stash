@@ -9,6 +9,7 @@ import SwiftUI
 import Combine
 
 struct HashtagTextField: NSViewRepresentable {
+    @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var viewModel: HashtagViewModel
     @Binding var text: String
     @State var suggestionIndex: Int?
@@ -27,11 +28,9 @@ struct HashtagTextField: NSViewRepresentable {
         textField.isEditable = true
         textField.isBordered = false
         textField.backgroundColor = .clear
-        //        textField.focusRingType = .none
         textField.font = font
         textField.lineBreakMode = .byTruncatingMiddle
         textField.usesSingleLineMode = true
-        textField.stringValue = text
         textField.focusRingType = .none
         return textField
     }
@@ -49,7 +48,8 @@ struct HashtagTextField: NSViewRepresentable {
             // Already focused; do nothing.
             return
         }
-        textField.stringValue = text
+
+        textField.attributedStringValue = text.highlightHashtags()
         
         // Move cursor to end if it just became first responder
         DispatchQueue.main.async {
@@ -102,10 +102,8 @@ struct HashtagTextField: NSViewRepresentable {
             guard let textField = obj.object as? NSTextField, let cursor = getCursor(textField) else { return }
             if let _ = parent.viewModel.findCursoredRange(text: textField.stringValue, cursorLocation: cursor.0) {
                 show(textField)
-                print("showshowshowshowshow")
             } else {
                 hide()
-                print("hidehidehidehide")
             }
             parent.text = textField.stringValue
         }
@@ -146,7 +144,6 @@ struct HashtagTextField: NSViewRepresentable {
             let textView = cursor.1
             let hashtag = (textView.string as NSString).substring(with: range)
             
-            print("目前的 hashtag 是 \(hashtag)")
             parent.viewModel.filter = hashtag
             
             // Get the bounding rect for that character

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import AppKit
 
 extension String {
     enum RegexConstant {
@@ -28,5 +29,17 @@ extension String {
         let nsrange = NSRange(self.startIndex..<self.endIndex, in: self)
         let matches = String.RegexConstant.regex2.matches(in: self, range: nsrange)
         return matches
+    }
+    
+    func highlightHashtags() -> NSAttributedString {
+        let attributed = NSMutableAttributedString(string: self)
+        
+        let attributes: [NSAttributedString.Key: Any] = [
+            .foregroundColor: NSColor(.theme),
+        ]
+        for match in self.hashtagMatches {
+            attributed.addAttributes(attributes, range: match.range)
+        }
+        return attributed
     }
 }

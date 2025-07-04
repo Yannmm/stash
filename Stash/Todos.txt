@@ -45,3 +45,5 @@
 // 42. if export file more than once, the export description does not update.
 // 43. when edit a title, if dismiss popover, next time the focused is still there.
 // 44. search?
+// 45. hashtag system part1 (title hashtag) ✅
+// 46. open with browder specified by hashtag ✅
