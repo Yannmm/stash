@@ -181,7 +181,7 @@ struct CellContent: View {
             if !flag {
                 Rectangle()
                     .frame(height: 1)
-                    .foregroundColor(focused ? Color.primary : Color.clear)
+                    .foregroundColor(focused ? Color.theme : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
             }
         }
@@ -197,7 +197,7 @@ struct CellContent: View {
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(width: side, height: side)
-                    .foregroundStyle(Color.primary)
+                    .foregroundStyle(Color.theme)
             case .favicon(let url):
                 KFImage.url(url)
                     .appendProcessor(EmptyFaviconReplacer(url: url))
@@ -331,7 +331,7 @@ struct CellContent: View {
         var asPrefix = AttributedString("\(prefix!)")
         asPrefix.font = .body
         asPrefix.foregroundColor = .white
-        asPrefix.backgroundColor = NSColor(Color.primary)
+        asPrefix.backgroundColor = NSColor(Color.theme)
         
         guard var path = components?.string else { return nil }
         path = path.replacingOccurrences(of: prefix, with: "")

@@ -32,7 +32,7 @@ extension AppDelegate {
                 let item = NSMenuItem(title: "Recently Visited", action: nil, keyEquivalent: "")
                 let image = NSImage(systemSymbolName: "clock.fill", accessibilityDescription: nil)
                 image?.isTemplate = true
-                item.image = image?.tint(color: Color.primary)
+                item.image = image?.tint(color: Color.theme)
                 let submenu = NSMenu()
                 g(menu: submenu, entries: history.map({ $0.0 }), parentId: nil, keyEquivalents: history.map({ $0.1 }))
                 item.submenu = submenu
@@ -88,7 +88,7 @@ extension AppDelegate {
             case Icon.system(let name):
                 let image = NSImage(systemSymbolName: name, accessibilityDescription: nil)
                 image?.isTemplate = true
-                item.image = image?.tint(color: Color.primary)
+                item.image = image?.tint(color: Color.theme)
             case Icon.favicon(let url):
                 setFavicon(url, item)
             case Icon.local(let url):
@@ -157,8 +157,7 @@ extension AppDelegate {
         let attributed = NSMutableAttributedString(string: title)
         
         let attributes: [NSAttributedString.Key: Any] = [
-            .foregroundColor: NSColor(.primary),
-//            .font: NSFont.systemFont(ofSize: 16, weight: .thin)
+            .foregroundColor: NSColor(.theme),
         ]
         for match in title.hashtagMatches {
             attributed.addAttributes(attributes, range: match.range)

@@ -13,14 +13,11 @@ extension Color {
         return Color(hex: 0xD3D3D3)
     }
     
-    static var text: Color {
-        return Color(hex: 0x2B2D31)
-    }
-    
-    static var primary: Color {
+    static var theme: Color {
         let currentAppearance = NSApp.effectiveAppearance
         let isDarkMode = currentAppearance.name == .darkAqua || currentAppearance.name == .vibrantDark
-        return isDarkMode ? Color(hex: 0xB0A8FF) : Color(hex: 0x7766E8)
+//        return isDarkMode ? Color(hex: 0xB0A8FF) : Color(hex: 0x7766E8)
+        return isDarkMode ? .purple : .yellow
     }
 }
 

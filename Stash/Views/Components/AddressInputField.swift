@@ -24,7 +24,7 @@ struct AddressInputField: View {
                     .frame(width: 16, height: 16)
             } else if let _ = icon {
                 Image(systemName: "checkmark.circle.fill")
-                    .foregroundColor(Color.primary)
+                    .foregroundColor(Color.theme)
                     .frame(width: 16, height: 16)
             } else {
                 Image(systemName: "link.circle")
@@ -43,7 +43,7 @@ struct AddressInputField: View {
         .cornerRadius(6)
         .overlay(
             RoundedRectangle(cornerRadius: 6)
-                .stroke(focused ? Color.primary : Color(nsColor: .separatorColor),
+                .stroke(focused ? Color.theme : Color(nsColor: .separatorColor),
                         lineWidth: 1)
         )
         .focusable()

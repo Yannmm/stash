@@ -56,7 +56,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func bind() {
-        还要适配 outine view
         Publishers.CombineLatest4(cabinet.$storedEntries,
                                   cabinet.$recentEntries,
                                   settingsViewModel.$collapseHistory,
