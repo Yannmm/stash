@@ -45,7 +45,7 @@ struct SettingsView: View {
         case .netscape:
             return ("Import from File", "Export from another Stashy or browsers first.")
         case .hungrymarks:
-            return ("Import from Hungrymarks", "Go to Settings > Bookmark Files (iCloud/Default > Reveal in Finder, locate the file and save it.)")
+            return ("Import from Hungrymarks", "Go to Settings > Bookmark Files (iCloud/Default > Reveal in Finder, locate the txt file and save it.)")
         case .pocket:
             return ("Import from Pocket", "Go to \"https://getpocket.com/export\", and click \"Export CSV file\" to download your Pocket saves first.")
         }

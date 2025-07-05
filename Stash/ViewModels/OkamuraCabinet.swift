@@ -240,7 +240,9 @@ extension OkamuraCabinet {
             let parser = HungrymarkParser()
             entries = parser.parse(text: content)
         case .pocket:
-            fatalError()
+            let parser = CsvParser()
+            let anyEntries = try parser.parse(from: content)
+            entries = anyEntries.asEntries
         }
         
         if !replace {

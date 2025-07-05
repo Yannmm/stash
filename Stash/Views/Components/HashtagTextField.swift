@@ -32,7 +32,7 @@ struct HashtagTextField: NSViewRepresentable {
         textField.lineBreakMode = .byTruncatingMiddle
         textField.usesSingleLineMode = true
         textField.focusRingType = .none
-        textField.stringValue = text
+        textField.attributedStringValue = text.highlightHashtags()
         return textField
     }
     
@@ -205,7 +205,7 @@ struct HashtagTextField: NSViewRepresentable {
         private func _insert(_ hashtag: String, _ textField: NSTextField) {
             guard let cursor = getCursor(textField)?.0 else { return }
             if let result = parent.viewModel.insert(text: textField.stringValue, hashtag: hashtag, cursorLocation: cursor) {
-                textField.stringValue = result.0
+                textField.attributedStringValue = result.0.highlightHashtags()
                 if let editor = textField.currentEditor() {
                     editor.selectedRange = result.1
                     editor.scrollRangeToVisible(result.1)

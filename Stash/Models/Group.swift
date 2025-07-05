@@ -25,5 +25,5 @@ extension Group: Entry {
 }
 
 extension Group {
-    var unboxable: Bool { true }
+    var unboxable: Bool { container }
 }

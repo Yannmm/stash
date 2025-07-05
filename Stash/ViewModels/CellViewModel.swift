@@ -16,6 +16,13 @@ class CellViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     
+    var ableToUngroup: Bool {
+        if let e = entry, e.unboxable, e.children(among: cabinet.storedEntries).count > 0 {
+            return true
+        }
+        return false
+    }
+    
     init(entry: (any Entry)? = nil, cabinet: OkamuraCabinet) {
         self.cabinet = cabinet
         self.entry = entry

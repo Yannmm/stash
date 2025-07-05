@@ -33,7 +33,7 @@ struct CellContent: View {
     }
     
     var shouldShowUnbox: Bool {
-        if let e = viewModel.entry, e.unboxable, expanded, !focusMonitor.isEditing {
+        if viewModel.ableToUngroup, expanded, !focusMonitor.isEditing {
             return true
         } else {
             return false
@@ -121,7 +121,7 @@ struct CellContent: View {
             Button("Confirm", role: .destructive) {
                 guard let e = viewModel.entry, e.unboxable else { return }
                 do {
-                    try viewModel.ungroup(e )
+                    try viewModel.ungroup(e)
                 } catch {
                     viewModel.error = error
                 }
@@ -129,7 +129,7 @@ struct CellContent: View {
         } message: {
             Text("Its content will drop in place.")
         }
-        .alert("Sure to Delete \((viewModel.entry?.container ?? false) ? "Group" : "Bookmark") \"\(viewModel.entry?.name ?? "")\"?", isPresented: $deleteAlert) {
+        .alert("Sure to Delete \(shouldShowUnbox ? "Group" : "Bookmark") \"\(viewModel.entry?.name ?? "")\"?", isPresented: $deleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Confirm", role: .destructive) {
                 guard let e = viewModel.entry else { return }
@@ -139,18 +139,18 @@ struct CellContent: View {
                     viewModel.error = error
                 }
             }
-            if viewModel.entry?.container ?? false {
+            if shouldShowUnbox {
                 Button("Ungroup") {
                     guard let e = viewModel.entry, e.unboxable else { return }
                     do {
-                        try viewModel.ungroup(e )
+                        try viewModel.ungroup(e)
                     } catch {
                         viewModel.error = error
                     }
                 }
             }
         } message: {
-            Text((viewModel.entry?.container ?? false) ?
+            Text(shouldShowUnbox ?
                  "This is a group and all of its content will be permanently deleted, which cannot be undone. You may ungroup and its content will drop in place."
                  : "This action cannot be undone. The item will be permanently deleted.")
         }

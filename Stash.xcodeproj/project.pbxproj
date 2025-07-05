@@ -10,6 +10,7 @@
 		6D6718472D672CDC0063FE57 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 6D6718462D672CDC0063FE57 /* Kingfisher */; };
 		6DCEC8752DAC9A9B00089699 /* Glur in Frameworks */ = {isa = PBXBuildFile; productRef = 6DCEC8742DAC9A9B00089699 /* Glur */; };
 		720642CA2D8DBA0600F62043 /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = 720642C92D8DBA0600F62043 /* HotKey */; };
+		7245871D2E1913FB00804B21 /* CodableCSV in Frameworks */ = {isa = PBXBuildFile; productRef = 7245871C2E1913FB00804B21 /* CodableCSV */; };
 		726B64F82D6DCEA1000AA419 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 726B64F72D6DCEA1000AA419 /* SwiftSoup */; };
 /* End PBXBuildFile section */
 
@@ -63,6 +64,7 @@
 				6D6718472D672CDC0063FE57 /* Kingfisher in Frameworks */,
 				6DCEC8752DAC9A9B00089699 /* Glur in Frameworks */,
 				726B64F82D6DCEA1000AA419 /* SwiftSoup in Frameworks */,
+				7245871D2E1913FB00804B21 /* CodableCSV in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -135,6 +137,7 @@
 				726B64F72D6DCEA1000AA419 /* SwiftSoup */,
 				720642C92D8DBA0600F62043 /* HotKey */,
 				6DCEC8742DAC9A9B00089699 /* Glur */,
+				7245871C2E1913FB00804B21 /* CodableCSV */,
 			);
 			productName = Stash;
 			productReference = 7222C1C02D491BEC00096255 /* Stashy.app */;
@@ -223,6 +226,7 @@
 				726B64F32D6DCE32000AA419 /* XCRemoteSwiftPackageReference "SwiftSoup" */,
 				720642C82D8DB9D400F62043 /* XCRemoteSwiftPackageReference "HotKey" */,
 				6DCEC8732DAC9A9200089699 /* XCRemoteSwiftPackageReference "Glur" */,
+				7245868F2E19136300804B21 /* XCRemoteSwiftPackageReference "CodableCSV" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7222C1C12D491BEC00096255 /* Products */;
@@ -616,6 +620,14 @@
 				kind = branch;
 			};
 		};
+		7245868F2E19136300804B21 /* XCRemoteSwiftPackageReference "CodableCSV" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/dehesa/CodableCSV";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.6.7;
+			};
+		};
 		726B64F32D6DCE32000AA419 /* XCRemoteSwiftPackageReference "SwiftSoup" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/scinfu/SwiftSoup.git";
@@ -641,6 +653,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 720642C82D8DB9D400F62043 /* XCRemoteSwiftPackageReference "HotKey" */;
 			productName = HotKey;
+		};
+		7245871C2E1913FB00804B21 /* CodableCSV */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7245868F2E19136300804B21 /* XCRemoteSwiftPackageReference "CodableCSV" */;
+			productName = CodableCSV;
 		};
 		726B64F72D6DCEA1000AA419 /* SwiftSoup */ = {
 			isa = XCSwiftPackageProductDependency;
