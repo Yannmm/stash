@@ -44,7 +44,9 @@
 // 41. pre-fill info at email template.
 // 42. if export file more than once, the export description does not update.
 // 43. when edit a title, if dismiss popover, next time the focused is still there. ✅
-// 44. search?
+// 44. search in menu
+// 45. search in manage view
+// 46. tag manage view (filter, delete, rename)
 // 45. hashtag system part1 (title hashtag) ✅
 // 46. open with browder specified by hashtag ✅
 // 47. when delete a group, hint user to ungroup it. ✅
