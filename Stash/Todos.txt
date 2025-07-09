@@ -48,3 +48,4 @@
 // 45. hashtag system part1 (title hashtag) ✅
 // 46. open with browder specified by hashtag ✅
 // 47. when delete a group, hint user to ungroup it. ✅
+// 48. suggestion view position for the last item in the outlineview.
