@@ -1,9 +1,9 @@
 // TODO
 // 1. launch on login ✅
 // 2. 没有任何。bookmarks 时，menu太空 // create first bookmark // import from browsers ✅
-// 5. 设置窗口有时无法到最前方
+// 5. 设置窗口有时无法到最前方 ✅
 // 6. use NSMetadataQuery to monitor file from icloud. ✅
-// 3. 排序失去焦点问题
+// 3. 排序失去焦点问题 ✅
 // 4. 一段时间后，好像icloud中的文件被覆盖了 ✅
 // 5. 编辑时不能展开 ✅
 // 6. 链接的反白 ✅
@@ -44,7 +44,9 @@
 // 41. pre-fill info at email template.
 // 42. if export file more than once, the export description does not update.
 // 43. when edit a title, if dismiss popover, next time the focused is still there. ✅
-// 44. search?
+// 44. search in menu
+// 45. search in manage view
+// 46. tag manage view (filter, delete, rename)
 // 45. hashtag system part1 (title hashtag) ✅
 // 46. open with browder specified by hashtag ✅
 // 47. when delete a group, hint user to ungroup it. ✅

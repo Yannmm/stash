@@ -121,8 +121,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if settingsWindow == nil {
             setupSettingsWindow()
         }
+        
+        // Ensure proper activation and window focusing
         NSApp.activate(ignoringOtherApps: true)
-        settingsWindow?.makeKeyAndOrderFront(nil)
+        
+        // Use a small delay to ensure app activation completes
+        DispatchQueue.main.async {
+            self.settingsWindow?.makeKeyAndOrderFront(nil)
+            // Force the window to become key window
+            self.settingsWindow?.level = .floating
+            self.settingsWindow?.level = .normal
+            NSApp.arrangeInFront(nil)
+        }
     }
     
     @objc func quit() {
