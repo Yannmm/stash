@@ -103,7 +103,19 @@ extension AppDelegate {
                 g(menu: submenu, entries: entries, parentId: entry.id, keyEquivalents: keyEquivalents)
                 item.submenu = submenu
             }
+            item.toolTip = getTooltip(entry, childrenCount: children.count)
             menu.addItem(item)
+        }
+    }
+    
+    private func getTooltip(_ entry: any Entry, childrenCount: Int) -> String? {
+        switch entry {
+        case let b as Bookmark:
+            return b.url.absoluteString
+        case let g as Group:
+            return "\(childrenCount) item(s)"
+        default:
+            return nil
         }
     }
     
