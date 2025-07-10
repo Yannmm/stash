@@ -47,12 +47,14 @@ struct HashtagSuggestionListView: View {
             .frame(width: 200, height: 150)
             .background(Color(nsColor: .controlBackgroundColor))
             .cornerRadius(6)
-            .onChange(of: index) { index in
+            .onChange(of: index) { _, index in
+                guard !hovering else { return }
                 withAnimation(.easeInOut(duration: 0.15)) {
                     proxy.scrollTo(index, anchor: .center)
                 }
             }
             .onReceive(viewModel.keyboard, perform: { value in
+                hovering = false
                 guard let direction = value else { return }
                 switch direction {
                 case .down: // ↓ Down arrow

@@ -132,6 +132,7 @@ struct HashtagTextField: NSViewRepresentable {
         
         private func show(_ textField: NSTextField) {
             if let anchor = _whereToAnchor(textField) {
+                parent.suggestionIndex = nil
                 _makePanel(anchor, textField)
             } else {
                 hide()
