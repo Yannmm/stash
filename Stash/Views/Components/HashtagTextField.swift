@@ -169,8 +169,8 @@ struct HashtagTextField: NSViewRepresentable {
         private func _setupPanel(_ anchor: NSRect, _ textField: NSTextField) {
             guard !parent.viewModel.hashtags.isEmpty else { return }
             
-            let panelWidth: CGFloat = 200
-            let panelHeight: CGFloat = 150
+            let width: CGFloat = 200
+            let height: CGFloat = 150
             
             // Get screen bounds to check available space
             let screenFrame = NSScreen.main?.frame ?? NSRect.zero
@@ -180,22 +180,22 @@ struct HashtagTextField: NSViewRepresentable {
             let spaceAbove = screenFrame.maxY - anchor.origin.y
             
             // Determine whether to position panel above or below cursor
-            let shouldPositionAbove = spaceBelow < panelHeight && spaceAbove >= panelHeight
+            let above = spaceBelow < height && spaceAbove >= height
             
-            let yPosition: CGFloat
-            if shouldPositionAbove {
+            let y: CGFloat
+            if above {
                 // Position above cursor
-                yPosition = anchor.origin.y + anchor.height
+                y = anchor.origin.y + anchor.height
             } else {
                 // Position below cursor (default behavior)
-                yPosition = anchor.origin.y - panelHeight
+                y = anchor.origin.y - height
             }
             
             let contentRect = NSRect(
                 x: anchor.origin.x,
-                y: yPosition,
-                width: panelWidth,
-                height: panelHeight
+                y: y,
+                width: width,
+                height: height
             )
             
             panel = NSPanel(
