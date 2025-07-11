@@ -11,7 +11,7 @@
 // 8. add id when saving files. ✅
 // 9. animation when expanded ✅
 // 10. 一键 expand / collapse ✅
-// 11. save title for at leat 1 cahr
+// 11. save title for at leat 1 cahr ✅
 // 12. in appdelegate, popover content size ✅
 // 13. hold cmd key and scroll, if a group is off the screen and enter the screen, it will shrink. ✅
 // 14. change craft view model, the icon should enum, use kingfisher to display ✅
@@ -42,7 +42,7 @@
 // 39. keep desction below import even after import done. ✅
 // 40. if import one file for multiple times, since id are same, error will occur. (try fix, still got issue when import same file twice.) ✅
 // 41. pre-fill info at email template.
-// 42. if export file more than once, the export description does not update.
+// 42. if export file more than once, the export description does not update. ✅
 // 43. when edit a title, if dismiss popover, next time the focused is still there. ✅
 // 44. search in menu
 // 45. search in manage view

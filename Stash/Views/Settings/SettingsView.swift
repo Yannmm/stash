@@ -185,7 +185,7 @@ struct SettingsView: View {
                 set: { if !$0 { importFileType = nil } }
             )) {
                 if viewModel.empty {
-                    Button("Add") {
+                    Button("Continue") {
                         handleImport(true, importFileType)
                     }
                 } else {
@@ -214,7 +214,7 @@ struct SettingsView: View {
             )) {
                 Button("OK") { }
             } message: {
-                Text((fileBackupNotice?.1 ?? false) ? "Original file is exported to \"Downloads\" as backup, just in case 😉" : "")
+                Text((fileBackupNotice?.1 ?? false) ? "Backup file is exported to \"Downloads\", just in case 😉" : "")
             }
             .alert(appendNotice ?? "", isPresented: Binding(
                 get: { appendNotice != nil },
