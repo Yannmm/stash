@@ -15,6 +15,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     var statusItem: NSStatusItem?
     var dropWindow: NSWindow?
+    var panel: NSPanel!
     
     private lazy var editPopover: NSPopover = {
         let p = NSPopover()
@@ -130,6 +131,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @objc func quit() {
         NSApp.terminate(nil)
+    }
+    
+    @objc func search() {
+        showSearchPanel()
+    }
+    
+    @objc private func buttonTapped() {
+        print("hello")
     }
     
     @objc func edit() {
