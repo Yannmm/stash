@@ -134,7 +134,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func search() {
-        showSearchPanel()
+//        showSearchPanel()
     }
     
     @objc private func buttonTapped() {

@@ -9,78 +9,88 @@ import AppKit
 import SwiftUI
 
 extension AppDelegate {
-    func showSearchPanel() {
-        hideSearchPanel()
+    func searchEntrance() -> NSMenuItem {
+        let searchField = NSSearchField()
+        searchField.placeholderString = "Search"
+        searchField.font = NSFont.systemFont(ofSize: 13)
+        searchField.focusRingType = .none
+        searchField.bezelStyle = .roundedBezel
+        searchField.cell?.isScrollable = true
+        searchField.cell?.sendsActionOnEndEditing = true
         
-        // Get status item button screen coordinates
-        guard let statusButton = statusItem?.button,
-              let buttonWindow = statusButton.window else { return }
+        // Make search field unfocused initially
+        searchField.refusesFirstResponder = false
         
-        let buttonFrame = statusButton.frame
-        let buttonScreenFrame = buttonWindow.convertToScreen(buttonFrame)
+        // Configure search field behavior
+        searchField.target = self
+        searchField.action = #selector(searchFieldAction(_:))
         
-        let width: CGFloat = 200
-        let height: CGFloat = 150
+        // Configure search button and cancel button
+//        if let searchButtonCell = searchField.cell?.searchButtonCell {
+//            searchButtonCell.target = self
+//            searchButtonCell.action = #selector(searchButtonClicked(_:))
+//        }
+//
+//        if let cancelButtonCell = searchField.cell?.cancelButtonCell {
+//            cancelButtonCell.target = self
+//            cancelButtonCell.action = #selector(searchCancelClicked(_:))
+//        }
         
-        // Get screen bounds to check available space
-        let screenFrame = NSScreen.main?.frame ?? NSRect.zero
+        // Create container view with padding
+        let containerView = NSView()
+        containerView.frame = CGRect(x: 0, y: 0, width: 240, height: 30)
+        containerView.addSubview(searchField)
         
-        // Calculate available space below and above the status button
-        let spaceBelow = buttonScreenFrame.origin.y - screenFrame.minY
-        let spaceAbove = screenFrame.maxY - buttonScreenFrame.origin.y
+        // Center the search field in the container with padding
+        searchField.frame = CGRect(x: 10, y: 4, width: 220, height: 22)
         
-        // Determine whether to position panel above or below button
-        let above = spaceBelow < height && spaceAbove >= height
+        // Ensure container doesn't automatically focus the search field
         
-        let y: CGFloat
-        if above {
-            // Position above button
-            y = buttonScreenFrame.origin.y + buttonScreenFrame.height
-        } else {
-            // Position below button (default behavior)
-            y = buttonScreenFrame.origin.y - height
-        }
+        let searchMenuItem = NSMenuItem(title: "Search", action: nil, keyEquivalent: "")
+        searchMenuItem.view = containerView
         
-        // Center horizontally relative to status button
-        let x = buttonScreenFrame.origin.x + (buttonScreenFrame.width - width) / 2
+        // Ensure menu item doesn't automatically focus its view
+        searchMenuItem.isEnabled = true
         
-        let contentRect = NSRect(
-            x: x,
-            y: y,
-            width: width,
-            height: height
-        )
         
-        panel = NSPanel(
-            contentRect: contentRect,
-            styleMask: [.borderless, .nonactivatingPanel],
-            backing: .buffered,
-            defer: false
-        )
         
-        panel.level = .statusBar
-        panel.isOpaque = true
-        panel.backgroundColor = NSColor.clear
-        panel.hasShadow = true
-        panel.worksWhenModal = true
-        panel.becomesKeyOnlyIfNeeded = false
-        panel.acceptsMouseMovedEvents = true
+        // Delay to ensure search field doesn't auto-focus when menu opens
+//        DispatchQueue.main.async {
+//            searchField.resignFirstResponder()
+//        }
         
-//        panel.contentViewController = NSHostingController(rootView: HashtagSuggestionListView(index: parent.$suggestionIndex, onTap: { [weak self] hashtag in
-//            self?._insert(hashtag, textField)
-//            self?.hide()
-//        }).environmentObject(parent.viewModel))
-        panel.contentViewController = NSHostingController(rootView: 
-            Button("Click Me") {
-                print("hello")
-            }
-            .buttonStyle(.borderedProminent)
-        )
-        panel.orderFront(nil)
+        return searchMenuItem
     }
     
-    func hideSearchPanel() {
-        panel?.close()
-        panel = nil
+    @objc private func searchFieldAction(_ sender: NSSearchField) {
+        let searchText = sender.stringValue
+        print("Search action: \(searchText)")
+        // TODO: Implement search functionality
+        performSearch(searchText)
+    }
+    
+    @objc private func searchButtonClicked(_ sender: Any) {
+        if let searchField = sender as? NSSearchFieldCell {
+            let searchText = searchField.stringValue
+            print("Search button clicked: \(searchText)")
+            performSearch(searchText)
+        }
+    }
+    
+    @objc private func searchCancelClicked(_ sender: Any) {
+        print("Search cancelled")
+        // Clear search results or reset state
+    }
+    
+    private func performSearch(_ searchText: String) {
+        guard !searchText.isEmpty else { return }
+        
+        // Filter entries based on search text
+        let filteredEntries = cabinet.storedEntries.filter { entry in
+            entry.name.localizedCaseInsensitiveContains(searchText)
+        }
+        
+        print("Found \(filteredEntries.count) results for: \(searchText)")
+        // TODO: Update UI to show search results
     }
 }
