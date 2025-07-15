@@ -14,7 +14,9 @@ import Kingfisher
 class AppDelegate: NSObject, NSApplicationDelegate {
     
     var statusItem: NSStatusItem?
+    
     var dropWindow: NSWindow?
+    
     var panel: NSPanel!
     
     private lazy var editPopover: NSPopover = {
@@ -30,6 +32,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let viewModel = SettingsViewModel(hotKeyManager: hotKeyMananger, cabinet: cabinet)
         return viewModel
     }()
+    
+    internal lazy var searchViewModel: SearchViewModel = {
+        let viewModel = SearchViewModel()
+        return viewModel
+    }()
+    
     var cabinet: OkamuraCabinet { OkamuraCabinet.shared }
     
     var hotKeyMananger: HotKeyManager { HotKeyManager.shared }
@@ -60,10 +68,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Publishers.CombineLatest4(cabinet.$storedEntries,
                                   cabinet.$recentEntries,
                                   settingsViewModel.$collapseHistory,
-                                  NSApp.publisher(for: \.effectiveAppearance))
-        .sink { [weak self] tuple3 in
+                                  Publishers.CombineLatest(searchViewModel.$searching,
+                                                           NSApp.publisher(for: \.effectiveAppearance)))
+        .map({ ($0, $1, $2, $3.0, $3.1) })
+        .sink { [weak self] tuple5 in
+            print("seaching --> \(tuple5.3)")
             Task { @MainActor in
-                self?.statusItem?.menu = self?.generateMenu(from: tuple3.0, history: tuple3.1, collapseHistory: tuple3.2)
+                self?.statusItem?.menu = self?.generateMenu(from: tuple5.0, history: tuple5.1, collapseHistory: tuple5.2)
             }
         }
         .store(in: &cancellables)
@@ -131,14 +142,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     @objc func quit() {
         NSApp.terminate(nil)
-    }
-    
-    @objc func search() {
-//        showSearchPanel()
-    }
-    
-    @objc private func buttonTapped() {
-        print("hello")
     }
     
     @objc func edit() {

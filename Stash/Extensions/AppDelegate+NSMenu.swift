@@ -67,7 +67,9 @@ extension AppDelegate {
         menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: "S"))
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: ""))
         
-        menu.addItem(searchEntrance())
+        menu.addItem(NSMenuItem(title: "Search", action: #selector(search), keyEquivalent: ""))
+        
+//        menu.addItem(searchEntrance())
     }
     
     private func addEntries(_ menu: NSMenu, _ entries: [any Entry]) {
@@ -169,19 +171,9 @@ extension AppDelegate {
 }
 
 extension AppDelegate: NSMenuDelegate {
-//    func menuNeedsUpdate(_ menu: NSMenu) {
-//        let modifierFlags = NSEvent.modifierFlags
-//        
-//        for item in menu.items {
-//            if modifierFlags.contains(.option) {
-//                //                item.title = "Alternative Action"
-//                print("ooooptions")
-//            } else {
-//                //                item.title = "Default Action"
-//                print("default, no option")
-//            }
-//        }
-//    }
+    func menuNeedsUpdate(_ menu: NSMenu) {
+        
+    }
 }
 
 

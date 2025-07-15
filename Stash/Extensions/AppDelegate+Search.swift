@@ -9,6 +9,14 @@ import AppKit
 import SwiftUI
 
 extension AppDelegate {
+    @objc func search() {
+        searchViewModel.searching = true
+        
+        if let button = self.statusItem?.button {
+            button.performClick(nil)
+        }
+    }
+    
     func searchEntrance() -> NSMenuItem {
         let searchField = NSSearchField()
         searchField.placeholderString = "Search"
