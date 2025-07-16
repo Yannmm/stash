@@ -75,9 +75,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         .map({ ($0, $1, $2, $3.0, $3.1) })
         .sink { [weak self] tuple5 in
             self?.menuSink.send(tuple5)
-//            Task { @MainActor in
-//                self?.statusItem?.menu = self?.generateMenu(from: tuple5.0, history: tuple5.1, collapseHistory: tuple5.2, searching: tuple5.3)
-//            }
         }
         .store(in: &cancellables)
         

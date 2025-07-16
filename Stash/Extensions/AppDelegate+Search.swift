@@ -11,13 +11,15 @@ import SwiftUI
 extension AppDelegate {
     @objc func search() {
         searchViewModel.searching = true
-        
-        if let button = self.statusItem?.button {
-            button.performClick(nil)
+            
+        DispatchQueue.main.async { [weak self] in
+            if let button = self?.statusItem?.button {
+                button.performClick(nil)
+            }
         }
     }
     
-    func searchEntrance() -> NSMenuItem {
+    func addSearch(_ menu: NSMenu) {
         let searchField = NSSearchField()
         searchField.placeholderString = "Search"
         searchField.font = NSFont.systemFont(ofSize: 13)
@@ -67,7 +69,7 @@ extension AppDelegate {
 //            searchField.resignFirstResponder()
 //        }
         
-        return searchMenuItem
+        menu.addItem(searchMenuItem)
     }
     
     @objc private func searchFieldAction(_ sender: NSSearchField) {
