@@ -50,6 +50,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private var settingsWindow: NSWindow?
     
+    internal let menuSink = CurrentValueSubject<([any Entry], [(Bookmark, String)], Bool, Bool, NSAppearance)?, Never>(nil)
+    
     func applicationWillFinishLaunching(_ notification: Notification) {
         //        NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
         
@@ -72,10 +74,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                                                            NSApp.publisher(for: \.effectiveAppearance)))
         .map({ ($0, $1, $2, $3.0, $3.1) })
         .sink { [weak self] tuple5 in
-            print("seaching --> \(tuple5.3)")
-            Task { @MainActor in
-                self?.statusItem?.menu = self?.generateMenu(from: tuple5.0, history: tuple5.1, collapseHistory: tuple5.2)
-            }
+            self?.menuSink.send(tuple5)
+//            Task { @MainActor in
+//                self?.statusItem?.menu = self?.generateMenu(from: tuple5.0, history: tuple5.1, collapseHistory: tuple5.2, searching: tuple5.3)
+//            }
         }
         .store(in: &cancellables)
         
@@ -105,6 +107,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "square.stack.3d.up.fill", accessibilityDescription: nil)
         }
+        
+        let menu = NSMenu()
+        menu.delegate = self // Set the delegate to ensure menuNeedsUpdate is called
+        statusItem?.menu = menu
     }
     
     private func setupSettingsWindow() {

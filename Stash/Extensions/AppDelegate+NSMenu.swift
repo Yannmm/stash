@@ -12,17 +12,18 @@ import Kingfisher
 @MainActor
 extension AppDelegate {
     
-    func generateMenu(from entries: [any Entry], history: [(any Entry, String)], collapseHistory: Bool) -> NSMenu {
-        let menu = NSMenu()
+    func generateMenu(menu: NSMenu, from entries: [any Entry], history: [(any Entry, String)], collapseHistory: Bool, searching: Bool) -> NSMenu {
         
-        addHistory(menu, history, collapseHistory)
+        if !searching {
+            addHistory(menu, history, collapseHistory)
+        }
         
         addEntries(menu, entries)
         
-        addGuide(menu, entries)
-        
-        addActions(menu)
-        
+        if !searching {
+            addGuide(menu, entries)
+            addActions(menu)
+        }
         return menu
     }
     
@@ -172,7 +173,13 @@ extension AppDelegate {
 
 extension AppDelegate: NSMenuDelegate {
     func menuNeedsUpdate(_ menu: NSMenu) {
+        guard let tuple5 = menuSink.value else { return }
         
+        // Clear existing menu items first to prevent accumulation
+        menu.removeAllItems()
+        
+        // Regenerate the menu
+        let _ = generateMenu(menu: menu, from: tuple5.0, history: tuple5.1, collapseHistory: tuple5.2, searching: tuple5.3)
     }
 }
 
