@@ -13,11 +13,11 @@ import Kingfisher
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     
-    var statusItem: NSStatusItem?
+    internal var statusItem: NSStatusItem?
     
-    var dropWindow: NSWindow?
+    internal var dropWindow: NSWindow?
     
-    var panel: NSPanel!
+    internal var searchPanel: NSPanel!
     
     private lazy var editPopover: NSPopover = {
         let p = NSPopover()
