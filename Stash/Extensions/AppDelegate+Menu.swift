@@ -12,18 +12,13 @@ import Kingfisher
 @MainActor
 extension AppDelegate {
     
-    fileprivate func generateMenu(menu: NSMenu, from entries: [any Entry], history: [(any Entry, String)], collapseHistory: Bool, searching: Bool) {
-        if !searching {
-            addHistory(menu, history, collapseHistory)
-        } else {
-            addSearch(menu)
-        }
+    func generateMenu(from entries: [any Entry], history: [(any Entry, String)], collapseHistory: Bool) -> NSMenu {
+        let menu = NSMenu()
+        addHistory(menu, history, collapseHistory)
         addEntries(menu, entries)
-        
-        if !searching {
-            addGuide(menu, entries)
-            addActions(menu)
-        }
+        addGuide(menu, entries)
+        addActions(menu)
+        return menu
     }
     
     private func addHistory(_ menu: NSMenu, _ history: [(any Entry, String)], _ collapseHistory: Bool ) {
@@ -62,8 +57,6 @@ extension AppDelegate {
     }
     
     private func addActions(_ menu: NSMenu) {
-//        menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Search", action: #selector(search), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Manage", action: #selector(edit), keyEquivalent: "M"))
         menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: "S"))
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: ""))
@@ -74,8 +67,6 @@ extension AppDelegate {
     }
 
     private func g(menu: NSMenu, entries: [any Entry], parentId: UUID?, keyEquivalents: [String]) {
-        menu.delegate = self
-
         for (index, entry) in entries.filter({ $0.parentId == parentId }).enumerated() {
             let item = CustomMenuItem(title: entry.name, action: #selector(action(_:)), keyEquivalent: "", with: entry)
             item.attributedTitle = entry.name.highlightHashtags()
@@ -164,23 +155,6 @@ extension AppDelegate {
         DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.25)) {
             NotificationCenter.default.post(name: .onShouldOpenImportPanel, object: nil)
         }
-    }
-}
-
-extension AppDelegate: NSMenuDelegate {
-    func menuNeedsUpdate(_ menu: NSMenu) {
-        guard let tuple5 = menuSink.value else { return }
-        menu.removeAllItems()
-        generateMenu(menu: menu, from: tuple5.0, history: tuple5.1, collapseHistory: tuple5.2, searching: tuple5.3)
-    }
-    
-    func menuDidClose(_ menu: NSMenu) {
-        guard menu.supermenu == nil else { return }
-        
-//        DispatchQueue.main.async { [weak self] in
-//            guard let flag = self?.searchViewModel.searching, flag else { return }
-//            self?.searchViewModel.searching = false
-//        }
     }
 }
 
