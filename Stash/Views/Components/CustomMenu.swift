@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 // MARK: - Menu Item Data Structure
 struct MenuItemData: Identifiable, Equatable {
@@ -71,6 +72,8 @@ struct CustomMenuItemView: View {
     @Binding var hoveredItem: UUID?
     let onCancelTimer: () -> Void
     let onStartTimer: () -> Void
+    let onShowSubmenu: (MenuItemData) -> Void
+    let onHideSubmenu: () -> Void
     
     private var isCurrentlyHovered: Bool {
         hoveredItem == item.id
@@ -140,7 +143,7 @@ struct CustomMenuItemView: View {
                 .background(
                     Rectangle()
                         .fill(isCurrentlyHovered && item.isEnabled ? 
-                            Color(NSColor.selectedMenuItemColor) : 
+                            Color(NSColor.controlAccentColor) : 
                             Color.clear)
                 )
                 .contentShape(Rectangle())
@@ -152,14 +155,24 @@ struct CustomMenuItemView: View {
                         withAnimation(.easeInOut(duration: 0.1)) {
                             hoveredItem = item.id
                         }
+                        
+                        // Show submenu if item has one
+                        if item.hasSubmenu {
+                            onShowSubmenu(item)
+                        }
+                        
+                        print("Hovering over item: \(item.title), hasSubmenu: \(item.hasSubmenu), submenu count: \(item.submenu?.count ?? 0), hoveredItem set to: \(item.id)")
                     } else {
                         // When leaving parent item, start a delay before closing submenu
                         if hoveredItem == item.id && item.hasSubmenu {
+                            print("Leaving item with submenu: \(item.title), starting timer")
                             onStartTimer()
                         } else if hoveredItem == item.id {
+                            print("Leaving item without submenu: \(item.title), clearing hover")
                             withAnimation(.easeInOut(duration: 0.1)) {
                                 hoveredItem = nil
                             }
+                            onHideSubmenu()
                         }
                     }
                 }
@@ -184,6 +197,8 @@ struct CustomMenuView: View {
     @State private var hoveredItem: UUID?
     @State private var submenuCloseTimer: Timer?
     @State private var isSubmenuHovered = false
+    @State private var menuSize: CGSize = .zero
+    @State private var submenuPanel: SubmenuPanelController?
     
     init(items: [MenuItemData], level: Int = 0) {
         self.items = items
@@ -191,43 +206,45 @@ struct CustomMenuView: View {
     }
     
     var body: some View {
-        GeometryReader { geometry in
-            VStack(spacing: 0) {
-                ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                    CustomMenuItemView(
-                        item: item,
-                        level: level,
-                        hoveredItem: $hoveredItem,
-                        onCancelTimer: cancelSubmenuTimer,
-                        onStartTimer: startSubmenuCloseTimer
-                    )
-                }
-            }
-            .padding(.vertical, 4)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(Color(NSColor.controlBackgroundColor))
-                    .shadow(
-                        color: .black.opacity(0.25),
-                        radius: 8,
-                        x: 0,
-                        y: 2
-                    )
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(Color(NSColor.separatorColor).opacity(0.3), lineWidth: 0.5)
-            )
-            .overlay(alignment: .topLeading) {
-                // Submenu positioning
-                submenuOverlay(geometry: geometry)
+        VStack(spacing: 0) {
+            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
+                CustomMenuItemView(
+                    item: item,
+                    level: level,
+                    hoveredItem: $hoveredItem,
+                    onCancelTimer: cancelSubmenuTimer,
+                    onStartTimer: startSubmenuCloseTimer,
+                    onShowSubmenu: { item in
+                        showSubmenu(for: item, at: index)
+                    },
+                    onHideSubmenu: {
+                        hideSubmenu()
+                    }
+                )
             }
         }
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(Color(NSColor.controlBackgroundColor))
+                .shadow(
+                    color: .black.opacity(0.25),
+                    radius: 8,
+                    x: 0,
+                    y: 2
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(Color(NSColor.separatorColor).opacity(0.3), lineWidth: 0.5)
+        )
         .frame(minWidth: 180)
+        .fixedSize() // Allow content to determine its own size
         .onDisappear {
-            // Clean up timer when view disappears
+            // Clean up timer and submenu when view disappears
             submenuCloseTimer?.invalidate()
             submenuCloseTimer = nil
+            hideSubmenu()
         }
     }
     
@@ -244,44 +261,49 @@ struct CustomMenuView: View {
                 withAnimation(.easeInOut(duration: 0.1)) {
                     hoveredItem = nil
                 }
+                hideSubmenu()
             }
             submenuCloseTimer = nil
         }
     }
     
-    @ViewBuilder
-    private func submenuOverlay(geometry: GeometryProxy) -> some View {
-        ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-            if let submenuItems = item.submenu,
-               let hoveredItem = hoveredItem,
-               hoveredItem == item.id {
-                
-                let itemHeight: CGFloat = item.detail != nil ? 32 : 20
-                let paddingTop: CGFloat = 4
-                let itemVerticalCenter = paddingTop + (CGFloat(index) * itemHeight) + (itemHeight / 2)
-                
-                                 CustomMenuView(
-                     items: submenuItems,
-                     level: level + 1
-                 )
-                 .onHover { hovering in
-                     isSubmenuHovered = hovering
-                     if hovering {
-                         // Cancel close timer when hovering over submenu
-                         cancelSubmenuTimer()
-                     } else {
-                         // Start close timer when leaving submenu
-                         startSubmenuCloseTimer()
-                     }
-                 }
-                 .position(
-                     x: geometry.size.width + 90, // Position to the right of parent menu
-                     y: itemVerticalCenter // Center vertically on the triggering item
-                 )
-                 .zIndex(Double(level + 1))
+    private func showSubmenu(for item: MenuItemData, at index: Int) {
+        guard let submenuItems = item.submenu, !submenuItems.isEmpty else { return }
+        
+        // Close existing submenu
+        hideSubmenu()
+        
+        // Create new submenu panel
+        submenuPanel = SubmenuPanelController()
+        
+        // Calculate position for submenu using mouse location
+        DispatchQueue.main.async {
+            let mouseLocation = NSEvent.mouseLocation
+            let itemHeight: CGFloat = item.detail != nil ? 32 : 20
+            let paddingTop: CGFloat = 4
+            let itemVerticalCenter = paddingTop + (CGFloat(index) * itemHeight) + (itemHeight / 2)
+            
+            // Position submenu to the right of the mouse cursor
+            let submenuX = mouseLocation.x + 4 // Small offset from mouse
+            let submenuY = mouseLocation.y - itemVerticalCenter // Center vertically on the triggering item
+            
+            let point = CGPoint(x: submenuX, y: submenuY)
+            
+            print("Showing submenu at point: \(point) for item: \(item.title)")
+            
+            self.submenuPanel?.showSubmenu(at: point) {
+                CustomMenuView(items: submenuItems, level: self.level + 1)
+                    .frame(minWidth: 180)
             }
         }
     }
+    
+    private func hideSubmenu() {
+        submenuPanel?.close()
+        submenuPanel = nil
+    }
+    
+
 }
 
 // MARK: - Menu Builder Helper

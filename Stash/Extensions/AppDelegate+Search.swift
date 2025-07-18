@@ -137,7 +137,7 @@ extension AppDelegate {
 //                        }
                         
                         CustomMenuView(items: Constant1.demoMenuItems)
-                            .frame(width: 300, height: 2000)
+                            .frame(width: 600, height: 1000)
                     }
     }
 }
