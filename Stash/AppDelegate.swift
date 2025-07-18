@@ -19,6 +19,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     internal var searchPanel: NSPanel!
     
+    let rootPanel = SubmenuPanelController()
+        let submenuPanel = SubmenuPanelController()
+    
+    let items = [
+            MenuItem(title: "File", children: [
+                MenuItem(title: "New", children: nil),
+                MenuItem(title: "Open", children: [
+                    MenuItem(title: "Recent", children: nil),
+                    MenuItem(title: "From Disk", children: nil)
+                ])
+            ]),
+            MenuItem(title: "Edit", children: nil)
+        ]
+    
     private lazy var editPopover: NSPopover = {
         let p = NSPopover()
         let contentView = CustomMenuDemo().environmentObject(cabinet)
