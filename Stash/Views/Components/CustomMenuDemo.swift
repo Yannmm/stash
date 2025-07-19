@@ -22,7 +22,7 @@ struct CustomMenuDemo: View {
             .buttonStyle(.borderedProminent)
             
             if showMenu {
-                CustomMenuView(items: demoMenuItems)
+                _Menu(items: demoMenuItems)
                     .frame(maxWidth: 300)
             }
         }

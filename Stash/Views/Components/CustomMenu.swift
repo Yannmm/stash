@@ -65,15 +65,14 @@ struct MenuItemData: Identifiable, Equatable {
 }
 
 // MARK: - Individual Menu Item View
-struct CustomMenuItemView: View {
+struct _MenuItemView: View {
     let item: MenuItemData
-    let level: Int
     @State private var isHovered = false
     @Binding var hoveredItem: UUID?
     let onCancelTimer: () -> Void
     let onStartTimer: () -> Void
     let onShowSubmenu: (MenuItemData) -> Void
-    let onHideSubmenu: () -> Void
+    let onHideSubmenu: (MenuItemData) -> Void
     
     private var isCurrentlyHovered: Bool {
         hoveredItem == item.id
@@ -172,7 +171,7 @@ struct CustomMenuItemView: View {
                             withAnimation(.easeInOut(duration: 0.1)) {
                                 hoveredItem = nil
                             }
-                            onHideSubmenu()
+                            onHideSubmenu(item)
                         }
                     }
                 }
@@ -190,35 +189,76 @@ struct CustomMenuItemView: View {
 
 }
 
-// MARK: - Main Menu View
-struct CustomMenuView: View {
+class Menu {
+    let point: CGPoint
+    let content: AnyView
+    init(at point: CGPoint, items: [MenuItemData]) {
+        self.point = point
+        self.content = AnyView(_Menu(items: items))
+    }
+    
+    private var _panel: NSPanel!
+    
+    func show() {
+        close()
+
+        let hosting = NSHostingController(rootView: content)
+        hosting.view.frame = CGRect(origin: .zero, size: hosting.view.intrinsicContentSize)
+        
+        _panel = NSPanel(
+            contentRect: hosting.view.frame,
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        
+        _panel.level = .statusBar
+        _panel.isOpaque = true
+        _panel.backgroundColor = NSColor.clear
+        _panel.hasShadow = true
+        _panel.worksWhenModal = true
+        _panel.becomesKeyOnlyIfNeeded = false
+        _panel.acceptsMouseMovedEvents = true
+        
+        _panel.contentViewController = hosting
+        
+        let screenHeight = NSScreen.main?.frame.height ?? 0
+        let flippedY = screenHeight - point.y
+        _panel.setFrameTopLeftPoint(NSPoint(x: point.x, y: flippedY))
+        _panel.orderFront(nil)
+        // TODO: release nspanel
+    }
+    
+    func close() {
+        _panel?.close()
+        _panel = nil
+    }
+}
+
+// Menu content
+struct _Menu: View {
     let items: [MenuItemData]
-    let level: Int
     @State private var hoveredItem: UUID?
     @State private var submenuCloseTimer: Timer?
     @State private var isSubmenuHovered = false
     @State private var menuSize: CGSize = .zero
-    @State private var submenuPanel: SubmenuPanelController?
     
-    init(items: [MenuItemData], level: Int = 0) {
-        self.items = items
-        self.level = level
-    }
-    
+    var menuManager: MenuManager { MenuManager.shared }
+
     var body: some View {
         VStack(spacing: 0) {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                CustomMenuItemView(
+                _MenuItemView(
                     item: item,
-                    level: level,
                     hoveredItem: $hoveredItem,
                     onCancelTimer: cancelSubmenuTimer,
                     onStartTimer: startSubmenuCloseTimer,
                     onShowSubmenu: { item in
-                        showSubmenu(for: item, at: index)
+                        guard let items = item.submenu else { return }
+                        menuManager.show(items, location: NSEvent.mouseLocation, source: item)
                     },
-                    onHideSubmenu: {
-                        hideSubmenu()
+                    onHideSubmenu: { item in
+                        menuManager.hide(item)
                     }
                 )
             }
@@ -274,129 +314,55 @@ struct CustomMenuView: View {
         hideSubmenu()
         
         // Create new submenu panel
-        submenuPanel = SubmenuPanelController()
+//        submenuPanel = SubmenuPanelController()
         
         // Calculate position for submenu using mouse location
-        DispatchQueue.main.async {
-            let mouseLocation = NSEvent.mouseLocation
-            let itemHeight: CGFloat = item.detail != nil ? 32 : 20
-            let paddingTop: CGFloat = 4
-            let itemVerticalCenter = paddingTop + (CGFloat(index) * itemHeight) + (itemHeight / 2)
-            
-            // Position submenu to the right of the mouse cursor
-            let submenuX = mouseLocation.x + 4 // Small offset from mouse
-            let submenuY = mouseLocation.y - itemVerticalCenter // Center vertically on the triggering item
-            
-            let point = CGPoint(x: submenuX, y: submenuY)
-            
-            print("Showing submenu at point: \(point) for item: \(item.title)")
-            
-            self.submenuPanel?.showSubmenu(at: point) {
-                CustomMenuView(items: submenuItems, level: self.level + 1)
-                    .frame(minWidth: 180)
-            }
-        }
+//        DispatchQueue.main.async {
+//            let mouseLocation = NSEvent.mouseLocation
+//            let itemHeight: CGFloat = item.detail != nil ? 32 : 20
+//            let paddingTop: CGFloat = 4
+//            let itemVerticalCenter = paddingTop + (CGFloat(index) * itemHeight) + (itemHeight / 2)
+//            
+//            // Position submenu to the right of the mouse cursor
+//            let submenuX = mouseLocation.x + 4 // Small offset from mouse
+//            let submenuY = mouseLocation.y - itemVerticalCenter // Center vertically on the triggering item
+//            
+//            let point = CGPoint(x: submenuX, y: submenuY)
+//            
+//            print("Showing submenu at point: \(point) for item: \(item.title)")
+//            
+//            let menu = Menu(at: point)
+//            
+//             {
+//                _Menu(items: submenuItems, level: self.level + 1)
+//                    .frame(minWidth: 180)
+//            }
+//            
+//            menu.show()
+//        }
     }
     
     private func hideSubmenu() {
-        submenuPanel?.close()
-        submenuPanel = nil
-    }
-    
-
-}
-
-// MARK: - Menu Builder Helper
-extension MenuItemData {
-    static func buildMenu(@MenuBuilder _ content: () -> [MenuItemData]) -> [MenuItemData] {
-        content()
+//        submenuPanel?.close()
+//        submenuPanel = nil
     }
 }
 
-@resultBuilder
-struct MenuBuilder {
-    static func buildBlock(_ components: MenuItemData...) -> [MenuItemData] {
-        components
+class MenuManager {
+    static let shared = MenuManager()
+    
+    private var stack: [(MenuItemData?, Menu)] = []
+    
+    func show(_ items: [MenuItemData], location: CGPoint, source: MenuItemData?) {
+        let menu = Menu(at: location, items: items)
+        
+        menu.show()
+        
+        stack.insert((source, menu), at: 0)
     }
     
-    static func buildArray(_ components: [[MenuItemData]]) -> [MenuItemData] {
-        components.flatMap { $0 }
-    }
-    
-    static func buildOptional(_ component: [MenuItemData]?) -> [MenuItemData] {
-        component ?? []
-    }
-    
-    static func buildEither(first component: [MenuItemData]) -> [MenuItemData] {
-        component
-    }
-    
-    static func buildEither(second component: [MenuItemData]) -> [MenuItemData] {
-        component
+    func hide(_ item: MenuItemData) {
+        let x = stack.remove(at: 0)
+        x.1.close()
     }
 }
-
-// MARK: - Preview
-#if DEBUG
-struct CustomMenuView_Previews: PreviewProvider {
-    static var previews: some View {
-        CustomMenuView(items: sampleMenuItems)
-            .frame(width: 300, height: 400)
-            .background(Color.gray.opacity(0.1))
-    }
-    
-    static var sampleMenuItems: [MenuItemData] = [
-        MenuItemData(
-            title: "Recently Visited",
-            icon: NSImage(systemSymbolName: "clock.fill", accessibilityDescription: nil),
-            submenu: [
-                MenuItemData(title: "Google", detail: "https://google.com", action: {}),
-                MenuItemData(title: "GitHub", detail: "https://github.com", action: {}),
-                MenuItemData.separator,
-                MenuItemData(title: "Stack Overflow", detail: "https://stackoverflow.com", action: {})
-            ]
-        ),
-        MenuItemData.separator,
-        MenuItemData(
-            title: "Bookmarks",
-            icon: NSImage(systemSymbolName: "book.fill", accessibilityDescription: nil),
-            submenu: [
-                MenuItemData(title: "Development", submenu: [
-                    MenuItemData(title: "SwiftUI", action: {}),
-                    MenuItemData(title: "UIKit", action: {}),
-                    MenuItemData(title: "AppKit", action: {})
-                ]),
-                MenuItemData(title: "Design", action: {}),
-                MenuItemData(title: "Documentation", action: {})
-            ]
-        ),
-        MenuItemData(
-            title: "Create New Bookmark",
-            icon: NSImage(systemSymbolName: "link.badge.plus", accessibilityDescription: nil),
-            keyEquivalent: "C",
-            action: {}
-        ),
-        MenuItemData(
-            title: "Import from File",
-            icon: NSImage(systemSymbolName: "square.and.arrow.down", accessibilityDescription: nil),
-            keyEquivalent: "I",
-            action: {}
-        ),
-        MenuItemData.separator,
-        MenuItemData(
-            title: "Manage",
-            keyEquivalent: "M",
-            action: {}
-        ),
-        MenuItemData(
-            title: "Settings",
-            keyEquivalent: "S",
-            action: {}
-        ),
-        MenuItemData(
-            title: "Quit",
-            action: {}
-        )
-    ]
-}
-#endif 
