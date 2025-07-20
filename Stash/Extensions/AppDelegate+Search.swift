@@ -134,6 +134,3 @@ extension AppDelegate {
         return .zero
     }
 }
-
-//yourPanel.setFrame(NSRect(origin: panelOrigin, size: panelSize), display: true)
-//yourPanel.makeKeyAndOrderFront(nil)

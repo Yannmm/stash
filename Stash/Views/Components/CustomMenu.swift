@@ -69,10 +69,9 @@ struct _MenuItemView: View {
     let item: MenuItemData
     @State private var isHovered = false
     @Binding var hoveredItem: UUID?
-    let onCancelTimer: () -> Void
-    let onStartTimer: () -> Void
     let onShowSubmenu: (MenuItemData) -> Void
     let onHideSubmenu: (MenuItemData) -> Void
+    @State private var timer: Timer?
     
     private var isCurrentlyHovered: Bool {
         hoveredItem == item.id
@@ -138,7 +137,7 @@ struct _MenuItemView: View {
                     }
                     .padding(.trailing, 8)
                 }
-                .frame(height: item.detail != nil ? 32 : 20)
+                .frame(height: 20)
                 .background(
                     Rectangle()
                         .fill(isCurrentlyHovered && item.isEnabled ? 
@@ -149,7 +148,7 @@ struct _MenuItemView: View {
                 .onHover { hovering in
                     if hovering && item.isEnabled {
                         // Cancel any pending close timer when hovering over parent item
-                        onCancelTimer()
+                        cancelSubmenuTimer()
                         
                         withAnimation(.easeInOut(duration: 0.1)) {
                             hoveredItem = item.id
@@ -159,13 +158,11 @@ struct _MenuItemView: View {
                         if item.hasSubmenu {
                             onShowSubmenu(item)
                         }
-                        
-                        print("Hovering over item: \(item.title), hasSubmenu: \(item.hasSubmenu), submenu count: \(item.submenu?.count ?? 0), hoveredItem set to: \(item.id)")
                     } else {
                         // When leaving parent item, start a delay before closing submenu
                         if hoveredItem == item.id && item.hasSubmenu {
                             print("Leaving item with submenu: \(item.title), starting timer")
-                            onStartTimer()
+                            startSubmenuCloseTimer()
                         } else if hoveredItem == item.id {
                             print("Leaving item without submenu: \(item.title), clearing hover")
                             withAnimation(.easeInOut(duration: 0.1)) {
@@ -182,11 +179,41 @@ struct _MenuItemView: View {
                         }
                     }
                 }
+                .onGeometryChange(for: CGSize.self) { proxy in
+                    print("aaa -> \(proxy.frame(in: .global))")
+                    if let frame = xx?.statusItem?.button?.window?.convertToScreen(proxy.frame(in: .global)) {
+                        print("bbbb -> \(frame)")
+                 }
+                    
+                                return proxy.size
+                    
+                            } action: {
+//                                self.contentHeight = $0.height
+                                print("xxxx -> \($0)")
+                                // Alternatively you can get the `width` here
+                            }
 
         }
     }
     
-
+    private func cancelSubmenuTimer() {
+        timer?.invalidate()
+        timer = nil
+    }
+    
+    private func startSubmenuCloseTimer() {
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { _ in
+            // Only close if submenu is not being hovered
+//            if !isSubmenuHovered {
+//                withAnimation(.easeInOut(duration: 0.1)) {
+//                    hovered = nil
+//                }
+//                hideSubmenu()
+//            }
+            timer = nil
+        }
+    }
 }
 
 class Menu {
@@ -219,12 +246,11 @@ class Menu {
         _panel.worksWhenModal = true
         _panel.becomesKeyOnlyIfNeeded = false
         _panel.acceptsMouseMovedEvents = true
-        
         _panel.contentViewController = hosting
         
         let panelSize = hosting.view.intrinsicContentSize // your panel's size
         
-        print("content size -> \(anchorRect)")
+        print("panel size -> \(panelSize.height)")
         
         // Position the panel below the status item
         let point = CGPoint(
@@ -246,10 +272,8 @@ class Menu {
 // Menu content
 struct _Menu: View {
     let items: [MenuItemData]
-    @State private var hoveredItem: UUID?
-    @State private var submenuCloseTimer: Timer?
+    @State private var hovered: UUID?
     @State private var isSubmenuHovered = false
-    @State private var menuSize: CGSize = .zero
     
     var menuManager: MenuManager { MenuManager.shared }
 
@@ -258,9 +282,7 @@ struct _Menu: View {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                 _MenuItemView(
                     item: item,
-                    hoveredItem: $hoveredItem,
-                    onCancelTimer: cancelSubmenuTimer,
-                    onStartTimer: startSubmenuCloseTimer,
+                    hoveredItem: $hovered,
                     onShowSubmenu: { item in
                         guard let items = item.submenu else { return }
                         menuManager.show(items, anchorRect: .zero, source: item)
@@ -288,68 +310,8 @@ struct _Menu: View {
         )
         .frame(minWidth: 180)
         .fixedSize() // Allow content to determine its own size
-        .onDisappear {
-            // Clean up timer and submenu when view disappears
-            submenuCloseTimer?.invalidate()
-            submenuCloseTimer = nil
-            hideSubmenu()
-        }
     }
-    
-    private func cancelSubmenuTimer() {
-        submenuCloseTimer?.invalidate()
-        submenuCloseTimer = nil
-    }
-    
-    private func startSubmenuCloseTimer() {
-        submenuCloseTimer?.invalidate()
-        submenuCloseTimer = Timer.scheduledTimer(withTimeInterval: 0.3, repeats: false) { _ in
-            // Only close if submenu is not being hovered
-            if !isSubmenuHovered {
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    hoveredItem = nil
-                }
-                hideSubmenu()
-            }
-            submenuCloseTimer = nil
-        }
-    }
-    
-    private func showSubmenu(for item: MenuItemData, at index: Int) {
-        guard let submenuItems = item.submenu, !submenuItems.isEmpty else { return }
-        
-        // Close existing submenu
-        hideSubmenu()
-        
-        // Create new submenu panel
-//        submenuPanel = SubmenuPanelController()
-        
-        // Calculate position for submenu using mouse location
-//        DispatchQueue.main.async {
-//            let mouseLocation = NSEvent.mouseLocation
-//            let itemHeight: CGFloat = item.detail != nil ? 32 : 20
-//            let paddingTop: CGFloat = 4
-//            let itemVerticalCenter = paddingTop + (CGFloat(index) * itemHeight) + (itemHeight / 2)
-//            
-//            // Position submenu to the right of the mouse cursor
-//            let submenuX = mouseLocation.x + 4 // Small offset from mouse
-//            let submenuY = mouseLocation.y - itemVerticalCenter // Center vertically on the triggering item
-//            
-//            let point = CGPoint(x: submenuX, y: submenuY)
-//            
-//            print("Showing submenu at point: \(point) for item: \(item.title)")
-//            
-//            let menu = Menu(at: point)
-//            
-//             {
-//                _Menu(items: submenuItems, level: self.level + 1)
-//                    .frame(minWidth: 180)
-//            }
-//            
-//            menu.show()
-//        }
-    }
-    
+
     private func hideSubmenu() {
 //        submenuPanel?.close()
 //        submenuPanel = nil
@@ -372,5 +334,14 @@ class MenuManager {
     func hide(_ item: MenuItemData) {
         let x = stack.remove(at: 0)
         x.1.close()
+    }
+}
+
+
+struct FramePreferenceKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        value = nextValue()
     }
 }
