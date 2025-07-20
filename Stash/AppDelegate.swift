@@ -21,7 +21,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private lazy var editPopover: NSPopover = {
         let p = NSPopover()
-        let contentView = CustomMenuDemo().environmentObject(cabinet)
+        let contentView = ContentView().environmentObject(cabinet)
         p.behavior = .transient
         p.contentViewController = NSHostingController(rootView: contentView)
         p.delegate = self

@@ -123,6 +123,17 @@ enum Constant1 {
 
 extension AppDelegate {
     @objc func search() {
-        MenuManager.shared.show(Constant1.demoMenuItems, location: NSEvent.mouseLocation, source: nil)
+        MenuManager.shared.show(Constant1.demoMenuItems, anchorRect: statusItemButtonFrame, source: nil)
+    }
+    
+    private var statusItemButtonFrame: NSRect {
+        if let button = statusItem?.button,
+           let frame = button.window?.convertToScreen(button.convert(button.bounds, to: nil)) {
+            return frame
+        }
+        return .zero
     }
 }
+
+//yourPanel.setFrame(NSRect(origin: panelOrigin, size: panelSize), display: true)
+//yourPanel.makeKeyAndOrderFront(nil)

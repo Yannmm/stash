@@ -190,10 +190,10 @@ struct _MenuItemView: View {
 }
 
 class Menu {
-    let point: CGPoint
+    let anchorRect: NSRect
     let content: AnyView
-    init(at point: CGPoint, items: [MenuItemData]) {
-        self.point = point
+    init(at anchorRect: NSRect, items: [MenuItemData]) {
+        self.anchorRect = anchorRect
         self.content = AnyView(_Menu(items: items))
     }
     
@@ -222,9 +222,17 @@ class Menu {
         
         _panel.contentViewController = hosting
         
-        let screenHeight = NSScreen.main?.frame.height ?? 0
-        let flippedY = screenHeight - point.y
-        _panel.setFrameTopLeftPoint(NSPoint(x: point.x, y: flippedY))
+        let panelSize = hosting.view.intrinsicContentSize // your panel's size
+        
+        print("content size -> \(anchorRect)")
+        
+        // Position the panel below the status item
+        let point = CGPoint(
+            x: anchorRect.midX - panelSize.width / 2,
+            y: anchorRect.minY - panelSize.height - 5 // 5pt gap below status item
+        )
+        
+        _panel.setFrameOrigin(point)
         _panel.orderFront(nil)
         // TODO: release nspanel
     }
@@ -255,7 +263,7 @@ struct _Menu: View {
                     onStartTimer: startSubmenuCloseTimer,
                     onShowSubmenu: { item in
                         guard let items = item.submenu else { return }
-                        menuManager.show(items, location: NSEvent.mouseLocation, source: item)
+                        menuManager.show(items, anchorRect: .zero, source: item)
                     },
                     onHideSubmenu: { item in
                         menuManager.hide(item)
@@ -353,8 +361,8 @@ class MenuManager {
     
     private var stack: [(MenuItemData?, Menu)] = []
     
-    func show(_ items: [MenuItemData], location: CGPoint, source: MenuItemData?) {
-        let menu = Menu(at: location, items: items)
+    func show(_ items: [MenuItemData], anchorRect: NSRect, source: MenuItemData?) {
+        let menu = Menu(at: anchorRect, items: items)
         
         menu.show()
         
