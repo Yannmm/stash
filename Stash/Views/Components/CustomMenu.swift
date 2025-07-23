@@ -129,13 +129,6 @@ struct _Menu: View {
                 _MenuItemView(
                     item: item,
                     hoveredItem: $hovered,
-                    onExpand: { item in
-                        guard let items = item.submenu else { return }
-                        menuManager.show(items, anchorRect: .zero, source: item)
-                    },
-                    onHideSubmenu: { item in
-                        menuManager.hide(item)
-                    }
                 )
             }
         }
@@ -154,17 +147,12 @@ struct _Menu: View {
             RoundedRectangle(cornerRadius: 6)
                 .stroke(Color(NSColor.separatorColor).opacity(0.3), lineWidth: 0.5)
         )
-        .frame(minWidth: 180)
-        .fixedSize() // Allow content to determine its own size
-        .onHover { hovering in
-            self.hovering = hovering
-            print("menu hovering state: \(self.hovering)")
-        }
-    }
-    
-    private func hideSubmenu() {
-        //        submenuPanel?.close()
-        //        submenuPanel = nil
+//        .frame(minWidth: 180)
+//        .fixedSize() // Allow content to determine its own size
+//        .onHover { hovering in
+//            self.hovering = hovering
+//            print("menu hovering state: \(self.hovering)")
+//        }
     }
 }
 
