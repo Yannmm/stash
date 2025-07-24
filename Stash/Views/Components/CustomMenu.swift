@@ -9,65 +9,21 @@ import SwiftUI
 import AppKit
 
 // MARK: - Menu Item Data Structure
-struct MenuItemData: Identifiable, Equatable {
-    let id = UUID()
+struct SearchItem: Identifiable, Equatable {
+    let id: UUID
     let title: String
-    let detail: String?
-    let icon: NSImage?
-    let keyEquivalent: String?
-    let action: (() -> Void)?
-    let submenu: [MenuItemData]?
-    let isSeparator: Bool
-    let enabled: Bool
+    let detail: String
+    let icon: Icon
     
-    init(
-        title: String,
-        detail: String? = nil,
-        icon: NSImage? = nil,
-        keyEquivalent: String? = nil,
-        action: (() -> Void)? = nil,
-        submenu: [MenuItemData]? = nil,
-        isEnabled: Bool = true
-    ) {
-        self.title = title
-        self.detail = detail
-        self.icon = icon
-        self.keyEquivalent = keyEquivalent
-        self.action = action
-        self.submenu = submenu
-        self.isSeparator = false
-        self.enabled = isEnabled
-    }
-    
-    // Separator initializer
-    static var separator: MenuItemData {
-        MenuItemData(title: "", isSeparator: true)
-    }
-    
-    private init(title: String, isSeparator: Bool) {
-        self.title = title
-        self.detail = nil
-        self.icon = nil
-        self.keyEquivalent = nil
-        self.action = nil
-        self.submenu = nil
-        self.isSeparator = isSeparator
-        self.enabled = true
-    }
-    
-    static func == (lhs: MenuItemData, rhs: MenuItemData) -> Bool {
+    static func == (lhs: SearchItem, rhs: SearchItem) -> Bool {
         lhs.id == rhs.id
-    }
-    
-    var hasSubmenu: Bool {
-        submenu?.isEmpty == false
     }
 }
 
 class Menu {
     let anchorRect: NSRect
     let content: AnyView
-    init(at anchorRect: NSRect, items: [MenuItemData]) {
+    init(at anchorRect: NSRect, items: [SearchItem]) {
         self.anchorRect = anchorRect
         self.content = AnyView(_Menu(items: items))
     }
@@ -117,7 +73,7 @@ class Menu {
 
 // Menu content
 struct _Menu: View {
-    let items: [MenuItemData]
+    let items: [SearchItem]
     @State private var hovered: UUID?
     @State private var hovering = false
     
@@ -159,9 +115,9 @@ struct _Menu: View {
 class MenuManager {
     static let shared = MenuManager()
     
-    private var stack: [(MenuItemData?, Menu)] = []
+    private var stack: [(SearchItem?, Menu)] = []
     
-    func show(_ items: [MenuItemData], anchorRect: NSRect, source: MenuItemData?) {
+    func show(_ items: [SearchItem], anchorRect: NSRect, source: SearchItem?) {
         let menu = Menu(at: anchorRect, items: items)
         
         menu.show()
@@ -169,7 +125,7 @@ class MenuManager {
         stack.insert((source, menu), at: 0)
     }
     
-    func hide(_ item: MenuItemData) {
+    func hide(_ item: SearchItem) {
         let x = stack.remove(at: 0)
         x.1.close()
     }

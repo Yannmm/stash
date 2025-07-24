@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct _MenuItemView: View {
-    let item: MenuItemData
+    let item: SearchItem
     @State private var isHovered = false
     @State private var frame = CGRect.zero
     @Binding var hoveredItem: UUID?
@@ -18,20 +18,13 @@ struct _MenuItemView: View {
     }
     
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(alignment: .top, spacing: 0) {
             // Icon
-            SwiftUI.Group {
-                if let icon = item.icon {
-                    Image(nsImage: icon)
-                        .frame(width: 16, height: 16)
-                } else {
-                    Rectangle()
-                        .fill(Color.clear)
-                        .frame(width: 16, height: 16)
-                }
-            }
-            .frame(width: 24)
-            .padding(.leading, 8)
+            Image(systemName: "star")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 45, height: 45)
+                .foregroundStyle(Color.theme)
             
             // Title and Detail
             VStack(alignment: .leading, spacing: 1) {
@@ -51,28 +44,7 @@ struct _MenuItemView: View {
             }
             
             Spacer()
-            
-            // Key Equivalent or Submenu Arrow
-            HStack(spacing: 4) {
-                if let keyEquivalent = item.keyEquivalent, !keyEquivalent.isEmpty {
-                    Text(keyEquivalent)
-                        .font(.system(size: 11))
-                        .foregroundColor(item.enabled ?
-                                         (isCurrentlyHovered ? Color.white.opacity(0.8) : .secondary) :
-                                .accentColor)
-                }
-                
-                if item.hasSubmenu {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundColor(item.enabled ?
-                                         (isCurrentlyHovered ? .white : .secondary) :
-                                .accentColor)
-                }
-            }
-            .padding(.trailing, 8)
         }
-        .frame(height: 20)
         .background(
             Rectangle()
                 .fill(isCurrentlyHovered && item.enabled ?
