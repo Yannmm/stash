@@ -168,22 +168,11 @@ struct CellContent: View {
     private func title(_ flag: Bool) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: flag ? 2 : 5) {
-                icon(flag ? NSImage.Constant.side1:  NSImage.Constant.side2)
+                ViewHelper.icon(viewModel.entry?.icon, side: flag ? NSImage.Constant.side1:  NSImage.Constant.side2)
                 Rectangle()
                     .frame(width: 1, height: 20)
                     .foregroundColor(focused ? Color(NSColor.separatorColor) : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
-                
-                //                TextField("Input the title here...", text: $viewModel.title)
-                //                    .font(flag ? .body : .title2)
-                //                    .textFieldStyle(.plain)
-                //                    .background(Color.clear)
-                //                    .focused($focused)
-                //                    .layoutPriority(1)
-                //                    .allowsHitTesting(false)
-                //                    .truncationMode(.tail)
-                
-                
                 HashtagTextField(text: $viewModel.title, focused: focused)
                     .font(flag ? NSFont.systemFont(ofSize: NSFont.systemFontSize) : NSFont.systemFont(ofSize: NSFont.systemFontSize + 5))
                     .focused($focused)
@@ -199,36 +188,6 @@ struct CellContent: View {
             }
         }
         .animation(.easeInOut(duration: 0.25), value: flag)
-    }
-    
-    @ViewBuilder
-    private func icon(_ side: CGFloat) -> some View {
-        if let e = viewModel.entry {
-            switch (e.icon) {
-            case .system(let name):
-                Image(systemName: name)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: side, height: side)
-                    .foregroundStyle(Color.theme)
-            case .favicon(let url):
-                KFImage.url(url)
-                    .appendProcessor(EmptyFaviconReplacer(url: url))
-                    .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2)
-                    .cacheOriginalImage()
-                    .loadDiskFileSynchronously()
-                    .onSuccess { result in }
-                    .onFailure { error in }
-                    .onFailureImage(NSImage.drawFavicon(from: url.firstDomainLetter))
-                    .resizable()
-                    .frame(width: side, height: side)
-            case .local(let url):
-                Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: side, height: side)
-            }
-        }
     }
     
     @ViewBuilder

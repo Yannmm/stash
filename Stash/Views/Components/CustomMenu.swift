@@ -83,12 +83,11 @@ struct _Menu: View {
         VStack(spacing: 0) {
             ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
                 _MenuItemView(
-                    item: item,
-                    hoveredItem: $hovered,
+                    item: item
                 )
             }
         }
-        .padding(.vertical, 4)
+        .frame(width: 400)
         .background(
             RoundedRectangle(cornerRadius: 6)
                 .fill(Color(NSColor.controlBackgroundColor))

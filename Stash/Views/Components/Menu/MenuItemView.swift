@@ -9,49 +9,34 @@ import SwiftUI
 
 struct _MenuItemView: View {
     let item: SearchItem
-    @State private var isHovered = false
+    @State private var hovering = false
     @State private var frame = CGRect.zero
-    @Binding var hoveredItem: UUID?
-    
-    private var isCurrentlyHovered: Bool {
-        hoveredItem == item.id
-    }
     
     var body: some View {
         HStack(alignment: .top, spacing: 0) {
             // Icon
-            Image(systemName: "star")
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 45, height: 45)
-                .foregroundStyle(Color.theme)
-            
+            ViewHelper.icon(item.icon, side: 45)
             // Title and Detail
             VStack(alignment: .leading, spacing: 1) {
-                Text(item.title)
-                    .font(.system(size: 13))
-                    .foregroundColor(isCurrentlyHovered ? .white : .primary)
-                
-                Text(item.detail)
-                    .font(.system(size: 11))
-                    .foregroundColor((isCurrentlyHovered ? Color.white.opacity(0.8) : .secondary))
+                title()
+                detail()
             }
             
             Spacer()
         }
         .background(
-            Rectangle()
-                .fill(Color(NSColor.controlAccentColor))
+//            Rectangle()
+//                .fill(Color(NSColor.controlAccentColor))
         )
         .contentShape(Rectangle())
         .onHover { hovering in
             if hovering  {
                 withAnimation(.easeInOut(duration: 0.1)) {
-                    hoveredItem = item.id
+                    self.hovering = true
                 }
             } else {
                 withAnimation(.easeInOut(duration: 0.1)) {
-                    hoveredItem = nil
+                    self.hovering = false
                 }
             }
         }
@@ -70,5 +55,19 @@ struct _MenuItemView: View {
         } action: {
             self.frame = $0
         }
+    }
+    
+    @ViewBuilder
+    private func title() -> some View {
+        Text(item.title)
+            .font(.system(size: 13))
+            .foregroundColor(hovering ? .white : .primary)
+    }
+    
+    @ViewBuilder
+    private func detail() -> some View {
+        Text(item.detail)
+            .font(.system(size: 11))
+            .foregroundColor((hovering ? Color.white.opacity(0.8) : .secondary))
     }
 }
