@@ -53,4 +53,6 @@
 // 48. suggestion view position for the last item in the outlineview. ✅
 // 49. add tooltip for nsmenuitem. ✅
 // 50. suggestion list view hover and keyboard. ✅
+// 51. change suggestion list hover scheme just like xcode cmd+shift+o
+// 52. remember last time search text
 

@@ -36,7 +36,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }()
     
     internal lazy var searchViewModel: SearchViewModel = {
-        let viewModel = SearchViewModel()
+        let viewModel = SearchViewModel(cabinet: cabinet)
         return viewModel
     }()
     
@@ -82,6 +82,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         .store(in: &cancellables)
         
+        
+        // Notifications
         NotificationCenter.default.addObserver(forName: .onShortcutKeyDown, object: nil, queue: nil) { [weak self] _ in
             if let button = self?.statusItem?.button {
                 button.performClick(nil)

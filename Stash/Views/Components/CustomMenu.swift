@@ -14,6 +14,7 @@ struct SearchItem: Identifiable, Equatable {
     let title: String
     let detail: String
     let icon: Icon
+    let type: EntryType
     
     static func == (lhs: SearchItem, rhs: SearchItem) -> Bool {
         lhs.id == rhs.id
@@ -87,7 +88,9 @@ struct _Menu: View {
                 )
             }
         }
-        .frame(width: 400)
+        .frame(width: 500)
+        .padding(.vertical, 12)
+        .padding(.horizontal, 12)
         .background(
             RoundedRectangle(cornerRadius: 6)
                 .fill(Color(NSColor.controlBackgroundColor))
@@ -102,12 +105,6 @@ struct _Menu: View {
             RoundedRectangle(cornerRadius: 6)
                 .stroke(Color(NSColor.separatorColor).opacity(0.3), lineWidth: 0.5)
         )
-//        .frame(minWidth: 180)
-//        .fixedSize() // Allow content to determine its own size
-//        .onHover { hovering in
-//            self.hovering = hovering
-//            print("menu hovering state: \(self.hovering)")
-//        }
     }
 }
 

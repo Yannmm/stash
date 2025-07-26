@@ -8,23 +8,11 @@
 import AppKit
 import SwiftUI
 
-enum Constant1 {
-    static var demoMenuItems: [SearchItem] {
-        [
-            SearchItem(id: UUID(), title: "test1", detail: "this is a good test", icon: .system("star")),
-            SearchItem(id: UUID(), title: "test1", detail: "this is a good test", icon: .system("star")),
-            SearchItem(id: UUID(), title: "test1", detail: "this is a good test", icon: .system("star")),
-            SearchItem(id: UUID(), title: "test1", detail: "this is a good test", icon: .system("star")),
-            SearchItem(id: UUID(), title: "test1", detail: "this is a good test", icon: .system("star")),
-            SearchItem(id: UUID(), title: "test1", detail: "this is a good test", icon: .system("star")),
-            SearchItem(id: UUID(), title: "test1", detail: "this is a good test", icon: .system("star")),
-        ]
-    }
-}
-
 extension AppDelegate {
     @objc func search() {
-        MenuManager.shared.show(Constant1.demoMenuItems, anchorRect: statusItemButtonFrame, source: nil)
+        let menu = Menu(at: statusItemButtonFrame, items: searchViewModel.items)
+        
+        menu.show()
     }
     
     private var statusItemButtonFrame: NSRect {
