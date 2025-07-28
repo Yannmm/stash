@@ -24,12 +24,13 @@ struct SearchItem: Identifiable, Equatable {
 class Menu {
     let anchorRect: NSRect
     let content: AnyView
-    init(at anchorRect: NSRect, items: [SearchItem]) {
+    let viewModel: SearchViewModel
+    init(at anchorRect: NSRect, viewModel: SearchViewModel) {
         self.anchorRect = anchorRect
-        self.content = AnyView(_Menu(items: items))
+        self.content = AnyView(_Menu(viewModel: viewModel))
     }
     
-    private var _panel: NSPanel!
+    private var _panel: FocusablePanel!
     
     func show() {
         close()
@@ -37,20 +38,25 @@ class Menu {
         let hosting = NSHostingController(rootView: content)
         hosting.view.frame = CGRect(origin: .zero, size: hosting.view.intrinsicContentSize)
         
-        _panel = NSPanel(
+        _panel = FocusablePanel(
             contentRect: hosting.view.frame,
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
         
-        _panel.level = .statusBar
+        //        _panel.level = .statusBar
         _panel.isOpaque = true
-        _panel.backgroundColor = NSColor.clear
+        //        _panel.backgroundColor = NSColor.clear
         _panel.hasShadow = true
         _panel.worksWhenModal = true
         _panel.becomesKeyOnlyIfNeeded = false
         _panel.acceptsMouseMovedEvents = true
+        _panel.isFloatingPanel = false
+        _panel.hidesOnDeactivate = false
+        _panel.isReleasedWhenClosed = false
+        _panel.level = .normal
+        
         _panel.contentViewController = hosting
         
         let panelSize = hosting.view.intrinsicContentSize // your panel's size
@@ -62,7 +68,8 @@ class Menu {
         )
         
         _panel.setFrameOrigin(point)
-        _panel.orderFront(nil)
+        //        _panel.orderFront(nil)
+        _panel.makeKeyAndOrderFront(nil)
         // TODO: release nspanel
     }
     
@@ -74,21 +81,50 @@ class Menu {
 
 // Menu content
 struct _Menu: View {
-    let items: [SearchItem]
+    @StateObject var viewModel: SearchViewModel
     @State private var hovered: UUID?
     @State private var hovering = false
     
-    var menuManager: MenuManager { MenuManager.shared }
+    @State private var searchText = ""
+    @FocusState private var focused: Bool
     
     var body: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(items.enumerated()), id: \.element.id) { index, item in
-                _MenuItemView(
-                    item: item
-                )
+        VStack(spacing: 12) {
+            HStack(spacing: 12) {
+                Image(systemName: "sparkle.magnifyingglass")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 20, height: 20)
+                    .foregroundStyle(Color.theme)
+                TextField("Search", text: $searchText)
+                    .controlSize(.extraLarge)
+                    .font(.system(size: 20, weight: .regular))
+                    .textFieldStyle(PlainTextFieldStyle())
+                    .focused($focused)
+                if !searchText.isEmpty {
+                    Button(action: {
+                        searchText = ""
+                    }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.gray)
+                    }
+                    .buttonStyle(BorderlessButtonStyle()) // Important for macOS!
+                }
+            }
+            .padding(.horizontal, 8)
+            
+            VStack(spacing: 0) {
+                ForEach(Array(Array($viewModel.items.prefix(5)).enumerated()), id: \.element.id) { index, item in
+                    _MenuItemView(
+                        item: item
+                    )
+                }
             }
         }
         .frame(width: 500)
+        .onAppear {
+            focused = true
+        }
         .padding(.vertical, 12)
         .padding(.horizontal, 12)
         .background(
@@ -108,21 +144,8 @@ struct _Menu: View {
     }
 }
 
-class MenuManager {
-    static let shared = MenuManager()
-    
-    private var stack: [(SearchItem?, Menu)] = []
-    
-    func show(_ items: [SearchItem], anchorRect: NSRect, source: SearchItem?) {
-        let menu = Menu(at: anchorRect, items: items)
-        
-        menu.show()
-        
-        stack.insert((source, menu), at: 0)
-    }
-    
-    func hide(_ item: SearchItem) {
-        let x = stack.remove(at: 0)
-        x.1.close()
-    }
+
+class FocusablePanel: NSPanel {
+    override var canBecomeKey: Bool { true }
+    override var canBecomeMain: Bool { true }
 }
