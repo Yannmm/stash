@@ -49,8 +49,9 @@ class SearchViewModel: ObservableObject {
         }
         .store(in: &cancellables)
         
-        Publishers.CombineLatest($originalItems, $searchText.filter({ $0.count > 0 }))
+        Publishers.CombineLatest($originalItems, $searchText)
             .map({ items, keyword in
+                guard keyword.count > 2 else { return [] }
                 let k = keyword.lowercased()
                 return items.filter({ $0.title.lowercased().contains(k) })
             })

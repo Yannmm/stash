@@ -7,15 +7,15 @@
 
 import SwiftUI
 
-struct _MenuItemView: View {
+struct _SearchItemView: View {
     let item: SearchItem
     @State private var hovering = false
     @State private var frame = CGRect.zero
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
-            ViewHelper.icon(item.icon, side: 35)
-            VStack(alignment: .leading, spacing: 2) {
+            ViewHelper.icon(item.icon, side: 30)
+            VStack(alignment: .leading, spacing: 0) {
                 title()
                 detail()
             }
@@ -27,6 +27,7 @@ struct _MenuItemView: View {
             Rectangle()
                 .fill(hovering ? Color(NSColor.controlAccentColor) : .clear)
         )
+        .cornerRadius(6)
         .onHover { hovering in
             if hovering  {
                 withAnimation(.easeInOut(duration: 0.1)) {
@@ -58,14 +59,19 @@ struct _MenuItemView: View {
     @ViewBuilder
     private func title() -> some View {
         Text(item.title)
-            .font(.system(size: 16, weight: .regular))
+            .font(.system(size: 15, weight: .regular))
+            .lineLimit(nil)
+            .fixedSize(horizontal: false, vertical: true)
+            .padding(.top, -2)
             .foregroundColor(hovering ? .white : .primary)
     }
     
     @ViewBuilder
     private func detail() -> some View {
         Text(item.detail)
-            .font(.system(size: 13, weight: .light))
+            .font(.system(size: 12, weight: .light))
+            .lineLimit(nil)
+            .fixedSize(horizontal: false, vertical: true)
             .foregroundColor((hovering ? .white : .secondary))
     }
 }

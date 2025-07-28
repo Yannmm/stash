@@ -8,19 +8,6 @@
 import SwiftUI
 import AppKit
 
-// MARK: - Menu Item Data Structure
-struct SearchItem: Identifiable, Equatable {
-    let id: UUID
-    let title: String
-    let detail: String
-    let icon: Icon
-    let type: EntryType
-    
-    static func == (lhs: SearchItem, rhs: SearchItem) -> Bool {
-        lhs.id == rhs.id
-    }
-}
-
 class Menu {
     let anchorRect: NSRect
     let content: AnyView
@@ -28,7 +15,7 @@ class Menu {
     init(at anchorRect: NSRect, viewModel: SearchViewModel) {
         self.anchorRect = anchorRect
         self.viewModel = viewModel
-        self.content = AnyView(_Menu(viewModel: viewModel))
+        self.content = AnyView(_SearchView(viewModel: viewModel))
     }
     
     private var _panel: FocusablePanel!
@@ -48,7 +35,7 @@ class Menu {
         
         //        _panel.level = .statusBar
         _panel.isOpaque = true
-        //        _panel.backgroundColor = NSColor.clear
+        _panel.backgroundColor = NSColor.clear
         _panel.hasShadow = true
         _panel.worksWhenModal = true
         _panel.becomesKeyOnlyIfNeeded = false
@@ -81,45 +68,22 @@ class Menu {
 }
 
 // Menu content
-struct _Menu: View {
+struct _SearchView: View {
     @StateObject var viewModel: SearchViewModel
     @State private var hovered: UUID?
     @State private var hovering = false
-
+    
     @FocusState private var focused: Bool
     
     var body: some View {
         VStack(spacing: 12) {
-            HStack(spacing: 12) {
-                Image(systemName: "sparkle.magnifyingglass")
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 20, height: 20)
-                    .foregroundStyle(Color.theme)
-                TextField("Search", text: $viewModel.searchText)
-                    .controlSize(.extraLarge)
-                    .font(.system(size: 20, weight: .regular))
-                    .textFieldStyle(PlainTextFieldStyle())
-                    .focused($focused)
-                if !viewModel.searchText.isEmpty {
-                    Button(action: {
-                        viewModel.searchText = ""
-                    }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.gray)
-                    }
-                    .buttonStyle(BorderlessButtonStyle()) // Important for macOS!
-                }
+            searchField()
+            ForEach(Array(Array(viewModel.items).enumerated()), id: \.element.id) { index, item in
+                _SearchItemView(
+                    item: item
+                )
             }
-            .padding(.horizontal, 8)
             
-            VStack(spacing: 0) {
-                ForEach(Array(Array(viewModel.items).enumerated()), id: \.element.id) { index, item in
-                    _MenuItemView(
-                        item: item
-                    )
-                }
-            }
         }
         .frame(width: 500)
         .onAppear {
@@ -131,16 +95,42 @@ struct _Menu: View {
             RoundedRectangle(cornerRadius: 6)
                 .fill(Color(NSColor.controlBackgroundColor))
                 .shadow(
-                    color: .black.opacity(0.25),
-                    radius: 8,
+                    color: .black.opacity(0.15),
+                    radius: 10,
                     x: 0,
-                    y: 2
+                    y: 4
                 )
         )
         .overlay(
             RoundedRectangle(cornerRadius: 6)
                 .stroke(Color(NSColor.separatorColor).opacity(0.3), lineWidth: 0.5)
         )
+    }
+    
+    @ViewBuilder
+    private func searchField() -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "sparkle.magnifyingglass")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 20, height: 20)
+                .foregroundStyle(Color.theme)
+            TextField("Search", text: $viewModel.searchText)
+                .controlSize(.extraLarge)
+                .font(.system(size: 20, weight: .regular))
+                .textFieldStyle(PlainTextFieldStyle())
+                .focused($focused)
+            if !viewModel.searchText.isEmpty {
+                Button(action: {
+                    viewModel.searchText = ""
+                }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.gray)
+                }
+                .buttonStyle(BorderlessButtonStyle()) // Important for macOS!
+            }
+        }
+        .padding(.horizontal, 8)
     }
 }
 
