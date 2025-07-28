@@ -6,6 +6,7 @@
 //
 
 import Combine
+import Foundation
 
 class SearchViewModel: ObservableObject {
     @Published var searching = false
@@ -50,11 +51,14 @@ class SearchViewModel: ObservableObject {
         .store(in: &cancellables)
         
         Publishers.CombineLatest($originalItems, $searchText)
+            .debounce(for: .milliseconds(100), scheduler: DispatchQueue.main)
+            .receive(on: DispatchQueue.global(qos: .userInitiated))
             .map({ items, keyword in
                 guard keyword.count > 2 else { return [] }
                 let k = keyword.lowercased()
                 return items.filter({ $0.title.lowercased().contains(k) })
             })
+            .receive(on: DispatchQueue.main)
             .sink { [weak self] in
                 self?.items = $0
             }

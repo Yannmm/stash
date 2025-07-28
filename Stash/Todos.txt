@@ -55,4 +55,5 @@
 // 50. suggestion list view hover and keyboard. ✅
 // 51. change suggestion list hover scheme just like xcode cmd+shift+o
 // 52. remember last time search text
+// 53. for search view, hover should default to the first item.
 
