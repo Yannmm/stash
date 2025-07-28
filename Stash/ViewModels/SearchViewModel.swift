@@ -10,6 +10,8 @@ import Combine
 class SearchViewModel: ObservableObject {
     @Published var searching = false
     @Published var items: [SearchItem] = []
+    @Published private var originalItems: [SearchItem] = []
+    @Published var searchText = ""
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -43,8 +45,18 @@ class SearchViewModel: ObservableObject {
             })
         })
         .sink { [weak self] in
-            self?.items = $0
+            self?.originalItems = $0
         }
         .store(in: &cancellables)
+        
+        Publishers.CombineLatest($originalItems, $searchText.filter({ $0.count > 0 }))
+            .map({ items, keyword in
+                let k = keyword.lowercased()
+                return items.filter({ $0.title.lowercased().contains(k) })
+            })
+            .sink { [weak self] in
+                self?.items = $0
+            }
+            .store(in: &cancellables)
     }
 }

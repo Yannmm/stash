@@ -27,6 +27,7 @@ class Menu {
     let viewModel: SearchViewModel
     init(at anchorRect: NSRect, viewModel: SearchViewModel) {
         self.anchorRect = anchorRect
+        self.viewModel = viewModel
         self.content = AnyView(_Menu(viewModel: viewModel))
     }
     
@@ -84,8 +85,7 @@ struct _Menu: View {
     @StateObject var viewModel: SearchViewModel
     @State private var hovered: UUID?
     @State private var hovering = false
-    
-    @State private var searchText = ""
+
     @FocusState private var focused: Bool
     
     var body: some View {
@@ -96,14 +96,14 @@ struct _Menu: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 20, height: 20)
                     .foregroundStyle(Color.theme)
-                TextField("Search", text: $searchText)
+                TextField("Search", text: $viewModel.searchText)
                     .controlSize(.extraLarge)
                     .font(.system(size: 20, weight: .regular))
                     .textFieldStyle(PlainTextFieldStyle())
                     .focused($focused)
-                if !searchText.isEmpty {
+                if !viewModel.searchText.isEmpty {
                     Button(action: {
-                        searchText = ""
+                        viewModel.searchText = ""
                     }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(.gray)
@@ -114,7 +114,7 @@ struct _Menu: View {
             .padding(.horizontal, 8)
             
             VStack(spacing: 0) {
-                ForEach(Array(Array($viewModel.items.prefix(5)).enumerated()), id: \.element.id) { index, item in
+                ForEach(Array(Array(viewModel.items).enumerated()), id: \.element.id) { index, item in
                     _MenuItemView(
                         item: item
                     )
