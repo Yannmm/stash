@@ -21,7 +21,7 @@ struct _SearchItemView: View {
             }
             Spacer()
         }
-        .padding(.vertical, 4)
+        .padding(.vertical, 8)
         .padding(.horizontal, 12)
         .background(
             Rectangle()
