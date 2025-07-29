@@ -17,16 +17,16 @@ struct _SearchView: View {
     @FocusState private var focused: Bool
     
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 0) {
             searchField()
-            SwiftUI.Group {
+            VStack(spacing: 0) {
                 ForEach(Array(Array(viewModel.items).enumerated()), id: \.element.id) { index, item in
                     _SearchItemView(
                         item: item
                     )
                 }
             }
-            
+            .padding(.top, viewModel.items.count > 0 ? 12 : 0)
         }
         .frame(width: 500)
         .onAppear {
