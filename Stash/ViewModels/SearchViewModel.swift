@@ -16,6 +16,12 @@ class SearchViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     
+    let _keyboard = PassthroughSubject<KeyboardAction?, Never>()
+    var keyboard: AnyPublisher<KeyboardAction?, Never> { _keyboard.eraseToAnyPublisher() }
+    func setKeyboard(_ value: KeyboardAction?) {
+        _keyboard.send(value)
+    }
+    
     let cabinet: OkamuraCabinet
     
     init(cabinet: OkamuraCabinet) {

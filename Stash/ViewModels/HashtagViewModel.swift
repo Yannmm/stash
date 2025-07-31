@@ -15,9 +15,9 @@ class HashtagViewModel: ObservableObject {
     @Published var filter: String?
     private var cancellables = Set<AnyCancellable>()
     
-    let _keyboard = PassthroughSubject<Keyboard?, Never>()
-    var keyboard: AnyPublisher<Keyboard?, Never> { _keyboard.eraseToAnyPublisher() }
-    func setKeyboard(_ value: Keyboard?) {
+    let _keyboard = PassthroughSubject<KeyboardAction?, Never>()
+    var keyboard: AnyPublisher<KeyboardAction?, Never> { _keyboard.eraseToAnyPublisher() }
+    func setKeyboard(_ value: KeyboardAction?) {
         _keyboard.send(value)
     }
     
@@ -91,10 +91,4 @@ class HashtagViewModel: ObservableObject {
     }
 }
 
-extension HashtagViewModel {
-    enum Keyboard {
-        case up
-        case down
-        case enter
-    }
-}
+

@@ -9,7 +9,8 @@ import SwiftUI
 
 struct _SearchItemView: View {
     let item: SearchItem
-    @State private var hovering = false
+    let highlight: Bool
+    // Not used
     @State private var frame = CGRect.zero
     
     var body: some View {
@@ -25,20 +26,9 @@ struct _SearchItemView: View {
         .padding(.horizontal, 12)
         .background(
             Rectangle()
-                .fill(hovering ? Color(NSColor.controlAccentColor) : .clear)
+                .fill(highlight ? Color(NSColor.controlAccentColor) : .clear)
         )
         .cornerRadius(6)
-        .onHover { hovering in
-            if hovering  {
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    self.hovering = true
-                }
-            } else {
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    self.hovering = false
-                }
-            }
-        }
         .onTapGesture {
             print("重新 reload（如果是 group）或者前往地址（bookmark）")
             
@@ -63,7 +53,7 @@ struct _SearchItemView: View {
             .lineLimit(nil)
             .fixedSize(horizontal: false, vertical: true)
             .padding(.top, -2)
-            .foregroundColor(hovering ? .white : .primary)
+            .foregroundColor(highlight ? .white : .primary)
     }
     
     @ViewBuilder
@@ -72,6 +62,6 @@ struct _SearchItemView: View {
             .font(.system(size: 12, weight: .light))
             .lineLimit(nil)
             .fixedSize(horizontal: false, vertical: true)
-            .foregroundColor((hovering ? .white : .secondary))
+            .foregroundColor((highlight ? .white : .secondary))
     }
 }

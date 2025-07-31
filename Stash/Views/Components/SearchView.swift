@@ -12,17 +12,19 @@ import AppKit
 struct _SearchView: View {
     @StateObject var viewModel: SearchViewModel
     @State private var hovered: UUID?
-    @State private var hovering = false
+    @State private var index: Int?
     
     @FocusState private var focused: Bool
     
     var body: some View {
         VStack(spacing: 0) {
+            // TODO: convert serach field to nstextfield, so to listen to keyboard action.
             searchField()
             VStack(spacing: 0) {
                 ForEach(Array(Array(viewModel.items).enumerated()), id: \.element.id) { index, item in
                     _SearchItemView(
-                        item: item
+                        item: item,
+                        highlight: self.index == index
                     )
                 }
             }
@@ -48,6 +50,21 @@ struct _SearchView: View {
             RoundedRectangle(cornerRadius: 6)
                 .stroke(Color(NSColor.separatorColor).opacity(0.3), lineWidth: 0.5)
         )
+        .onReceive(viewModel.keyboard, perform: { value in
+            guard let direction = value else { return }
+            switch direction {
+            case .down: // ↓ Down arrow
+                index = index == nil ? 0 : (index! + 1) % viewModel.items.count
+            case .up: // ↑ Up arrow
+                // TODO: might out of range
+                index = index == nil ? 0 : (index! - 1 + viewModel.items.count) % viewModel.items.count
+            case .enter:
+                guard let idx = index else { return }
+                // TODO: implement ontap
+                //                onTap(viewModel.hashtags[idx])
+                index = nil
+            }
+        })
     }
     
     @ViewBuilder
