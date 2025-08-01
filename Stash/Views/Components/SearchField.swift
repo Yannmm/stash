@@ -9,7 +9,7 @@ import SwiftUI
 import AppKit
 import Combine
 
-struct PseudoTextField: NSViewRepresentable {
+struct SearchField: NSViewRepresentable {
     @Environment(\.colorScheme) var colorScheme
 //    @EnvironmentObject var viewModel: HashtagViewModel
     @Binding var text: String
