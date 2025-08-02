@@ -13,7 +13,7 @@ struct SearchField: NSViewRepresentable {
     @Environment(\.colorScheme) var colorScheme
     @Binding var text: String
     @Binding var keyboardAction: KeyboardAction?
-    let focused: Bool
+    @Binding var focused: Bool
     var font: NSFont?
     var onCommit: () -> Void = {}
     
@@ -23,7 +23,7 @@ struct SearchField: NSViewRepresentable {
     
     func makeNSView(context: Context) -> NSTextField {
         let textField = NSTextField()
-        
+        textField.stringValue = text
         textField.delegate = context.coordinator
         textField.isEditable = true
         textField.isBordered = false
@@ -32,40 +32,27 @@ struct SearchField: NSViewRepresentable {
         textField.lineBreakMode = .byTruncatingMiddle
         textField.usesSingleLineMode = true
         textField.focusRingType = .none
-        textField.attributedStringValue = text.highlightHashtags()
         return textField
     }
     
     func updateNSView(_ textField: NSTextField, context: Context) {
-        guard textField.stringValue != text else { return }
-        textField.stringValue = text
-        textField.font = font
+        if text != textField.stringValue {
+            textField.stringValue = text
+        }
+        if font != textField.font {
+            textField.font = font
+        }
         
-        //        context.coordinator.monitorCursor(focused, textField)
-        //
-        //        if let coordinator = textField.delegate as? Coordinator, !focused {
-        //            coordinator.hide()
-        //        }
-        
-        //        guard textField.window?.firstResponder != textField.currentEditor() else {
-        //            // Already focused; do nothing.
-        //            return
-        //        }
-        
-        //        textField.attributedStringValue = text.highlightHashtags()
-        //
-        //        // Move cursor to end if it just became first responder
-        //        DispatchQueue.main.async {
-        //            if let editor = textField.currentEditor() {
-        //                let range = NSRange(location: (editor.string as NSString).length, length: 0)
-        //                editor.selectedRange = range
-        //                editor.scrollRangeToVisible(range)
-        //            }
-        //        }
-        
-        //        DispatchQueue.main.async {
-        //            let _ = focused ? textField.becomeFirstResponder() : textField.resignFirstResponder()
-        //        }
+        // Handle focus state
+        DispatchQueue.main.asyncAfter(deadline: .now()) {
+            let isFocus = textField.window?.firstResponder == textField.currentEditor()
+            let flag = focused && !isFocus
+            if flag {
+                let _ = textField.becomeFirstResponder()
+            } else {
+                let _ = textField.resignFirstResponder()
+            }
+        }
     }
     
     internal class Coordinator: NSObject, NSTextFieldDelegate {

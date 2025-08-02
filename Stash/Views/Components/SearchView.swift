@@ -14,7 +14,7 @@ struct _SearchView: View {
     @State private var hovered: UUID?
     @State private var index: Int?
     
-    @FocusState private var focused: Bool
+    @State private var focused = true
     
     var body: some View {
         VStack(spacing: 0) {
@@ -50,6 +50,9 @@ struct _SearchView: View {
             RoundedRectangle(cornerRadius: 6)
                 .stroke(Color(NSColor.separatorColor).opacity(0.3), lineWidth: 0.5)
         )
+        .onAppear(perform: {
+            focused = true
+        })
         .onReceive(viewModel.keyboard, perform: { value in
             guard let direction = value else { return }
             switch direction {
@@ -80,7 +83,7 @@ struct _SearchView: View {
 //                .font(.system(size: 20, weight: .regular))
 //                .textFieldStyle(PlainTextFieldStyle())
 //                .focused($focused)
-            SearchField(text: $viewModel.searchText, keyboardAction: $viewModel.keyboardAction, focused: true) {
+            SearchField(text: $viewModel.searchText, keyboardAction: $viewModel.keyboardAction, focused: $focused) {
                 
             }
             if !viewModel.searchText.isEmpty {
