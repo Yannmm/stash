@@ -13,6 +13,7 @@ class SearchViewModel: ObservableObject {
     @Published var items: [SearchItem] = []
     @Published private var originalItems: [SearchItem] = []
     @Published var searchText = ""
+    @Published var keyboardAction: KeyboardAction?
     
     private var cancellables = Set<AnyCancellable>()
     

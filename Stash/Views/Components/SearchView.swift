@@ -75,11 +75,14 @@ struct _SearchView: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 20, height: 20)
                 .foregroundStyle(Color.theme)
-            TextField("Search", text: $viewModel.searchText)
-                .controlSize(.extraLarge)
-                .font(.system(size: 20, weight: .regular))
-                .textFieldStyle(PlainTextFieldStyle())
-                .focused($focused)
+//            TextField("Search", text: $viewModel.searchText)
+//                .controlSize(.extraLarge)
+//                .font(.system(size: 20, weight: .regular))
+//                .textFieldStyle(PlainTextFieldStyle())
+//                .focused($focused)
+            SearchField(text: $viewModel.searchText, keyboardAction: $viewModel.keyboardAction, focused: true) {
+                
+            }
             if !viewModel.searchText.isEmpty {
                 Button(action: {
                     viewModel.searchText = ""

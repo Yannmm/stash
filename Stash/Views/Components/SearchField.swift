@@ -11,9 +11,8 @@ import Combine
 
 struct SearchField: NSViewRepresentable {
     @Environment(\.colorScheme) var colorScheme
-//    @EnvironmentObject var viewModel: HashtagViewModel
     @Binding var text: String
-//    @State var suggestionIndex: Int?
+    @Binding var keyboardAction: KeyboardAction?
     let focused: Bool
     var font: NSFont?
     var onCommit: () -> Void = {}
@@ -38,63 +37,63 @@ struct SearchField: NSViewRepresentable {
     }
     
     func updateNSView(_ textField: NSTextField, context: Context) {
+        guard textField.stringValue != text else { return }
+        textField.stringValue = text
         textField.font = font
         
-//        context.coordinator.monitorCursor(focused, textField)
-//        
-//        if let coordinator = textField.delegate as? Coordinator, !focused {
-//            coordinator.hide()
-//        }
+        //        context.coordinator.monitorCursor(focused, textField)
+        //
+        //        if let coordinator = textField.delegate as? Coordinator, !focused {
+        //            coordinator.hide()
+        //        }
         
-        guard textField.window?.firstResponder != textField.currentEditor() else {
-            // Already focused; do nothing.
-            return
-        }
-
-//        textField.attributedStringValue = text.highlightHashtags()
-//        
-//        // Move cursor to end if it just became first responder
-//        DispatchQueue.main.async {
-//            if let editor = textField.currentEditor() {
-//                let range = NSRange(location: (editor.string as NSString).length, length: 0)
-//                editor.selectedRange = range
-//                editor.scrollRangeToVisible(range)
-//            }
-//        }
+        //        guard textField.window?.firstResponder != textField.currentEditor() else {
+        //            // Already focused; do nothing.
+        //            return
+        //        }
+        
+        //        textField.attributedStringValue = text.highlightHashtags()
+        //
+        //        // Move cursor to end if it just became first responder
+        //        DispatchQueue.main.async {
+        //            if let editor = textField.currentEditor() {
+        //                let range = NSRange(location: (editor.string as NSString).length, length: 0)
+        //                editor.selectedRange = range
+        //                editor.scrollRangeToVisible(range)
+        //            }
+        //        }
+        
+        //        DispatchQueue.main.async {
+        //            let _ = focused ? textField.becomeFirstResponder() : textField.resignFirstResponder()
+        //        }
     }
     
     internal class Coordinator: NSObject, NSTextFieldDelegate {
-        private var parent: PseudoTextField
+        private var parent: SearchField
         
-        init(_ parent: PseudoTextField) {
+        init(_ parent: SearchField) {
             self.parent = parent
         }
         
         func controlTextDidChange(_ obj: Notification) {
-            guard let textField = obj.object as? NSTextField, let cursor = getCursor(textField) else { return }
-//            if let _ = parent.viewModel.findCursoredRange(text: textField.stringValue, cursorLocation: cursor.0) {
-//                show(textField)
-//            } else {
-//                hide()
-//            }
+            guard let textField = obj.object as? NSTextField else { return }
             parent.text = textField.stringValue
         }
         
         func controlTextDidEndEditing(_ obj: Notification) {
-            parent.onCommit()
+            //            parent.onCommit()
         }
         
         func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
             switch commandSelector {
             case #selector(NSResponder.moveDown(_:)):
-                parent.viewModel.setKeyboard(.down)
+                parent.keyboardAction = .down
                 return true
             case #selector(NSResponder.moveUp(_:)):
-                parent.viewModel.setKeyboard(.up)
+                parent.keyboardAction = .up
                 return true
             case #selector(NSResponder.insertNewline(_:)):
-                guard parent.suggestionIndex != nil else { return false }
-                parent.viewModel.setKeyboard(.enter)
+                parent.keyboardAction = .enter
                 return true
             default:
                 return false
