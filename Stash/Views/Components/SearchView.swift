@@ -18,7 +18,6 @@ struct _SearchView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // TODO: convert serach field to nstextfield, so to listen to keyboard action.
             searchField()
             VStack(spacing: 0) {
                 ForEach(Array(Array(viewModel.items).enumerated()), id: \.element.id) { index, item in
@@ -76,16 +75,12 @@ struct _SearchView: View {
             Image(systemName: "sparkle.magnifyingglass")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 20, height: 20)
+                .frame(width: 18, height: 18)
                 .foregroundStyle(Color.theme)
-//            TextField("Search", text: $viewModel.searchText)
-//                .controlSize(.extraLarge)
-//                .font(.system(size: 20, weight: .regular))
-//                .textFieldStyle(PlainTextFieldStyle())
-//                .focused($focused)
             SearchField(text: $viewModel.searchText, keyboardAction: $viewModel.keyboardAction, focused: $focused) {
                 
             }
+            .font(NSFont.systemFont(ofSize: 20, weight: .light))
             if !viewModel.searchText.isEmpty {
                 Button(action: {
                     viewModel.searchText = ""

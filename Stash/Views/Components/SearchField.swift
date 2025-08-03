@@ -32,6 +32,11 @@ struct SearchField: NSViewRepresentable {
         textField.lineBreakMode = .byTruncatingMiddle
         textField.usesSingleLineMode = true
         textField.focusRingType = .none
+        textField.setContentHuggingPriority(.defaultHigh, for: .vertical)
+        textField.translatesAutoresizingMaskIntoConstraints = false
+        NSLayoutConstraint.activate([
+            textField.heightAnchor.constraint(equalToConstant: 22)
+        ])
         return textField
     }
     
@@ -39,9 +44,8 @@ struct SearchField: NSViewRepresentable {
         if text != textField.stringValue {
             textField.stringValue = text
         }
-        if font != textField.font {
-            textField.font = font
-        }
+        
+        textField.font = font
         
         // Handle focus state
         DispatchQueue.main.asyncAfter(deadline: .now()) {
@@ -86,5 +90,13 @@ struct SearchField: NSViewRepresentable {
                 return false
             }
         }
+    }
+}
+
+extension SearchField {
+    func font(_ font: NSFont) -> Self {
+        var copy = self
+        copy.font = font
+        return copy
     }
 }
