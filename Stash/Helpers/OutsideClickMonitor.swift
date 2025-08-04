@@ -21,10 +21,10 @@ class OutsideClickMonitor {
     private var monitor: Any?
     
     func start() {
-        monitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+        monitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
             guard let self = self else {
                 // If self is nil, the monitor should be removed
-                return event
+                return
             }
             
             let frame = self.areaProvider()
@@ -36,8 +36,6 @@ class OutsideClickMonitor {
                 self.onClose()
                 self.stop()
             }
-            
-            return event
         }
     }
     
