@@ -12,6 +12,17 @@ class FloatingPanel {
     let anchorRect: NSRect
     let content: AnyView
     let viewModel: SearchViewModel
+    private var _panel: FocusablePanel!
+    
+    private lazy var outsideClickMonitor: OutsideClickMonitor = {
+        OutsideClickMonitor { [weak self] in
+            self?._panel?.frame ?? .zero
+        } onClose: { [weak self] in
+            self?.close()
+        }
+
+    }()
+    
     init(at anchorRect: NSRect, viewModel: SearchViewModel) {
         self.anchorRect = anchorRect
         self.viewModel = viewModel
@@ -20,27 +31,22 @@ class FloatingPanel {
         )
     }
     
-    private var _panel: FocusablePanel!
-    
     func show() {
         close()
         
-        let kk1 = NSHostingController(rootView: content)
+        let temp = NSHostingController(rootView: content)
         
-        let kk = DraggableHostingView(rootView: content)
-        kk.frame = CGRect(origin: .zero, size: kk1.view.intrinsicContentSize)
-        let hosting = NSViewController()
-        hosting.view = kk
+        let host = DraggableHostingView(rootView: content)
+        host.frame = CGRect(origin: .zero, size: temp.view.intrinsicContentSize)
+
         
         _panel = FocusablePanel(
-            contentRect: hosting.view.frame,
+            contentRect: host.frame,
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
         )
         
-
-//        _panel.isOpaque = true
         _panel.hasShadow = true
         _panel.worksWhenModal = true
         _panel.becomesKeyOnlyIfNeeded = false
@@ -56,9 +62,9 @@ class FloatingPanel {
         _panel.isOpaque = false
         _panel.backgroundColor = .clear
         
-        _panel.contentViewController = hosting
+        _panel.contentView = host
         
-        let panelSize = hosting.view.intrinsicContentSize // your panel's size
+        let panelSize = host.intrinsicContentSize // your panel's size
         
         // Position the panel below the status item
         let point = CGPoint(
@@ -70,6 +76,9 @@ class FloatingPanel {
         //        _panel.orderFront(nil)
         _panel.makeKeyAndOrderFront(nil)
         // TODO: release nspanel
+        
+        outsideClickMonitor.start()
+        // TODO: stop when other way to dismiss panel, like type esc
     }
     
     func close() {
@@ -77,41 +86,6 @@ class FloatingPanel {
         _panel = nil
     }
 }
-
-
-struct DragArea: NSViewRepresentable {
-    func makeNSView(context: Context) -> NSView {
-        let view = DraggableView()
-        view.frame = .zero
-        return view
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {}
-}
-
-class DraggableView: NSView {
-    private var initialLocation: NSPoint = .zero
-
-    override func mouseDown(with event: NSEvent) {
-        guard let window = self.window else { return }
-        initialLocation = NSEvent.mouseLocation
-    }
-
-    override func mouseDragged(with event: NSEvent) {
-        guard let window = self.window else { return }
-        let currentLocation = NSEvent.mouseLocation
-        let deltaX = currentLocation.x - initialLocation.x
-        let deltaY = currentLocation.y - initialLocation.y
-
-        var frame = window.frame
-        frame.origin.x += deltaX
-        frame.origin.y += deltaY
-        window.setFrame(frame, display: true)
-
-        initialLocation = currentLocation
-    }
-}
-
 
 class DraggableHostingView<Content: View>: NSHostingView<Content> {
     private var initialLocation: NSPoint = .zero
