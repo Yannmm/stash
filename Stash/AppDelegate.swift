@@ -19,7 +19,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     internal var dropWindow: NSWindow?
     
-    internal var searchPanel: NSPanel!
+    internal var searchPanel: FloatingPanel!
     
     private lazy var editPopover: NSPopover = {
         let p = NSPopover()

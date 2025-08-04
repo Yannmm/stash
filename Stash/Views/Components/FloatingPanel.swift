@@ -85,6 +85,10 @@ class FloatingPanel {
         _panel?.close()
         _panel = nil
     }
+    
+    deinit {
+        close()
+    }
 }
 
 class DraggableHostingView<Content: View>: NSHostingView<Content> {

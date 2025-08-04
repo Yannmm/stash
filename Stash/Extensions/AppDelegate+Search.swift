@@ -10,9 +10,8 @@ import SwiftUI
 
 extension AppDelegate {
     @objc func search() {
-        let menu = FloatingPanel(at: statusItemButtonFrame, viewModel: searchViewModel)
-        
-        menu.show()
+        searchPanel = FloatingPanel(at: statusItemButtonFrame, viewModel: searchViewModel)
+        searchPanel?.show()
     }
     
     private var statusItemButtonFrame: NSRect {
