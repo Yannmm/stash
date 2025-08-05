@@ -23,7 +23,8 @@ struct _SearchView: View {
                 ForEach(Array(Array(viewModel.items).enumerated()), id: \.element.id) { index, item in
                     _SearchItemView(
                         item: item,
-                        highlight: self.index == index
+                        highlight: self.index == index,
+                        searchText: $viewModel.searchText
                     )
                 }
             }

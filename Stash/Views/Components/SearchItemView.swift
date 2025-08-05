@@ -12,6 +12,7 @@ struct _SearchItemView: View {
     let highlight: Bool
     // Not used
     @State private var frame = CGRect.zero
+    @Binding var searchText: String
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -48,20 +49,43 @@ struct _SearchItemView: View {
     
     @ViewBuilder
     private func title() -> some View {
-        Text(item.title)
-            .font(.system(size: 15, weight: .regular))
-            .lineLimit(nil)
-            .fixedSize(horizontal: false, vertical: true)
-            .padding(.top, -2)
-            .foregroundColor(highlight ? .white : .primary)
+        Text(emphasize(item.title) { attr in
+            attr.foregroundColor = .primary
+            attr.font = .system(size: 15, weight: .light)
+        } highlightStyle: { attr, range in
+            attr[range].foregroundColor = .theme
+            attr[range].font = .system(size: 15, weight: .regular)
+        })
+        .lineLimit(nil)
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(.top, -2)
     }
     
     @ViewBuilder
     private func detail() -> some View {
-        Text(item.detail)
-            .font(.system(size: 12, weight: .light))
-            .lineLimit(nil)
-            .fixedSize(horizontal: false, vertical: true)
-            .foregroundColor((highlight ? .white : .secondary))
+        Text(emphasize(item.detail) { attr in
+            attr.foregroundColor = .secondary
+            attr.font = .system(size: 12, weight: .light)
+        } highlightStyle: { attr, range in
+            attr[range].foregroundColor = .theme
+            attr[range].font = .system(size: 12, weight: .regular)
+        })
+        .lineLimit(nil)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+    
+    private func emphasize(_ base: String, baseStyle: (inout AttributedString) -> Void, highlightStyle: (inout AttributedString, Range<AttributedString.Index>) -> Void) -> AttributedString {
+        var attr = AttributedString(base)
+        baseStyle(&attr)
+        
+        let ranges = base.lowercased().ranges(of: searchText.lowercased())
+        guard ranges.count > 0 else { return attr }
+        ranges.forEach { r in
+            let rr = NSRange(r, in: base)
+            if let range = Range(rr, in: attr) {
+                highlightStyle(&attr, range)
+            }
+        }
+        return attr
     }
 }

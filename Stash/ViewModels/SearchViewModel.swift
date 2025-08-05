@@ -57,13 +57,12 @@ class SearchViewModel: ObservableObject {
         }
         .store(in: &cancellables)
         
-        Publishers.CombineLatest($originalItems, $searchText)
+        Publishers.CombineLatest($originalItems, $searchText.map({ $0.lowercased() }))
             .debounce(for: .milliseconds(100), scheduler: DispatchQueue.main)
             .receive(on: DispatchQueue.global(qos: .userInitiated))
             .map({ items, keyword in
-                guard keyword.count > 2 else { return [] }
-                let k = keyword.lowercased()
-                return items.filter({ $0.title.lowercased().contains(k) })
+                guard keyword.count >= 2 else { return [] }
+                return items.filter({ $0.title.lowercased().contains(keyword) || $0.detail.lowercased().contains(keyword) })
             })
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
