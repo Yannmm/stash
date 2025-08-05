@@ -11,10 +11,8 @@ import AppKit
 // Menu content
 struct _SearchView: View {
     @StateObject var viewModel: SearchViewModel
-    @State private var hovered: UUID?
-    @State private var index: Int?
-    
     @State private var focused = true
+    @State private var index: Int?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -53,13 +51,18 @@ struct _SearchView: View {
         .onAppear(perform: {
             focused = true
         })
-        .onReceive(viewModel.keyboard, perform: { value in
+        .onReceive(viewModel.$keyboardAction) { newValue in // $viewModel.keyboardAction 🙅
+                        print("Value changed to: \(newValue)")
+                        // perform some side effect here
+                    }
+        .onReceive(viewModel.$keyboardAction) { value in
+            print("123123")
             guard let direction = value else { return }
             switch direction {
             case .down: // ↓ Down arrow
                 index = index == nil ? 0 : (index! + 1) % viewModel.items.count
+                print("xxxxxxxxx -> \(index)")
             case .up: // ↑ Up arrow
-                // TODO: might out of range
                 index = index == nil ? 0 : (index! - 1 + viewModel.items.count) % viewModel.items.count
             case .enter:
                 guard let idx = index else { return }
@@ -67,7 +70,7 @@ struct _SearchView: View {
                 //                onTap(viewModel.hashtags[idx])
                 index = nil
             }
-        })
+        }
     }
     
     @ViewBuilder
