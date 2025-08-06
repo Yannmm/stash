@@ -17,7 +17,8 @@ class SettingsViewModel: ObservableObject {
     @Published var importFromFile: URL?
     @Published var exportDestinationDirectory: URL?
     @Published var exportToFile: URL?
-    @Published var shortcut: (Key, NSEvent.ModifierFlags)?
+    @Published var appShortcut: (Key, NSEvent.ModifierFlags)?
+    @Published var searchShortcut: (Key, NSEvent.ModifierFlags)?
     @Published var error: Error?
     
     private var cancellables = Set<AnyCancellable>()
@@ -62,7 +63,7 @@ class SettingsViewModel: ObservableObject {
         if let code: UInt32 = pieceSaver.value(for: .hotkey),
            let key = Key(carbonKeyCode: code),
            let modifiers: UInt = pieceSaver.value(for: .hokeyModifiers) {
-            shortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
+            appShortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
         }
         
         self.setAppIdentifier()
@@ -105,7 +106,7 @@ class SettingsViewModel: ObservableObject {
                 self?.pieceSaver.save(for: .showDockIcon, value: $0)
             }
             .store(in: &cancellables)
-        $shortcut
+        $appShortcut
             .dropFirst()
             .sink { [weak self] tuple2 in
                 if let t2 = tuple2 {
@@ -118,7 +119,7 @@ class SettingsViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        $shortcut
+        $appShortcut
             .compactMap({ $0 })
             .sink { [weak self] in
                 self?.hotKeyManager.register(shortcut: $0)

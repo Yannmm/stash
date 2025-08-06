@@ -4,7 +4,8 @@ import HotKey
 
 struct SettingsView: View {
     @StateObject var viewModel: SettingsViewModel
-    @State private var isRecording = false
+    @State private var isAppGlobalShortcutRecording = false
+    @State private var isSearchGlobalShortcutRecording = false
     @State private var resetAlert = false
     @State private var fileBackupNotice: (String, Bool)?
     @State private var appendNotice: String?
@@ -58,11 +59,19 @@ struct SettingsView: View {
                 Toggle("Launch on Login", isOn: $viewModel.launchOnLogin)
                 Toggle("iCloud Sync", isOn: $viewModel.icloudSync)
                 HStack {
-                    Text("Global Shortcut")
+                    Text("App Global Shortcut")
                     Spacer()
                     KeyRecorderView(
-                        isRecording: $isRecording,
-                        shortcut: $viewModel.shortcut
+                        isRecording: $isAppGlobalShortcutRecording,
+                        shortcut: $viewModel.appShortcut
+                    )
+                }
+                HStack {
+                    Text("Search Global Shortcut")
+                    Spacer()
+                    KeyRecorderView(
+                        isRecording: $isSearchGlobalShortcutRecording,
+                        shortcut: $viewModel.searchShortcut
                     )
                 }
                 VStack(alignment: .leading) {
