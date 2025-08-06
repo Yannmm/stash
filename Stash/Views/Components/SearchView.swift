@@ -51,17 +51,11 @@ struct _SearchView: View {
         .onAppear(perform: {
             focused = true
         })
-        .onReceive(viewModel.$keyboardAction) { newValue in // $viewModel.keyboardAction 🙅
-                        print("Value changed to: \(newValue)")
-                        // perform some side effect here
-                    }
-        .onReceive(viewModel.$keyboardAction) { value in
-            print("123123")
+        .onReceive(viewModel.$keyboardAction) { value in // $viewModel.keyboardAction 🙅
             guard let direction = value else { return }
             switch direction {
             case .down: // ↓ Down arrow
                 index = index == nil ? 0 : (index! + 1) % viewModel.items.count
-                print("xxxxxxxxx -> \(index)")
             case .up: // ↑ Up arrow
                 index = index == nil ? 0 : (index! - 1 + viewModel.items.count) % viewModel.items.count
             case .enter:

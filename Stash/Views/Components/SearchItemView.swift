@@ -50,11 +50,11 @@ struct _SearchItemView: View {
     @ViewBuilder
     private func title() -> some View {
         Text(emphasize(item.title) { attr in
-            attr.foregroundColor = .primary
+            attr.foregroundColor = highlight ? .white : .primary
             attr.font = .system(size: 15, weight: .light)
         } highlightStyle: { attr, range in
-            attr[range].foregroundColor = .theme
-            attr[range].font = .system(size: 15, weight: .regular)
+            attr[range].foregroundColor = highlight ? .white : .theme
+            attr[range].font = .system(size: 15, weight: .bold)
         })
         .lineLimit(nil)
         .fixedSize(horizontal: false, vertical: true)
@@ -64,11 +64,11 @@ struct _SearchItemView: View {
     @ViewBuilder
     private func detail() -> some View {
         Text(emphasize(item.detail) { attr in
-            attr.foregroundColor = .secondary
+            attr.foregroundColor = highlight ? .white : .secondary
             attr.font = .system(size: 12, weight: .light)
         } highlightStyle: { attr, range in
-            attr[range].foregroundColor = .theme
-            attr[range].font = .system(size: 12, weight: .regular)
+            attr[range].foregroundColor = highlight ? .white : .theme
+            attr[range].font = .system(size: 12, weight: .bold)
         })
         .lineLimit(nil)
         .fixedSize(horizontal: false, vertical: true)
