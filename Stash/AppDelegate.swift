@@ -72,12 +72,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         Publishers.CombineLatest4(cabinet.$storedEntries,
                                   cabinet.$recentEntries,
                                   settingsViewModel.$collapseHistory,
-                                  Publishers.CombineLatest(searchViewModel.$searching,
-                                                           NSApp.publisher(for: \.effectiveAppearance)))
-        .map({ ($0, $1, $2, $3.0, $3.1) })
+                                  NSApp.publisher(for: \.effectiveAppearance))
         .sink { [weak self] tuple5 in
             Task { @MainActor in
-                self?.statusItem?.menu = self?.generateMenu(from: tuple5.0, history: tuple5.1, collapseHistory: tuple5.3)
+                self?.statusItem?.menu = self?.generateMenu(from: tuple5.0, history: tuple5.1, collapseHistory: tuple5.2)
             }
         }
         .store(in: &cancellables)

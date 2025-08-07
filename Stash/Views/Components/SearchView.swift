@@ -12,7 +12,6 @@ import AppKit
 struct _SearchView: View {
     @StateObject var viewModel: SearchViewModel
     @State private var focused = true
-    @State private var index: Int?
     
     var body: some View {
         VStack(spacing: 0) {
@@ -21,8 +20,9 @@ struct _SearchView: View {
                 ForEach(Array(Array(viewModel.items).enumerated()), id: \.element.id) { index, item in
                     _SearchItemView(
                         item: item,
-                        highlight: self.index == index,
-                        searchText: $viewModel.searchText
+                        highlight: self.viewModel.index == nil ? false : (self.viewModel.index! == index),
+                        onTap: { viewModel.setSelectedItem($0) },
+                        searchText: $viewModel.searchText,
                     )
                 }
             }
@@ -51,19 +51,8 @@ struct _SearchView: View {
         .onAppear(perform: {
             focused = true
         })
-        .onReceive(viewModel.$keyboardAction) { value in // $viewModel.keyboardAction 🙅
-            guard let direction = value else { return }
-            switch direction {
-            case .down: // ↓ Down arrow
-                index = index == nil ? 0 : (index! + 1) % viewModel.items.count
-            case .up: // ↑ Up arrow
-                index = index == nil ? 0 : (index! - 1 + viewModel.items.count) % viewModel.items.count
-            case .enter:
-                guard let idx = index else { return }
-                // TODO: implement ontap
-                //                onTap(viewModel.hashtags[idx])
-                index = nil
-            }
+        .onReceive(viewModel.selectedItem) { value in
+            print("狗 -> \(value)")
         }
     }
     
