@@ -10,6 +10,7 @@ import SwiftUI
 struct _SearchItemView: View {
     let item: SearchItem
     let highlight: Bool
+    let onTap: (SearchItem) -> Void
     // Not used
     @State private var frame = CGRect.zero
     @Binding var searchText: String
@@ -31,8 +32,8 @@ struct _SearchItemView: View {
         )
         .cornerRadius(6)
         .onTapGesture {
-            print("重新 reload（如果是 group）或者前往地址（bookmark）")
-            
+            print("1111111")
+            onTap(item)
         }
         .onGeometryChange(for: CGRect.self) { proxy in
             // TODO: will the window change
