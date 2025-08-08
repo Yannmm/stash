@@ -106,10 +106,12 @@ class SettingsViewModel: ObservableObject {
                 self?.pieceSaver.save(for: .showDockIcon, value: $0)
             }
             .store(in: &cancellables)
+        
         $appShortcut
             .dropFirst()
             .sink { [weak self] tuple2 in
                 if let t2 = tuple2 {
+                    // TODO: how to subscribe multiple short cuts.
                     self?.hotKeyManager.register(shortcut: t2)
                 } else {
                     self?.hotKeyManager.unregister()
