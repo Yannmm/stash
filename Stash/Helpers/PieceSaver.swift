@@ -9,8 +9,10 @@ import Foundation
 
 class PieceSaver {
     enum Key: String {
-        case hotkey
-        case hokeyModifiers
+        case appShortcut
+        case appShortcutModifiers
+        case searchShortcut
+        case searchShortcutModifiers
         case collapseHistory
         case icloudSync
         case launchOnLogin

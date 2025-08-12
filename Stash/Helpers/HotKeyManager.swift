@@ -9,8 +9,6 @@ import HotKey
 import AppKit
 
 class HotKeyManager {
-    static let shared = HotKeyManager()
-
     private var hotKey: HotKey?
 
     func register(shortcut: (Key, NSEvent.ModifierFlags)) {

@@ -7,16 +7,7 @@
 
 import UniformTypeIdentifiers
 
-extension String {
-//    func checkFileType() -> FileType {
-//        if isNetscapeBookmarkFile() {
-//            return .netscape
-//        } else {
-//            // TODO: check pocket file
-//            return .hungrymarks
-//        }
-//    }
-    
+extension String {    
     func isNetscapeBookmarkFile() -> Bool {
         if let range = range(of: #"(?i)<!DOCTYPE\s+NETSCAPE-Bookmark-file-1>"#, options: .regularExpression) {
             let doctype = self[range].lowercased()

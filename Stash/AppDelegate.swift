@@ -11,8 +11,6 @@ import Combine
 import HotKey
 import Kingfisher
 
-var xx: AppDelegate?
-
 class AppDelegate: NSObject, NSApplicationDelegate {
     
     internal var statusItem: NSStatusItem?
@@ -31,7 +29,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }()
     
     private lazy var settingsViewModel: SettingsViewModel = {
-        let viewModel = SettingsViewModel(hotKeyManager: hotKeyMananger, cabinet: cabinet)
+        let viewModel = SettingsViewModel(cabinet: cabinet)
         return viewModel
     }()
     
@@ -41,8 +39,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }()
     
     var cabinet: OkamuraCabinet { OkamuraCabinet.shared }
-    
-    var hotKeyMananger: HotKeyManager { HotKeyManager.shared }
     
     private let dominator = Dominator()
     
@@ -58,8 +54,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // TODO: remove this line
         //        ImageCache.default.diskStorage.config.expiration = .days(1)
         //        ImageCache.default.clearDiskCache()
-        
-        xx = self
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {

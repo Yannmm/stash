@@ -23,7 +23,8 @@ class SettingsViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     private let pieceSaver = PieceSaver()
-    private let hotKeyManager: HotKeyManager
+    private let appHotKeyManager = HotKeyManager()
+    private let searchHotKeyManager = HotKeyManager()
     private let cabinet: OkamuraCabinet
     
     var empty: Bool { cabinet.storedEntries.isEmpty }
@@ -52,18 +53,23 @@ class SettingsViewModel: ObservableObject {
         self.importFromFile = filePath
     }
     
-    init(hotKeyManager: HotKeyManager, cabinet: OkamuraCabinet) {
-        self.hotKeyManager = hotKeyManager
+    init(cabinet: OkamuraCabinet) {
         self.cabinet = cabinet
         collapseHistory = pieceSaver.value(for: .collapseHistory) ?? false
         icloudSync = pieceSaver.value(for: .icloudSync) ?? true
         launchOnLogin = RocketLauncher.shared.enabled
         showDockIcon = pieceSaver.value(for: .showDockIcon) ?? false
         
-        if let code: UInt32 = pieceSaver.value(for: .hotkey),
+        if let code: UInt32 = pieceSaver.value(for: .appShortcut),
            let key = Key(carbonKeyCode: code),
-           let modifiers: UInt = pieceSaver.value(for: .hokeyModifiers) {
+           let modifiers: UInt = pieceSaver.value(for: .appShortcutModifiers) {
             appShortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
+        }
+        
+        if let code: UInt32 = pieceSaver.value(for: .searchShortcut),
+           let key = Key(carbonKeyCode: code),
+           let modifiers: UInt = pieceSaver.value(for: .searchShortcutModifiers) {
+            searchShortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
         }
         
         self.setAppIdentifier()
@@ -108,23 +114,26 @@ class SettingsViewModel: ObservableObject {
             .store(in: &cancellables)
         
         $appShortcut
-            .dropFirst()
             .sink { [weak self] tuple2 in
                 if let t2 = tuple2 {
-                    // TODO: how to subscribe multiple short cuts.
-                    self?.hotKeyManager.register(shortcut: t2)
+                    self?.appHotKeyManager.register(shortcut: t2)
                 } else {
-                    self?.hotKeyManager.unregister()
+                    self?.appHotKeyManager.unregister()
                 }
-                self?.pieceSaver.save(for: .hotkey, value: tuple2?.0.carbonKeyCode)
-                self?.pieceSaver.save(for: .hokeyModifiers, value: tuple2?.1.rawValue)
+                self?.pieceSaver.save(for: .appShortcut, value: tuple2?.0.carbonKeyCode)
+                self?.pieceSaver.save(for: .appShortcutModifiers, value: tuple2?.1.rawValue)
             }
             .store(in: &cancellables)
         
-        $appShortcut
-            .compactMap({ $0 })
-            .sink { [weak self] in
-                self?.hotKeyManager.register(shortcut: $0)
+        $searchShortcut
+            .sink { [weak self] tuple2 in
+                if let t2 = tuple2 {
+                    self?.searchHotKeyManager.register(shortcut: t2)
+                } else {
+                    self?.searchHotKeyManager.unregister()
+                }
+                self?.pieceSaver.save(for: .searchShortcut, value: tuple2?.0.carbonKeyCode)
+                self?.pieceSaver.save(for: .searchShortcutModifiers, value: tuple2?.1.rawValue)
             }
             .store(in: &cancellables)
         
