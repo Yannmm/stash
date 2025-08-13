@@ -8,6 +8,9 @@
 import SwiftUI
 import AppKit
 
+1. tap esc to dismiss
+2. remember last drag frame.
+
 // Menu content
 struct _SearchView: View {
     @StateObject var viewModel: SearchViewModel

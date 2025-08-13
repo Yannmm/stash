@@ -23,8 +23,8 @@ class SettingsViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     private let pieceSaver = PieceSaver()
-    private let appHotKeyManager = HotKeyManager()
-    private let searchHotKeyManager = HotKeyManager()
+    private let appHotKeyManager = HotKeyManager(action: .menu)
+    private let searchHotKeyManager = HotKeyManager(action: .search)
     private let cabinet: OkamuraCabinet
     
     var empty: Bool { cabinet.storedEntries.isEmpty }

@@ -76,10 +76,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         
         // Notifications
-        NotificationCenter.default.addObserver(forName: .onShortcutKeyDown, object: nil, queue: nil) { [weak self] _ in
-            if let button = self?.statusItem?.button {
-                button.performClick(nil)
+        NotificationCenter.default.addObserver(forName: .onShortcutKeyDown, object: nil, queue: nil) { [weak self] noti in
+            guard let action = noti.object as? HotKeyManager.Action else { return }
+            switch action {
+            case .menu:
+                if let button = self?.statusItem?.button {
+                    button.performClick(nil)
+                }
+            case .search:
+                self?.search()
             }
+            
         }
         
         NotificationCenter.default.addObserver(forName: .onOutlineViewRowCount, object: nil, queue: nil) { [unowned self] noti in
