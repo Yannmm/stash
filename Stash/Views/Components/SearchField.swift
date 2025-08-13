@@ -15,7 +15,6 @@ struct SearchField: NSViewRepresentable {
     @Binding var keyboardAction: KeyboardAction?
     @Binding var focused: Bool
     var font: NSFont?
-    var onCommit: () -> Void = {}
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -71,9 +70,7 @@ struct SearchField: NSViewRepresentable {
             parent.text = textField.stringValue
         }
         
-        func controlTextDidEndEditing(_ obj: Notification) {
-            //            parent.onCommit()
-        }
+        func controlTextDidEndEditing(_ obj: Notification) {}
         
         func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
             switch commandSelector {

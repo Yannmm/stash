@@ -20,7 +20,6 @@ class FloatingPanel {
         } onClose: { [weak self] in
             self?.close()
         }
-
     }()
     
     init(at anchorRect: NSRect, viewModel: SearchViewModel) {
@@ -34,10 +33,8 @@ class FloatingPanel {
     func show() {
         close()
         
-        let temp = NSHostingController(rootView: content)
-        
         let host = DraggableHostingView(rootView: content)
-        host.frame = CGRect(origin: .zero, size: temp.view.intrinsicContentSize)
+        host.frame = CGRect(origin: .zero, size: host.intrinsicContentSize)
 
         
         _panel = FocusablePanel(
@@ -82,6 +79,7 @@ class FloatingPanel {
     }
     
     func close() {
+        outsideClickMonitor.stop()
         _panel?.close()
         _panel = nil
     }

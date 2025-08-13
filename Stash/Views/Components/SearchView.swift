@@ -8,8 +8,8 @@
 import SwiftUI
 import AppKit
 
-1. tap esc to dismiss
-2. remember last drag frame.
+//todo: 1. tap esc to dismiss
+//2. remember last drag frame.
 
 // Menu content
 struct _SearchView: View {
@@ -67,9 +67,7 @@ struct _SearchView: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 18, height: 18)
                 .foregroundStyle(Color.theme)
-            SearchField(text: $viewModel.searchText, keyboardAction: $viewModel.keyboardAction, focused: $focused) {
-                
-            }
+            SearchField(text: $viewModel.searchText, keyboardAction: $viewModel.keyboardAction, focused: $focused)
             .font(NSFont.systemFont(ofSize: 20, weight: .light))
             if !viewModel.searchText.isEmpty {
                 Button(action: {
@@ -89,4 +87,8 @@ struct _SearchView: View {
 class FocusablePanel: NSPanel {
     override var canBecomeKey: Bool { true }
     override var canBecomeMain: Bool { true }
+    
+    override func cancelOperation(_ sender: Any?) {
+        self.close() // Or orderOut(nil) if you just want to hide
+    }
 }
