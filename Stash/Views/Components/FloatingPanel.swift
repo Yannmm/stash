@@ -30,7 +30,7 @@ class FloatingPanel {
         )
     }
     
-    func show() {
+    func show(_ origin: CGPoint?) {
         close()
         
         let host = DraggableHostingView(rootView: content)
@@ -64,12 +64,17 @@ class FloatingPanel {
         let panelSize = host.intrinsicContentSize // your panel's size
         
         // Position the panel below the status item
-        let point = CGPoint(
+        let position = CGPoint(
             x: anchorRect.midX - panelSize.width / 2,
             y: anchorRect.minY - panelSize.height - 5 // 5pt gap below status item
         )
         
-        _panel.setFrameOrigin(point)
+        if let o = origin {
+            _panel.setFrameOrigin(CGPoint(x: o.x - panelSize.width, y: o.y - panelSize.height))
+        } else {
+            _panel.setFrameOrigin(position)
+        }
+        
         //        _panel.orderFront(nil)
         _panel.makeKeyAndOrderFront(nil)
         // TODO: release nspanel

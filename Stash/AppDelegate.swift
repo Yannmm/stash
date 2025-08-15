@@ -19,6 +19,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     internal var searchPanel: FloatingPanel!
     
+    internal var searchPanelPosition: CGPoint?
+    
     private lazy var editPopover: NSPopover = {
         let p = NSPopover()
         let contentView = ContentView().environmentObject(cabinet)
@@ -100,6 +102,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         NotificationCenter.default.addObserver(forName: .onCellResignFirstResponder, object: nil, queue: nil) { [weak self] _ in
             self?.editPopover.behavior = .transient
+        }
+        
+        NotificationCenter.default.addObserver(forName: .onDragWindow, object: nil, queue: nil) { [weak self] noti in
+//            guard let p1 = noti.object as? FloatingPanel,
+//                  let p2 = self?.searchPanel,
+//                  p1 === p2 else { return }
+            guard let panel = noti.object as? NSPanel else { return }
+            self?.searchPanelPosition = CGPoint(x: panel.frame.origin.x + panel.frame.width, y: panel.frame.origin.y + panel.frame.height)
         }
     }
     
