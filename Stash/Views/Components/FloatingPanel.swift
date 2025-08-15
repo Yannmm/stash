@@ -9,7 +9,6 @@ import AppKit
 import SwiftUI
 
 class FloatingPanel {
-    let anchorRect: NSRect
     let content: AnyView
     let viewModel: SearchViewModel
     private var _panel: FocusablePanel!
@@ -22,23 +21,38 @@ class FloatingPanel {
         }
     }()
     
-    init(at anchorRect: NSRect, viewModel: SearchViewModel) {
-        self.anchorRect = anchorRect
+    init(viewModel: SearchViewModel) {
         self.viewModel = viewModel
         self.content = AnyView(
             _SearchView(viewModel: viewModel)
         )
     }
     
-    func show(_ origin: CGPoint?) {
+    func show(atTopLeft position: CGPoint?, inferredFrom anchor: NSRect?) {
         close()
         
         let host = DraggableHostingView(rootView: content)
         host.frame = CGRect(origin: .zero, size: host.intrinsicContentSize)
-
+        
+        let size = host.intrinsicContentSize
+        
+        var origin: CGPoint!
+        if let p = position {
+            origin = CGPoint(
+                x: p.x - size.width,
+                y: p.y - size.height
+            )
+        } else if let a = anchor {
+            origin = CGPoint(
+                x: a.midX - size.width / 2,
+                y: a.minY - size.height - 5 // 5pt gap below status item
+            )
+        } else {
+            fatalError("Must provide position or anchor.")
+        }
         
         _panel = FocusablePanel(
-            contentRect: host.frame,
+            contentRect: CGRect(origin: origin, size: size),
             styleMask: [.borderless, .nonactivatingPanel],
             backing: .buffered,
             defer: false
@@ -61,26 +75,11 @@ class FloatingPanel {
         
         _panel.contentView = host
         
-        let panelSize = host.intrinsicContentSize // your panel's size
-        
-        // Position the panel below the status item
-        let position = CGPoint(
-            x: anchorRect.midX - panelSize.width / 2,
-            y: anchorRect.minY - panelSize.height - 5 // 5pt gap below status item
-        )
-        
-        if let o = origin {
-            _panel.setFrameOrigin(CGPoint(x: o.x - panelSize.width, y: o.y - panelSize.height))
-        } else {
-            _panel.setFrameOrigin(position)
-        }
-        
         //        _panel.orderFront(nil)
         _panel.makeKeyAndOrderFront(nil)
         // TODO: release nspanel
         
         outsideClickMonitor.start()
-        // TODO: stop when other way to dismiss panel, like type esc
     }
     
     func close() {

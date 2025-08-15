@@ -60,7 +60,6 @@ struct HashtagSuggestionListView: View {
                 case .down: // ↓ Down arrow
                     index = index == nil ? 0 : (index! + 1) % viewModel.hashtags.count
                 case .up: // ↑ Up arrow
-                    // TODO: might out of range
                     index = index == nil ? 0 : (index! - 1 + viewModel.hashtags.count) % viewModel.hashtags.count
                 case .enter:
                     guard let idx = index else { return }
