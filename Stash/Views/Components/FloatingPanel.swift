@@ -9,8 +9,6 @@ import AppKit
 import SwiftUI
 
 class FloatingPanel {
-    let content: AnyView
-    let viewModel: SearchViewModel
     private var _panel: FocusablePanel!
     
     private lazy var outsideClickMonitor: OutsideClickMonitor = {
@@ -21,20 +19,10 @@ class FloatingPanel {
         }
     }()
     
-    init(viewModel: SearchViewModel) {
-        self.viewModel = viewModel
-        self.content = AnyView(
-            _SearchView(viewModel: viewModel)
-        )
-    }
-    
-    func show(atTopLeft position: CGPoint?, inferredFrom anchor: NSRect?) {
+    func show(content: NSView, atTopLeft position: CGPoint?, inferredFrom anchor: NSRect?) {
         close()
         
-        let host = DraggableHostingView(rootView: content)
-        host.frame = CGRect(origin: .zero, size: host.intrinsicContentSize)
-        
-        let size = host.intrinsicContentSize
+        let size = content.intrinsicContentSize
         
         var origin: CGPoint!
         if let p = position {
@@ -73,7 +61,7 @@ class FloatingPanel {
         _panel.isOpaque = false
         _panel.backgroundColor = .clear
         
-        _panel.contentView = host
+        _panel.contentView = content
         
         //        _panel.orderFront(nil)
         _panel.makeKeyAndOrderFront(nil)

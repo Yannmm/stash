@@ -10,8 +10,12 @@ import SwiftUI
 
 extension AppDelegate {
     @objc func search() {
-        searchPanel = FloatingPanel(viewModel: searchViewModel)
-        searchPanel?.show(atTopLeft: searchPanelPosition, inferredFrom: statusItemButtonFrame)
+        searchPanel = FloatingPanel()
+        searchPanel?.show(
+            content: DraggableHostingView(rootView: _SearchView(viewModel: self.searchViewModel)),
+            atTopLeft: searchPanelPosition,
+            inferredFrom: statusItemButtonFrame
+        )
     }
     
     private var statusItemButtonFrame: NSRect {
