@@ -8,30 +8,29 @@
 import SwiftUI
 import AppKit
 
+private struct ContentHeightKey: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
+}
+
 struct _SearchView: View {
     @StateObject var viewModel: SearchViewModel
     @State private var focused = true
     
+    @State private var contentHeight: CGFloat = 0
+    private let cap: CGFloat = 300
+    
     var body: some View {
         VStack(spacing: 0) {
             searchField()
-            VStack(spacing: 0) {
-                ForEach(Array(Array(viewModel.items).enumerated()), id: \.element.id) { index, item in
-                    _SearchItemView(
-                        item: item,
-                        highlight: self.viewModel.index == nil ? false : (self.viewModel.index! == index),
-                        onTap: { viewModel.setSelectedItem($0) },
-                        searchText: $viewModel.searchText,
-                    )
-                }
-            }
-            .padding(.top, viewModel.items.count > 0 ? 12 : 0)
+            list()
         }
         .frame(width: 500)
         .onAppear {
             focused = true
         }
-        .padding(.vertical, 12)
+        .padding(.top, 12)
+        .padding(.bottom, 12)
         .padding(.horizontal, 12)
         .background(
             RoundedRectangle(cornerRadius: 6)
@@ -56,6 +55,30 @@ struct _SearchView: View {
     }
     
     @ViewBuilder
+    private func list() -> some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                ForEach(Array(Array(viewModel.items).enumerated()), id: \.element.id) { index, item in
+                    _SearchItemView(
+                        item: item,
+                        highlight: self.viewModel.index == nil ? false : (self.viewModel.index! == index),
+                        onTap: { viewModel.setSelectedItem($0) },
+                        searchText: $viewModel.searchText,
+                    )
+                }
+            }
+            .padding(.top, viewModel.items.count > 0 ? 12 : 0)
+            .overlay(
+                GeometryReader { proxy in
+                    Color.clear.preference(key: ContentHeightKey.self, value: proxy.size.height)
+                }
+            )
+        }
+        .onPreferenceChange(ContentHeightKey.self) { contentHeight = $0 }
+        .frame(height: min(contentHeight, cap))   // 👈 set exact viewport height
+    }
+    
+    @ViewBuilder
     private func searchField() -> some View {
         HStack(spacing: 12) {
             Image(systemName: "sparkle.magnifyingglass")
@@ -64,7 +87,7 @@ struct _SearchView: View {
                 .frame(width: 18, height: 18)
                 .foregroundStyle(Color.theme)
             SearchField(text: $viewModel.searchText, keyboardAction: $viewModel.keyboardAction, focused: $focused)
-            .font(NSFont.systemFont(ofSize: 20, weight: .light))
+                .font(NSFont.systemFont(ofSize: 20, weight: .light))
             if !viewModel.searchText.isEmpty {
                 Button(action: {
                     viewModel.searchText = ""
