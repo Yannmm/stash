@@ -93,7 +93,6 @@ class SearchViewModel: ObservableObject {
             .compactMap({ $0 })
             .sink { [weak self] in
                 self?.index = $0
-                print("222222 -> \(self?.index)")
             }
             .store(in: &cancellables)
         

@@ -12,7 +12,7 @@ extension AppDelegate {
     @objc func search() {
         searchPanel = FloatingPanel()
         searchPanel?.show(
-            content: DraggableHostingView(rootView: _SearchView(viewModel: self.searchViewModel)),
+            content: DraggableHostingView(rootView: SearchView(viewModel: self.searchViewModel)),
             atTopLeft: searchPanelPosition,
             inferredFrom: statusItemButtonFrame
         )
