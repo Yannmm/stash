@@ -17,12 +17,13 @@ class SearchViewModel: ObservableObject {
     
     private var cancellables = Set<AnyCancellable>()
     
-    let _selectedItem = PassthroughSubject<SearchItem, Never>()
+    let _selectedEntry = PassthroughSubject<any Entry, Never>()
     
-    var selectedItem: AnyPublisher<SearchItem, Never> { _selectedItem.eraseToAnyPublisher() }
+    var selectedEntry: AnyPublisher<any Entry, Never> { _selectedEntry.eraseToAnyPublisher() }
     
     func setSelectedItem(_ value: SearchItem) {
-        _selectedItem.send(value)
+        guard let entry = cabinet.storedEntries.first(where: { $0.id == value.id }) else { return }
+        _selectedEntry.send(entry)
     }
     
     let cabinet: OkamuraCabinet
@@ -100,7 +101,7 @@ class SearchViewModel: ObservableObject {
             .withLatestFrom2($index.compactMap({ $0 }), $items)
             .map({ $0.2[$0.1] })
             .sink { [weak self] in
-                self?._selectedItem.send($0)
+                self?.setSelectedItem($0)
             }
             .store(in: &cancellables)
         

@@ -9,10 +9,16 @@ import AppKit
 import SwiftUI
 
 extension AppDelegate {
+    @MainActor
     @objc func search() {
         searchPanel = FloatingPanel()
         searchPanel?.show(
-            content: DraggableHostingView(rootView: SearchView(viewModel: self.searchViewModel)),
+            content: DraggableHostingView(rootView:
+                                            SearchView(viewModel: self.searchViewModel, onTap: { [weak self] in
+                                                self?.act(upon: $0)
+                                                self?.searchPanel?.close()
+                                            })
+                                         ),
             atTopLeft: searchPanelPosition,
             inferredFrom: statusItemButtonFrame
         )

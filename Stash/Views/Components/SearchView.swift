@@ -15,6 +15,8 @@ struct SearchView: View {
     @State private var height: CGFloat = 0
     @State private var visibleRange: Range<Int> = 0..<0
     
+    let onTap: (any Entry) -> Void
+    
     var body: some View {
         VStack(spacing: 0) {
             searchField()
@@ -44,8 +46,8 @@ struct SearchView: View {
         .onAppear(perform: {
             focused = true
         })
-        .onReceive(viewModel.selectedItem) { value in
-            print("狗 -> \(value)")
+        .onReceive(viewModel.selectedEntry) { value in
+            onTap(value)
         }
     }
     
@@ -59,7 +61,7 @@ struct SearchView: View {
                             item: item,
                             highlight: self.viewModel.index == nil ? false : (self.viewModel.index! == index),
                             onTap: { viewModel.setSelectedItem($0) },
-                            searchText: $viewModel.searchText,
+                            searchText: $viewModel.searchText
                         )
                         .id(index)
                         .background(

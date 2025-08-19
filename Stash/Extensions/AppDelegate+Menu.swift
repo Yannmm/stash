@@ -134,7 +134,12 @@ extension AppDelegate {
     }
     
     @objc private func action(_ sender: CustomMenuItem) {
-        if let b = sender.object as? Bookmark {
+        guard let entry = sender.object else { return }
+        act(upon: entry)
+    }
+    
+    internal func act(upon entry: any Entry) {
+        if let b = entry as? Bookmark {
             do {
                 try cabinet.asRecent(b)
             } catch {
@@ -142,7 +147,7 @@ extension AppDelegate {
             }
             
         }
-        (sender.object as? Actionable)?.open()
+        entry.open()
     }
     
     @objc private func createBookmark() {
