@@ -64,7 +64,7 @@ struct SearchView: View {
                             searchText: $viewModel.searchText
                         )
                         .id(index)
-                        .background(
+                        .overlay(
                             GeometryReader { geo in
                                 Color.clear
                                     .preference(
@@ -81,9 +81,9 @@ struct SearchView: View {
                     }
                 )
             }
-            .padding(.bottom, 12)
             .onPreferenceChange(HeightKey.self) { height = $0 }
             .frame(height: min(height, 300))   // 👈 set exact viewport height
+            .padding(.bottom, 12)
             .onPreferenceChange(VisibleRangeKey.self) { values in
                 visibleRange = computeVisibleRange(from: values, containerHeight: min(height, 300))
             }
@@ -95,9 +95,11 @@ struct SearchView: View {
                         proxy.scrollTo(i, anchor: .top)
                     }
                 case .down:
+                    print("i: \(viewModel.index), visible range: \(visibleRange)")
                     withAnimation {
                         proxy.scrollTo(i, anchor: .bottom)
                     }
+                    
                 case .enter:
                     return
                 }

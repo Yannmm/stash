@@ -11,7 +11,9 @@ import SwiftUI
 extension AppDelegate {
     @MainActor
     @objc func search() {
-        searchPanel = FloatingPanel()
+        if searchPanel == nil {
+            searchPanel = FloatingPanel()
+        }
         searchPanel?.show(
             content: DraggableHostingView(rootView:
                                             SearchView(viewModel: self.searchViewModel, onTap: { [weak self] in
