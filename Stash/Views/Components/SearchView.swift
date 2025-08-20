@@ -87,21 +87,17 @@ struct SearchView: View {
             .onPreferenceChange(VisibleRangeKey.self) { values in
                 visibleRange = computeVisibleRange(from: values, containerHeight: min(height, 300))
             }
-            .onReceive(viewModel.$keyboardAction.compactMap({ $0 })) { event in
-                guard let i = viewModel.index, !visibleRange.contains(i) else { return }
-                switch event {
-                case .up:
-                    withAnimation {
-                        proxy.scrollTo(i, anchor: .top)
+            .onReceive(viewModel.$index.compactMap({ $0 }).withLatestFrom(viewModel.$keyboardAction.compactMap({ $0 }))) { event in
+                guard !visibleRange.contains(event.0) else { return }
+                DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.1)) {
+                    switch event.1 {
+                    case .up:
+                        withAnimation(.easeInOut(duration: 0.15)) { proxy.scrollTo(event.0, anchor: .top) }
+                    case .down:
+                        withAnimation(.easeInOut(duration: 0.15)) { proxy.scrollTo(event.0, anchor: .bottom) }
+                    case .enter:
+                        return
                     }
-                case .down:
-                    print("i: \(viewModel.index), visible range: \(visibleRange)")
-                    withAnimation {
-                        proxy.scrollTo(i, anchor: .bottom)
-                    }
-                    
-                case .enter:
-                    return
                 }
             }
         }
