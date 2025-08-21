@@ -116,14 +116,14 @@ struct HashtagTextField: NSViewRepresentable {
         func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
             switch commandSelector {
             case #selector(NSResponder.moveDown(_:)):
-                parent.viewModel.setKeyboard(.down)
+                parent.viewModel.keyboardAction = .down
                 return true
             case #selector(NSResponder.moveUp(_:)):
-                parent.viewModel.setKeyboard(.up)
+                parent.viewModel.keyboardAction = .up
                 return true
             case #selector(NSResponder.insertNewline(_:)):
                 guard parent.suggestionIndex != nil else { return false }
-                parent.viewModel.setKeyboard(.enter)
+                parent.viewModel.keyboardAction = .enter
                 return true
             default:
                 return false
@@ -146,7 +146,7 @@ struct HashtagTextField: NSViewRepresentable {
             let textView = cursor.1
             let hashtag = (textView.string as NSString).substring(with: range)
             
-            parent.viewModel.filter = hashtag
+            parent.viewModel.query = hashtag
             
             // Get the bounding rect for that character
             guard let glyphRange = textView.layoutManager?.glyphRange(forCharacterRange: range, actualCharacterRange: nil),

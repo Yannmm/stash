@@ -11,7 +11,7 @@ import Foundation
 class SearchViewModel: ObservableObject {
     @Published var items: [SearchItem] = []
     @Published private var originalItems: [SearchItem] = []
-    @Published var searchText = ""
+    @Published var query = ""
     @Published var keyboardAction: KeyboardAction?
     @Published var index: Int?
     
@@ -60,7 +60,7 @@ class SearchViewModel: ObservableObject {
         }
         .store(in: &cancellables)
         
-        Publishers.CombineLatest($originalItems, $searchText.map({ $0.lowercased() }))
+        Publishers.CombineLatest($originalItems, $query.map({ $0.lowercased() }))
             .debounce(for: .milliseconds(100), scheduler: DispatchQueue.main)
             .receive(on: DispatchQueue.global(qos: .userInitiated))
             .map({ items, keyword in

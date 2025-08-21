@@ -12,14 +12,9 @@ class HashtagViewModel: ObservableObject {
     let cabinet: OkamuraCabinet
     @Published var title: String?
     @Published var hashtags: [String] = []
-    @Published var filter: String?
+    @Published var query: String?
+    @Published var keyboardAction: KeyboardAction?
     private var cancellables = Set<AnyCancellable>()
-    
-    let _keyboard = PassthroughSubject<KeyboardAction?, Never>()
-    var keyboard: AnyPublisher<KeyboardAction?, Never> { _keyboard.eraseToAnyPublisher() }
-    func setKeyboard(_ value: KeyboardAction?) {
-        _keyboard.send(value)
-    }
     
     init(cabinet: OkamuraCabinet) {
         self.cabinet = cabinet
@@ -50,7 +45,7 @@ class HashtagViewModel: ObservableObject {
         }
         .map({ Array($0).sorted(by: { $0 < $1 }) })
         
-        Publishers.CombineLatest(rest, $filter.map({ $0?.lowercased() }))
+        Publishers.CombineLatest(rest, $query.map({ $0?.lowercased() }))
             .map { rest, filter in
                 rest.filter({
                     if let f = filter {

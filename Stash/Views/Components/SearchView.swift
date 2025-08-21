@@ -61,7 +61,7 @@ struct SearchView: View {
                             item: item,
                             highlight: self.viewModel.index == nil ? false : (self.viewModel.index! == index),
                             onTap: { viewModel.setSelectedItem($0) },
-                            searchText: $viewModel.searchText
+                            searchText: $viewModel.query
                         )
                         .id(index)
                         .overlay(
@@ -111,11 +111,11 @@ struct SearchView: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 18, height: 18)
                 .foregroundStyle(Color.theme)
-            SearchField(text: $viewModel.searchText, keyboardAction: $viewModel.keyboardAction, focused: $focused)
+            SearchField(text: $viewModel.query, keyboardAction: $viewModel.keyboardAction, focused: $focused)
                 .font(NSFont.systemFont(ofSize: 20, weight: .light))
-            if !viewModel.searchText.isEmpty {
+            if !viewModel.query.isEmpty {
                 Button(action: {
-                    viewModel.searchText = ""
+                    viewModel.query = ""
                 }) {
                     Image(systemName: "xmark.circle.fill")
                         .foregroundColor(.gray)

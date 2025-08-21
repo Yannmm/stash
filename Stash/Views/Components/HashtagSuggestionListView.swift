@@ -35,12 +35,12 @@ struct HashtagSuggestionListView: View {
                     onTap(viewModel.hashtags[idx])
                     index = nil
                 }
-                .onHover { flag in
-                    hovering = flag
-                    if hovering {
-                        index = idx
-                    }
-                }
+//                .onHover { flag in
+//                    hovering = flag
+//                    if hovering {
+//                        index = idx
+//                    }
+//                }
             }
             .listStyle(.plain)
             .padding(0)
@@ -53,7 +53,7 @@ struct HashtagSuggestionListView: View {
                     proxy.scrollTo(index, anchor: .center)
                 }
             }
-            .onReceive(viewModel.keyboard, perform: { value in
+            .onReceive(viewModel.$keyboardAction, perform: { value in
                 hovering = false
                 guard let direction = value else { return }
                 switch direction {
