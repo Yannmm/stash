@@ -92,10 +92,14 @@ extension AppDelegate {
             }
             
             let children = entry.children(among: entries)
-            if !children.isEmpty {
-                let submenu = NSMenu()
-                g(menu: submenu, entries: entries, parentId: entry.id, keyEquivalents: keyEquivalents)
-                item.submenu = submenu
+            if entry.container {
+                if !children.isEmpty {
+                    let submenu = NSMenu()
+                    g(menu: submenu, entries: entries, parentId: entry.id, keyEquivalents: keyEquivalents)
+                    item.submenu = submenu
+                } else {
+                    item.isEnabled = false
+                }
             }
             item.toolTip = getTooltip(entry, childrenCount: children.count)
             menu.addItem(item)

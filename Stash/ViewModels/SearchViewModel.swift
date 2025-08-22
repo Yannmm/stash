@@ -10,21 +10,16 @@ import Foundation
 
 class SearchViewModel: ObservableObject {
     @Published var items: [SearchItem] = []
-    @Published private var originalItems: [SearchItem] = []
     @Published var query = ""
     @Published var keyboardAction: KeyboardAction?
     @Published var index: Int?
+    @Published var selectedBookmark: (any Entry)?
     
     private var cancellables = Set<AnyCancellable>()
     
-    let _selectedEntry = PassthroughSubject<any Entry, Never>()
+    let _select = PassthroughSubject<SearchItem, Never>()
     
-    var selectedEntry: AnyPublisher<any Entry, Never> { _selectedEntry.eraseToAnyPublisher() }
-    
-    func setSelectedItem(_ value: SearchItem) {
-        guard let entry = cabinet.storedEntries.first(where: { $0.id == value.id }) else { return }
-        _selectedEntry.send(entry)
-    }
+    func select(_ item: SearchItem) { _select.send(item) }
     
     let cabinet: OkamuraCabinet
     
@@ -35,7 +30,38 @@ class SearchViewModel: ObservableObject {
     }
     
     private func bind() {
-        cabinet.$storedEntries.map({ event in
+        let selectedEntry = _select.map({ [weak self] item in
+            (self?.cabinet.storedEntries ?? []).first(where: { $0.id == item.id })
+        })
+            .compactMap({ $0 })
+        
+        selectedEntry
+            .filter({ !$0.container })
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.selectedBookmark = $0 }
+            .store(in: &cancellables)
+        
+        // TOOD: 在 ui 上，如果group 有0个child，则灰色，无法选择
+        let scoped = selectedEntry
+            .filter({ $0.container })
+            .withLatestFrom(Just(cabinet.storedEntries))
+            .map({ $0.0.children(among: $0.1) })
+        
+        scoped
+            .map({ _ in "" })
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.query = $0 }
+            .store(in: &cancellables)
+        
+        let _entries = CurrentValueSubject<[any Entry], Never>([])
+        
+        Publishers.Merge(cabinet.$storedEntries, scoped)
+            .sink(receiveValue: _entries.send)
+            .store(in: &cancellables)
+        
+        let seachItems = PassthroughSubject<[SearchItem], Never>()
+        
+        _entries.map({ event in
             event.map({ e in
                 var type: EntryType!
                 var detail: String!
@@ -43,7 +69,7 @@ class SearchViewModel: ObservableObject {
                 case let g as Group:
                     type = .directory
                     let children =  g.children(among: event)
-                    detail = "\(children.count)"
+                    detail = "\(children.count) item(s)"
                 case let b as Bookmark:
                     type = .bookmark
                     detail = b.url.absoluteString
@@ -55,12 +81,10 @@ class SearchViewModel: ObservableObject {
                 return item
             })
         })
-        .sink { [weak self] in
-            self?.originalItems = $0
-        }
+        .sink(receiveValue: seachItems.send)
         .store(in: &cancellables)
         
-        Publishers.CombineLatest($originalItems, $query.map({ $0.lowercased() }))
+        Publishers.CombineLatest(seachItems, $query.map({ $0.lowercased() }))
             .debounce(for: .milliseconds(100), scheduler: DispatchQueue.main)
             .receive(on: DispatchQueue.global(qos: .userInitiated))
             .map({ items, keyword in
@@ -101,7 +125,7 @@ class SearchViewModel: ObservableObject {
             .withLatestFrom2($index.compactMap({ $0 }), $items)
             .map({ $0.2[$0.1] })
             .sink { [weak self] in
-                self?.setSelectedItem($0)
+                self?.select($0)
             }
             .store(in: &cancellables)
         

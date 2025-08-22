@@ -46,8 +46,9 @@ struct SearchView: View {
         .onAppear(perform: {
             focused = true
         })
-        .onReceive(viewModel.selectedEntry) { value in
-            onTap(value)
+        .onReceive(viewModel.$selectedBookmark) { value in
+//            onTap(value)
+            
         }
     }
     
@@ -60,7 +61,7 @@ struct SearchView: View {
                         _SearchItemView(
                             item: item,
                             highlight: self.viewModel.index == nil ? false : (self.viewModel.index! == index),
-                            onTap: { viewModel.setSelectedItem($0) },
+                            onTap: { viewModel.select($0) },
                             searchText: $viewModel.query
                         )
                         .id(index)
