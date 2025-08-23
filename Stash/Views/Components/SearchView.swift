@@ -46,8 +46,8 @@ struct SearchView: View {
         .onAppear(perform: {
             focused = true
         })
-        .onReceive(viewModel.$selectedBookmark) { value in
-//            onTap(value)
+        .onReceive(viewModel.$selectedBookmark.compactMap({ $0 })) { value in
+            onTap(value)
             
         }
     }
@@ -58,6 +58,7 @@ struct SearchView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     ForEach(Array(Array(viewModel.items).enumerated()), id: \.element.id) { index, item in
+                        // TODO: need a dummy search view item to deal with go back.
                         _SearchItemView(
                             item: item,
                             highlight: self.viewModel.index == nil ? false : (self.viewModel.index! == index),
@@ -112,7 +113,17 @@ struct SearchView: View {
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 18, height: 18)
                 .foregroundStyle(Color.theme)
-            SearchField(text: $viewModel.query, keyboardAction: $viewModel.keyboardAction, focused: $focused)
+            SearchField(text: $viewModel.query, keyboardAction: $viewModel.keyboardAction, focused: $focused, placeholder: Binding(
+                get: {
+                    switch viewModel.depth {
+                    case .root:
+                        return "Search by Title or Address"
+                    case .group(let name):
+                        return "Search in Group \"\(name)\""
+                    }
+                },
+                set: { _ in }
+            ))
                 .font(NSFont.systemFont(ofSize: 20, weight: .light))
             if !viewModel.query.isEmpty {
                 Button(action: {

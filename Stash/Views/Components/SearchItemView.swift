@@ -32,7 +32,6 @@ struct _SearchItemView: View {
         )
         .cornerRadius(6)
         .onTapGesture {
-            print("1111111")
             onTap(item)
         }
         .onGeometryChange(for: CGRect.self) { proxy in

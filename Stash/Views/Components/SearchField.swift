@@ -14,6 +14,8 @@ struct SearchField: NSViewRepresentable {
     @Binding var text: String
     @Binding var keyboardAction: KeyboardAction?
     @Binding var focused: Bool
+    @Binding var placeholder: String?
+    
     var font: NSFont?
     
     func makeCoordinator() -> Coordinator {
@@ -28,6 +30,7 @@ struct SearchField: NSViewRepresentable {
         textField.isBordered = false
         textField.backgroundColor = .clear
         textField.font = font
+        textField.placeholderString = placeholder
         textField.lineBreakMode = .byTruncatingMiddle
         textField.usesSingleLineMode = true
         textField.focusRingType = .none
@@ -45,6 +48,7 @@ struct SearchField: NSViewRepresentable {
         }
         
         textField.font = font
+        textField.placeholderString = placeholder
         
         // Handle focus state
         DispatchQueue.main.asyncAfter(deadline: .now()) {
