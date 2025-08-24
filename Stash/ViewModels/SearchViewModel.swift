@@ -8,12 +8,20 @@
 import Combine
 import Foundation
 
+extension SearchViewModel {
+    enum Depth {
+        case root
+        case group(String)
+    }
+}
+
 class SearchViewModel: ObservableObject {
     @Published var items: [SearchItem] = []
     @Published var query = ""
     @Published var keyboardAction: KeyboardAction?
     @Published var index: Int?
     @Published var selectedBookmark: (any Entry)?
+    @Published var depth: Depth = .root
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -25,7 +33,6 @@ class SearchViewModel: ObservableObject {
     
     init(cabinet: OkamuraCabinet) {
         self.cabinet = cabinet
-        
         bind()
     }
     
@@ -41,6 +48,12 @@ class SearchViewModel: ObservableObject {
             .sink { [weak self] in self?.selectedBookmark = $0 }
             .store(in: &cancellables)
         
+        selectedEntry
+            .map({ Depth.group($0.name) })
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.depth = $0 }
+            .store(in: &cancellables)
+        
         // TOOD: 在 ui 上，如果group 有0个child，则灰色，无法选择
         let scoped = selectedEntry
             .filter({ $0.container })
@@ -53,43 +66,72 @@ class SearchViewModel: ObservableObject {
             .sink { [weak self] in self?.query = $0 }
             .store(in: &cancellables)
         
-        let _entries = CurrentValueSubject<[any Entry], Never>([])
+        let entries = CurrentValueSubject<[any Entry], Never>([])
         
         Publishers.Merge(cabinet.$storedEntries, scoped)
-            .sink(receiveValue: _entries.send)
+            .sink(receiveValue: entries.send)
             .store(in: &cancellables)
         
-        let seachItems = PassthroughSubject<[SearchItem], Never>()
+        cabinet.$storedEntries
+            .sink(receiveValue: entries.send)
+            .store(in: &cancellables)
         
-        _entries.map({ event in
+        let seachItems = CurrentValueSubject<[SearchItem], Never>([])
+        
+        entries.map({ event in
             event.map({ e in
-                var type: EntryType!
                 var detail: String!
                 switch e {
                 case let g as Group:
-                    type = .directory
                     let children =  g.children(among: event)
                     detail = "\(children.count) item(s)"
                 case let b as Bookmark:
-                    type = .bookmark
                     detail = b.url.absoluteString
                 default:
                     // Impossible to reach
                     fatalError()
                 }
-                let item = SearchItem(id: e.id, title: e.name, detail: detail, icon: e.icon, type: type)
+                let item = SearchItem(id: e.id, title: e.name, detail: detail, icon: e.icon)
                 return item
             })
         })
         .sink(receiveValue: seachItems.send)
         .store(in: &cancellables)
         
-        Publishers.CombineLatest(seachItems, $query.map({ $0.lowercased() }))
+        let parent = CurrentValueSubject<(any Entry)?, Never>(nil)
+        
+        selectedEntry
+            .map({ $0.parentId })
+            .withLatestFrom(Just(cabinet.storedEntries))
+            .map({ event in event.0 == nil ? nil : event.1.first(where: { event.0 == $0.id }) })
+            .sink(receiveValue: parent.send)
+            .store(in: &cancellables)
+        
+        Publishers.CombineLatest3(seachItems, $query.map({ $0.lowercased() }), $depth)
             .debounce(for: .milliseconds(100), scheduler: DispatchQueue.main)
             .receive(on: DispatchQueue.global(qos: .userInitiated))
-            .map({ items, keyword in
-                guard keyword.count >= 2 else { return [] }
-                return items.filter({ $0.title.lowercased().contains(keyword) || $0.detail.lowercased().contains(keyword) })
+            .withLatestFrom(parent)
+            .map({ event in
+                var items = event.0.0
+                let keyword = event.0.1
+                let depth = event.0.2
+                let parent = event.1
+                
+                var isRoot: Bool!
+                var back: String!
+                switch depth {
+                case .root:
+                    isRoot = true
+                case .group(_):
+                    isRoot = false
+                    back = "\"\(parent?.name ?? "Root")\""
+                }
+                if isRoot && keyword.count < 2 { return [] }
+                items = items.filter({ keyword.isEmpty ? true : ($0.title.lowercased().contains(keyword) || $0.detail.lowercased().contains(keyword)) })
+                if !isRoot {
+                    items.insert(SearchItem.back(title: "Back to", detail: back), at: 0)
+                }
+                return items
             })
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in
@@ -130,69 +172,4 @@ class SearchViewModel: ObservableObject {
             .store(in: &cancellables)
         
     }
-}
-
-
-extension Publisher {
-    func withLatestFrom<P>(
-        _ other: P
-    ) -> AnyPublisher<(Self.Output, P.Output), Failure> where P: Publisher, Self.Failure == P.Failure {
-        let other = other
-        // Note: Do not use `.map(Optional.some)` and `.prepend(nil)`.
-        // There is a bug in iOS versions prior 14.5 in `.combineLatest`. If P.Output itself is Optional.
-        // In this case prepended `Optional.some(nil)` will become just `nil` after `combineLatest`.
-            .map { (value: $0, ()) }
-            .prepend((value: nil, ()))
-        
-        return map { (value: $0, token: UUID()) }
-            .combineLatest(other)
-            .removeDuplicates(by: { (old, new) in
-                let lhs = old.0, rhs = new.0
-                return lhs.token == rhs.token
-            })
-            .map { ($0.value, $1.value) }
-            .compactMap { (left, right) in
-                right.map { (left, $0) }
-            }
-            .eraseToAnyPublisher()
-    }
-    
-    
-    func withLatestFrom2<P1, P2>(
-        _ p1: P1,
-        _ p2: P2
-    ) -> AnyPublisher<(Self.Output, P1.Output, P2.Output), Failure>
-    where P1: Publisher, P2: Publisher,
-          Self.Failure == P1.Failure,
-          Self.Failure == P2.Failure
-    {
-        // Workaround to avoid iOS <14.5 Optional combineLatest bug
-        let latestP1 = p1
-            .map { (value: $0, ()) }
-            .prepend((value: nil, ()))
-        
-        let latestP2 = p2
-            .map { (value: $0, ()) }
-            .prepend((value: nil, ()))
-        
-        // Combine p1 and p2 first
-        let combinedLatest = latestP1.combineLatest(latestP2)
-        
-        return self
-            .map { (value: $0, token: UUID()) }
-            .combineLatest(combinedLatest)
-            .removeDuplicates(by: { $0.0.token == $1.0.token })
-            .map { (left, right) in
-                (left.value, right.0.value, right.1.value)
-            }
-            .compactMap { trigger, l1, l2 in
-                if let l1 = l1, let l2 = l2 {
-                    return (trigger, l1, l2)
-                } else {
-                    return nil
-                }
-            }
-            .eraseToAnyPublisher()
-    }
-    
 }

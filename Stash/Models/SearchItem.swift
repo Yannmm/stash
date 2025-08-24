@@ -12,9 +12,14 @@ struct SearchItem: Identifiable, Equatable {
     let title: String
     let detail: String
     let icon: Icon
-    let type: EntryType
     
     static func == (lhs: SearchItem, rhs: SearchItem) -> Bool {
         lhs.id == rhs.id
+    }
+}
+
+extension SearchItem {
+    static func back(title: String, detail: String) -> SearchItem {
+        SearchItem(id: UUID(), title: title, detail: detail, icon: .system("arrowshape.turn.up.backward.fill"))
     }
 }
