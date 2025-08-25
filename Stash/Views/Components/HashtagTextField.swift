@@ -12,7 +12,6 @@ struct HashtagTextField: NSViewRepresentable {
     @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var viewModel: HashtagViewModel
     @Binding var text: String
-    @State var suggestionIndex: Int?
     let focused: Bool
     var font: NSFont?
     var onCommit: () -> Void = {}
@@ -122,7 +121,7 @@ struct HashtagTextField: NSViewRepresentable {
                 parent.viewModel.keyboardAction = .up
                 return true
             case #selector(NSResponder.insertNewline(_:)):
-                guard parent.suggestionIndex != nil else { return false }
+                guard parent.viewModel.suggestionIndex != nil else { return false }
                 parent.viewModel.keyboardAction = .enter
                 return true
             default:
@@ -132,7 +131,7 @@ struct HashtagTextField: NSViewRepresentable {
         
         private func show(_ textField: NSTextField) {
             if let anchor = _whereToAnchor(textField) {
-                parent.suggestionIndex = nil
+                parent.viewModel.suggestionIndex = nil
                 _makePanel(anchor, textField)
             } else {
                 hide()
@@ -213,7 +212,7 @@ struct HashtagTextField: NSViewRepresentable {
             panel.becomesKeyOnlyIfNeeded = false
             panel.acceptsMouseMovedEvents = true
             
-            panel.contentViewController = NSHostingController(rootView: HashtagSuggestionListView(index: parent.$suggestionIndex, onTap: { [weak self] hashtag in
+            panel.contentViewController = NSHostingController(rootView: HashtagSuggestionListView(onTap: { [weak self] hashtag in
                 self?._insert(hashtag, textField)
                 self?.hide()
             }).environmentObject(parent.viewModel))

@@ -11,7 +11,6 @@ import AppKit
 struct SearchView: View {
     @StateObject var viewModel: SearchViewModel
     @State private var focused = true
-    
     @State private var height: CGFloat = 0
     @State private var visibleRange: Range<Int> = 0..<0
     
@@ -70,7 +69,7 @@ struct SearchView: View {
                             GeometryReader { geo in
                                 Color.clear
                                     .preference(
-                                        key: VisibleRangeKey.self,
+                                        key: VisibleRangeSignal.self,
                                         value: [index: geo.frame(in: .named("scroll")).minY...geo.frame(in: .named("scroll")).maxY]
                                     )
                             }
@@ -79,15 +78,15 @@ struct SearchView: View {
                 }
                 .overlay(
                     GeometryReader { proxy in
-                        Color.clear.preference(key: HeightKey.self, value: proxy.size.height)
+                        Color.clear.preference(key: HeightSignal.self, value: proxy.size.height)
                     }
                 )
             }
-            .onPreferenceChange(HeightKey.self) { height = $0 }
+            .onPreferenceChange(HeightSignal.self) { height = $0 }
             .frame(height: min(height, 300))   // 👈 set exact viewport height
             .padding(.bottom, 12)
-            .onPreferenceChange(VisibleRangeKey.self) { values in
-                visibleRange = computeVisibleRange(from: values, containerHeight: min(height, 300))
+            .onPreferenceChange(VisibleRangeSignal.self) { values in
+                visibleRange = VisibleRangeSignal.computeVisibleRange(from: values, containerHeight: min(height, 300))
             }
             .onReceive(viewModel.$index.compactMap({ $0 }).withLatestFrom(viewModel.$keyboardAction.compactMap({ $0 }))) { event in
                 guard !visibleRange.contains(event.0) else { return }
@@ -137,34 +136,6 @@ struct SearchView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 12)
-    }
-}
-
-private extension SearchView {
-    struct HeightKey: PreferenceKey {
-        static var defaultValue: CGFloat = 0
-        static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
-    }
-    
-    struct VisibleRangeKey: PreferenceKey {
-        static var defaultValue: [Int: ClosedRange<CGFloat>] = [:]
-        static func reduce(value: inout [Int: ClosedRange<CGFloat>], nextValue: () -> [Int: ClosedRange<CGFloat>]) {
-            value.merge(nextValue(), uniquingKeysWith: { $1 })
-        }
-    }
-}
-
-/// Compute which indexes are fully visible inside the container height
-func computeVisibleRange(from values: [Int: ClosedRange<CGFloat>], containerHeight: CGFloat) -> Range<Int> {
-    let visible = values
-        .filter { $0.value.lowerBound >= 0 && $0.value.upperBound <= containerHeight }
-        .map { $0.key }
-        .sorted()
-    
-    if let first = visible.first, let last = visible.last {
-        return first..<last+1
-    } else {
-        return 0..<0
     }
 }
 

@@ -14,6 +14,7 @@ class HashtagViewModel: ObservableObject {
     @Published var hashtags: [String] = []
     @Published var query: String?
     @Published var keyboardAction: KeyboardAction?
+    @Published var suggestionIndex: Int?
     private var cancellables = Set<AnyCancellable>()
     
     init(cabinet: OkamuraCabinet) {

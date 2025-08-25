@@ -8,12 +8,10 @@
 import SwiftUI
 
 struct HashtagSuggestionListView: View {
-    @Environment(\.colorScheme) var colorScheme
-    @Binding var index: Int?
-    let onTap: (String) -> Void
     @EnvironmentObject var viewModel: HashtagViewModel
-    @State private var hovering: Bool = false
-    
+    @Environment(\.colorScheme) var colorScheme
+    let onTap: (String) -> Void
+    @State private var visibleRange: Range<Int> = 0..<0
     
     var body: some View {
         ScrollViewReader { proxy in
@@ -28,45 +26,52 @@ struct HashtagSuggestionListView: View {
                 }
                 .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
                 .listRowSeparator(.hidden)
-                .listRowBackground(index == idx ? Color.theme.opacity(0.3) : Color.clear)
+                .listRowBackground(viewModel.suggestionIndex == idx ? Color.theme.opacity(0.3) : Color.clear)
                 .frame(maxWidth: .infinity)
+                .id(idx)
+                .overlay(
+                    GeometryReader { geo in
+                        Color.clear
+                            .preference(
+                                key: VisibleRangeSignal.self,
+                                value: [idx: geo.frame(in: .named("scroll")).minY...geo.frame(in: .named("scroll")).maxY]
+                            )
+                    }
+                )
                 .onTapGesture {
-                    hovering = false
                     onTap(viewModel.hashtags[idx])
-                    index = nil
+//                    index = nil
                 }
-//                .onHover { flag in
-//                    hovering = flag
-//                    if hovering {
-//                        index = idx
-//                    }
-//                }
             }
             .listStyle(.plain)
             .padding(0)
-            .frame(width: 200, height: 150)
+            .frame(width: Constant.width, height: Constant.height)
             .background(Color(nsColor: .controlBackgroundColor))
             .cornerRadius(6)
-            .onChange(of: index) { _, index in
-                guard !hovering else { return }
-                withAnimation(.easeInOut(duration: 0.15)) {
-                    proxy.scrollTo(index, anchor: .center)
+            .onPreferenceChange(VisibleRangeSignal.self) { values in
+                visibleRange = VisibleRangeSignal.computeVisibleRange(from: values, containerHeight: Constant.height)
+            }
+            // TODO: set $keyboardAction
+            .onReceive(viewModel.$suggestionIndex.compactMap({ $0 }).withLatestFrom(viewModel.$keyboardAction.compactMap({ $0 }))) { event in
+                guard !visibleRange.contains(event.0) else { return }
+                DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.1)) {
+                    switch event.1 {
+                    case .up:
+                        withAnimation(.easeInOut(duration: 0.15)) { proxy.scrollTo(event.0, anchor: .top) }
+                    case .down:
+                        withAnimation(.easeInOut(duration: 0.15)) { proxy.scrollTo(event.0, anchor: .bottom) }
+                    case .enter:
+                        return
+                    }
                 }
             }
-            .onReceive(viewModel.$keyboardAction, perform: { value in
-                hovering = false
-                guard let direction = value else { return }
-                switch direction {
-                case .down: // ↓ Down arrow
-                    index = index == nil ? 0 : (index! + 1) % viewModel.hashtags.count
-                case .up: // ↑ Up arrow
-                    index = index == nil ? 0 : (index! - 1 + viewModel.hashtags.count) % viewModel.hashtags.count
-                case .enter:
-                    guard let idx = index else { return }
-                    onTap(viewModel.hashtags[idx])
-                    index = nil
-                }
-            })
         }
+    }
+}
+
+extension HashtagSuggestionListView {
+    enum Constant {
+        static let height = 150.0
+        static let width = 200.0
     }
 }
