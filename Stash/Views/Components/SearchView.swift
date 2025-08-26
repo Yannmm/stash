@@ -47,7 +47,6 @@ struct SearchView: View {
         })
         .onReceive(viewModel.$selectedBookmark.compactMap({ $0 })) { value in
             onTap(value)
-            
         }
     }
     

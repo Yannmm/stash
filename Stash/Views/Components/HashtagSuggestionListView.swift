@@ -15,9 +15,9 @@ struct HashtagSuggestionListView: View {
     
     var body: some View {
         ScrollViewReader { proxy in
-            List(Array(viewModel.hashtags.enumerated()), id: \.offset) { idx, fruit in
+            List(Array(viewModel.hashtags.enumerated()), id: \.offset) { idx, hashtag in
                 HStack {
-                    Text(fruit)
+                    Text(hashtag)
                         .lineLimit(1)
                         .truncationMode(.middle)
                         .font(.system(size: 18, weight: .thin))
@@ -39,8 +39,7 @@ struct HashtagSuggestionListView: View {
                     }
                 )
                 .onTapGesture {
-                    onTap(viewModel.hashtags[idx])
-//                    index = nil
+                    onTap(hashtag)
                 }
             }
             .listStyle(.plain)
@@ -65,6 +64,9 @@ struct HashtagSuggestionListView: View {
                     }
                 }
             }
+//            .onReceive(viewModel.$selectedBookmark.compactMap({ $0 })) { value in
+//                onTap(value)
+//            }
         }
     }
 }

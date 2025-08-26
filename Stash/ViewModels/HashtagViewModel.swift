@@ -17,6 +17,10 @@ class HashtagViewModel: ObservableObject {
     @Published var suggestionIndex: Int?
     private var cancellables = Set<AnyCancellable>()
     
+    let _select = PassthroughSubject<String, Never>()
+    
+    func select(_ hashtag: String) { _select.send(hashtag) }
+    
     init(cabinet: OkamuraCabinet) {
         self.cabinet = cabinet
         bind()
@@ -58,6 +62,30 @@ class HashtagViewModel: ObservableObject {
             }
             .sink { [unowned self] result in
                 self.hashtags = result
+            }
+            .store(in: &cancellables)
+        
+        $keyboardAction.withLatestFrom2($suggestionIndex.compactMap({ $0 }), $hashtags)
+            .map({ t3 in
+                switch t3.0 {
+                case .down: // ↓ Down arrow
+                    return (t3.1 + 1) % t3.2.count
+                case .up: // ↑ Up arrow
+                    return (t3.1 - 1 + t3.2.count) % t3.2.count
+                default: return nil
+                }
+            })
+            .compactMap({ $0 })
+            .sink { [weak self] in
+                self?.suggestionIndex = $0
+            }
+            .store(in: &cancellables)
+        
+        $keyboardAction.filter({ $0 == .enter })
+            .withLatestFrom2($suggestionIndex.compactMap({ $0 }), $hashtags)
+            .map({ $0.2[$0.1] })
+            .sink { [weak self] in
+                self?.select($0)
             }
             .store(in: &cancellables)
     }
