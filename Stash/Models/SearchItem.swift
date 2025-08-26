@@ -22,4 +22,13 @@ extension SearchItem {
     static func back(title: String, detail: String) -> SearchItem {
         SearchItem(id: UUID(), title: title, detail: detail, icon: .system("arrowshape.turn.up.backward.fill"))
     }
+    
+    var isBack: Bool {
+        switch icon {
+        case .system(let name):
+            return name == "arrowshape.turn.up.backward.fill"
+        default:
+            return false
+        }
+    }
 }

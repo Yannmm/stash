@@ -9,9 +9,20 @@ import Combine
 import Foundation
 
 extension SearchViewModel {
-    enum Depth {
+    enum Depth: Equatable {
         case root
         case group(String)
+        
+        static func ==(lhs: Depth, rhs: Depth) -> Bool {
+            switch (lhs, rhs) {
+            case let (.group(a), .group(b)):
+                return a == b
+            case (.root, .root):
+                return true
+            default:
+                return false
+            }
+        }
     }
 }
 
@@ -37,25 +48,44 @@ class SearchViewModel: ObservableObject {
     }
     
     private func bind() {
-        let selectedEntry = _select.map({ [weak self] item in
+        
+        // ????
+        let current = CurrentValueSubject<(any Entry)?, Never>(nil)
+        
+        _select.map({ [weak self] item in
             (self?.cabinet.storedEntries ?? []).first(where: { $0.id == item.id })
         })
-            .compactMap({ $0 })
+        .sink(receiveValue: current.send)
+            .store(in: &cancellables)
         
-        selectedEntry
+        let back = _select.filter({ $0.isBack })
+            .withLatestFrom(current)
+            .map({ $0.1?.parentId })
+            .withLatestFrom(Just(cabinet.storedEntries))
+            .map({ $0.0 == nil ? nil : $0.1.findBy(id: $0.0!) })
+            .withLatestFrom(Just(cabinet.storedEntries))
+            .map({ $0.0 == nil ? $0.1 : $0.0!.children(among: $0.1) })
+        
+        
+        
+        current
+            .compactMap({ $0 })
             .filter({ !$0.container })
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in self?.selectedBookmark = $0 }
             .store(in: &cancellables)
         
-        selectedEntry
+        current
+            .compactMap({ $0 })
+            .filter({ $0.container })
             .map({ Depth.group($0.name) })
             .receive(on: DispatchQueue.main)
             .sink { [weak self] in self?.depth = $0 }
             .store(in: &cancellables)
         
         // TOOD: 在 ui 上，如果group 有0个child，则灰色，无法选择
-        let scoped = selectedEntry
+        let scoped = current
+            .compactMap({ $0 })
             .filter({ $0.container })
             .withLatestFrom(Just(cabinet.storedEntries))
             .map({ $0.0.children(among: $0.1) })
@@ -68,13 +98,14 @@ class SearchViewModel: ObservableObject {
         
         let entries = CurrentValueSubject<[any Entry], Never>([])
         
-        Publishers.Merge(cabinet.$storedEntries, scoped)
-            .sink(receiveValue: entries.send)
-            .store(in: &cancellables)
-        
-        cabinet.$storedEntries
-            .sink(receiveValue: entries.send)
-            .store(in: &cancellables)
+        Publishers.Merge3(
+            Publishers.CombineLatest(cabinet.$storedEntries, $depth)
+                .map({ $0.0 }),
+            scoped,
+            back
+        )
+        .sink(receiveValue: entries.send)
+        .store(in: &cancellables)
         
         let seachItems = CurrentValueSubject<[SearchItem], Never>([])
         
@@ -100,8 +131,9 @@ class SearchViewModel: ObservableObject {
         
         let parent = CurrentValueSubject<(any Entry)?, Never>(nil)
         
-        selectedEntry
-            .map({ $0.parentId })
+        current
+            .compactMap({ $0 })
+            .map({ $0?.parentId })
             .withLatestFrom(Just(cabinet.storedEntries))
             .map({ event in event.0 == nil ? nil : event.1.first(where: { event.0 == $0.id }) })
             .sink(receiveValue: parent.send)
@@ -122,7 +154,7 @@ class SearchViewModel: ObservableObject {
                 switch depth {
                 case .root:
                     isRoot = true
-                case .group(_):
+                case .group(_): //  xxx depth 没变，即使已经回到了root
                     isRoot = false
                     back = "\"\(parent?.name ?? "Root")\""
                 }
