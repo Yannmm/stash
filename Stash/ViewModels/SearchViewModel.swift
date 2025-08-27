@@ -179,13 +179,14 @@ class SearchViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        $keyboardAction.withLatestFrom2($index.compactMap({ $0 }), $items)
+        $keyboardAction.withLatestFrom2($index, $items)
             .map({ t3 in
+                guard let index = t3.1 else { return nil }
                 switch t3.0 {
                 case .down: // ↓ Down arrow
-                    return (t3.1 + 1) % t3.2.count
+                    return (index + 1) % t3.2.count
                 case .up: // ↑ Up arrow
-                    return (t3.1 - 1 + t3.2.count) % t3.2.count
+                    return (index - 1 + t3.2.count) % t3.2.count
                 default: return nil
                 }
             })
@@ -196,8 +197,9 @@ class SearchViewModel: ObservableObject {
             .store(in: &cancellables)
         
         $keyboardAction.filter({ $0 == .enter })
-            .withLatestFrom2($index.compactMap({ $0 }), $items)
-            .map({ $0.2[$0.1] })
+            .withLatestFrom2($index, $items)
+            .map({ $0.1 == nil ? nil : $0.2[$0.1!] })
+            .compactMap({ $0 })
             .sink { [weak self] in
                 self?.select($0)
             }

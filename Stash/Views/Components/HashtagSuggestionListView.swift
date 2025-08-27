@@ -28,7 +28,7 @@ struct HashtagSuggestionListView: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(viewModel.suggestionIndex == idx ? Color.theme.opacity(0.3) : Color.clear)
                 .frame(maxWidth: .infinity)
-                .id(idx)
+//                .id(idx)
                 .overlay(
                     GeometryReader { geo in
                         Color.clear
@@ -39,7 +39,7 @@ struct HashtagSuggestionListView: View {
                     }
                 )
                 .onTapGesture {
-                    onTap(hashtag)
+                    viewModel.select(hashtag)
                 }
             }
             .listStyle(.plain)
@@ -54,19 +54,19 @@ struct HashtagSuggestionListView: View {
             .onReceive(viewModel.$suggestionIndex.compactMap({ $0 }).withLatestFrom(viewModel.$keyboardAction.compactMap({ $0 }))) { event in
                 guard !visibleRange.contains(event.0) else { return }
                 DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.1)) {
-                    switch event.1 {
-                    case .up:
+                    switch event.1! {
+                    case KeyboardAction.up:
                         withAnimation(.easeInOut(duration: 0.15)) { proxy.scrollTo(event.0, anchor: .top) }
-                    case .down:
+                    case KeyboardAction.down:
                         withAnimation(.easeInOut(duration: 0.15)) { proxy.scrollTo(event.0, anchor: .bottom) }
-                    case .enter:
+                    case KeyboardAction.enter:
                         return
                     }
                 }
             }
-//            .onReceive(viewModel.$selectedBookmark.compactMap({ $0 })) { value in
-//                onTap(value)
-//            }
+            .onReceive(viewModel.selected) { value in
+                onTap(value)
+            }
         }
     }
 }
