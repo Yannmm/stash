@@ -28,7 +28,6 @@ struct HashtagSuggestionListView: View {
                 .listRowSeparator(.hidden)
                 .listRowBackground(viewModel.suggestionIndex == idx ? Color.theme.opacity(0.3) : Color.clear)
                 .frame(maxWidth: .infinity)
-//                .id(idx)
                 .overlay(
                     GeometryReader { geo in
                         Color.clear
@@ -50,7 +49,6 @@ struct HashtagSuggestionListView: View {
             .onPreferenceChange(VisibleRangeSignal.self) { values in
                 visibleRange = VisibleRangeSignal.computeVisibleRange(from: values, containerHeight: Constant.height)
             }
-            // TODO: set $keyboardAction
             .onReceive(viewModel.$suggestionIndex.compactMap({ $0 }).withLatestFrom(viewModel.$keyboardAction.compactMap({ $0 }))) { event in
                 guard !visibleRange.contains(event.0) else { return }
                 DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.1)) {

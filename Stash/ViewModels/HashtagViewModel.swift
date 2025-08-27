@@ -67,13 +67,14 @@ class HashtagViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        $keyboardAction.withLatestFrom2($suggestionIndex.compactMap({ $0 }), $hashtags)
+        $keyboardAction.withLatestFrom2($suggestionIndex, $hashtags)
             .map({ t3 in
+                guard let index = t3.1 else { return nil }
                 switch t3.0 {
                 case .down: // ↓ Down arrow
-                    return (t3.1 + 1) % t3.2.count
+                    return (index + 1) % t3.2.count
                 case .up: // ↑ Up arrow
-                    return (t3.1 - 1 + t3.2.count) % t3.2.count
+                    return (index - 1 + t3.2.count) % t3.2.count
                 default: return nil
                 }
             })
