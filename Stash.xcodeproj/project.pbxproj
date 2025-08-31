@@ -12,6 +12,7 @@
 		720642CA2D8DBA0600F62043 /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = 720642C92D8DBA0600F62043 /* HotKey */; };
 		7245871D2E1913FB00804B21 /* CodableCSV in Frameworks */ = {isa = PBXBuildFile; productRef = 7245871C2E1913FB00804B21 /* CodableCSV */; };
 		726B64F82D6DCEA1000AA419 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 726B64F72D6DCEA1000AA419 /* SwiftSoup */; };
+		72D8AE7C2E635B6900D6DACB /* CombineExt in Frameworks */ = {isa = PBXBuildFile; productRef = 72D8AE7B2E635B6900D6DACB /* CombineExt */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,6 +65,7 @@
 				6D6718472D672CDC0063FE57 /* Kingfisher in Frameworks */,
 				6DCEC8752DAC9A9B00089699 /* Glur in Frameworks */,
 				726B64F82D6DCEA1000AA419 /* SwiftSoup in Frameworks */,
+				72D8AE7C2E635B6900D6DACB /* CombineExt in Frameworks */,
 				7245871D2E1913FB00804B21 /* CodableCSV in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -138,6 +140,7 @@
 				720642C92D8DBA0600F62043 /* HotKey */,
 				6DCEC8742DAC9A9B00089699 /* Glur */,
 				7245871C2E1913FB00804B21 /* CodableCSV */,
+				72D8AE7B2E635B6900D6DACB /* CombineExt */,
 			);
 			productName = Stash;
 			productReference = 7222C1C02D491BEC00096255 /* Stashy.app */;
@@ -227,6 +230,7 @@
 				720642C82D8DB9D400F62043 /* XCRemoteSwiftPackageReference "HotKey" */,
 				6DCEC8732DAC9A9200089699 /* XCRemoteSwiftPackageReference "Glur" */,
 				7245868F2E19136300804B21 /* XCRemoteSwiftPackageReference "CodableCSV" */,
+				72D8ADD82E635A3100D6DACB /* XCRemoteSwiftPackageReference "CombineExt" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7222C1C12D491BEC00096255 /* Products */;
@@ -636,6 +640,14 @@
 				minimumVersion = 2.8.0;
 			};
 		};
+		72D8ADD82E635A3100D6DACB /* XCRemoteSwiftPackageReference "CombineExt" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/CombineCommunity/CombineExt.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.8.1;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -663,6 +675,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 726B64F32D6DCE32000AA419 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
 			productName = SwiftSoup;
+		};
+		72D8AE7B2E635B6900D6DACB /* CombineExt */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 72D8ADD82E635A3100D6DACB /* XCRemoteSwiftPackageReference "CombineExt" */;
+			productName = CombineExt;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

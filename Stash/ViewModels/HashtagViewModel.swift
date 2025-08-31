@@ -6,6 +6,7 @@
 //
 
 import Combine
+import CombineExt
 import AppKit
 
 class HashtagViewModel: ObservableObject {
