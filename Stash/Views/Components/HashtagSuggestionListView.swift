@@ -49,7 +49,7 @@ struct HashtagSuggestionListView: View {
             .onPreferenceChange(VisibleRangeSignal.self) { values in
                 visibleRange = VisibleRangeSignal.computeVisibleRange(from: values, containerHeight: Constant.height)
             }
-            .onReceive(viewModel.$suggestionIndex.compactMap({ $0 }).withLatestFrom(viewModel.$keyboardAction.compactMap({ $0 }))) { event in
+            .onReceive(viewModel.$suggestionIndex.compactMap({ $0 }).withLatestFrom(viewModel.$keyboardAction.compactMap({ $0 }), resultSelector: {($0, $1)})) { event in
                 guard !visibleRange.contains(event.0) else { return }
                 DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.1)) {
                     switch event.1! {

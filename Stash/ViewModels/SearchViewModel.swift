@@ -65,7 +65,7 @@ class SearchViewModel: ObservableObject {
             .withLatestFrom(Just(cabinet.storedEntries), resultSelector: { a, b in a == nil ? nil : b.findBy(id: a!) })
         
         let children1 = parent1
-            .withLatestFrom(Just(cabinet.storedEntries))
+            .withLatestFrom(Just(cabinet.storedEntries), resultSelector: {($0, $1)})
             .map({ $0.0 == nil ? $0.1 : $0.0!.children(among: $0.1) })
         
         // For back, parent become current
@@ -93,7 +93,7 @@ class SearchViewModel: ObservableObject {
         let children2 = current_entry
             .compactMap({ $0 })
             .filter({ $0.container })
-            .withLatestFrom(Just(cabinet.storedEntries))
+            .withLatestFrom(Just(cabinet.storedEntries), resultSelector: {($0, $1)})
             .map({ $0.0.children(among: $0.1) })
         
         Publishers.Merge(children1, children2)
@@ -146,13 +146,13 @@ class SearchViewModel: ObservableObject {
 
         let parent2 = current_entry
             .map({ $0?.parentId })
-            .withLatestFrom(Just(cabinet.storedEntries))
+            .withLatestFrom(Just(cabinet.storedEntries), resultSelector: {($0, $1)})
             .map({ event in event.0 == nil ? nil : event.1.first(where: { event.0 == $0.id }) })
         
         Publishers.CombineLatest3(seachItems, $query.map({ $0.lowercased() }), $depth)
             .debounce(for: .milliseconds(100), scheduler: DispatchQueue.main)
             .receive(on: DispatchQueue.global(qos: .userInitiated))
-            .withLatestFrom(parent2)
+            .withLatestFrom(parent2, resultSelector: {($0, $1)})
             .map({ event in
                 var items = event.0.0
                 let keyword = event.0.1
@@ -166,8 +166,7 @@ class SearchViewModel: ObservableObject {
                     isRoot = true
                 case .group(_):
                     isRoot = false
-//                    back = "\"\(parent?.name ?? "Root")\""
-                    back = "123"
+                    back = "\"\(parent?.name ?? "Root")\""
                 }
                 if isRoot && keyword.count < 2 { return [] }
                 items = items.filter({ keyword.isEmpty ? true : ($0.title.lowercased().contains(keyword) || $0.detail.lowercased().contains(keyword)) })
