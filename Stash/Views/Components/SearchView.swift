@@ -70,7 +70,7 @@ struct SearchView: View {
                                 Color.clear
                                     .preference(
                                         key: VisibleRangeSignal.self,
-                                        value: [index: geo.frame(in: .named("scroll")).minY...geo.frame(in: .named("scroll")).maxY]
+                                        value: [index: geo.frame(in: .named("scrollView")).minY...geo.frame(in: .named("scrollView")).maxY]
                                     )
                             }
                         )
@@ -85,6 +85,7 @@ struct SearchView: View {
             .onPreferenceChange(HeightSignal.self) { height = $0 }
             .frame(height: min(height, 300))   // 👈 set exact viewport height
             .padding(.bottom, 12)
+            .coordinateSpace(name: "scrollView")
             .onPreferenceChange(VisibleRangeSignal.self) { values in
                 visibleRange = VisibleRangeSignal.computeVisibleRange(from: values, containerHeight: min(height, 300))
             }

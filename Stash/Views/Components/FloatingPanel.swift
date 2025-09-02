@@ -65,8 +65,6 @@ class FloatingPanel {
         
         //        _panel.orderFront(nil)
         _panel.makeKeyAndOrderFront(nil)
-        // TODO: release nspanel
-        
         outsideClickMonitor.start()
     }
     
