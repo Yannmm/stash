@@ -53,20 +53,18 @@ class SearchViewModel: ObservableObject {
         // nil means root
         let current_entry = CurrentValueSubject<(any Entry)?, Never>(nil)
         
-        _select.map({ [weak self] item in
-            (self?.cabinet.storedEntries ?? []).first(where: { $0.id == item.id })
-        })
-        .sink(receiveValue: current_entry.send)
-        .store(in: &cancellables)
+        _select
+            .filter({ !$0.isBack })
+            .map({ [weak self] item in
+                (self?.cabinet.storedEntries ?? []).first(where: { $0.id == item.id })
+            })
+            .sink(receiveValue: current_entry.send)
+            .store(in: &cancellables)
         
         // For back only
         let parent1 = _select.filter({ $0.isBack })
             .withLatestFrom(current_entry, resultSelector: { a, b in b?.parentId })
             .withLatestFrom(Just(cabinet.storedEntries), resultSelector: { a, b in a == nil ? nil : b.findBy(id: a!) })
-        
-        let children1 = parent1
-            .withLatestFrom(Just(cabinet.storedEntries), resultSelector: {($0, $1)})
-            .map({ $0.0 == nil ? $0.1 : $0.0!.children(among: $0.1) })
         
         // For back, parent become current
         parent1.sink(receiveValue: current_entry.send)
@@ -89,18 +87,6 @@ class SearchViewModel: ObservableObject {
             .sink { [weak self] in self?.depth = $0 }
             .store(in: &cancellables)
         
-        // TODO: 在 ui 上，如果group 有0个child，则灰色，无法选择
-        let children2 = current_entry
-            .compactMap({ $0 })
-            .filter({ $0.container })
-            .withLatestFrom(Just(cabinet.storedEntries), resultSelector: {($0, $1)})
-            .map({ $0.0.children(among: $0.1) })
-        
-        Publishers.Merge(children1, children2)
-            .map({ _ in "" })
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] in self?.query = $0 }
-            .store(in: &cancellables)
         
         // If current become nil, it means we are back to root
         current_entry
@@ -109,41 +95,56 @@ class SearchViewModel: ObservableObject {
             .sink { [weak self] _ in self?.depth = .root }
             .store(in: &cancellables)
         
+        // TODO: 在 ui 上，如果group 有0个child，则灰色，无法选择
+        let children2 = current_entry
+            .filter({ $0 == nil || $0!.container })
+            .withLatestFrom(Just(cabinet.storedEntries), resultSelector: {($0, $1)})
+            .map({ $0.0 == nil ? $0.1 : $0.0!.children(among: $0.1) })
+        
+        children2
+            .map({ _ in "" })
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] in self?.query = $0 }
+            .store(in: &cancellables)
+        
+        
         // Scope
         let entries = CurrentValueSubject<[any Entry], Never>([])
         
-        Publishers.Merge3(
-//            cabinet.$storedEntries.withLatestFrom($depth.filter({ $0 == .root })).map({ $0.0 }),
-            cabinet.$storedEntries,
+        Publishers.Merge(
+            cabinet.$storedEntries
+                .withLatestFrom($depth.filter({ $0 == .root }), resultSelector: { ($0, $1) })
+                .map({ $0.0 }),
             children2,
-            children1
         )
         .sink(receiveValue: entries.send)
         .store(in: &cancellables)
         
         let seachItems = CurrentValueSubject<[SearchItem], Never>([])
         
-        entries.map({ event in
-            event.map({ e in
-                var detail: String!
-                switch e {
-                case let g as Group:
-                    let children =  g.children(among: event)
-                    detail = "\(children.count) item(s)"
-                case let b as Bookmark:
-                    detail = b.url.absoluteString
-                default:
-                    // Impossible to reach
-                    fatalError()
-                }
-                let item = SearchItem(id: e.id, title: e.name, detail: detail, icon: e.icon)
-                return item
+        entries
+            .withLatestFrom(Just(cabinet.storedEntries), resultSelector: { ($0, $1) })
+            .map({ event in
+                event.0.map({ e in
+                    var detail: String!
+                    switch e {
+                    case let g as Group:
+                        let children =  g.children(among: event.1)
+                        detail = "\(children.count) item(s)"
+                    case let b as Bookmark:
+                        detail = b.url.absoluteString
+                    default:
+                        // Impossible to reach
+                        fatalError()
+                    }
+                    let item = SearchItem(id: e.id, title: e.name, detail: detail, icon: e.icon)
+                    return item
+                })
             })
-        })
-        .sink(receiveValue: seachItems.send)
-        .store(in: &cancellables)
+            .sink(receiveValue: seachItems.send)
+            .store(in: &cancellables)
         
-
+        
         let parent2 = current_entry
             .map({ $0?.parentId })
             .withLatestFrom(Just(cabinet.storedEntries), resultSelector: {($0, $1)})

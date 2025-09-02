@@ -58,4 +58,4 @@
 // 53. for search view, hover should default to the first item. ✅
 // 54. for search view, last drag positon should be remembered. ✅
 // 55. keyboard navigation for suggestion list should follow serach view. ✅
-// 56. in search view, what happens if you tap a directory.
+// 56. in search view, what happens if you tap a directory. ✅
