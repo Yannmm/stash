@@ -59,3 +59,4 @@
 // 54. for search view, last drag positon should be remembered. ✅
 // 55. keyboard navigation for suggestion list should follow serach view. ✅
 // 56. in search view, what happens if you tap a directory. ✅
+// 57. when recoding in settings view, tap esc will wipe the recording out. ✅

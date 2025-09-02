@@ -27,6 +27,7 @@ struct KeyRecorderView: View {
         .buttonStyle(.bordered)
         .onAppear {
             NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+                guard isRecording else { return event }
                 defer { isRecording = false }
                 if event.keyCode == 53 {
                     shortcut = nil
