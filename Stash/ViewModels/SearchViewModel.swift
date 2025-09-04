@@ -32,8 +32,11 @@ class SearchViewModel: ObservableObject {
     @Published var query = ""
     @Published var keyboardAction: KeyboardAction?
     @Published var index: Int?
-    @Published var selectedBookmark: (any Entry)?
     @Published var depth: Depth = .root
+    
+    let _bookmark = PassthroughSubject<Bookmark, Never>()
+    
+    var bookmark: AnyPublisher<Bookmark, Never> { _bookmark.eraseToAnyPublisher() }
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -72,10 +75,9 @@ class SearchViewModel: ObservableObject {
         
         // If selected item is bookmark, then that's it
         current_entry
-            .compactMap({ $0 })
-            .filter({ !$0.container })
+            .compactMap({ $0 as? Bookmark })
             .receive(on: DispatchQueue.main)
-            .sink { [weak self] in self?.selectedBookmark = $0 }
+            .sink { [weak self] in self?._bookmark.send($0) }
             .store(in: &cancellables)
         
         // If it's container

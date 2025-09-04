@@ -60,4 +60,4 @@
 // 55. keyboard navigation for suggestion list should follow serach view. ✅
 // 56. in search view, what happens if you tap a directory. ✅
 // 57. when recoding in settings view, tap esc will wipe the recording out. ✅
-// 58. 如果搜索并点击了一个item，修改快捷键，后续每次按这个快捷键，都会直接打开这个item，而非搜索框
+// 58. 如果搜索并点击了一个item，修改快捷键，后续每次按这个快捷键，都会直接打开这个item，而非搜索框 ✅

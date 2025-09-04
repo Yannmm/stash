@@ -46,7 +46,7 @@ struct SearchView: View {
         .onAppear(perform: {
             focused = true
         })
-        .onReceive(viewModel.$selectedBookmark.compactMap({ $0 })) { value in
+        .onReceive(viewModel.bookmark) { value in
             onTap(value)
         }
     }
