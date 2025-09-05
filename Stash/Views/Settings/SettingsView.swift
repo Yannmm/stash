@@ -4,8 +4,6 @@ import HotKey
 
 struct SettingsView: View {
     @StateObject var viewModel: SettingsViewModel
-    @State private var isAppGlobalShortcutRecording = false
-    @State private var isSearchGlobalShortcutRecording = false
     @State private var resetAlert = false
     @State private var fileBackupNotice: (String, Bool)?
     @State private var appendNotice: String?
@@ -62,7 +60,7 @@ struct SettingsView: View {
                     Text("App Global Shortcut")
                     Spacer()
                     KeyRecorderView(
-                        isRecording: $isAppGlobalShortcutRecording,
+                        isRecording: $viewModel.isAppGlobalShortcutRecording,
                         shortcut: $viewModel.appShortcut
                     )
                 }
@@ -70,7 +68,7 @@ struct SettingsView: View {
                     Text("Search Global Shortcut")
                     Spacer()
                     KeyRecorderView(
-                        isRecording: $isSearchGlobalShortcutRecording,
+                        isRecording: $viewModel.isSearchGlobalShortcutRecording,
                         shortcut: $viewModel.searchShortcut
                     )
                 }

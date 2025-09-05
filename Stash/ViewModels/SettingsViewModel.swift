@@ -8,6 +8,7 @@
 import AppKit
 import Combine
 import HotKey
+import CombineExt
 
 class SettingsViewModel: ObservableObject {
     @Published var collapseHistory: Bool
@@ -19,6 +20,8 @@ class SettingsViewModel: ObservableObject {
     @Published var exportToFile: URL?
     @Published var appShortcut: (Key, NSEvent.ModifierFlags)?
     @Published var searchShortcut: (Key, NSEvent.ModifierFlags)?
+    @Published var isAppGlobalShortcutRecording = false
+    @Published var isSearchGlobalShortcutRecording = false
     @Published var error: Error?
     
     private var cancellables = Set<AnyCancellable>()
@@ -122,6 +125,24 @@ class SettingsViewModel: ObservableObject {
                 }
                 self?.pieceSaver.save(for: .appShortcut, value: tuple2?.0.carbonKeyCode)
                 self?.pieceSaver.save(for: .appShortcutModifiers, value: tuple2?.1.rawValue)
+            }
+            .store(in: &cancellables)
+        
+        Publishers.CombineLatest($isAppGlobalShortcutRecording, $isSearchGlobalShortcutRecording)
+            .map({ $0.0 || $0.1 })
+            .withLatestFrom($appShortcut, $searchShortcut, resultSelector: { ($0, $1.0, $1.1) })
+            .sink { [weak self] in
+                if !$0.0 {
+                    if let x = $0.1 {
+                        self?.appHotKeyManager.register(shortcut: x)
+                    }
+                    if let x = $0.2 {
+                        self?.searchHotKeyManager.register(shortcut: x)
+                    }
+                } else {
+                    self?.appHotKeyManager.unregister()
+                    self?.searchHotKeyManager.unregister()
+                }
             }
             .store(in: &cancellables)
         
