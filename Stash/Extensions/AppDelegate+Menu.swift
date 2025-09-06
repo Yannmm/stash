@@ -78,11 +78,12 @@ extension AppDelegate {
                 item.keyEquivalent = keyEquivalents[index]
             }
             
+            let children = entry.children(among: entries)
             switch entry.icon {
             case Icon.system(let name):
                 let image = NSImage(systemSymbolName: name, accessibilityDescription: nil)
                 image?.isTemplate = true
-                item.image = image?.tint(color: Color.theme)
+                item.image = image?.tint(color: (entry.container && children.isEmpty) ? Color(NSColor.lightGray) : Color.theme)
             case Icon.favicon(let url):
                 setFavicon(url, item)
             case Icon.local(let url):
@@ -91,7 +92,6 @@ extension AppDelegate {
                 item.image = i
             }
             
-            let children = entry.children(among: entries)
             if entry.container {
                 if !children.isEmpty {
                     let submenu = NSMenu()

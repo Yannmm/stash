@@ -97,7 +97,6 @@ class SearchViewModel: ObservableObject {
             .sink { [weak self] _ in self?.depth = .root }
             .store(in: &cancellables)
         
-        // TODO: 在 ui 上，如果group 有0个child，则灰色，无法选择
         let children2 = current_entry
             .filter({ $0 == nil || $0!.container })
             .withLatestFrom(Just(cabinet.storedEntries), resultSelector: {($0, $1)})
@@ -117,7 +116,7 @@ class SearchViewModel: ObservableObject {
             cabinet.$storedEntries
                 .withLatestFrom($depth.filter({ $0 == .root }), resultSelector: { ($0, $1) })
                 .map({ $0.0 }),
-            children2,
+            children2
         )
         .sink(receiveValue: entries.send)
         .store(in: &cancellables)

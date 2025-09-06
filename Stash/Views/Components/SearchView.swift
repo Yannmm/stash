@@ -124,7 +124,7 @@ struct SearchView: View {
                 },
                 set: { _ in }
             ))
-                .font(NSFont.systemFont(ofSize: 20, weight: .light))
+                .font(NSFont.systemFont(ofSize: 18, weight: .light))
             if !viewModel.query.isEmpty {
                 Button(action: {
                     viewModel.query = ""
