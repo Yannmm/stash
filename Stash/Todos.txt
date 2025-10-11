@@ -66,3 +66,4 @@
 // 61. 缺少检查更新 (Sparkle)
 // 62. hungrymark -> hungrymarks
 // 63. drag in manage view, view should also scroll along side
+// 64. after creating a new item, list should auto scroll to the position
