@@ -13,8 +13,13 @@ import Kingfisher
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     
-    var statusItem: NSStatusItem?
-    var dropWindow: NSWindow?
+    internal var statusItem: NSStatusItem?
+    
+    internal var dropWindow: NSWindow?
+    
+    internal var searchPanel: FloatingPanel!
+    
+    internal var searchPanelPosition: CGPoint?
     
     private lazy var editPopover: NSPopover = {
         let p = NSPopover()
@@ -26,12 +31,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }()
     
     private lazy var settingsViewModel: SettingsViewModel = {
-        let viewModel = SettingsViewModel(hotKeyManager: hotKeyMananger, cabinet: cabinet)
+        let viewModel = SettingsViewModel(cabinet: cabinet)
         return viewModel
     }()
-    var cabinet: OkamuraCabinet { OkamuraCabinet.shared }
     
-    var hotKeyMananger: HotKeyManager { HotKeyManager.shared }
+    internal lazy var searchViewModel: SearchViewModel = {
+        let viewModel = SearchViewModel(cabinet: cabinet)
+        return viewModel
+    }()
+    
+    var cabinet: OkamuraCabinet { OkamuraCabinet.shared }
     
     private let dominator = Dominator()
     
@@ -45,8 +54,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         //        NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
         
         // TODO: remove this line
-//        ImageCache.default.diskStorage.config.expiration = .days(1)
-//        ImageCache.default.clearDiskCache()
+        //        ImageCache.default.diskStorage.config.expiration = .days(1)
+        //        ImageCache.default.clearDiskCache()
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -56,23 +65,51 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func bind() {
-        Publishers.CombineLatest3(cabinet.$storedEntries, cabinet.$recentEntries, settingsViewModel.$collapseHistory)
-            .sink { [weak self] tuple3 in
-                Task { @MainActor in
-                    self?.statusItem?.menu = self?.generateMenu(from: tuple3.0, history: tuple3.1, collapseHistory: tuple3.2)
-                }
+        Publishers.CombineLatest4(cabinet.$storedEntries,
+                                  cabinet.$recentEntries,
+                                  settingsViewModel.$collapseHistory,
+                                  NSApp.publisher(for: \.effectiveAppearance))
+        .sink { [weak self] tuple5 in
+            Task { @MainActor in
+                self?.statusItem?.menu = self?.generateMenu(from: tuple5.0, history: tuple5.1, collapseHistory: tuple5.2)
             }
-            .store(in: &cancellables)
+        }
+        .store(in: &cancellables)
         
-        NotificationCenter.default.addObserver(forName: .onShortcutKeyDown, object: nil, queue: nil) { [weak self] _ in
-            if let button = self?.statusItem?.button {
-                button.performClick(nil)
+        
+        // Notifications
+        NotificationCenter.default.addObserver(forName: .onShortcutKeyDown, object: nil, queue: nil) { [weak self] noti in
+            guard let action = noti.object as? HotKeyManager.Action else { return }
+            switch action {
+            case .menu:
+                if let button = self?.statusItem?.button {
+                    button.performClick(nil)
+                }
+            case .search:
+                self?.search()
             }
+            
         }
         
         NotificationCenter.default.addObserver(forName: .onOutlineViewRowCount, object: nil, queue: nil) { [unowned self] noti in
             guard let height = noti.object as? CGFloat else { return }
             editPopoverContentSize(height)
+        }
+        
+        NotificationCenter.default.addObserver(forName: .onCellBecomeFirstResponder, object: nil, queue: nil) { [weak self] _ in
+            self?.editPopover.behavior = .applicationDefined
+        }
+        
+        NotificationCenter.default.addObserver(forName: .onCellResignFirstResponder, object: nil, queue: nil) { [weak self] _ in
+            self?.editPopover.behavior = .transient
+        }
+        
+        NotificationCenter.default.addObserver(forName: .onDragWindow, object: nil, queue: nil) { [weak self] noti in
+//            guard let p1 = noti.object as? FloatingPanel,
+//                  let p2 = self?.searchPanel,
+//                  p1 === p2 else { return }
+            guard let panel = noti.object as? NSPanel else { return }
+            self?.searchPanelPosition = CGPoint(x: panel.frame.origin.x + panel.frame.width, y: panel.frame.origin.y + panel.frame.height)
         }
     }
     
@@ -81,13 +118,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         if let button = statusItem?.button {
             button.image = NSImage(systemSymbolName: "square.stack.3d.up.fill", accessibilityDescription: nil)
-            
-            let menu = NSMenu()
-            menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: ","))
-            menu.addItem(NSMenuItem.separator())
-            menu.addItem(NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
-            
-            statusItem?.menu = menu
         }
     }
     
@@ -110,8 +140,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if settingsWindow == nil {
             setupSettingsWindow()
         }
+        
+        // Ensure proper activation and window focusing
         NSApp.activate(ignoringOtherApps: true)
-        settingsWindow?.makeKeyAndOrderFront(nil)
+        
+        // Use a small delay to ensure app activation completes
+        DispatchQueue.main.async {
+            self.settingsWindow?.makeKeyAndOrderFront(nil)
+            // Force the window to become key window
+            self.settingsWindow?.level = .floating
+            self.settingsWindow?.level = .normal
+            NSApp.arrangeInFront(nil)
+        }
     }
     
     @objc func quit() {

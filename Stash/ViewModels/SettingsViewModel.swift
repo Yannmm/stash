@@ -8,6 +8,7 @@
 import AppKit
 import Combine
 import HotKey
+import CombineExt
 
 class SettingsViewModel: ObservableObject {
     @Published var collapseHistory: Bool
@@ -17,12 +18,16 @@ class SettingsViewModel: ObservableObject {
     @Published var importFromFile: URL?
     @Published var exportDestinationDirectory: URL?
     @Published var exportToFile: URL?
-    @Published var shortcut: (Key, NSEvent.ModifierFlags)?
+    @Published var appShortcut: (Key, NSEvent.ModifierFlags)?
+    @Published var searchShortcut: (Key, NSEvent.ModifierFlags)?
+    @Published var isAppGlobalShortcutRecording = false
+    @Published var isSearchGlobalShortcutRecording = false
     @Published var error: Error?
     
     private var cancellables = Set<AnyCancellable>()
     private let pieceSaver = PieceSaver()
-    private let hotKeyManager: HotKeyManager
+    private let appHotKeyManager = HotKeyManager(action: .menu)
+    private let searchHotKeyManager = HotKeyManager(action: .search)
     private let cabinet: OkamuraCabinet
     
     var empty: Bool { cabinet.storedEntries.isEmpty }
@@ -51,18 +56,23 @@ class SettingsViewModel: ObservableObject {
         self.importFromFile = filePath
     }
     
-    init(hotKeyManager: HotKeyManager, cabinet: OkamuraCabinet) {
-        self.hotKeyManager = hotKeyManager
+    init(cabinet: OkamuraCabinet) {
         self.cabinet = cabinet
         collapseHistory = pieceSaver.value(for: .collapseHistory) ?? false
         icloudSync = pieceSaver.value(for: .icloudSync) ?? true
         launchOnLogin = RocketLauncher.shared.enabled
         showDockIcon = pieceSaver.value(for: .showDockIcon) ?? false
         
-        if let code: UInt32 = pieceSaver.value(for: .hotkey),
+        if let code: UInt32 = pieceSaver.value(for: .appShortcut),
            let key = Key(carbonKeyCode: code),
-           let modifiers: UInt = pieceSaver.value(for: .hokeyModifiers) {
-            shortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
+           let modifiers: UInt = pieceSaver.value(for: .appShortcutModifiers) {
+            appShortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
+        }
+        
+        if let code: UInt32 = pieceSaver.value(for: .searchShortcut),
+           let key = Key(carbonKeyCode: code),
+           let modifiers: UInt = pieceSaver.value(for: .searchShortcutModifiers) {
+            searchShortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
         }
         
         self.setAppIdentifier()
@@ -105,23 +115,46 @@ class SettingsViewModel: ObservableObject {
                 self?.pieceSaver.save(for: .showDockIcon, value: $0)
             }
             .store(in: &cancellables)
-        $shortcut
-            .dropFirst()
+        
+        $appShortcut
             .sink { [weak self] tuple2 in
                 if let t2 = tuple2 {
-                    self?.hotKeyManager.register(shortcut: t2)
+                    self?.appHotKeyManager.register(shortcut: t2)
                 } else {
-                    self?.hotKeyManager.unregister()
+                    self?.appHotKeyManager.unregister()
                 }
-                self?.pieceSaver.save(for: .hotkey, value: tuple2?.0.carbonKeyCode)
-                self?.pieceSaver.save(for: .hokeyModifiers, value: tuple2?.1.rawValue)
+                self?.pieceSaver.save(for: .appShortcut, value: tuple2?.0.carbonKeyCode)
+                self?.pieceSaver.save(for: .appShortcutModifiers, value: tuple2?.1.rawValue)
             }
             .store(in: &cancellables)
         
-        $shortcut
-            .compactMap({ $0 })
+        Publishers.CombineLatest($isAppGlobalShortcutRecording, $isSearchGlobalShortcutRecording)
+            .map({ $0.0 || $0.1 })
+            .withLatestFrom($appShortcut, $searchShortcut, resultSelector: { ($0, $1.0, $1.1) })
             .sink { [weak self] in
-                self?.hotKeyManager.register(shortcut: $0)
+                if !$0.0 {
+                    if let x = $0.1 {
+                        self?.appHotKeyManager.register(shortcut: x)
+                    }
+                    if let x = $0.2 {
+                        self?.searchHotKeyManager.register(shortcut: x)
+                    }
+                } else {
+                    self?.appHotKeyManager.unregister()
+                    self?.searchHotKeyManager.unregister()
+                }
+            }
+            .store(in: &cancellables)
+        
+        $searchShortcut
+            .sink { [weak self] tuple2 in
+                if let t2 = tuple2 {
+                    self?.searchHotKeyManager.register(shortcut: t2)
+                } else {
+                    self?.searchHotKeyManager.unregister()
+                }
+                self?.pieceSaver.save(for: .searchShortcut, value: tuple2?.0.carbonKeyCode)
+                self?.pieceSaver.save(for: .searchShortcutModifiers, value: tuple2?.1.rawValue)
             }
             .store(in: &cancellables)
         

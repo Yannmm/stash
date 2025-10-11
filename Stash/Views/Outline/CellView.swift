@@ -18,8 +18,11 @@ class CellView: NSTableCellView {
     
     let focusMonitor: FocusMonitor
     
-    init(focusMonitor: FocusMonitor) {
+    let cabinet: OkamuraCabinet
+    
+    init(focusMonitor: FocusMonitor, cabinet: OkamuraCabinet) {
         self.focusMonitor = focusMonitor
+        self.cabinet = cabinet
         super.init(frame: CGRectZero)
     }
     
@@ -33,7 +36,9 @@ class CellView: NSTableCellView {
         hostingView?.removeFromSuperview()
         hostingView?.prepareForReuse()
         
-        let content = NSHostingView(rootView: AnyView(CellContent(viewModel: CellViewModel(entry: entry)).environmentObject(focusMonitor)))
+        let content = NSHostingView(rootView: AnyView(CellContent(viewModel: CellViewModel(entry: entry, cabinet: cabinet), hashtagViewModel: HashtagViewModel(cabinet: cabinet))
+            .environmentObject(focusMonitor)
+            .environmentObject(cabinet)))
         self.hostingView = content
         content.sizingOptions = .minSize
         self.addSubview(content)

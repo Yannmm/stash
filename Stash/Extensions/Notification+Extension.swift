@@ -18,4 +18,7 @@ extension NSNotification.Name {
     static let onRowViewSelectionChange = NSNotification.Name("onRowViewSelectionChange")
     static let onEditPopoverClose = NSNotification.Name("onEditPopoverClose")
     static let onToggleOutlineView = NSNotification.Name("onToggleOutlineView")
+    static let onCellBecomeFirstResponder = NSNotification.Name("onBecomeFirstResponder")
+    static let onCellResignFirstResponder = NSNotification.Name("onResignFirstResponder")
+    static let onDragWindow = NSNotification.Name("onDragWindow")
 }

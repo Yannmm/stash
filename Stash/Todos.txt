@@ -1,9 +1,9 @@
 // TODO
 // 1. launch on login ✅
 // 2. 没有任何。bookmarks 时，menu太空 // create first bookmark // import from browsers ✅
-// 5. 设置窗口有时无法到最前方
+// 5. 设置窗口有时无法到最前方 ✅
 // 6. use NSMetadataQuery to monitor file from icloud. ✅
-// 3. 排序失去焦点问题
+// 3. 排序失去焦点问题 ✅
 // 4. 一段时间后，好像icloud中的文件被覆盖了 ✅
 // 5. 编辑时不能展开 ✅
 // 6. 链接的反白 ✅
@@ -11,7 +11,7 @@
 // 8. add id when saving files. ✅
 // 9. animation when expanded ✅
 // 10. 一键 expand / collapse ✅
-// 11. save title for at leat 1 cahr
+// 11. save title for at leat 1 cahr ✅
 // 12. in appdelegate, popover content size ✅
 // 13. hold cmd key and scroll, if a group is off the screen and enter the screen, it will shrink. ✅
 // 14. change craft view model, the icon should enum, use kingfisher to display ✅
@@ -31,10 +31,10 @@
 // 28. add firefox to import section ✅
 // 29. add repo address to settings ✅
 // 30. add feedback method ✅
-// 31. import pocket csv
+// 31. import pocket csv ✅
 // 32. allow user to choose to add or replace new bookmarks ✅
 // 33. when import, alert user this will replace current bookmarks. ask user to export first (Downloads folder) ✅
-// 34. 指定浏览器打开
+// 34. 指定浏览器打开 ✅
 // 35. add onre more button for group to move its children one level up ✅
 // 36. when deleting an item, mention the name in alert. ✅
 // 37. when exported file, file name should be timestamped. ✅
@@ -42,5 +42,28 @@
 // 39. keep desction below import even after import done. ✅
 // 40. if import one file for multiple times, since id are same, error will occur. (try fix, still got issue when import same file twice.) ✅
 // 41. pre-fill info at email template.
-// 42. if export file more than once, the export description does not update.
-// 43. when edit a title, if dismiss popover, next time the focused is still there.
+// 42. if export file more than once, the export description does not update. ✅
+// 43. when edit a title, if dismiss popover, next time the focused is still there. ✅
+// 44. search in menu
+// 45. search in manage view
+// 46. tag manage view (filter, delete, rename)
+// 45. hashtag system part1 (title hashtag) ✅
+// 46. open with browder specified by hashtag ✅
+// 47. when delete a group, hint user to ungroup it. ✅
+// 48. suggestion view position for the last item in the outlineview. ✅
+// 49. add tooltip for nsmenuitem. ✅
+// 50. suggestion list view hover and keyboard. ✅
+// 51. change suggestion list hover scheme just like xcode cmd+shift+o ✅
+// 52. remember last time search text ✅
+// 53. for search view, hover should default to the first item. ✅
+// 54. for search view, last drag positon should be remembered. ✅
+// 55. keyboard navigation for suggestion list should follow serach view. ✅
+// 56. in search view, what happens if you tap a directory. ✅
+// 57. when recoding in settings view, tap esc will wipe the recording out. ✅
+// 58. 如果搜索并点击了一个item，修改快捷键，后续每次按这个快捷键，都会直接打开这个item，而非搜索框 ✅
+// 59. 创建新的 group，改名后，滚走又滚动回来，还是之前的名字
+// 60. 创建新的 group, 无法用回车确认修改
+// 61. 缺少检查更新 (Sparkle)
+// 62. hungrymark -> hungrymarks
+// 63. drag in manage view, view should also scroll along side
+// 64. after creating a new item, list should auto scroll to the position

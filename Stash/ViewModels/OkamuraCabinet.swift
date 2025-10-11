@@ -58,9 +58,6 @@ class OkamuraCabinet: ObservableObject {
                 .combineLatest(Just<String?>(pieceSaver.value(for: .appIdentifier))
                     .compactMap({ $0 })
                     .map({ UUID(uuidString: $0) }))
-                .handleEvents(receiveOutput: { value in
-                    print("doOnData: \(value)")
-                })
                 .filter({ $0.0 != $0.1 })
                 .delay(for: .seconds(2), scheduler: RunLoop.main)
                 .sink(receiveValue: { [weak self] _ in
@@ -243,7 +240,9 @@ extension OkamuraCabinet {
             let parser = HungrymarkParser()
             entries = parser.parse(text: content)
         case .pocket:
-            fatalError()
+            let parser = CsvParser()
+            let anyEntries = try parser.parse(from: content)
+            entries = anyEntries.asEntries
         }
         
         if !replace {

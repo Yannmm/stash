@@ -14,15 +14,10 @@ extension AppDelegate {
     
     func generateMenu(from entries: [any Entry], history: [(any Entry, String)], collapseHistory: Bool) -> NSMenu {
         let menu = NSMenu()
-        
         addHistory(menu, history, collapseHistory)
-        
         addEntries(menu, entries)
-        
         addGuide(menu, entries)
-        
         addActions(menu)
-        
         return menu
     }
     
@@ -32,7 +27,7 @@ extension AppDelegate {
                 let item = NSMenuItem(title: "Recently Visited", action: nil, keyEquivalent: "")
                 let image = NSImage(systemSymbolName: "clock.fill", accessibilityDescription: nil)
                 image?.isTemplate = true
-                item.image = image?.tint(color: Color.primary)
+                item.image = image?.tint(color: Color.theme)
                 let submenu = NSMenu()
                 g(menu: submenu, entries: history.map({ $0.0 }), parentId: nil, keyEquivalents: history.map({ $0.1 }))
                 item.submenu = submenu
@@ -50,8 +45,8 @@ extension AppDelegate {
     private func addGuide(_ menu: NSMenu, _ entries: [any Entry]) {
         var items = [
             NSMenuItem(title: "Welcom to Stashy 🎉", action: nil, keyEquivalent: ""),
-            NSMenuItem(title: "Create New Bookmark", action: #selector(createBookmark), keyEquivalent: "C"),
-            NSMenuItem(title: "Import from File", action: #selector(importFromBrowsers), keyEquivalent: "I")
+            NSMenuItem(title: "Create New Bookmark", action: #selector(createBookmark), keyEquivalent: "c"),
+            NSMenuItem(title: "Import from File", action: #selector(importFromBrowsers), keyEquivalent: "i")
         ] as [NSMenuItem]
         
         if entries.count > 0 {
@@ -62,10 +57,11 @@ extension AppDelegate {
     }
     
     private func addActions(_ menu: NSMenu) {
-//        menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Manage", action: #selector(edit), keyEquivalent: "M"))
-        menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: "S"))
+        menu.addItem(NSMenuItem(title: "Manage", action: #selector(edit), keyEquivalent: "m"))
+        menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: "t"))
+        menu.addItem(NSMenuItem(title: "Search", action: #selector(search), keyEquivalent: "s"))
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: ""))
+        
     }
     
     private func addEntries(_ menu: NSMenu, _ entries: [any Entry]) {
@@ -73,23 +69,21 @@ extension AppDelegate {
     }
 
     private func g(menu: NSMenu, entries: [any Entry], parentId: UUID?, keyEquivalents: [String]) {
-        menu.delegate = self
-
         for (index, entry) in entries.filter({ $0.parentId == parentId }).enumerated() {
-            let actionable = entry is Actionable
-            let item = CustomMenuItem(title: entry.name, action: actionable ? #selector(action(_:)) : nil, keyEquivalent: "", with: entry)
-            if actionable {
-                item.keyEquivalentModifierMask = []
-                if index <= keyEquivalents.count - 1 {
-                    item.keyEquivalent = keyEquivalents[index]
-                }
+            let item = CustomMenuItem(title: entry.name, action: #selector(action(_:)), keyEquivalent: "", with: entry)
+            item.attributedTitle = entry.name.highlightHashtags()
+            
+            item.keyEquivalentModifierMask = []
+            if index <= keyEquivalents.count - 1 {
+                item.keyEquivalent = keyEquivalents[index]
             }
             
+            let children = entry.children(among: entries)
             switch entry.icon {
             case Icon.system(let name):
                 let image = NSImage(systemSymbolName: name, accessibilityDescription: nil)
                 image?.isTemplate = true
-                item.image = image?.tint(color: Color.primary)
+                item.image = image?.tint(color: (entry.container && children.isEmpty) ? Color(NSColor.lightGray) : Color.theme)
             case Icon.favicon(let url):
                 setFavicon(url, item)
             case Icon.local(let url):
@@ -98,13 +92,28 @@ extension AppDelegate {
                 item.image = i
             }
             
-            let children = entry.children(among: entries)
-            if !children.isEmpty {
-                let submenu = NSMenu()
-                g(menu: submenu, entries: entries, parentId: entry.id, keyEquivalents: keyEquivalents)
-                item.submenu = submenu
+            if entry.container {
+                if !children.isEmpty {
+                    let submenu = NSMenu()
+                    g(menu: submenu, entries: entries, parentId: entry.id, keyEquivalents: keyEquivalents)
+                    item.submenu = submenu
+                } else {
+                    item.isEnabled = false
+                }
             }
+            item.toolTip = getTooltip(entry, childrenCount: children.count)
             menu.addItem(item)
+        }
+    }
+    
+    private func getTooltip(_ entry: any Entry, childrenCount: Int) -> String? {
+        switch entry {
+        case let b as Bookmark:
+            return b.url.absoluteString
+        case let g as Group:
+            return "\(childrenCount) item(s)"
+        default:
+            return nil
         }
     }
     
@@ -129,7 +138,12 @@ extension AppDelegate {
     }
     
     @objc private func action(_ sender: CustomMenuItem) {
-        if let b = sender.object as? Bookmark {
+        guard let entry = sender.object else { return }
+        act(upon: entry)
+    }
+    
+    internal func act(upon entry: any Entry) {
+        if let b = entry as? Bookmark {
             do {
                 try cabinet.asRecent(b)
             } catch {
@@ -137,7 +151,7 @@ extension AppDelegate {
             }
             
         }
-        (sender.object as? Actionable)?.open()
+        entry.open()
     }
     
     @objc private func createBookmark() {
@@ -153,22 +167,6 @@ extension AppDelegate {
             NotificationCenter.default.post(name: .onShouldOpenImportPanel, object: nil)
         }
     }
-}
-
-extension AppDelegate: NSMenuDelegate {
-//    func menuNeedsUpdate(_ menu: NSMenu) {
-//        let modifierFlags = NSEvent.modifierFlags
-//        
-//        for item in menu.items {
-//            if modifierFlags.contains(.option) {
-//                //                item.title = "Alternative Action"
-//                print("ooooptions")
-//            } else {
-//                //                item.title = "Default Action"
-//                print("default, no option")
-//            }
-//        }
-//    }
 }
 
 

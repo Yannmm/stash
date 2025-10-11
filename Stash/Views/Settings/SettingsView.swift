@@ -4,7 +4,6 @@ import HotKey
 
 struct SettingsView: View {
     @StateObject var viewModel: SettingsViewModel
-    @State private var isRecording = false
     @State private var resetAlert = false
     @State private var fileBackupNotice: (String, Bool)?
     @State private var appendNotice: String?
@@ -45,7 +44,7 @@ struct SettingsView: View {
         case .netscape:
             return ("Import from File", "Export from another Stashy or browsers first.")
         case .hungrymarks:
-            return ("Import from Hungrymarks", "Go to Settings > Bookmark Files (iCloud/Default > Reveal in Finder, locate the file and save it.)")
+            return ("Import from Hungrymarks", "Go to Settings > Bookmark Files (iCloud/Default > Reveal in Finder, locate the txt file and save it.)")
         case .pocket:
             return ("Import from Pocket", "Go to \"https://getpocket.com/export\", and click \"Export CSV file\" to download your Pocket saves first.")
         }
@@ -58,11 +57,19 @@ struct SettingsView: View {
                 Toggle("Launch on Login", isOn: $viewModel.launchOnLogin)
                 Toggle("iCloud Sync", isOn: $viewModel.icloudSync)
                 HStack {
-                    Text("Global Shortcut")
+                    Text("App Global Shortcut")
                     Spacer()
                     KeyRecorderView(
-                        isRecording: $isRecording,
-                        shortcut: $viewModel.shortcut
+                        isRecording: $viewModel.isAppGlobalShortcutRecording,
+                        shortcut: $viewModel.appShortcut
+                    )
+                }
+                HStack {
+                    Text("Search Global Shortcut")
+                    Spacer()
+                    KeyRecorderView(
+                        isRecording: $viewModel.isSearchGlobalShortcutRecording,
+                        shortcut: $viewModel.searchShortcut
                     )
                 }
                 VStack(alignment: .leading) {
@@ -185,7 +192,7 @@ struct SettingsView: View {
                 set: { if !$0 { importFileType = nil } }
             )) {
                 if viewModel.empty {
-                    Button("Add") {
+                    Button("Continue") {
                         handleImport(true, importFileType)
                     }
                 } else {
@@ -214,7 +221,7 @@ struct SettingsView: View {
             )) {
                 Button("OK") { }
             } message: {
-                Text((fileBackupNotice?.1 ?? false) ? "Original file is exported to \"Downloads\" as backup, just in case 😉" : "")
+                Text((fileBackupNotice?.1 ?? false) ? "Backup file is exported to \"Downloads\", just in case 😉" : "")
             }
             .alert(appendNotice ?? "", isPresented: Binding(
                 get: { appendNotice != nil },

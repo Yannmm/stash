@@ -21,16 +21,16 @@ struct CraftModalView: View {
                 .frame(maxWidth: .infinity)
                 .background(Color(nsColor: .windowBackgroundColor))
             VStack(spacing: 8) {
-                TitleInputField(title: $viewModel.title, icon: $viewModel.icon)
-                    .onSubmit {
-                        viewModel.save()
-                        dismiss()
-                    }
                 AddressInputField(loading: $viewModel.loading, icon: $viewModel.icon, path: $viewModel.path)
                     .onSubmit {
                         Task {
                             await viewModel.parse()
                         }
+                    }
+                TitleInputField(title: $viewModel.title, icon: $viewModel.icon)
+                    .onSubmit {
+                        viewModel.save()
+                        dismiss()
                     }
                 HStack {
                     Button("Cancel") {

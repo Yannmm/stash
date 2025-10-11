@@ -16,10 +16,11 @@ enum Focusable: Hashable {
 }
 
 struct CellContent: View {
-    
+    @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var cabinet: OkamuraCabinet
     @EnvironmentObject var focusMonitor: FocusMonitor
     @ObservedObject var viewModel: CellViewModel
+    @ObservedObject var hashtagViewModel: HashtagViewModel
     @FocusState private var focused: Bool
     @State private var expanded: Bool = false
     @State private var selected: Bool = false
@@ -32,7 +33,7 @@ struct CellContent: View {
     }
     
     var shouldShowUnbox: Bool {
-        if let e = viewModel.entry, e.unboxable, expanded, !focusMonitor.isEditing {
+        if viewModel.ableToUngroup, expanded, !focusMonitor.isEditing {
             return true
         } else {
             return false
@@ -75,7 +76,6 @@ struct CellContent: View {
         .padding(.vertical, 10)
         .padding(.trailing, 10)
         .onAppear {
-            viewModel.cabinet = cabinet
             expanded = NSEvent.modifierFlags.containsOnly(.command)
             focused = false
         }
@@ -88,12 +88,14 @@ struct CellContent: View {
                 viewModel.error = error
             }
         }
-        .onChange(of: focused) { old, new in
-            guard !new else { return }
-            NotificationCenter.default.post(name: NSControl.textDidEndEditingNotification, object: nil)
+        .onChange(of: focused) { _, new in
+            NotificationCenter.default.post(name: new ? .onCellBecomeFirstResponder : .onCellResignFirstResponder, object: nil)
         }
         .onChange(of: focusMonitor.isEditing, { _, newValue in
             expanded = false
+        })
+        .onChange(of: viewModel.title, { _, newValue in
+            hashtagViewModel.title = newValue
         })
         .onReceive(NotificationCenter.default.publisher(for: .onDoubleTapRowView)) { noti in
             guard !expanded else { return }
@@ -119,7 +121,7 @@ struct CellContent: View {
             Button("Confirm", role: .destructive) {
                 guard let e = viewModel.entry, e.unboxable else { return }
                 do {
-                    try viewModel.ungroup(e )
+                    try viewModel.ungroup(e)
                 } catch {
                     viewModel.error = error
                 }
@@ -127,7 +129,7 @@ struct CellContent: View {
         } message: {
             Text("Its content will drop in place.")
         }
-        .alert("Sure to Delete \"\(viewModel.entry?.name ?? "")\"?", isPresented: $deleteAlert) {
+        .alert("Sure to Delete \(shouldShowUnbox ? "Group" : "Bookmark") \"\(viewModel.entry?.name ?? "")\"?", isPresented: $deleteAlert) {
             Button("Cancel", role: .cancel) { }
             Button("Confirm", role: .destructive) {
                 guard let e = viewModel.entry else { return }
@@ -137,8 +139,20 @@ struct CellContent: View {
                     viewModel.error = error
                 }
             }
+            if shouldShowUnbox {
+                Button("Ungroup") {
+                    guard let e = viewModel.entry, e.unboxable else { return }
+                    do {
+                        try viewModel.ungroup(e)
+                    } catch {
+                        viewModel.error = error
+                    }
+                }
+            }
         } message: {
-            Text("This action cannot be undone. The item will be permanently deleted.")
+            Text(shouldShowUnbox ?
+                 "This is a group and all of its content will be permanently deleted, which cannot be undone. You may ungroup and its content will drop in place."
+                 : "This action cannot be undone. The item will be permanently deleted.")
         }
         .alert("Error", isPresented: Binding(
             get: { viewModel.error != nil },
@@ -154,66 +168,26 @@ struct CellContent: View {
     private func title(_ flag: Bool) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: flag ? 2 : 5) {
-                icon(flag ? NSImage.Constant.side1:  NSImage.Constant.side2)
+                ViewHelper.icon(viewModel.entry?.icon, side: flag ? NSImage.Constant.side1:  NSImage.Constant.side2)
                 Rectangle()
                     .frame(width: 1, height: 20)
                     .foregroundColor(focused ? Color(NSColor.separatorColor) : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
-                
-//                TextField("Input the title here...", text: $viewModel.title)
-//                    .font(flag ? .body : .title2)
-//                    .textFieldStyle(.plain)
-//                    .background(Color.clear)
-//                    .focused($focused)
-//                    .layoutPriority(1)
-//                    .allowsHitTesting(false)
-//                    .truncationMode(.tail)
-                
-
-                EmphasisTextField(text: $viewModel.title)
+                HashtagTextField(text: $viewModel.title, focused: focused)
                     .font(flag ? NSFont.systemFont(ofSize: NSFont.systemFontSize) : NSFont.systemFont(ofSize: NSFont.systemFontSize + 5))
                     .focused($focused)
+                    .environmentObject(hashtagViewModel)
             }
             .padding(.vertical, flag ? 0 : 4)
             
             if !flag {
                 Rectangle()
                     .frame(height: 1)
-                    .foregroundColor(focused ? Color.primary : Color.clear)
+                    .foregroundColor(focused ? Color.theme : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
             }
         }
         .animation(.easeInOut(duration: 0.25), value: flag)
-    }
-    
-    @ViewBuilder
-    private func icon(_ side: CGFloat) -> some View {
-        if let e = viewModel.entry {
-            switch (e.icon) {
-            case .system(let name):
-                Image(systemName: name)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: side, height: side)
-                    .foregroundStyle(Color.primary)
-            case .favicon(let url):
-                KFImage.url(url)
-                    .appendProcessor(EmptyFaviconReplacer(url: url))
-                    .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2)
-                    .cacheOriginalImage()
-                    .loadDiskFileSynchronously()
-                    .onSuccess { result in }
-                    .onFailure { error in }
-                    .onFailureImage(NSImage.drawFavicon(from: url.firstDomainLetter))
-                    .resizable()
-                    .frame(width: side, height: side)
-            case .local(let url):
-                Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: side, height: side)
-            }
-        }
     }
     
     @ViewBuilder
@@ -249,7 +223,7 @@ struct CellContent: View {
         }
         .animation(.easeInOut(duration: 0.25), value: expanded)
     }
-
+    
     @ViewBuilder
     private func actions() -> some View {
         ZStack {
@@ -329,7 +303,7 @@ struct CellContent: View {
         var asPrefix = AttributedString("\(prefix!)")
         asPrefix.font = .body
         asPrefix.foregroundColor = .white
-        asPrefix.backgroundColor = NSColor(Color.primary)
+        asPrefix.backgroundColor = NSColor(Color.theme)
         
         guard var path = components?.string else { return nil }
         path = path.replacingOccurrences(of: prefix, with: "")

@@ -9,6 +9,7 @@ import SwiftUI
 import Kingfisher
 
 struct TitleInputField: View {
+    @Environment(\.colorScheme) var colorScheme
     @FocusState private var focused: Bool
     @Environment(\.dismiss) var dismiss
     @State private var disabled: Bool = true
@@ -26,7 +27,7 @@ struct TitleInputField: View {
                                 .resizable()
                                 .aspectRatio(contentMode: .fit)
                                 .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
-                                .foregroundStyle(Color.primary)
+                                .foregroundStyle(Color.theme)
                         case .favicon(let url):
                             KFImage.url(url)
                                 .appendProcessor(EmptyFaviconReplacer(url: url))
@@ -66,7 +67,7 @@ struct TitleInputField: View {
             .cornerRadius(6)
             .overlay(
                 RoundedRectangle(cornerRadius: 6)
-                    .stroke(focused ? Color.primary : Color(nsColor: .separatorColor),
+                    .stroke(focused ? Color.theme : Color(nsColor: .separatorColor),
                             lineWidth: 1)
             )
             .focusable()
