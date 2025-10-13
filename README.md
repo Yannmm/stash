@@ -6,7 +6,7 @@
 
 ---
 ## What is Stashy?
-Stashy is an app on OSX that manages bookmarks in a centralized way, so to keep everything within easy reach.
+Stashy is an OSX app that manages bookmarks in a centralized way, so to keep everything within easy reach.
 
 ## Features
 - Save bookmarks for websites, local files, or VNC connections
@@ -23,18 +23,24 @@ Stashy is an app on OSX that manages bookmarks in a centralized way, so to keep 
     - ~~Web url~~
     - ~~Local file~~
     - ~~VNC~~
-- Import
-    - Browsers
-    - Pocket
-    - Hungrymarks
+- ~~Import~~
+    - ~~Browsers~~
+    - ~~Pocket~~
+    - ~~Hungrymarks~~
 - Manage
-- Tag
-- Search
+    - ~~Rename~~
+    - ~~Reorder~~
+    - ~~Group~~
+- ~~Tag~~
+- ~~Search~~
 - Hotkey
-    - Menu
-    - Search
+    - ~~Menu~~
+    - ~~Search~~
+- Search
+    - ~~Basic~~
+    - By tag
 - Sync
-    - iCloud
+    - ~~iCloud~~
     - Other sources
 - iOS App
 
