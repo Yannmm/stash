@@ -123,6 +123,7 @@ struct HashtagTextField: NSViewRepresentable {
             case #selector(NSResponder.insertNewline(_:)):
                 guard parent.viewModel.suggestionIndex != nil else { return false }
                 parent.viewModel.keyboardAction = .enter
+                print("🐶 --> \(parent.viewModel.suggestionIndex)")
                 return true
             default:
                 return false

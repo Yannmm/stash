@@ -89,6 +89,7 @@ struct OutlineView: NSViewRepresentable {
         
         guard entries.map({$0.id.uuidString.suffix(4)}) != context.coordinator.parent.entries.map({$0.id.uuidString.suffix(4)})
                 || entries.map({$0.parentId}) != context.coordinator.parent.entries .map({$0.parentId})
+                || entries.map({$0.name}) != context.coordinator.parent.entries.map({$0.name})
         else { return }
         
         context.coordinator.parent = self
