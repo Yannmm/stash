@@ -121,9 +121,10 @@ struct HashtagTextField: NSViewRepresentable {
                 parent.viewModel.keyboardAction = .up
                 return true
             case #selector(NSResponder.insertNewline(_:)):
+                guard panel != nil else { return false } // if panel is not shown, hit enter will quit editing.
                 guard parent.viewModel.suggestionIndex != nil else { return false }
                 parent.viewModel.keyboardAction = .enter
-                print("🐶 --> \(parent.viewModel.suggestionIndex)")
+                
                 return true
             default:
                 return false

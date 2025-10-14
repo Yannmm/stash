@@ -62,7 +62,7 @@
 // 57. when recoding in settings view, tap esc will wipe the recording out. ✅
 // 58. 如果搜索并点击了一个item，修改快捷键，后续每次按这个快捷键，都会直接打开这个item，而非搜索框 ✅
 // 59. 创建新的 group，改名后，滚走又滚动回来，还是之前的名字 ✅
-// 60. 创建新的 group, 无法用回车确认修改
+// 60. 创建新的 group, 无法用回车确认修改✅
 // 61. 缺少检查更新 (Sparkle)
 // 62. hungrymark -> hungrymarks
 // 63. drag in manage view, view should also scroll along side
