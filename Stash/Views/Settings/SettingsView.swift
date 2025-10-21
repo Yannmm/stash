@@ -233,27 +233,31 @@ struct SettingsView: View {
             }
             
             // Check Update Section
-            //            Section("Software Update") {
-            //                HStack {
-            //                    Button("Check for Updates") {
-            //                        // Handle update check
-            //                    }
-            //                    .buttonStyle(.bordered)
-            //
-            //                    Spacer()
-            //
-            //                    Text("Last checked date...")
-            //                }
-            //
-            //                Picker("Check frequency:", selection: $updateFrequency) {
-            //                    ForEach(UpdateFrequency.allCases, id: \.self) { frequency in
-            //                        Text(frequency.rawValue).tag(frequency)
-            //                    }
-            //                }
-            //            }
-            
+            Section("Software Update") {
+  
+                // Check update each day
+                
+                VStack(alignment: .leading) {
+                    HStack {
+                        Text(viewModel.checkedVersionDescription)
+                        Spacer()
+                        Button("Go to AppStore") {
+                            viewModel.goToAppStore()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                    if let notes = viewModel.newReleaseNotes {
+                        HStack {
+                            Text(notes)
+                                .foregroundColor(.secondary)
+                                .multilineTextAlignment(.leading)
+                        }
+                    }
+                }
+            }
+
             // About Section
-            Section("About\(viewModel.versionDescription)") {
+            Section("About\(viewModel.currentVersionDescription)") {
                 VStack(alignment: .leading) {
                     //                    Link("https://github.com/Yannmm/stash", destination: URL(string: "https://github.com/Yannmm/stash")!)
                     //                        .foregroundStyle(.secondary)

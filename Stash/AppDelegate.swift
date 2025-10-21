@@ -31,7 +31,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }()
     
     private lazy var settingsViewModel: SettingsViewModel = {
-        let viewModel = SettingsViewModel(cabinet: cabinet)
+        let viewModel = SettingsViewModel(cabinet: cabinet, updateChecker: updateChecker)
         return viewModel
     }()
     
@@ -41,6 +41,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }()
     
     var cabinet: OkamuraCabinet { OkamuraCabinet.shared }
+    
+    var updateChecker: UpdateChecker { UpdateChecker.shared }
     
     private let dominator = Dominator()
     
@@ -56,6 +58,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // TODO: remove this line
         //        ImageCache.default.diskStorage.config.expiration = .days(1)
         //        ImageCache.default.clearDiskCache()
+        
+        Task {
+            try? await updateChecker.check()
+        }
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {

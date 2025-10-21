@@ -9,6 +9,7 @@ import AppKit
 import Combine
 import HotKey
 import CombineExt
+import SwiftUI
 
 class SettingsViewModel: ObservableObject {
     @Published var collapseHistory: Bool
@@ -22,6 +23,8 @@ class SettingsViewModel: ObservableObject {
     @Published var searchShortcut: (Key, NSEvent.ModifierFlags)?
     @Published var isAppGlobalShortcutRecording = false
     @Published var isSearchGlobalShortcutRecording = false
+    @Published var checkedVersionDescription: String = ""
+    @Published var newReleaseNotes: String?
     @Published var error: Error?
     
     private var cancellables = Set<AnyCancellable>()
@@ -29,6 +32,7 @@ class SettingsViewModel: ObservableObject {
     private let appHotKeyManager = HotKeyManager(action: .menu)
     private let searchHotKeyManager = HotKeyManager(action: .search)
     private let cabinet: OkamuraCabinet
+    @ObservedObject var updateChcker: UpdateChecker
     
     var empty: Bool { cabinet.storedEntries.isEmpty }
     
@@ -56,8 +60,13 @@ class SettingsViewModel: ObservableObject {
         self.importFromFile = filePath
     }
     
-    init(cabinet: OkamuraCabinet) {
+    func goToAppStore() {
+        updateChcker.go()
+    }
+    
+    init(cabinet: OkamuraCabinet, updateChecker: UpdateChecker) {
         self.cabinet = cabinet
+        self.updateChcker = updateChecker
         collapseHistory = pieceSaver.value(for: .collapseHistory) ?? false
         icloudSync = pieceSaver.value(for: .icloudSync) ?? true
         launchOnLogin = RocketLauncher.shared.enabled
@@ -170,13 +179,33 @@ class SettingsViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
+        updateChcker.$new
+            .sink { [unowned self] update in
+                if let v = update {
+                    self.checkedVersionDescription = "New Version Available: \(v.version)"
+                } else {
+                    self.checkedVersionDescription = "You're Up to Date"
+                }
+                self.newReleaseNotes = update?.releaseNotes
+            }
+            .store(in: &cancellables)
+        
         $error
             .compactMap({ $0 })
             .sink { ErrorTracker.shared.add($0)}
             .store(in: &cancellables)
+        
+//        Task {
+//            do {
+//                let a = try await updateChcker.check()
+//                newVersion = a?.releaseNotes
+//            } catch {
+//                self.error = error
+//            }
+//        }
     }
     
-    var versionDescription: String {
+    var currentVersionDescription: String {
         var result = " ("
         
         if let version = Bundle.main.version {
