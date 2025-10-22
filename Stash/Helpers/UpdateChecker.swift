@@ -44,12 +44,11 @@ final class UpdateChecker: ObservableObject {
     }
     
     func go() {
-        self.new = AppStore(version: "3.2.1", releaseNotes: "sdjfsd sjkldfjksdfjsd jlfjsdklfjksd kljfsdjklfj klsdf")
-//        NSWorkspace.shared.open(Constant.appStoreUrl)
+        NSWorkspace.shared.open(Constant.appStoreStall)
     }
     
     private func _check() async throws -> AppStore {
-        let (data, _) = try await URLSession.shared.data(from: Constant.appStoreUrl)
+        let (data, _) = try await URLSession.shared.data(from: Constant.appStoreInfo)
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
         let results = json["results"] as? [[String: Any]],
         let stashy = results.first,
@@ -67,7 +66,7 @@ final class UpdateChecker: ObservableObject {
         alert.addButton(withTitle: "Later")
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
-            NSWorkspace.shared.open(Constant.appStoreUrl)
+            NSWorkspace.shared.open(Constant.appStoreInfo)
         }
     }
 
@@ -82,6 +81,7 @@ final class UpdateChecker: ObservableObject {
 
 fileprivate extension UpdateChecker {
     enum Constant {
-        static let appStoreUrl = URL(string: "https://itunes.apple.com/lookup?id=6745811044")!
+        static let appStoreInfo = URL(string: "https://itunes.apple.com/lookup?id=6745811044")!
+        static let appStoreStall = URL(string: "https://apps.apple.com/cn/app/stashy/id6745811044?l=en-GB&mt=12")!
     }
 }

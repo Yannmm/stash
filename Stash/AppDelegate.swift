@@ -42,7 +42,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     var cabinet: OkamuraCabinet { OkamuraCabinet.shared }
     
-    var updateChecker: UpdateChecker { UpdateChecker.shared }
+    private var updateChecker: UpdateChecker { UpdateChecker.shared }
     
     private let dominator = Dominator()
     
@@ -68,6 +68,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupStatusItem()
         
         bind()
+        
+        setupUpdateCheckTimer()
     }
     
     private func bind() {
@@ -117,6 +119,22 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             guard let panel = noti.object as? NSPanel else { return }
             self?.searchPanelPosition = CGPoint(x: panel.frame.origin.x + panel.frame.width, y: panel.frame.origin.y + panel.frame.height)
         }
+    }
+    
+    private func setupUpdateCheckTimer() {
+        Timer.publish(every: 3 * 60 * 60, on: .main, in: .common)
+            .autoconnect()
+            .prepend(Date())
+            .sink { [unowned self] _ in
+                Task {
+                    do {
+                        try await self.updateChecker.check()
+                    } catch {
+                        ErrorTracker.shared.add(error)
+                    }
+                }
+            }
+            .store(in: &cancellables)
     }
     
     private func setupStatusItem() {
