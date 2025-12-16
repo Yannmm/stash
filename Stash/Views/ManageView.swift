@@ -42,12 +42,7 @@ struct CollectionView: View {
     
     var body: some View {
         NavigationSplitView {
-            CollectionList(
-                searchText: $searchText,
-                selectedItem: $selectedItem,
-                libraryItems: libraryItems,
-                collections: collections
-            )
+            CollectionList()
             .navigationSplitViewColumnWidth(min: 220, ideal: 250, max: 300)
         } detail: {
             BookmarkList(selectedItem: selectedItem)
