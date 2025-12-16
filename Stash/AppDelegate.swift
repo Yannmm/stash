@@ -21,14 +21,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     internal var searchPanelPosition: CGPoint?
     
-    private lazy var editPopover: NSPopover = {
-        let p = NSPopover()
-        let contentView = ContentView().environmentObject(cabinet)
-        p.behavior = .transient
-        p.contentViewController = NSHostingController(rootView: contentView)
-        p.delegate = self
-        return p
-    }()
+    private var editWindow: NSWindow?
     
     private lazy var settingsViewModel: SettingsViewModel = {
         let viewModel = SettingsViewModel(cabinet: cabinet, updateChecker: updateChecker)
@@ -51,6 +44,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var outlineViewHeight: CGFloat?
     
     private var settingsWindow: NSWindow?
+    
+    private var collectionWindow: NSWindow?
     
     func applicationWillFinishLaunching(_ notification: Notification) {
         //        NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
@@ -101,15 +96,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         NotificationCenter.default.addObserver(forName: .onOutlineViewRowCount, object: nil, queue: nil) { [unowned self] noti in
             guard let height = noti.object as? CGFloat else { return }
-            editPopoverContentSize(height)
-        }
-        
-        NotificationCenter.default.addObserver(forName: .onCellBecomeFirstResponder, object: nil, queue: nil) { [weak self] _ in
-            self?.editPopover.behavior = .applicationDefined
-        }
-        
-        NotificationCenter.default.addObserver(forName: .onCellResignFirstResponder, object: nil, queue: nil) { [weak self] _ in
-            self?.editPopover.behavior = .transient
+            editWindowContentSize(height)
         }
         
         NotificationCenter.default.addObserver(forName: .onDragWindow, object: nil, queue: nil) { [weak self] noti in
@@ -160,6 +147,60 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
     }
     
+    private func setupEditWindow() {
+        let contentView = ContentView().environmentObject(cabinet)
+        let hostingView = NSHostingView(rootView: contentView)
+        
+        editWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 800, height: 400),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        editWindow?.title = "Manage"
+        editWindow?.isReleasedWhenClosed = false
+        editWindow?.center()
+        editWindow?.contentView = hostingView
+        
+        // Post notification when window closes
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification,
+            object: editWindow,
+            queue: .main
+        ) { [weak self] _ in
+            NotificationCenter.default.post(name: .onEditPopoverClose, object: nil)
+        }
+    }
+    
+    private func setupCollectionWindow() {
+        let collectionView = CollectionView()
+        let hostingView = NSHostingView(rootView: collectionView)
+        
+        collectionWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 1000, height: 700),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+            backing: .buffered,
+            defer: false
+        )
+        collectionWindow?.title = ""
+        collectionWindow?.isReleasedWhenClosed = false
+        collectionWindow?.center()
+        collectionWindow?.contentView = hostingView
+        collectionWindow?.minSize = NSSize(width: 900, height: 600)
+        
+        // Make titlebar transparent so content extends to top
+        collectionWindow?.titlebarAppearsTransparent = true
+        collectionWindow?.titleVisibility = .hidden
+        
+        // Use unified compact style for seamless look
+        collectionWindow?.toolbarStyle = .unifiedCompact
+        
+        // Create an empty toolbar to get the proper layout
+        let toolbar = NSToolbar(identifier: "CollectionToolbar")
+        toolbar.showsBaselineSeparator = false
+        collectionWindow?.toolbar = toolbar
+    }
+    
     @objc func openSettings() {
         if settingsWindow == nil {
             setupSettingsWindow()
@@ -183,18 +224,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func edit() {
-        if (editPopover.isShown) {
-            editPopover.performClose(self)
-        } else {
-            editPopoverContentSize(nil)
-            NSApplication.shared.activate(ignoringOtherApps: true)
-            DispatchQueue.main.async { [unowned self] in
-                self.editPopover.show(relativeTo: .zero, of: self.statusItem!.button!, preferredEdge: .minY)
-            }
+        if editWindow == nil {
+            setupEditWindow()
+        }
+        
+        NSApp.activate(ignoringOtherApps: true)
+        
+        DispatchQueue.main.async {
+            self.editWindow?.makeKeyAndOrderFront(nil)
+            self.editWindow?.level = .floating
+            self.editWindow?.level = .normal
+            NSApp.arrangeInFront(nil)
         }
     }
     
-    private func editPopoverContentSize(_ height: CGFloat?) {
+    @objc func openCollection() {
+        if collectionWindow == nil {
+            setupCollectionWindow()
+        }
+        
+        NSApp.activate(ignoringOtherApps: true)
+        
+        DispatchQueue.main.async {
+            self.collectionWindow?.makeKeyAndOrderFront(nil)
+            self.collectionWindow?.level = .floating
+            self.collectionWindow?.level = .normal
+            NSApp.arrangeInFront(nil)
+        }
+    }
+    
+    private func editWindowContentSize(_ height: CGFloat?) {
         let h = height
         ?? outlineViewHeight
         ?? cabinet.storedEntries
@@ -202,13 +261,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             .map({ $0.height })
             .reduce(0, { $0 + $1 })
         outlineViewHeight = h
-        self.editPopover.contentSize = CGSize(width: 800, height: (h <= 200 ? 200 : h) + 34)
+        editWindow?.setContentSize(CGSize(width: 800, height: (h <= 200 ? 200 : h) + 34))
     }
 }
 
-extension AppDelegate: NSPopoverDelegate {
-    func popoverDidClose(_ notification: Notification) {
-        NotificationCenter.default.post(name: .onEditPopoverClose, object: nil)
-    }
-}
 
