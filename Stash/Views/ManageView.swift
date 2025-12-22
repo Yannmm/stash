@@ -1,5 +1,5 @@
 //
-//  CollectionView.swift
+//  ManageView.swift
 //  Stash
 //
 //  Created by Yan Meng on 2025/12/16.
@@ -12,94 +12,131 @@ import AppKit
 
 // MARK: - Data Models
 
-struct SidebarItem: Identifiable, Hashable {
+struct Folder: Identifiable, Hashable {
     let id = UUID()
     let name: String
-    let icon: String
-    let count: Int?
-    
-    init(name: String, icon: String, count: Int? = nil) {
-        self.name = name
-        self.icon = icon
-        self.count = count
-    }
+    let count: Int
 }
 
-struct Collection: Identifiable, Hashable {
+struct ClipTag: Identifiable, Hashable {
     let id = UUID()
     let name: String
-    let icon: String
 }
 
-// MARK: - CollectionView
-
-struct CollectionView: View {
-    @State private var searchText = ""
-    @State private var selectedItem: SidebarItem?
-    
-    private let libraryItems = SidebarItem.libraryData
-    private let collections = Collection.sampleData
-    
-    var body: some View {
-        NavigationSplitView {
-            CollectionList()
-            .navigationSplitViewColumnWidth(min: 220, ideal: 250, max: 300)
-        } detail: {
-            BookmarkList(selectedItem: selectedItem)
-        }
-        .navigationSplitViewStyle(.balanced)
-        .frame(minWidth: 900, minHeight: 600)
-    }
-}
-
-// MARK: - Book Item
-
-struct BookItem: Identifiable {
+struct Clip: Identifiable {
     let id = UUID()
     let title: String
-    let author: String
-    let coverColor: Color
-    let progress: Int? // Percentage, nil means not started
-    let isNew: Bool
+    let domain: String
+    let tags: [String]
+    let dateAdded: Date
+    
+    var initial: String {
+        String(title.prefix(1)).uppercased()
+    }
+    
+    var formattedDate: String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMM dd, yyyy"
+        return formatter.string(from: dateAdded)
+    }
 }
 
+// MARK: - ManageView
+
+struct ManageView: View {
+    @State private var selectedFolder: Folder?
+    @State private var selectedTag: ClipTag?
+    @State private var showAllClips = true
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            ManageViewSidebar(
+                selectedCollection: .constant(nil),
+                groups: .constant([]),
+                hashtags: .constant([])
+            )
+            .frame(width: 260)
+            
+            BookmarkList(
+                selectedFolder: selectedFolder,
+                selectedTag: selectedTag,
+                showAllClips: showAllClips
+            )
+        }
+        .frame(minWidth: 1000, minHeight: 650)
+    }
+}
 
 // MARK: - Sample Data
 
-extension SidebarItem {
-    static let libraryData: [SidebarItem] = [
-        SidebarItem(name: "All", icon: "books.vertical"),
-        SidebarItem(name: "Want to Read", icon: "bookmark"),
-        SidebarItem(name: "Finished", icon: "checkmark.circle"),
-        SidebarItem(name: "Books", icon: "book.closed"),
-        SidebarItem(name: "Audiobooks", icon: "headphones"),
-        SidebarItem(name: "PDFs", icon: "doc"),
-        SidebarItem(name: "My Samples", icon: "doc.text")
+extension Folder {
+    static let sampleData: [Folder] = [
+        Folder(name: "Awesome", count: 12),
+        Folder(name: "Dribbble Likes", count: 45),
+        Folder(name: "Grandcentral Beta", count: 8),
+        Folder(name: "Inspiration", count: 156),
+        Folder(name: "Read Later", count: 24)
     ]
 }
 
-extension Collection {
-    static let sampleData: [Collection] = [
-        Collection(name: "My Books", icon: "line.3.horizontal"),
-        Collection(name: "IOS dev", icon: "line.3.horizontal")
+extension ClipTag {
+    static let sampleData: [ClipTag] = [
+        ClipTag(name: "Design"),
+        ClipTag(name: "Development")
     ]
 }
 
-extension BookItem {
-    static let sampleData: [BookItem] = [
-        BookItem(title: "Eloquent Ruby", author: "Russ Olsen", coverColor: .red, progress: 40, isNew: false),
-        BookItem(title: "假装生活在唐朝", author: "张东海", coverColor: Color(red: 0.7, green: 0.2, blue: 0.2), progress: nil, isNew: true),
-        BookItem(title: "Healthy Sleep Habits", author: "Marc Weissbluth", coverColor: .white, progress: 24, isNew: false),
-        BookItem(title: "Wicked Cool Shell Scripts", author: "Dave Taylor", coverColor: .yellow, progress: nil, isNew: true),
-        BookItem(title: "The Linux Command Line", author: "William Shotts", coverColor: .yellow, progress: nil, isNew: true),
-        BookItem(title: "JavaScript Ninja", author: "John Resig", coverColor: Color(red: 0.6, green: 0.3, blue: 0.2), progress: 20, isNew: false),
-        BookItem(title: "Rails Guides", author: "Rails Team", coverColor: .red, progress: 5, isNew: false),
-        BookItem(title: "Metaprogramming Ruby", author: "Paolo Perrotta", coverColor: .white, progress: 68, isNew: false)
+extension Clip {
+    static let sampleData: [Clip] = [
+        Clip(
+            title: "Misguided Nostalgia for Our Paleo Pasts",
+            domain: "chronicle.com",
+            tags: [],
+            dateAdded: createDate(year: 2023, month: 11, day: 10)
+        ),
+        Clip(
+            title: "Visualizing The Beatles",
+            domain: "visualizingthebeatles.com",
+            tags: ["Design"],
+            dateAdded: createDate(year: 2023, month: 10, day: 28)
+        ),
+        Clip(
+            title: "Design for the Other 90%",
+            domain: "cooperhewitt.org",
+            tags: ["Design"],
+            dateAdded: createDate(year: 2023, month: 10, day: 6)
+        ),
+        Clip(
+            title: "CSS Grid Layout Guide",
+            domain: "css-tricks.com",
+            tags: ["Development"],
+            dateAdded: createDate(year: 2023, month: 9, day: 6)
+        ),
+        Clip(
+            title: "Refactoring UI",
+            domain: "refactoringui.com",
+            tags: ["Design", "Development"],
+            dateAdded: createDate(year: 2023, month: 7, day: 13)
+        ),
+        Clip(
+            title: "The Future of Interface Design",
+            domain: "interface.design",
+            tags: [],
+            dateAdded: createDate(year: 2023, month: 3, day: 22)
+        )
     ]
+    
+    private static func createDate(year: Int, month: Int, day: Int) -> Date {
+        var components = DateComponents()
+        components.year = year
+        components.month = month
+        components.day = day
+        return Calendar.current.date(from: components) ?? Date()
+    }
 }
 
 // MARK: - Preview
 
-//#Preview {
-//    CollectionView()
-//}
+#Preview {
+    ManageView()
+}

@@ -173,8 +173,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func setupCollectionWindow() {
-        let collectionView = CollectionView()
-        let hostingView = NSHostingView(rootView: collectionView)
+        let manageView = ManageView()
+        let hostingView = NSHostingView(rootView: manageView)
         
         collectionWindow = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1000, height: 700),
