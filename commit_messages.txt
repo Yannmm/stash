@@ -1,0 +1,2417 @@
+commit 3661d7aa03748754c364dbd0efedc05d6685799f
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Sep 5 10:19:32 2025 +0800
+
+    Fix an issue when user do key binding.
+
+commit a480455ca57a9f0a3b74f611ccce13ef68134fc4
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Sep 4 09:49:06 2025 +0800
+
+    Bump version to 2.0
+
+commit 9600d743d43d8f950b672bd386ff13cfc4aa27ad
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Sep 4 09:48:30 2025 +0800
+
+    Fix a bug.
+
+commit 37a4ec53a73becb2d724ebe2d71a2a6bacadc897
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Sep 3 17:08:18 2025 +0800
+
+    Update todos.
+
+commit c74b94f5d8ed38f69816fcec6f29a5508ba24e5b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Sep 2 17:33:10 2025 +0800
+
+    Fix an issue.
+
+commit 06d987adcb1e6765dada2fe6555e87d914007784
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Sep 2 17:11:20 2025 +0800
+
+    Fix a bug.
+
+commit 55cc6c90e53eaca132621c2acb51f3434eb1a845
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Sep 2 13:50:33 2025 +0800
+
+    Fix an issue when using search view model.
+
+commit 0deebcfcbd83fbdb167543ff1c7bbb582d03739d
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Sep 1 09:27:36 2025 +0800
+
+    Replace withlatestFrom with CombineExt.
+
+commit 6ff79ab9cd32dcb381bbac2d845909a6b25ce8a1
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Sep 1 07:26:34 2025 +0800
+
+    Temp save.
+
+commit 2176f7b00fe64222c70be30db7da362f864e58b1
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Aug 29 18:08:08 2025 +0800
+
+    Update todos.:wq
+
+commit 109ca9a01e79e7ded214e85e27300edec146cf7c
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Aug 27 18:22:07 2025 +0800
+
+    Fix some tricky issues.
+
+commit 6f2dfbdde6826cfc4a96103f5b63e8ecbb0c15af
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Aug 27 17:59:25 2025 +0800
+
+    Fix out of range issue.
+
+commit afcc0ea61eeec67b96d98a952f9a4eb0c448e06f
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Aug 26 22:36:35 2025 +0800
+
+    Temp save.
+
+commit 1b4c6560160e5a3d61140bc2f52d12d3cd322837
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Aug 26 17:44:38 2025 +0800
+
+    work on search view model.
+
+commit 7d19fe5bdf0f9bbde239a98207fdb25eb2c32902
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Aug 25 22:33:06 2025 +0800
+
+    work on suggestion list view index.
+
+commit 67c23fae69a25ecf38deb2e228d2da4fd6b5a4c7
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Aug 24 13:28:06 2025 +0800
+
+    Work on search view.
+
+commit 318faae44e7b3f78b356f884ce45289c0bc46699
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Aug 23 18:05:28 2025 +0800
+
+    Work on group in search view, navigation. temp save.
+
+commit 0fd63364a4639d9d39d651e5c80d46d9f9ccd70e
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Aug 22 23:06:33 2025 +0800
+
+    Temp save.
+
+commit 2cb02eff2ba949be85f07b185b2583fa92335474
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Aug 21 22:42:08 2025 +0800
+
+    Work on hashtag suggestion list view.
+
+commit 4099406f3311202e4f6d305e6c38732be2639fb3
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Aug 20 09:53:01 2025 +0800
+
+    Update todos.
+
+commit fe2aebb03cd571ca157ba6d175addc5eb4f5eeee
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Aug 20 09:51:43 2025 +0800
+
+    Fine tune keybaord navigation in search view.
+
+commit 0152e25d322a1cdd54fa70718682851f9aacc7a3
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Aug 20 09:26:38 2025 +0800
+
+    Temp save.
+
+commit 0e8d75850fb82e5dc7ed82fa697b9689a9b39f1a
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Aug 19 20:41:30 2025 +0800
+
+    Act when user select a item in search view.
+
+commit bae94bcdfdeb2bd3f6e9d11a0dacdede5011e5f1
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Aug 19 13:51:04 2025 +0800
+
+    Work on search view keyboard navitaion.
+
+commit 1ef0165f2c5653935a7d6538e652203420cc641f
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Aug 18 17:23:57 2025 +0800
+
+    Work on serach view with limit view port height.
+
+commit f934c5683eeefe37df70e3a06ae09c19b2405e66
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Aug 15 16:00:29 2025 +0800
+
+    Continue to refactor code.
+
+commit 74a8acf6c351323b8763a1314163f19253872f7a
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Aug 15 15:47:07 2025 +0800
+
+    Refactor code.
+
+commit d768e24c0f063de25935f56f76efc24d0e3aa4c4
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Aug 15 15:25:54 2025 +0800
+
+    Remember last time dragging position.
+
+commit f7f55e3d38142fc0aa5a3172244168d0118505f2
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Aug 13 17:33:23 2025 +0800
+
+    Work on tap to dismiss serach view.
+
+commit 9c1effd8db64b03779693d89552c7b15a6e816d5
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Aug 13 09:41:14 2025 +0800
+
+    Work on search global hotky.
+
+commit 38c253f9e42fd447a1265deaec9bb869d616689d
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Aug 12 17:07:10 2025 +0800
+
+    Done search shotcut hotkey.
+
+commit ecb321dcb82900b7b749a9cd0d420db8ea6b0148
+Merge: a02277d 044eb53
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Aug 8 17:27:44 2025 +0800
+
+    Merge branch 'r2.0' of github.com:Yannmm/stash into r2.0
+
+commit a02277df2376d579b6af3ada8681f8d16540f661
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Aug 8 17:27:19 2025 +0800
+
+    Update.
+
+commit 044eb53ac7dee6ed9106edda6eb6e4785ccff9ae
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Aug 7 16:20:40 2025 +0800
+
+    Resolve a tap issue.
+
+commit 71898d2b7f6efee8c27bd6f82f54d21813440a07
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Aug 7 15:41:14 2025 +0800
+
+    Able to use keyboard to select search item.
+
+commit 2f2595e7b9bb6f09745b785cda7affb026861207
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Aug 6 22:43:14 2025 +0800
+
+    Work on search global shortcut.
+
+commit 4c6e0c07dd715c1ce87d15c7d3f2f3f6695fb36b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Aug 6 09:19:18 2025 +0800
+
+    Change emphasize font.
+
+commit 6ab3f0eabe7b86773dc6fbc34e540fe82c7b922c
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Aug 5 22:57:55 2025 +0800
+
+    Work on keyboard navigation of search view.
+
+commit 4fc62805c7aa89da84693bc0d175e8e7b4ac5544
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Aug 5 12:56:28 2025 +0800
+
+    Work on search.
+
+commit 82d46498a7cf1735da2248bc1113a74ab62e49fa
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Aug 4 13:42:35 2025 +0800
+
+    Tap outside to close.
+
+commit 0590c07c67a766a8655d4af075b61dd3d35c03be
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Aug 4 13:38:11 2025 +0800
+
+    Tem save.
+
+commit a9d89e083dbf443fc1ee58ffefa760d96266f09b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Aug 4 09:33:12 2025 +0800
+
+    Add click monitor.
+
+commit f787832cdc54f8e30f26fb0f9a80d06366ce40cc
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Aug 3 12:38:47 2025 +0800
+
+    Height of search field.
+
+commit 80bc585fdccad2450a7fb1bcfb4692cc7ad352ab
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Aug 2 22:45:20 2025 +0800
+
+    Focus issue.
+
+commit b8fbba37bff8c948e668d81defb427ffbc8f55eb
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Aug 2 18:17:12 2025 +0800
+
+    Work on search field.
+
+commit a7aa80110c72fcd97e0f55546cc924a5542e265c
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Aug 1 22:47:00 2025 +0800
+
+    Update.`:wq
+
+commit 773201f12b6c0fa0be68340ab3e3fd476dc4ce2d
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Aug 1 22:46:07 2025 +0800
+
+    Temp save.
+
+commit b22cd6b098f20dd1cbaf5ded5f4541270afa753f
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jul 31 23:06:35 2025 +0800
+
+    Temp save.
+
+commit 38346e77f237d7f61dc9c33764874fa35cdfbab5
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jul 29 22:50:47 2025 +0800
+
+    Enable draggin.
+
+commit 68122dbf45d33abc75e470d9d1c1f84700b4a4b5
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jul 29 09:58:12 2025 +0800
+
+    Update again.
+
+commit 62f5208704e67197e92935715932ece70a68f97a
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jul 28 22:40:02 2025 +0800
+
+    Update.
+
+commit ab6c58edda15599621f1b4e78cae1d154f5a3178
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jul 28 22:34:05 2025 +0800
+
+    Work on serach item view.
+
+commit b4472dffd5098d6c5c39a455b4477b9b13a5fe0c
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jul 28 17:22:17 2025 +0800
+
+    Work on search view.
+
+commit b59c8501f25af4e8f1e0337ed5488be0d016b245
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jul 28 08:10:36 2025 +0800
+
+    Temp save1.
+
+commit 263241c3cc0ff460d989707f5954fb46a3388a70
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Jul 26 21:58:24 2025 +0800
+
+    Work on search view ui.
+
+commit f4daddf3afea9d5f8216b52db77bafa1f99bbe19
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Jul 25 16:27:26 2025 +0800
+
+    Temp save.
+
+commit 295043aa2a551c9351298a460377ad73a8167ce0
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jul 24 17:34:02 2025 +0800
+
+    To fix errors.
+
+commit 322c13c617fbfcb7f185e22367b0d197a0f3096b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jul 24 17:30:02 2025 +0800
+
+    work on search menu.
+
+commit 5e3ebb2e05c1f8d60471fb02ab7069c05569356e
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jul 23 17:06:50 2025 +0800
+
+    Temp save.
+
+commit e9828590aa5692c9e0bfef42c3be5040830a6941
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jul 21 17:29:55 2025 +0800
+
+    Still work on menu.
+
+commit 56d3349d4df2261ede21475328a58a561954839d
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jul 20 17:44:28 2025 +0800
+
+    Get each menu item's coordinate.
+
+commit 9c5fb5f517b25493ec8302c8289c5e7e2e5f833e
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jul 20 13:45:14 2025 +0800
+
+    Correct search panel location.
+
+commit cbcca07cf5a398665d35d83f268c95f9b7b10ca4
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Jul 19 17:04:32 2025 +0800
+
+    Work on menu.
+
+commit be53cf5f94c664e988fda968bff7fece4b01f96c
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Jul 18 17:11:57 2025 +0800
+
+    Make submenu show.
+
+commit 3886d4ff660cc65326b4613ac8f762aef894ebe2
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Jul 18 14:57:47 2025 +0800
+
+    Temp save.
+
+commit 614a3a0117f17589f04d4f37f819ada0a7bb9b5a
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jul 17 22:06:59 2025 +0800
+
+    Work on it.
+
+commit 47b8efe355e59412944f6169765aebeb048e6460
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jul 17 21:55:46 2025 +0800
+
+    Revert code.
+
+commit 96462ef64dd26e4342005590f0daaba242793028
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jul 17 12:56:21 2025 +0800
+
+    custom menu demo.
+
+commit 54fa00b447594b10c867e64954808b4662e1238b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jul 16 23:07:06 2025 +0800
+
+    Temp save. having issue.
+
+commit df9c90a31e1e5995ce74ad9b22fb30f8d98cde76
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jul 16 17:03:36 2025 +0800
+
+    Work on menu search.
+
+commit fa52da2a52864de00145d58de20bf318163c597c
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jul 15 21:13:39 2025 +0800
+
+    Temp save.
+
+commit 58a00309e4de63a1d924c0512b6804079040af25
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jul 14 20:25:21 2025 +0800
+
+    Find a way to embed search field in menu.
+
+commit dbe1f929d8463688fea3cc0e5448a9b39fd862c2
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jul 13 21:45:21 2025 +0800
+
+    Temp save.
+
+commit 2fe4bdeef8248705675ce13a7178881e09eaf7ee
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Jul 11 11:12:09 2025 +0800
+
+    Minor update.
+
+commit 61bb9a370e36d5fc476f40ad801d57329f242b94
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jul 10 23:19:00 2025 +0800
+
+    Remove code.
+
+commit 949676bcb7240cd717fed43ec5b66b48281853ee
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jul 10 23:07:25 2025 +0800
+
+    Clean up code.
+
+commit eda02e1085016fc0c1153388201ed8255d351a72
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jul 10 23:03:07 2025 +0800
+
+    Fix issue 50.
+
+commit 161243d3e928dc4a849403326e1b01c1d49bf66a
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jul 9 22:16:05 2025 +0800
+
+    Fix the suggestion view anchor up or down issue.
+
+commit 5fbd388e44e5ca6824d7283527fcb6a68c08521a
+Merge: b38dab0 4a04137
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jul 9 22:07:05 2025 +0800
+
+    Merge branch 'r2.0' of github.com:Yannmm/stash into r2.0
+
+commit b38dab0d167ca9b424c354a02ac96a13ea490757
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jul 9 22:06:50 2025 +0800
+
+    Add tooltip.
+
+commit e6d81d2efc3252530b409cc8429b2f4a8ad200d6
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jul 9 18:40:05 2025 +0800
+
+    Update todos.
+
+commit 4a041374d4f84a547790360efda13bedcbeb0612
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jul 8 09:41:59 2025 +0800
+
+    Update todos.
+
+commit 1267b49ca2bb0aeb0cafbcba5058f676d4f0a439
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jul 7 09:23:44 2025 +0800
+
+    Bump version.
+
+commit 103a9831a4bae70add4f0cf859cd830cc14857b2
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jul 7 09:21:52 2025 +0800
+
+    Fix an issue that settings window cannot order front.
+
+commit 836a821eeae0b82e7e8142fd2d2ffec259f11b1c
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jul 6 11:22:33 2025 +0800
+
+    Update app icons.
+
+commit 422efce74d95787c0e35b24644c0f5ad98cb9fd2
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Jul 5 23:35:22 2025 +0800
+
+    Bump version.
+
+commit 23e778618920ca2fddee3f54be1b2ccae31842c4
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Jul 5 23:31:38 2025 +0800
+
+    Import from pocket.
+
+commit 07a9cb792b4e8d75aaedcf8480020fbd402a6402
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Jul 4 17:21:27 2025 +0800
+
+    Allow user to ungroup a group when he is about to delte the gorup.
+
+commit 0bfd0a6503ebf0ee1daa6c798eb8436650aad0d8
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Jul 4 17:02:50 2025 +0800
+
+    Fix a issue that when outline view expand, group title cannot display.
+
+commit 40de616f90aaca8ab80ae77216fc29dec668d86b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Jul 4 16:26:54 2025 +0800
+
+    Render hashtags in outline view.
+
+commit e898f6e992a3e4ab817d183aabeffc8e60a26011
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Jul 4 13:30:08 2025 +0800
+
+    Done color scheme change.
+
+commit 8e1576c19d2aff1457959ac4c3b9371e2e106d9b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Jul 4 13:25:48 2025 +0800
+
+    Change color name.
+
+commit 754c2a77c13c0c9814e952bfcb7c4c813bf64f12
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jul 3 09:28:47 2025 +0800
+
+    Change adaptive color.
+
+commit 3ff1b071462ee096e9b1dfaa048e484d5dc3d77f
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jul 2 20:30:11 2025 +0800
+
+    Done adaptive color.
+
+commit 6c1866f19dcb426ebbcc3fb145cf6b6bd0397a22
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jul 2 13:50:35 2025 +0800
+
+    Color is not done yet.
+
+commit 3d70bf63cbb18f3bf14247a36edf33950db0821d
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jul 2 13:41:33 2025 +0800
+
+    Update hashtag color.
+
+commit 8d9ea330bc99637a15f5b3289dd3340219f3dd27
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jul 2 12:28:45 2025 +0800
+
+    Open browser by hashtag.
+
+commit f74ea679b59579dbe8df630c2b9f15103e6b8ca3
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jul 1 21:15:50 2025 +0800
+
+    Add todos.
+
+commit 4b711c3134d208b6dea81e3cf1bdf61df6c70ee1
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jul 1 21:15:04 2025 +0800
+
+    Basically done hashtag function version 1.
+
+commit ce979a4e451eb5e7932ce1699da36464b7fe6332
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jul 1 09:46:02 2025 +0800
+
+    Exclude existing hashtags.
+
+commit f4d55c9e3d68b4683824dbe664e96f71a1babf6e
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jun 30 21:07:49 2025 +0800
+
+    Work on hashtag suggestion view.
+
+commit caeb5e2b0783f84502c5d049449a8888bc80d5e6
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jun 30 20:35:35 2025 +0800
+
+    Clean up code.
+
+commit 0846639a1bd0cd5619581379b99c8a07556fab4d
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jun 30 14:39:16 2025 +0800
+
+    Update cursor position of insert hashtag.
+
+commit 9599ab8b0796233f86db7f1a8f22809f96e71894
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jun 29 14:40:06 2025 +0800
+
+    Done hashtag suggestion lsit view ui.
+
+commit f038ff2ffdebe4744ab4b644c06add074b8df1c3
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jun 29 14:03:42 2025 +0800
+
+    Change file name.
+
+commit 4d62f88fc42e3988ad79a52ab6e24442350cd20b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jun 29 12:02:03 2025 +0800
+
+    Handle enter keyboard action.
+
+commit 2e9428bc4eaede17fdbfbbeee2f55a176805f976
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Jun 28 22:05:52 2025 +0800
+
+    Temp save.
+
+commit b0778457281a9f53da756caf159043e13357c601
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Jun 28 21:08:30 2025 +0800
+
+    Work on suggestion list view.
+
+commit dd72873320f4c3667e96c3e624787b5a29464c92
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Jun 27 22:48:50 2025 +0800
+
+    Work on hashtag suggestion panel.
+
+commit ae05a70d3cc1f8e105624f9404626b6800affad2
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jun 25 23:12:08 2025 +0800
+
+    Insertion logic.
+
+commit c4a0f9785cf6c5c768ec107469a7133419c9d539
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jun 25 15:58:36 2025 +0800
+
+    Insert hashtag.
+
+commit 3c55eae865ae6db1a784628ae43680653976ec21
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jun 24 23:15:36 2025 +0800
+
+    Work on hashtag textfield.
+
+commit fa691f53aee07821d70e81c2e84b673823a2ab48
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jun 24 21:46:14 2025 +0800
+
+    Now the suggestion panel will anchor down below the last #.
+
+commit 5c0a15195cb73136c7fa17a496030b84acecf326
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jun 24 15:57:02 2025 +0800
+
+    Temp save.
+
+commit 12283644152907817aba5060c7fc84748b6d6083
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jun 24 13:43:59 2025 +0800
+
+    Hold popover when user is editng title in-place.
+
+commit 580e113db5f81656b44ffe7eb54dc1bfb74cae67
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jun 23 15:37:35 2025 +0800
+
+    Use NSPanel to implement suggeston view.
+
+commit 261ee59eb0e3f14aa8150aa30a2f5293aaeb60ce
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jun 23 14:28:51 2025 +0800
+
+    Use NSMenu instead of NSPopover.
+
+commit cf4eb3d1833af60297fe5fa724d3666ee6e2dc48
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jun 22 23:59:32 2025 +0800
+
+    Temp save1.
+
+commit 3c2ae232a882bc3d8532d6f93ba37362e560f522
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jun 22 23:42:04 2025 +0800
+
+    Temp save.
+
+commit 4c7853db4625fefe67e329cab314f91c45b79809
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jun 22 22:18:30 2025 +0800
+
+    Rename to HashtagTextField
+
+commit 4f40f8e8c417c5230db5e68f691b9aba43eab4f7
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jun 22 22:12:30 2025 +0800
+
+    Fix an issue that for text wit emoji, cursor cannot go to the end.
+
+commit 7c229f443e10169948d457ad4a26b55fda69d6fd
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jun 18 14:03:49 2025 +0800
+
+    Work on hashtag textfield.
+
+commit 594eec2524ba8e2e666a896b8487734a4d1c88a3
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jun 17 09:34:52 2025 +0800
+
+    Allow user to ungroup a group.
+
+commit 5c96f8fc4ce100fd5af3fc3f7779ba09ffaf74a0
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jun 16 12:14:33 2025 +0800
+
+    Ui part of unbox a group.
+
+commit 26699d310d91c57005a9090eb4b7e64217a95e49
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jun 16 11:51:19 2025 +0800
+
+    When deleting an item, mention the name.
+
+commit d875edc92ad5c84c6e26dd7ab8933f771a45f4e1
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jun 16 09:23:25 2025 +0800
+
+    Fix an issue when import same file multiple times.
+
+commit 21ff6ed3dd02c687538715149f16be92251e2e54
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jun 15 19:23:12 2025 +0800
+
+    Update wording when import.
+
+commit 0a8d6ddb47cf32afe25f8e6973dd586ca92e989c
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jun 15 18:39:48 2025 +0800
+
+    Try to fix import multiple file twice issue, still got error.
+
+commit 7b660f6f6f01c350fd6f495e85c898387aab18ff
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jun 15 13:56:20 2025 +0800
+
+    Combine several import methods.
+
+commit 29989421d5bdb5ba275eb28b01a19f78fc20d96e
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Jun 14 10:53:58 2025 +0800
+
+    Allow user to merge or replace when improting bookmarks as netscape file.
+
+commit 2948bf17654ee50f3daa837198220982275c71c0
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Jun 14 09:41:34 2025 +0800
+
+    Combine import and importHungrymarks.
+
+commit cc205445c146dfec0665871b6f63f286bf94d750
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Jun 13 11:59:54 2025 +0800
+
+    Work on append bookmarks from file.
+
+commit be56444f3e2564489607206222cd2b2fb1720e5a
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Jun 13 11:06:07 2025 +0800
+
+    Backup file before importing.
+
+commit 553ef58eb5961c03aa93e4d58ccf54ed1190f128
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jun 12 14:34:54 2025 +0800
+
+    Export a backup file when user reset data.
+
+commit 52b60f8c31ba630fde89a671fa599fdac71f3ba8
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jun 12 11:07:04 2025 +0800
+
+    Add todos.
+
+commit 27a716cef35f9721554cb3db20a68b21faeff0a7
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jun 11 23:39:37 2025 +0800
+
+    Add todos.
+
+commit 7b62ccb104c26e04ec319ae10e7a680acc5713d6
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jun 11 09:38:49 2025 +0800
+
+    Add feedback methods.
+
+commit cd19507400d834ac36bd500d9461ae0de7e62565
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jun 11 09:09:51 2025 +0800
+
+    Add repo address.
+
+commit 57b5c3cf2924f605851d6d35686ea30cc8520fbd
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jun 10 13:24:41 2025 +0800
+
+    Bump version.
+
+commit 70704572cd0030a45a0ec5a447300b6077557031
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jun 10 13:24:00 2025 +0800
+
+    Add firefox when importing from file.
+
+commit 2adfdbfd3d5947d7680e16b663f98ccbdd72b1f2
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jun 10 13:20:07 2025 +0800
+
+    Loop through all tips.
+
+commit ed6acbd76e123b0da23aface7d35ace454b9bdc9
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jun 10 13:14:25 2025 +0800
+
+    Support dark mode.
+
+commit 86173b66601e86c6e959bd40447e9756b0c2b1eb
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jun 10 13:01:10 2025 +0800
+
+    Fix a bug for chrome bookmark html file.
+
+commit 9e354a02c8948fd16ae89f3addfe65cbb44fdf6d
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Jun 6 13:07:50 2025 +0800
+
+    Another minor update.
+
+commit 1bd90c67d343d11fd1195930f17d42d3a13899c9
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Jun 6 12:55:26 2025 +0800
+
+    Minor update.
+
+commit f7a37c21c3fc0f28b95e92b9c8defde161f79fea
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jun 5 09:32:23 2025 +0800
+
+    Speed up favicon drawing by cache.
+
+commit e67ea8349242ac8989e4cdc512308a6ed7d86fba
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jun 5 09:19:14 2025 +0800
+
+    Limit .txt files to be imported as hungrymark file.
+
+commit 82e033a54ebe254441d9961942e101fb3a7ce5b2
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jun 4 15:16:33 2025 +0800
+
+    Update todos.
+
+commit 0d54c6231e3fe0903e1c01a865c5441182564c83
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jun 4 10:44:01 2025 +0800
+
+    Handle selection after creating an entry.
+
+commit 709ca8fdb85377e136915812ca94db1ceab3b5e7
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jun 4 10:23:00 2025 +0800
+
+    Fix the issue that it takes long to display icon at outline view.
+
+commit 4374b38628e0dcdb3f45064493323ed34f35adf2
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jun 4 10:20:36 2025 +0800
+
+    Fix the reordering bug at outlineview.
+
+commit 75e6953d58ede63c4039905c39e593f7da411e66
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jun 4 07:54:43 2025 +0800
+
+    Temp save.
+
+commit 8197e7776187b200f12916e4d4a7f2633f03ac46
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jun 3 17:28:22 2025 +0800
+
+    Temp save again.
+
+commit 260ac3d7c029ce9ec58865d57cb40bd6ea20132b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jun 3 11:47:55 2025 +0800
+
+    1. Fix an issue when drag and drop to order, cannot dismiss popover by tapping outside.
+    2. Redesign the pattern to sync from icloud file.
+
+commit 27d9a6b4e1e85045c5ab0a80aa3b084bd5fa71fb
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Jun 2 23:03:52 2025 +0800
+
+    temp save.
+
+commit 3997517e7fe3bacb81b94c2ab5c49ee79c1d1d7b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jun 1 22:09:05 2025 +0800
+
+    Fix an issue when drag and drop to reorder.
+
+commit e97523eb14e7b46e379ac3afdfafa5e621adb33b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Jun 1 11:55:44 2025 +0800
+
+    Temp save.
+
+commit 05865a8c6359d0c31f647b3b553d6b996a62fe36
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat May 31 22:07:16 2025 +0800
+
+    Bump build.
+
+commit b21497ca3e26348847af660a0993ca132347047c
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat May 31 22:06:48 2025 +0800
+
+    Fix the drag and drop issue.
+
+commit 3977eb1489b9122c999899a0416ab4291619aa3f
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat May 31 21:32:58 2025 +0800
+
+    Height calculation.
+
+commit 27b2f952a5d0a79c019dbd1c049ee2a8f141030f
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri May 30 19:28:03 2025 +0800
+
+    Update tips.
+
+commit 1bfaa58fea28a68a750f7b0075a1be949dda3591
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri May 30 16:35:58 2025 +0800
+
+    Fix a bug that outline does reload when reorering.
+
+commit f296a561b50f04b33178bc3f151e2875d75a7c1b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri May 30 16:22:40 2025 +0800
+
+    Update hotkey config.
+
+commit 1add9ff63fc9748e89dc2866783b7bc86fb89b4b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu May 29 16:27:03 2025 +0800
+
+    Minor change.
+
+commit 19e9818bd90a256cfc849104c3989d3c979bc6c2
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed May 28 12:46:29 2025 +0800
+
+    Update custom drawing icons.
+
+commit e8487b0e78f091d2461cfc6c268f1811262f373e
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed May 28 10:32:55 2025 +0800
+
+    Support import from hungrymark.
+
+commit 5bd95f3b76177ca808c6ba289639769cc74d678e
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue May 27 17:23:42 2025 +0800
+
+    Work on parsing hungarymark file.
+
+commit 33aaeebe950ae5aae0de12b6aee254bf3649fa96
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon May 26 14:13:47 2025 +0800
+
+    Able render custom iamge as favicon.
+
+commit 9bfaf5692e532f9de5fb09389869fc68e5e9d78c
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon May 26 13:27:13 2025 +0800
+
+    Temp save.
+
+commit 2c8239d1ddb1e576a47f4eb5ea38cac53420be06
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon May 26 12:42:26 2025 +0800
+
+    Change how icon is rendered in craft view.
+
+commit a28c29301a7de75043144e9691a61311a428ec17
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon May 26 12:02:06 2025 +0800
+
+    Update the logic of icon fetching in the process of creating new bookmark.
+
+commit b7d87ce078d5b4886394cff5cfc7202e4f8ed854
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon May 26 11:39:41 2025 +0800
+
+    Fix a bug that cannot update title edited in outline view.
+
+commit 42ccb7a25958a3e9672cce29739ffcf7a87ab313
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon May 26 09:32:13 2025 +0800
+
+    Add todos.
+
+commit 1624811794b2ff3ab3c060f9306490a9fe205925
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat May 24 17:20:55 2025 +0800
+
+    Hide project address.
+
+commit c4a16f26d5ac7023c4a8ccbf6891a986de7c3419
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat May 24 11:56:52 2025 +0800
+
+    Add todos.
+
+commit bc48a69f5998622dde3d723a794fc63d3ed59ec8
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri May 23 17:12:26 2025 +0800
+
+    Fix the favicon caching issue. replace globe with empty favicon.
+
+commit e87797190c129b76803633b3a2065f2c20929cb8
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri May 23 12:04:31 2025 +0800
+
+    Bump build.
+
+commit c17b32ccd3e6bed5a49b4dbff2a33b5d25c0ab86
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri May 23 12:04:04 2025 +0800
+
+    Fix bugs.
+
+commit cde57e8c97067260f880c332dca0277d0ab539e4
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu May 22 20:56:37 2025 +0800
+
+    Fix scrolling issue.
+
+commit 071f877d07b0a27bca6f06f9e8da4b63223eea41
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu May 22 17:15:28 2025 +0800
+
+    Add more todos.
+
+commit 850394fda7b0127e403dd269188ab1902c75da34
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu May 22 17:14:24 2025 +0800
+
+    Add todos.
+
+commit 06ffb974669e52d46e9c3f6a6431d6ff547049d9
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu May 22 15:30:48 2025 +0800
+
+    Update tips.
+
+commit a86b1392e2027a45efbd393bc6666f9aec2dfcb9
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu May 22 15:29:22 2025 +0800
+
+    Allow user to expand / collapse list.
+
+commit 741c0030863536da3f0caf6651f49bd92f5fb8bf
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu May 22 13:51:15 2025 +0800
+
+    Add id to sync file.
+
+commit 8f3a80404081a5d759b1fa0aa2801c1b8c997abe
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu May 22 12:20:06 2025 +0800
+
+    Work on animation transition.
+
+commit 581a543c7d70143a4deeccb36888331edf9f0d32
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu May 22 12:06:27 2025 +0800
+
+    Temp save.
+
+commit d497c886cabfcb5bbda515bfba5b2aa799fcc2a3
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed May 21 17:27:12 2025 +0800
+
+    Add todos.
+
+commit d1d5676f13c891a05c5323ea063faf25f4b894e8
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed May 21 17:16:36 2025 +0800
+
+    Minor change.
+
+commit c61fd8866c85deab2276891a49ebb7bff3c60cfc
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed May 21 17:13:53 2025 +0800
+
+    Work on refactor expand state.
+
+commit 0d6c4a32c882fe7401e113e397055508afa2e2e6
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed May 21 11:44:23 2025 +0800
+
+    Change file structure.
+
+commit e07d15a15dfd9135a023609c5827aec6f1a8736f
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue May 20 22:55:30 2025 +0800
+
+    Center cell view content.
+
+commit 619eaa1e0c3437634b204cf3ad639ea7bc390b7a
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue May 20 22:49:44 2025 +0800
+
+    Fix a bug that link cannot display.
+
+commit 4ea7c44bbd58d81bc7ef77509d9024d069e00bf1
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue May 20 15:37:14 2025 +0800
+
+    Fix a bug that cell can expand when editing a title.
+
+commit b3e46906994984e768c36551fd845f3150082caa
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue May 20 12:24:44 2025 +0800
+
+    Disable current row expand when it's focused.
+
+commit 122dc476e742fa89bc339f183b78fcfe0464a61a
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue May 20 12:11:17 2025 +0800
+
+    Set default icon when fetching favicon failed.
+
+commit e0d3b0636de98426d8511d23bfe15ef0ba52035a
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue May 20 10:50:59 2025 +0800
+
+    Fix a but that parse button is always disabled.
+
+commit 9617ab8b7f16fba167e4502a5ac969158dfa9845
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon May 19 17:34:18 2025 +0800
+
+    Minor change.
+
+commit fd453848ccb2b5e2bc01e178000c0a8920cdedfe
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon May 19 12:39:59 2025 +0800
+
+    Deselect all when edit popover dismissed.
+
+commit ac719cf6a171053119507eb6e7ccd2cb588c739c
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon May 19 11:18:16 2025 +0800
+
+    Change welcome phrase.
+
+commit d2492de55fd2fecf540a3fff747729d2281787ff
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon May 19 10:27:22 2025 +0800
+
+    Change outline view double click logic.
+
+commit 15563b42eb34c6479245aa3a8878ded307d56b4d
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon May 19 09:56:40 2025 +0800
+
+    Fix a issue to display link when cell is selected.
+
+commit c93b65709cbce46d07bab4b68d218bd8d4903733
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun May 18 15:54:14 2025 +0800
+
+    Auto color change for link in the cell content.
+
+commit b14a11bb8e4a400ba0149381dabf1d1b7b25560d
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun May 18 15:39:06 2025 +0800
+
+    Fix an issue when user input custom title.
+
+commit 3e65789803620a371aad51cb4debf129bc865820
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun May 18 15:27:34 2025 +0800
+
+    Fall through to aboslute url string when fetch title failed.
+
+commit 1cfa6dea49a92e32aba5f18cb0b65d075438d12a
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun May 18 15:08:35 2025 +0800
+
+    1. try to fix icloud sync issue.
+    2. fix crash when user drag an item from sub to top level.
+
+commit 504133a343743ea0a2aea885c868cd1232ba146e
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun May 18 09:03:44 2025 +0800
+
+    Try to fix redundant icloud sync issue.
+
+commit 6b8d87f22e06b668d2df0f61ca71dd2bb48079b9
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat May 17 19:05:00 2025 +0800
+
+    1. bump version
+    2. fix warnings
+
+commit 0af555a4632c1aeb3ee2ad2f5e03096ee65544a8
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat May 17 11:15:58 2025 +0800
+
+    Change welcome phrase.
+
+commit b91dc2dc76a007f2dc159adb27456210a97cb4b6
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat May 17 11:11:05 2025 +0800
+
+    Allow user to quit hotkey settings.
+
+commit 34ecbb056e633c9540b33205463e080c55253e3a
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu May 15 14:49:12 2025 +0800
+
+    Bump build.
+
+commit 2794366a08c37161009b2352818716e9906a05a0
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu May 15 14:44:35 2025 +0800
+
+    Almost done.
+
+commit 674267aa6b1b37eb14111a41fbec914193708eaf
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed May 14 21:24:01 2025 +0800
+
+    Change defualt hotkey.
+
+commit d1a482d62aa2b10d61a17e0ca3389f0d526f23c4
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed May 14 17:22:37 2025 +0800
+
+    Work on launch on login.
+
+commit 0c101ccc65a1d94847e178c264d3ed58d1fc9abc
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed May 14 16:46:52 2025 +0800
+
+    Update.
+
+commit f3ba898704aaf0343e41d0b4f3734538ab1d835c
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed May 14 16:41:31 2025 +0800
+
+    Use NSMetadataQuery to monitor icloud file.
+
+commit 6e4a872785166fe5f0b941d5e6867a8c8d0139d7
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed May 14 11:52:36 2025 +0800
+
+    Add error tracker.
+
+commit 3bc06d437c85a06659b752cfe9a83bf233b5a3c6
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue May 13 20:44:52 2025 +0800
+
+    Add comments.
+
+commit 0923c2a3b7c905a966a476d71e9f618cdfe4d4d9
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue May 13 20:42:21 2025 +0800
+
+    Fix afater drag and drop cannot dismiss popover issue.
+
+commit 43f7ff88e07e2ba3b5ebf20c318f2b04d8804fa6
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue May 13 18:55:06 2025 +0800
+
+    Work on icloud sync.
+
+commit 5f517cd33f6e1ee6bfdd8720c27c434e6ecf3dd5
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue May 13 16:23:17 2025 +0800
+
+    Upload to app store change.
+
+commit 0ffdb1801777375654cd18909131aa940f5646e4
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun May 11 10:22:15 2025 +0800
+
+    Update about.
+
+commit b8de3a2a0ca0986d8c8222e28eb2fa2feb6a19a9
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat May 10 21:00:16 2025 +0800
+
+    Minor update.
+
+commit 70ec3790868380c595da58239c1098bbb7b7c7ce
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat May 10 15:34:59 2025 +0800
+
+    Minor update.
+
+commit 66cec79a1d4b1b0e963f8ac61742466778bc5b51
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat May 10 15:33:15 2025 +0800
+
+    Update craft view model.
+
+commit 9e53c3f15d25d3fec5d93884e81b0db30ec460b6
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri May 9 22:47:35 2025 +0800
+
+    Temp save.
+
+commit 44fbe8011efd3607924b75c7d17987b3e77a0176
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri May 9 17:10:40 2025 +0800
+
+    Temp save.
+
+commit cdd474201b295524bed615aaea3d4ac1f3f735a7
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri May 9 16:19:20 2025 +0800
+
+    Work on settings.
+
+commit 3f0391cc081be88ffa27d501bccccb1f1f86eee2
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu May 8 17:29:07 2025 +0800
+
+    Temp save.
+
+commit edd4ce84074cb9cbb4db3cf5d9b7324f076ee800
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu May 8 14:00:40 2025 +0800
+
+    Work on settings window key.
+
+commit acad611a2a07134815aa033f5d9f8863815ceae1
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed May 7 23:48:32 2025 +0800
+
+    Temp save.
+
+commit 701b87d603dc684c9565f73d0f9d008c92227232
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed May 7 23:45:31 2025 +0800
+
+    Work on empty status.
+
+commit e1557f1e48f43e2315be961e3ffbba05159d8dc7
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed May 7 21:32:14 2025 +0800
+
+    Work on save to app support dir.
+
+commit a113cd1e07a68cf7e9cd02d2bb97cbd1da2d4217
+Merge: 6984d17 9ade24a
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed May 7 21:12:40 2025 +0800
+
+    Merge branch 'main' of github.com:Yannmm/stash
+
+commit 6984d173f78257669df2dcf219abeb01b77c6181
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed May 7 21:11:45 2025 +0800
+
+    Temp save.
+
+commit 9ade24aae0874db4c85f08b254c53fe5d389695b
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Tue May 6 17:45:44 2025 +0800
+
+    Work.
+
+commit 60fd27329fcd3ad1a61b0153c9a194bf8ed8dfae
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon May 5 14:44:40 2025 +0800
+
+    Update.
+
+commit 61dce3819e2019245bcbc1b904d21b0d1f276d8d
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun May 4 12:57:33 2025 +0800
+
+    Work on bookmark creation.
+
+commit cc7bdb1c828af307a25496a527b79de49a863021
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun May 4 12:43:46 2025 +0800
+
+    Work on streamline bookmark creation.
+
+commit 1d5bac37e05fc533d967d8797a6610aa6ef8f79d
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat May 3 19:23:47 2025 +0800
+
+    Work on details.
+
+commit 0eeaf170607807df07c308ac0c8f40d3f96cb67b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri May 2 19:55:23 2025 +0800
+
+    Remove hover.
+
+commit 9e686932604f041364e6d4a6994fe7cdd6ec2149
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri May 2 19:12:46 2025 +0800
+
+    Temp save.
+
+commit dd2f5c9b580325c3a0d9a355e6bcfb9bc75c6963
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu May 1 17:40:33 2025 +0800
+
+    Done clear row view effect.
+
+commit 1c37b3dd3fba952ef96e28cb73221ff68f6cfc41
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu May 1 17:30:05 2025 +0800
+
+    Work on clear row view efffect.
+
+commit 20a5b68f7c542b4c59e0f9fb8d5ea9a9dc1aee06
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Apr 30 23:22:06 2025 +0800
+
+    work on outlineview expand or collapse to make effect on popover.
+
+commit ed817cf6325bb940bf9e5cbfba8c22ae3a9e8d24
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Apr 30 18:50:12 2025 +0800
+
+    Temp save.
+
+commit 00b854f990f53054e3076bd332a36bbebded7283
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Apr 29 13:28:03 2025 +0800
+
+    Temp save.
+
+commit b6900795b18651b37c730e79ce8a2775d9eda0e4
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Apr 28 17:27:49 2025 +0800
+
+    UI update.
+
+commit 078d7b66c3ea449db67970726ef74b7c600bc0ec
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Apr 27 22:18:16 2025 +0800
+
+    Temp save.
+
+commit 1a3461bb9e329018ae523ec9bc8c227dc87c3a14
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Apr 27 17:14:56 2025 +0800
+
+    Organize code.
+
+commit ac1e33a03245c4189bbe5ba6029e393b6a650db0
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Apr 27 15:19:47 2025 +0800
+
+    Allow user to collapse history.
+
+commit aabf4447f7d96a4690f38d5325c71c383abe6ba2
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Apr 26 20:26:31 2025 +0800
+
+    Done saving recent entries.
+
+commit c7f225f2bce24cf5afc97f10ee9fc5a221c64abe
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Apr 26 16:39:54 2025 +0800
+
+    Work on recent ones.
+
+commit 8b8cb07297f122f0e37919d9b28a99b7e95e93f9
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Apr 26 16:24:44 2025 +0800
+
+    Work on recent ones.
+
+commit 46dc2ca1feb4810fda6fdb50442bab10d411cb2e
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Apr 26 16:05:12 2025 +0800
+
+    Temp save.
+
+commit 0ae8e09d380eeae4233dc95ff163f3fd63003c7e
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Apr 26 12:41:06 2025 +0800
+
+    Work on recent entries.
+
+commit 291b4124f432c568d027d5f47c6d594c360e8382
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Apr 25 16:24:43 2025 +0800
+
+    Work on recency.
+
+commit 2f738fb8d3f49ceb901e13d5590957d093611585
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Apr 25 16:00:03 2025 +0800
+
+    Reorganize code.
+
+commit ec1b336ff3c4588501101c20198220286460d500
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Apr 25 12:07:45 2025 +0800
+
+    Done import and export.
+
+commit c0ca28ead0181455bffc39b0892610b50695292f
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Apr 25 11:55:08 2025 +0800
+
+    Done export as html
+
+commit fbbbb810bfd0d489a77d1505e707a0160467443e
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Apr 24 17:17:20 2025 +0800
+
+    Temp save.
+
+commit bba18183e8ea79ab79343af63562813f80b02faa
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Apr 24 12:51:27 2025 +0800
+
+    Work on export netscape bookmarks.
+
+commit 79714313489e3fbd2d701bee9bbc19691eb4cfcc
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Apr 24 11:28:38 2025 +0800
+
+    Work on generic file import.
+
+commit 8b4c75343725dfc70fd0a3c5c66322396b3c5c00
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Apr 23 22:47:39 2025 +0800
+
+    Update.
+
+commit 754d8180ea48e43f6470f7a5aaa32da87a8008c4
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Apr 23 19:53:55 2025 +0800
+
+    Minor update.
+
+commit a49977d25a30acc886aba3a90c8e80e1c5be7e81
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Apr 23 15:16:24 2025 +0800
+
+    Add comment.
+
+commit 4f79a2b5901de86f96d7fea30058299a67c4b67f
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Apr 23 15:15:34 2025 +0800
+
+    Minor fix.
+
+commit d6ca3e19305e4101c08e2e35cc31e311191e5553
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Apr 23 15:01:32 2025 +0800
+
+    Done safari bookmarks parsing.
+
+commit 8feb1f7cacc29b5594d8bb941b38e6815ee2a8c1
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Apr 23 14:27:07 2025 +0800
+
+    Temp save.
+
+commit 7d557228967c19bd42a9533319482e5d60b1cfc8
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Tue Apr 22 17:16:47 2025 +0800
+
+    Temp save.
+
+commit 9f3cc358ab304fdee1342c70158df4c3ffd07ac2
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Tue Apr 22 15:50:28 2025 +0800
+
+    Done parsing safari bookmarks.
+
+commit 8b972e450d01d400ebca081f9526757cd5451cb0
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Apr 21 17:20:19 2025 +0800
+
+    work on safari parsing. wip.
+
+commit 11555ac3ebbc5ec3a2138948328dbc5737681341
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Apr 20 18:53:52 2025 +0800
+
+    Temp save.
+
+commit 9b7602ec0c6327a1a5b61228d4b300b549015bac
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Apr 19 18:35:33 2025 +0800
+
+    Allow user to show or hide icon in dock.
+
+commit 9f4e4b95b0a29b444337e673f673e711482d1e68
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Apr 19 18:25:34 2025 +0800
+
+    Add icons.
+
+commit 6dfb872a9b07137451afc4c838e8b3094ba95665
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Apr 19 15:55:19 2025 +0800
+
+    Work on settings.
+
+commit cfd906e04d7f2d795786723912b8b0fb174c6055
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Apr 18 17:33:13 2025 +0800
+
+    Add hotkey management.
+
+commit afa92a80904f0676fd478aef37abf215222b034a
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Apr 18 10:18:27 2025 +0800
+
+    Settings window logic.
+
+commit 2aa796a1af1d43c35a2c4c57e300d0c2b2e9c85b
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Apr 17 10:00:47 2025 +0800
+
+    Start working on settings page.
+
+commit ac5fd946ad7576fb207745a8c826fa1de71b0e59
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Apr 16 15:59:39 2025 +0800
+
+    Ignore hover when presenting a modal.
+
+commit f31e9dca803efb12f783a05a5e17419b0732ea51
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Apr 16 15:42:44 2025 +0800
+
+    Add esc key listener.
+
+commit 7d795050bead2ef0d68e9d530e5f98e5ec1b0708
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Tue Apr 15 09:33:05 2025 +0800
+
+    Work on cmd key monitoring.
+
+commit 29aacad197bfb723ea63e988e7935fe4d245d523
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Apr 14 11:49:34 2025 +0800
+
+    Done button gradient at cell view.
+
+commit 6c007e21a240f12e6b75f6b6ae96888d4772ec3e
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Apr 13 17:38:35 2025 +0800
+
+    Extinguish entry type.
+
+commit 5bf28c917c04da5ad61b24a7ea1cb444cb894290
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Apr 12 23:22:16 2025 +0800
+
+    Temp save 2.
+
+commit 8ec7e1b040176b05b99979f66b51db8d0729af57
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Apr 12 19:50:18 2025 +0800
+
+    temp save.
+
+commit 5400531a76b039a3be3f832c177a79efb2b6ef7d
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Apr 11 14:21:11 2025 +0800
+
+    Show copy and reveal buttons.
+
+commit 3c48cf6f28e0a15aeefdecf9ef8c44062ecc34e0
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Apr 11 12:46:08 2025 +0800
+
+    work on cmd pressed.
+
+commit fd3379e129181fe7d34e3eb3fc41e45e7aeaa1ab
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Apr 11 09:58:21 2025 +0800
+
+    Fix the edit and focus issue.
+
+commit ad2a85d318501bda130992fd5689f1bdecd363b3
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Apr 10 16:47:11 2025 +0800
+
+    work on double tapp a row.
+
+commit cce82a51ffdb6fa083fb08b117562830a0dd29f1
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Apr 9 14:11:13 2025 +0800
+
+    work on expand when press cmd.
+
+commit 0f28272a2b79934322b8da3fbbd6bed026fa7a7a
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Tue Apr 8 16:33:41 2025 +0800
+
+    Work on show link when press cmd modifier key.
+
+commit 52d452a2ce8f22009729a0b4cdd393cac8585745
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Tue Apr 8 09:26:07 2025 +0800
+
+    Modifier key listener.
+
+commit fd9827ee7be4afe64d2c5cbc3cce1d035018faaa
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Apr 7 09:58:41 2025 +0800
+
+    Work on import.
+
+commit 4a43cf0e3a5cb527e81f903aed624170a1afa2de
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Apr 3 09:33:51 2025 +0800
+
+    work in file export and import.
+
+commit 83fba452dcf8048913834bf617cebc1c814a93e8
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Apr 2 23:09:43 2025 +0800
+
+    Ready to ouput json.
+
+commit 1eb56b6b43494ad067f2a227982fc6147a51f114
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Apr 2 13:41:10 2025 +0800
+
+    Work on AnyEntry.
+
+commit 8137b0d8f5a922ec5037935f78c6e467e64211c4
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Apr 2 09:54:59 2025 +0800
+
+    Next step is how to store those entries into json. next next step is to save them to icloud.
+
+commit c9fd0b5c5b285eb20faf636c34944f8e536c0e08
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Mar 31 09:06:27 2025 +0800
+
+    Minor update.
+
+commit 1b6c41856bdbfd0f9eadfedc3bd9e1ce79524598
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Mar 30 18:58:57 2025 +0800
+
+    Start point of settings page.
+
+commit a5b5d9398214ab8d403bc8c57dc277b0b70f973b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Mar 30 10:08:50 2025 +0800
+
+    Able to delete correctly.
+
+commit a796370765082478d73a36b87d8e2d1d980d04a9
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Mar 29 18:09:12 2025 +0800
+
+    Add delete button, but somethign is wrong.
+
+commit 22e53006bd95c1fa76192b9529d3b0be172f3972
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Mar 28 14:08:57 2025 +0800
+
+    Organize code.
+
+commit 5268f841e0c10dbbcee8a714c39f3212dcc61d4f
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Mar 27 16:01:06 2025 +0800
+
+    Fix group issue.
+
+commit 5ec7b4a37079e91cffeca6442b4db6746c785aa5
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Mar 26 14:18:34 2025 +0800
+
+    Work on path, will add more in future.
+
+commit 8cccb9682d0cbb7183cfb736ac9811d3e8d14dfc
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Mar 25 19:33:59 2025 +0800
+
+    Why image size not work for nsimage.
+
+commit e83de742d0f3641f4ac8f26a9f9799e27f7a9d0c
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Mar 25 14:15:50 2025 +0800
+
+    Work on local file.
+
+commit fd9efc541a9c19c05b7e61e5104cd3cf1ae7486f
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Mar 24 17:28:47 2025 +0800
+
+    Update.
+
+commit 63d2d1650e09214bb529022741190e66edd7ec07
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Mar 23 20:47:44 2025 +0800
+
+    Temp save.
+
+commit 0a47cc044dff3a4a848f52b6ce6cda725ef61d2b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Mar 23 09:44:03 2025 +0800
+
+    Update.
+
+commit fa6810c14e987b9d9f845132c8e7eb256d38ea2b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Mar 22 19:41:14 2025 +0800
+
+    Global hot key.
+
+commit c29739c7dbdd89147c2b6126637b997181ba33e3
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Mar 22 19:21:44 2025 +0800
+
+    Expand if necessary.
+
+commit 4e0d5bb4cc221af12e44a6a8b1d2882fdef118c5
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Mar 22 11:40:00 2025 +0800
+
+    Expand directory when creating a new item.
+
+commit 01b24e510119802d6e0eb845b5974d0f24cce327
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Mar 22 11:09:24 2025 +0800
+
+    Add global hotkeys.
+
+commit ddd52cf188750b44be19ba8776fe1818b22c4107
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Mar 21 17:34:10 2025 +0800
+
+    Update.
+
+commit e2933b8463cf808e7d7d85ef340222508ac6f035
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Mar 21 09:44:45 2025 +0800
+
+    Work on menu items.
+
+commit c9f0444df00155b346efff62fc651e48ecf638f6
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Mar 20 13:46:54 2025 +0800
+
+    Temp save.
+
+commit f1cded60f409df760203a896794940d60aeb8044
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Mar 19 23:13:08 2025 +0800
+
+    Work on dir naming.
+
+commit f90bd3c98236979c0fd6e96b18cc290b571ea463
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Mar 19 13:03:47 2025 +0800
+
+    Allow to edit after insert a dir.
+
+commit 54158ac3664812d3f2e23c8046ff67a193910160
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Mar 19 12:57:30 2025 +0800
+
+    Fix anchor id.
+
+commit d8b9854bc81015750ccdadd6640989e770fc25ca
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Mar 18 21:13:12 2025 +0800
+
+    Temp save.
+
+commit 4487f65c98274b8b09f8a3640cb2d963674038a7
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Mar 18 17:47:29 2025 +0800
+
+    Solve the extra update ns view issue.
+
+commit fa82297557df4f921a4a2a197bd1c36cfbbbb16b
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Mar 17 17:27:08 2025 +0800
+
+    Debug.
+
+commit 06c2e9ee3130adc17d2d27e11b04da3ea4fad354
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Mar 17 17:11:18 2025 +0800
+
+    Try to fix issue.
+
+commit 0f8c70ba93e07078982bc81fb810e0711a4b55dd
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Mar 17 09:54:27 2025 +0800
+
+    Allow to create directory at specified location.
+
+commit ed17260a25eecb2b2a60b148c00a7ade9d994e9e
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Mar 16 10:04:21 2025 +0800
+
+    Allow to update title.
+
+commit 3b3d27f65f6759c0b9ae85ab30b2f6f43b865d90
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Mar 15 19:40:07 2025 +0800
+
+    Add folder.
+
+commit 24d3eda2033c3e2577aa9382f9327d7b2ffb0825
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Mar 15 19:29:50 2025 +0800
+
+    Update color.
+
+commit 176962f058182ce2c304a08dadefc77a766a45b6
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Mar 15 17:52:46 2025 +0800
+
+    Allow to reorder items.
+
+commit 8bf9969c64009c3adb989e7866653b29447803ca
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Mar 15 17:07:49 2025 +0800
+
+    Allow user to update title.
+
+commit be15a05eb08373351e6d774dbf6dc5b1aca4096a
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Mar 14 17:25:32 2025 +0800
+
+    Update.
+
+commit 977f6a2294004cbf544ddeca710c363a5141356a
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Mar 14 13:51:46 2025 +0800
+
+    Update underline.
+
+commit e29a04370f9bf8fbe034dd8c9816018bfdf6de9c
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Mar 14 12:55:50 2025 +0800
+
+    Clean up code.
+
+commit 9bc4e3ed7d5f3106ff327c70dcd716b945700fa4
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Mar 13 17:31:16 2025 +0800
+
+    Remove focus reminder.
+
+commit 9faeeec32d7a9715ac4fd063d6fba41dc78eb1e0
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Mar 13 14:05:51 2025 +0800
+
+    Update.
+
+commit 5d97a18429010f904d3e7e61c9bdd11de02aba11
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Mar 12 17:36:13 2025 +0800
+
+    Work on change background color of cell view.
+
+commit 16156d9b55b03246fed5ea11741cf6e7b2401975
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Mar 12 10:39:45 2025 +0800
+
+    Update code.
+
+commit 1bd59c105ff8cf74db3567ae61455b4021df7ee2
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Mar 11 20:58:04 2025 +0800
+
+    Temp save.
+
+commit ae303f3ed1c9c741727cbf12938a02010884b727
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Mar 11 12:51:01 2025 +0800
+
+    Minor change.
+
+commit d337bfd70088d51581a200e14e72db82a377aceb
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Mar 11 08:08:50 2025 +0800
+
+    Make it compile.
+
+commit cb01b6cbf90ead7fd85d97d3571c0684ed4a7e4f
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Mar 10 22:38:04 2025 +0800
+
+    Change names.
+
+commit 117b6cafbc0cfbb3b6fab9dab64932347665d635
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Mar 10 17:30:36 2025 +0800
+
+    Temp save.
+
+commit c6a77c84ca496c00593c5723ad9271e93470b70a
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Mar 8 18:34:32 2025 +0800
+
+    Change style.
+
+commit 8b9d6ff6e176980a483534a98b402311a576e08a
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Mar 7 17:22:45 2025 +0800
+
+    Temp save.
+
+commit 00dd5f742ada338e88790f43a8ca399839a4c670
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Mar 7 13:59:59 2025 +0800
+
+    Able to inline edit name.
+
+commit 87fbb501c0ad3cc6728a11e8f9396f7ffdbff94d
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Mar 6 17:43:57 2025 +0800
+
+    Temp save.
+
+commit dddc8655f926d78a8b36d11ec1864c21cb46d4ea
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Mar 6 14:22:32 2025 +0800
+
+    Work on double click to edit.
+
+commit 4b08ec3bcaad6cc6375e1efaf06f156f1ce8c277
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Mar 6 10:37:07 2025 +0800
+
+    Work on row hightlight.
+
+commit 5f2b4e4088f15a397fde166feb4ef365d01fc0bc
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Mar 5 11:11:44 2025 +0800
+
+    Able to save and load from disk.
+
+commit 1ed0609b2cfea70aac74c43d78b4f85f89accecc
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Mar 4 14:12:07 2025 +0800
+
+    Temp save.
+
+commit 3856f91a02b529769411c1aa16f4d674e9f146f8
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Mar 3 17:40:23 2025 +0800
+
+    Able to store locally.
+
+commit 5d78e6b15d2f64e80be642e2b8a8a3f0cf10f66f
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Mar 3 16:14:59 2025 +0800
+
+    Change the way to deal with drop in outline view.
+
+commit 2bcb7c5c4dbb709d2e6f65ea07c84bc921dd3b51
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Mar 3 11:43:39 2025 +0800
+
+    Confusing.
+
+commit 7900f8492cc600ef3ab877f93d6b6d039b264d19
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Mar 2 20:45:35 2025 +0800
+
+    Solve the struct cannot expand issue.
+
+commit efc427cf9967f26cb7e63a9b8c87d4e370de1a08
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Mar 2 18:48:23 2025 +0800
+
+    Have some progress.
+
+commit 07a0ed4e589680968c79a30ddb5e821b86e5aa4c
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Mar 1 11:03:25 2025 +0800
+
+    Change model to struct.
+
+commit c6ac06affb0117dfc319afa314c03f06de7b9e5c
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Feb 28 17:18:51 2025 +0800
+
+    Working on change model from class to struct.
+
+commit 1f28976e9a7a619c12178cadcb902850ebbd41a6
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Feb 28 17:12:05 2025 +0800
+
+    Minor change.
+
+commit 97709ce650757b71f47da14a06e58289e83ef695
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Feb 28 16:43:45 2025 +0800
+
+    disalbe save until icon and title are available.
+
+commit 637057c409b6385a1c187651a52267d8a3229bb1
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Feb 28 16:10:12 2025 +0800
+
+    Update outline view.
+
+commit 4097730416bcfa7362a18a9b1037f89356e8c19f
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Feb 27 17:13:27 2025 +0800
+
+    Work on title input field.
+
+commit 08c7cd46acd3c3d56a0f9dd7db40c7dfddc8e54b
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Feb 27 15:49:08 2025 +0800
+
+    Separate code.
+
+commit cfdde786a2ffc35cb947748fe3ebcbdf266e5713
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Feb 27 15:47:38 2025 +0800
+
+    Work on icon and title parsing.
+
+commit 5616866e30529a8f11300eb84aea019308b255a7
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Feb 26 17:44:28 2025 +0800
+
+    Work on loading.
+
+commit 50ba8fd1eb324b7e8290b0610bd54bf802816125
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Feb 26 17:31:33 2025 +0800
+
+    Remove waste code.
+
+commit 523d05e4bb877b242dcaac3a95b4d64e645a63ef
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Feb 26 17:29:45 2025 +0800
+
+    Work on input.
+
+commit 101ab9beb0cbf78cdf21df8b7ccedfa8829f0fb3
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Feb 25 18:41:26 2025 +0800
+
+    Keep updating.
+
+commit fabd2c8f32400144163fe964425298731c095d45
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Feb 24 23:40:38 2025 +0800
+
+    Update.
+
+commit 2fc98d4a334eaf9796582807718fc053635ff2ca
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Feb 24 17:33:43 2025 +0800
+
+    Add custom toolbar.
+
+commit f9218530110a46eea806a96b4c31e1f7de5046cb
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Feb 24 16:41:36 2025 +0800
+
+    Update icons at drag and drop page.
+
+commit 5d3345bef6dd3ff02d055cc3b25a968ffae92a49
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Feb 23 23:55:07 2025 +0800
+
+    Revert back to duckduck go.
+
+commit a4c39db2cb891ecb83ebf6586dbbe4207f235d0b
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Feb 22 21:56:26 2025 +0800
+
+    Change favicon url.
+
+commit a642b2e454af185f2fde36e6483d97c569e9294b
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Feb 21 14:53:18 2025 +0800
+
+    Update tint color.
+
+commit f9e58fdbc2e15c232354a0e7a9678390c1207a88
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Feb 21 14:48:12 2025 +0800
+
+    Add tinit color
+
+commit 9fa643eedc873c52894a66513588cbdb9af065d8
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Fri Feb 21 14:04:48 2025 +0800
+
+    Update icon logic.
+
+commit 208fab3bd5a0a596244d84ba932fbe2d9eecd5bd
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Thu Feb 20 17:13:34 2025 +0800
+
+    Add kingfisher
+
+commit 833bc7d6bd7c9d2e4bb2828cdce72d775bfee88b
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Feb 19 17:34:34 2025 +0800
+
+    Work on favicon.
+
+commit 4892a675d304af5d7ffc548d1c1c909ef42e869f
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Feb 19 14:00:59 2025 +0800
+
+    Work on restructuring.
+
+commit b7ac29bca964fafa7d875e3c357bf9492149232f
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Feb 18 22:58:42 2025 +0800
+
+    Add animations of reordering.
+
+commit 973b0736940e72e0ba7c21252e58973a1af5aaba
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Feb 18 22:47:18 2025 +0800
+
+    Stop tracking .DS_Store files
+
+commit ac51f4511e7b42f69530020a398cbd06f55ea798
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Feb 18 22:46:58 2025 +0800
+
+    Remove dividers.
+
+commit 634c81a59dcbc935d595e9c51e9be26c3d1732f8
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Feb 18 22:32:30 2025 +0800
+
+    Add gitignore.
+
+commit 9feec9159b07bb082ecc0a79488b194dbb608262
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Feb 18 22:30:16 2025 +0800
+
+    Fix a crash issue.
+
+commit 3fa907b20464a53ae1ea3c76450071a260d4febb
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Feb 18 14:32:15 2025 +0800
+
+    Organize code.
+
+commit 52256ac3497cd48451d68f74f94e946203f12066
+Author: yannmm <yannmm@foxmail.com>
+Date:   Mon Feb 17 23:59:41 2025 +0800
+
+    Work on it.
+
+commit 3ff4acf566a0d661e62a0e14e79d174b0251a962
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Feb 17 17:20:50 2025 +0800
+
+    Add hover effect.
+
+commit 783c0e160c4cd4f7f7da39f1b8f7459d6bbc2ba9
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Feb 17 12:10:56 2025 +0800
+
+    Change model.
+
+commit b263c2d8ce95ddec9179c6c102b9c9a90d26345f
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Feb 16 14:21:08 2025 +0800
+
+    Remove code.
+
+commit 4973caa64ef411b40066c19e50f2d02451cf0c64
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Feb 15 18:15:45 2025 +0800
+
+    A working example of list.
+
+commit ef2f5b71c6fd1ac212bff5c55839f890149f0423
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Feb 14 23:07:41 2025 +0800
+
+    Figure out a way to drag and drop.
+
+commit 55cbf57a11b1a962fef594d1efb14ad257211a66
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Feb 13 22:52:16 2025 +0800
+
+    Update.
+
+commit fc89646a01d667a9f3409b8b3600220a1e453906
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Wed Feb 12 17:22:49 2025 +0800
+
+    Work on fetch favicon from web url.
+
+commit 817a1df2ba2d59b0ca799cb2cdc8bc480825c0a9
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Feb 11 19:57:19 2025 +0800
+
+    Menu demo done.
+
+commit 42d32e181b31c7ff95a4b465664c580824a80bf1
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Feb 11 15:38:58 2025 +0800
+
+    Work on status bar menu.
+
+commit 98706917e5d779c291752ccddd9b55da9e48fb2a
+Author: Rayman Yan <ryan@aligntech.com>
+Date:   Mon Feb 10 17:15:29 2025 +0800
+
+    Work on menu creation.
+
+commit 07d4202344373b006fb1a8dc364d78ac2b4b8943
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sun Feb 9 23:38:09 2025 +0800
+
+    Organize files.
+
+commit 7867a663818e50ddb9a80018eb117e0504b4b9aa
+Author: yannmm <yannmm@foxmail.com>
+Date:   Sat Feb 8 21:54:03 2025 +0800
+
+    Add some views.
+
+commit 04fcfb1c769d51abaa8cfb66fe4cc3159dd3dade
+Author: yannmm <yannmm@foxmail.com>
+Date:   Fri Feb 7 21:23:47 2025 +0800
+
+    Minor change.
+
+commit 4f60cf51d1459eeac35a99e4707c8be6ecd1c0bd
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Feb 6 23:27:59 2025 +0800
+
+    Remove unnecessary code.
+
+commit 7e3e85dce01f30da397ff1de20e2b0d41fa39363
+Author: yannmm <yannmm@foxmail.com>
+Date:   Thu Jan 30 17:34:58 2025 +0800
+
+    Temp save.
+
+commit 5aab847dd62cc249c6092e11dbb597716d444cfb
+Author: yannmm <yannmm@foxmail.com>
+Date:   Wed Jan 29 23:03:52 2025 +0800
+
+    Add list.
+
+commit 1e0e033cf3a86d4a14e52dc4aa4f2a64480938fa
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jan 28 22:11:07 2025 +0800
+
+    Add drag&drop.
+
+commit 92f8162efc42a965f5fa71c393d5b234b05b023a
+Author: yannmm <yannmm@foxmail.com>
+Date:   Tue Jan 28 22:06:41 2025 +0800
+
+    Initial Commit
