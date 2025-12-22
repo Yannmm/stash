@@ -4,8 +4,6 @@ import HotKey
 
 struct SettingsView: View {
     @StateObject var viewModel: SettingsViewModel
-    @State private var fileBackupNotice: (String, Bool)?
-    @State private var appendNotice: String?
     @State private var importFileType: String.FileType? {
         didSet {
             guard let ft = importFileType else { return }
@@ -164,7 +162,7 @@ struct SettingsView: View {
                             do {
                                 try viewModel.export()
                                 try viewModel.reset()
-                                fileBackupNotice = ("Done Reset", true)
+                                alert = .backup("Done Reset", true)
                             } catch {
                                 viewModel.error = error
                             }
@@ -184,22 +182,6 @@ struct SettingsView: View {
             }, message: {
                 alert.message()
             })
-            //            .alert(fileBackupNotice?.0 ?? "", isPresented: Binding(
-            //                get: { fileBackupNotice != nil },
-            //                set: { if !$0 { fileBackupNotice = nil } }
-            //            )) {
-            //                Button("OK") { }
-            //            } message: {
-            //                Text((fileBackupNotice?.1 ?? false) ? "Backup file is exported to \"Downloads\", just in case 😉" : "")
-            //            }
-            //            .alert(appendNotice ?? "", isPresented: Binding(
-            //                get: { appendNotice != nil },
-            //                set: { if !$0 { appendNotice = nil } }
-            //            )) {
-            //                Button("OK") { }
-            //            } message: {
-            //                Text("Find them in Group \"\(appendAsGroup ?? "")\" at root level.")
-            //            }
             
             // Check Update Section
             Section("Software Update") {
@@ -317,7 +299,7 @@ struct SettingsView: View {
             let flag = viewModel.empty
             if !flag { try viewModel.export() }
             try viewModel.import(url, fileType: fileType, replace: true)
-            fileBackupNotice = ("Done Import", !flag)
+            alert = .backup("Done Import", !flag)
         } catch {
             viewModel.error = error
         }
@@ -326,7 +308,7 @@ struct SettingsView: View {
     private func append(_ url: URL, _ fileType: String.FileType) {
         do {
             try self.viewModel.import(url, fileType: fileType, replace: false)
-            appendNotice = "Done Append"
+            alert = .append(appendAsGroup)
         } catch {
             viewModel.error = error
         }
@@ -378,8 +360,8 @@ extension SettingsView {
         case reset(() -> Void)
         case `import`(String.FileType, () -> Bool, () -> Void, () -> Void, () -> Void)
         case export(String)
-        case backup
-        case append
+        case backup(String, Bool)
+        case append(String?)
         case error
         
         var id: String {
@@ -418,8 +400,9 @@ extension SettingsView {
                 }
             case .export(let browser):
                 "Export Bookmarks from \(browser)"
-            case .backup: "xxx"
-            case .append: "xxx"
+            case .backup(let title, _):
+                title
+            case .append: "Done Append"
             case .error: "xxx"
             }
         }
@@ -450,8 +433,10 @@ extension SettingsView {
                     Text("Open the Firefox Library, navigate to \"Import and Backup\", and select \"Export Bookmarks to HTML\".")
                 default: EmptyView()
                 }
-            case .backup: Text("xxx")
-            case .append: Text("xxx")
+            case .backup(_, let flag):
+                Text(flag ? "Backup file is exported to \"Downloads\", just in case 😉" : "")
+            case .append(let group):
+                Text("Find them in Group \"\(group ?? "")\" at root level.")
             case .error: Text("xxx")
             }
         }
@@ -480,7 +465,13 @@ extension SettingsView {
                     }
                 }
                 Button("Cancel", role: .cancel) {}
-            default:
+            case .export(_):
+                Button("OK", role: .cancel) {}
+            case .backup(_, _):
+                Button("OK", role: .cancel) { }
+            case .append(_):
+                Button("OK", role: .cancel) { }
+            case .error:
                 EmptyView()
             }
         }
