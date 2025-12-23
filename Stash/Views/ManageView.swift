@@ -43,6 +43,12 @@ struct Clip: Identifiable {
 
 // MARK: - ManageView
 
+let group1 = UUID()
+let group2 = UUID()
+let group3 = UUID()
+let child1 = UUID()
+let child2 = UUID()
+
 struct ManageView: View {
     @State private var selectedFolder: Folder?
     @State private var selectedTag: ClipTag?
@@ -52,7 +58,13 @@ struct ManageView: View {
         HStack(spacing: 0) {
             ManageViewSidebar(
                 selectedCollection: .constant(nil),
-                groups: .constant([]),
+                groups: .constant([
+                    Group(id: group1, name: "Group 1", parentId: nil),
+                    Group(id: child1, name: "Child 1.1", parentId: group1),
+                    Group(id: child2, name: "Child 1.2", parentId: group1),
+                    Group(id: group2, name: "Group 2", parentId: nil),
+                    Group(id: group3, name: "Group 3", parentId: nil)
+                ]),
                 hashtags: .constant([])
             )
             .frame(width: 260)
