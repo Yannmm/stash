@@ -141,7 +141,7 @@ extension ManageViewSidebar {
                         .font(.system(size: 13))
                         .foregroundStyle(.white.opacity(0.6))
                 }
-//                .padding(.horizontal, 12)
+                .padding(.horizontal, 12)
                 .padding(.vertical, 10)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
