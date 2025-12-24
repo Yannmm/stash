@@ -179,10 +179,12 @@ extension ManageViewSidebar {
                                 expandedGroups: $expandedGroups,
                                 draggedGroup: $draggedGroup,
                                 onToggleExpand: { groupId in
-                                    if expandedGroups.contains(groupId) {
-                                        expandedGroups.remove(groupId)
-                                    } else {
-                                        expandedGroups.insert(groupId)
+                                    withAnimation(.easeInOut(duration: 0.25)) {
+                                        if expandedGroups.contains(groupId) {
+                                            expandedGroups.remove(groupId)
+                                        } else {
+                                            expandedGroups.insert(groupId)
+                                        }
                                     }
                                 },
                                 onDrop: { droppedGroup, targetGroup, position in
@@ -394,19 +396,25 @@ extension ManageViewSidebar {
                 ))
                 .onHover { isHovered = $0 }
                 
-                if hasChildren && isExpanded {
-                    ForEach(children) { child in
-                        GroupTreeNode(
-                            group: child,
-                            allGroups: allGroups,
-                            level: level + 1,
-                            isSelected: false,
-                            expandedGroups: $expandedGroups,
-                            draggedGroup: $draggedGroup,
-                            onToggleExpand: onToggleExpand,
-                            onDrop: onDrop,
-                            action: action
-                        )
+                if hasChildren {
+                    if isExpanded {
+                        ForEach(children) { child in
+                            GroupTreeNode(
+                                group: child,
+                                allGroups: allGroups,
+                                level: level + 1,
+                                isSelected: false,
+                                expandedGroups: $expandedGroups,
+                                draggedGroup: $draggedGroup,
+                                onToggleExpand: onToggleExpand,
+                                onDrop: onDrop,
+                                action: action
+                            )
+                            .transition(.asymmetric(
+                                insertion: .opacity.combined(with: .move(edge: .top)),
+                                removal: .opacity.combined(with: .move(edge: .top))
+                            ))
+                        }
                     }
                 }
             }
@@ -501,24 +509,27 @@ extension ManageViewSidebar {
                 }
                 
                 // Expand/collapse button
-                if hasChildren {
-                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 10, weight: .medium))
-                        .foregroundStyle(.white.opacity(0.5))
-                        .frame(width: 16, height: 16)
-                        .contentShape(Rectangle())
-                        .onTapGesture {
-                            onToggleExpand()
-                        }
-                } else {
-                    Spacer()
-                        .frame(width: 16)
-                }
+//                if hasChildren {
+//                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+//                        .font(.system(size: 10, weight: .medium))
+//                        .foregroundStyle(.white.opacity(0.5))
+//                        .frame(width: 16, height: 16)
+//                        .contentShape(Rectangle())
+//                        .onTapGesture {
+//                            onToggleExpand()
+//                        }
+//                } else {
+//                    Spacer()
+//                        .frame(width: 16)
+//                }
                 
                 // Folder icon
-                Image(systemName: "folder")
+                Image(systemName: hasChildren ? "folder.fill" : "folder")
                     .font(.system(size: 14))
                     .foregroundStyle(.white.opacity(0.7))
+                    .onTapGesture {
+                        onToggleExpand()
+                    }
                 
                 // Group name
                 Text(group.name)
