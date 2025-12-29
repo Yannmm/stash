@@ -63,3 +63,9 @@ extension Array<any Entry> {
         return self.filter { $0.parentId == nil }
     }
 }
+
+extension Array<any Entry> {
+    var groups: [Group] { compactMap { $0 as? Group } }
+    
+    var bookmarks: [Bookmark] { compactMap { $0 as? Bookmark } }
+}

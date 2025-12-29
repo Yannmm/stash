@@ -60,7 +60,7 @@ struct ManageView: View {
     private var groups: Binding<[Group]> {
         Binding(
             get: {
-                cabinet.storedEntries.compactMap { $0 as? Group }
+                cabinet.storedEntries.groups
             },
             set: { newGroups in
                 // Replace all entries with newGroups + non-Group entries

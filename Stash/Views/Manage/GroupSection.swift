@@ -171,7 +171,7 @@ extension ManageViewSidebar {
                         dragOverPosition: dragOverPosition,
                         onToggleExpansion: { onToggleExpansion(group.id) },
                         action: action,
-                        selected: selectedOne?.id == group.id,
+                        selected: selectedOne?.id == group.id
                     )
                     
                     // Drop indicator line (after)
@@ -222,7 +222,7 @@ extension ManageViewSidebar {
                                 selectedOne: $selectedOne,
                                 onToggleExpansion: onToggleExpansion,
                                 onDrop: onDrop,
-                                action: action,
+                                action: action
                             )
                             .transition(.asymmetric(
                                 insertion: .opacity.combined(with: .move(edge: .top)),
@@ -311,6 +311,11 @@ extension ManageViewSidebar {
         let onToggleExpansion: () -> Void
         let action: (Group) -> Void
         let selected: Bool
+        @EnvironmentObject var cabinet: OkamuraCabinet
+        
+        private var bookmarkCount: Int { group.children(among: cabinet.storedEntries).bookmarks.count }
+        
+        private var groupCount: Int { getChildren(group.id).count }
         
         var body: some View {
             HStack(spacing: 6) {
@@ -338,7 +343,7 @@ extension ManageViewSidebar {
                 Spacer()
                 
                 // Count
-                Text("\(getChildren(group.id).count)")
+                Text(groupCount > 0 ? "\(bookmarkCount)/\(groupCount)" : "\(bookmarkCount)")
                     .font(.system(size: 13))
                     .foregroundStyle(.white.opacity(0.5))
             }
