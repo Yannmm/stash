@@ -13,6 +13,7 @@ extension ManageViewSidebar {
         @Binding var groups: [Group]
         @State private var expandedOnes: Set<UUID> = []
         @State private var draggingOne: Group?
+        @State private var selectedOne: Group?
         
         private var roots: [Group] {
             groups.filter { $0.parentId == nil }
@@ -32,7 +33,8 @@ extension ManageViewSidebar {
                                 getChildren: { gid in groups.filter { $0.parentId == gid } },
                                 checkExpanded: expandedOnes.contains,
                                 level: 0,
-                                draggedGroup: $draggingOne,
+                                draggingOne: $draggingOne,
+                                selectedOne: $selectedOne,
                                 onToggleExpansion: { groupId in
                                     withAnimation(.easeInOut(duration: 0.25)) {
                                         if expandedOnes.contains(groupId) {
@@ -45,7 +47,8 @@ extension ManageViewSidebar {
                                 onDrop: { droppedGroup, targetGroup, position in
                                     handleDrop(droppedGroup: droppedGroup, targetGroup: targetGroup, position: position)
                                 },
-                                action: {
+                                action: { group in
+                                    selectedOne = group
                                     //                                    selectedFolder = group
                                     //                                    selectedTag = nil
                                     //                                    showAllClips = false
@@ -137,10 +140,11 @@ extension ManageViewSidebar {
         let checkExpanded: (UUID) -> Bool
         let level: Int
         
-        @Binding var draggedGroup: Group?
+        @Binding var draggingOne: Group?
+        @Binding var selectedOne: Group?
         let onToggleExpansion: (UUID) -> Void
         let onDrop: (Group, Group?, DropPosition) -> Void
-        let action: () -> Void
+        let action: (Group) -> Void
         
         @State private var isHovered = false
         @State private var dragOver = false
@@ -166,7 +170,8 @@ extension ManageViewSidebar {
                         dragOver: dragOver && dragOverPosition == .on,
                         dragOverPosition: dragOverPosition,
                         onToggleExpansion: { onToggleExpansion(group.id) },
-                        action: action
+                        action: action,
+                        selected: selectedOne?.id == group.id,
                     )
                     
                     // Drop indicator line (after)
@@ -179,7 +184,7 @@ extension ManageViewSidebar {
                 }
                 .contentShape(Rectangle())
                 .onDrag {
-                    draggedGroup = group
+                    draggingOne = group
                     return NSItemProvider(object: group.id.uuidString as NSString)
                 } preview: {
                     // Drag preview
@@ -198,7 +203,7 @@ extension ManageViewSidebar {
                 }
                 .onDrop(of: [UTType.plainText], delegate: GroupDropDelegate(
                     group: group,
-                    draggedGroup: $draggedGroup,
+                    draggedGroup: $draggingOne,
                     dragOver: $dragOver,
                     dragOverPosition: $dragOverPosition,
                     onDrop: onDrop
@@ -213,10 +218,11 @@ extension ManageViewSidebar {
                                 getChildren: getChildren,
                                 checkExpanded: checkExpanded,
                                 level: level + 1,
-                                draggedGroup: $draggedGroup,
+                                draggingOne: $draggingOne,
+                                selectedOne: $selectedOne,
                                 onToggleExpansion: onToggleExpansion,
                                 onDrop: onDrop,
-                                action: action
+                                action: action,
                             )
                             .transition(.asymmetric(
                                 insertion: .opacity.combined(with: .move(edge: .top)),
@@ -303,7 +309,8 @@ extension ManageViewSidebar {
         let dragOver: Bool
         let dragOverPosition: DropPosition?
         let onToggleExpansion: () -> Void
-        let action: () -> Void
+        let action: (Group) -> Void
+        let selected: Bool
         
         var body: some View {
             HStack(spacing: 6) {
@@ -314,7 +321,7 @@ extension ManageViewSidebar {
                 }
                 
                 // Folder icon
-                Image(systemName: getChildren(group.id).count > 0 ? "folder.fill" : "folder")
+                Image(systemName: (getChildren(group.id).count > 0 && !checkExpanded(group.id)) ? "folder.fill" : "folder")
                     .font(.system(size: 14))
                     .foregroundStyle(.white.opacity(0.7))
                     .onTapGesture {
@@ -341,7 +348,7 @@ extension ManageViewSidebar {
             )
             .contentShape(Rectangle())
             .onTapGesture {
-                action()
+                action(group)
             }
         }
         
@@ -356,7 +363,7 @@ extension ManageViewSidebar {
                     return Color.white.opacity(0.08)
                 }
             }
-            return (isHovered ? Color.white.opacity(0.08) : Color.clear)
+            return selected ? Color.white.opacity(0.15) : (isHovered ? Color.white.opacity(0.08) : Color.clear)
         }
     }
 }
