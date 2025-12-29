@@ -11,8 +11,12 @@ import UniformTypeIdentifiers
 extension ManageViewSidebar {
     struct GroupSection: View {
         @Binding var groups: [Group]
-        @State private var expandedGroups: Set<UUID> = []
-        @State private var draggedGroup: Group?
+        @State private var expandedOnes: Set<UUID> = []
+        @State private var draggedOnes: Group?
+        
+        private var rootOnes: [Group] {
+            groups.filter { $0.parentId == nil }
+        }
         
         var body: some View {
             if groups.count <= 0 {
@@ -22,20 +26,20 @@ extension ManageViewSidebar {
                     SectionHeader(title: "GROUPS")
                     
                     VStack(spacing: 0) {
-                        ForEach(rootGroups) { group in
+                        ForEach(rootOnes) { group in
                             GroupTreeNode(
                                 group: group,
                                 allGroups: groups,
                                 level: 0,
                                 isSelected: false,
-                                expandedGroups: $expandedGroups,
-                                draggedGroup: $draggedGroup,
+                                expandedGroups: $expandedOnes,
+                                draggedGroup: $draggedOnes,
                                 onToggleExpand: { groupId in
                                     withAnimation(.easeInOut(duration: 0.25)) {
-                                        if expandedGroups.contains(groupId) {
-                                            expandedGroups.remove(groupId)
+                                        if expandedOnes.contains(groupId) {
+                                            expandedOnes.remove(groupId)
                                         } else {
-                                            expandedGroups.insert(groupId)
+                                            expandedOnes.insert(groupId)
                                         }
                                     }
                                 },
@@ -52,10 +56,6 @@ extension ManageViewSidebar {
                     }
                 }
             }
-        }
-        
-        private var rootGroups: [Group] {
-            groups.filter { $0.parentId == nil }
         }
         
         private func handleDrop(droppedGroup: Group, targetGroup: Group?, position: DropPosition) {
