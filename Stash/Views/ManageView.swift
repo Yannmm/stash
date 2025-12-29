@@ -46,6 +46,7 @@ struct Clip: Identifiable {
 let group1 = UUID()
 let group2 = UUID()
 let group3 = UUID()
+let group4 = UUID()
 let child1 = UUID()
 let child2 = UUID()
 
@@ -63,7 +64,8 @@ struct ManageView: View {
                     Group(id: child1, name: "Child 1.1", parentId: group1),
                     Group(id: child2, name: "Child 1.2", parentId: group1),
                     Group(id: group2, name: "Group 2", parentId: nil),
-                    Group(id: group3, name: "Group 3", parentId: nil)
+                    Group(id: group3, name: "Group 3", parentId: nil),
+                    Group(id: group4, name: "Group 1.1.1", parentId: child1)
                 ]),
                 hashtags: .constant([])
             )

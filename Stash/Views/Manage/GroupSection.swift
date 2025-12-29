@@ -12,9 +12,9 @@ extension ManageViewSidebar {
     struct GroupSection: View {
         @Binding var groups: [Group]
         @State private var expandedOnes: Set<UUID> = []
-        @State private var draggedOnes: Group?
+        @State private var draggingOne: Group?
         
-        private var rootOnes: [Group] {
+        private var roots: [Group] {
             groups.filter { $0.parentId == nil }
         }
         
@@ -26,15 +26,14 @@ extension ManageViewSidebar {
                     SectionHeader(title: "GROUPS")
                     
                     VStack(spacing: 0) {
-                        ForEach(rootOnes) { group in
-                            GroupTreeNode(
+                        ForEach(roots) { group in
+                            Node(
                                 group: group,
-                                allGroups: groups,
+                                getChildren: { gid in groups.filter { $0.parentId == gid } },
+                                checkExpanded: expandedOnes.contains,
                                 level: 0,
-                                isSelected: false,
-                                expandedGroups: $expandedOnes,
-                                draggedGroup: $draggedOnes,
-                                onToggleExpand: { groupId in
+                                draggedGroup: $draggingOne,
+                                onToggleExpansion: { groupId in
                                     withAnimation(.easeInOut(duration: 0.25)) {
                                         if expandedOnes.contains(groupId) {
                                             expandedOnes.remove(groupId)
@@ -47,9 +46,9 @@ extension ManageViewSidebar {
                                     handleDrop(droppedGroup: droppedGroup, targetGroup: targetGroup, position: position)
                                 },
                                 action: {
-        //                                    selectedFolder = group
-        //                                    selectedTag = nil
-        //                                    showAllClips = false
+                                    //                                    selectedFolder = group
+                                    //                                    selectedTag = nil
+                                    //                                    showAllClips = false
                                 }
                             )
                         }
@@ -132,32 +131,20 @@ extension ManageViewSidebar {
 }
 
 extension ManageViewSidebar {
-    private struct GroupTreeNode: View {
+    private struct Node: View {
         let group: Group
-        let allGroups: [Group]
+        let getChildren: (UUID) -> [Group]
+        let checkExpanded: (UUID) -> Bool
         let level: Int
-        let isSelected: Bool
-        @Binding var expandedGroups: Set<UUID>
+        
         @Binding var draggedGroup: Group?
-        let onToggleExpand: (UUID) -> Void
+        let onToggleExpansion: (UUID) -> Void
         let onDrop: (Group, Group?, DropPosition) -> Void
         let action: () -> Void
         
         @State private var isHovered = false
         @State private var dragOver = false
         @State private var dragOverPosition: DropPosition? = nil
-        
-        private var hasChildren: Bool {
-            allGroups.contains { $0.parentId == group.id }
-        }
-        
-        private var isExpanded: Bool {
-            expandedGroups.contains(group.id)
-        }
-        
-        private var children: [Group] {
-            allGroups.filter { $0.parentId == group.id }
-        }
         
         var body: some View {
             VStack(spacing: 0) {
@@ -170,16 +157,15 @@ extension ManageViewSidebar {
                             .padding(.horizontal, 12 + CGFloat(level) * 16)
                     }
                     
-                    GroupRow(
+                    Row(
                         group: group,
                         level: level,
-                        isSelected: isSelected,
-                        hasChildren: hasChildren,
-                        isExpanded: isExpanded,
+                        getChildren: getChildren,
+                        checkExpanded: checkExpanded,
                         isHovered: isHovered,
                         dragOver: dragOver && dragOverPosition == .on,
                         dragOverPosition: dragOverPosition,
-                        onToggleExpand: { onToggleExpand(group.id) },
+                        onToggleExpansion: { onToggleExpansion(group.id) },
                         action: action
                     )
                     
@@ -219,17 +205,16 @@ extension ManageViewSidebar {
                 ))
                 .onHover { isHovered = $0 }
                 
-                if hasChildren {
-                    if isExpanded {
-                        ForEach(children) { child in
-                            GroupTreeNode(
+                if getChildren(group.id).count > 0 {
+                    if checkExpanded(group.id) {
+                        ForEach(getChildren(group.id)) { child in
+                            Node(
                                 group: child,
-                                allGroups: allGroups,
+                                getChildren: getChildren,
+                                checkExpanded: checkExpanded,
                                 level: level + 1,
-                                isSelected: false,
-                                expandedGroups: $expandedGroups,
                                 draggedGroup: $draggedGroup,
-                                onToggleExpand: onToggleExpand,
+                                onToggleExpansion: onToggleExpansion,
                                 onDrop: onDrop,
                                 action: action
                             )
@@ -309,16 +294,15 @@ extension ManageViewSidebar {
 }
 
 extension ManageViewSidebar {
-    private struct GroupRow: View {
+    private struct Row: View {
         let group: Group
         let level: Int
-        let isSelected: Bool
-        let hasChildren: Bool
-        let isExpanded: Bool
+        let getChildren: (UUID) -> [Group]
+        let checkExpanded: (UUID) -> Bool
         let isHovered: Bool
         let dragOver: Bool
         let dragOverPosition: DropPosition?
-        let onToggleExpand: () -> Void
+        let onToggleExpansion: () -> Void
         let action: () -> Void
         
         var body: some View {
@@ -330,11 +314,11 @@ extension ManageViewSidebar {
                 }
                 
                 // Folder icon
-                Image(systemName: hasChildren ? "folder.fill" : "folder")
+                Image(systemName: getChildren(group.id).count > 0 ? "folder.fill" : "folder")
                     .font(.system(size: 14))
                     .foregroundStyle(.white.opacity(0.7))
                     .onTapGesture {
-                        onToggleExpand()
+                        onToggleExpansion()
                     }
                 
                 // Group name
@@ -372,7 +356,7 @@ extension ManageViewSidebar {
                     return Color.white.opacity(0.08)
                 }
             }
-            return isSelected ? Color.white.opacity(0.15) : (isHovered ? Color.white.opacity(0.08) : Color.clear)
+            return (isHovered ? Color.white.opacity(0.08) : Color.clear)
         }
     }
 }
