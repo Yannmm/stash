@@ -338,14 +338,14 @@ extension ManageViewSidebar {
                 Spacer()
                 
                 // Count
-                Text("22")
+                Text("\(getChildren(group.id).count)")
                     .font(.system(size: 13))
                     .foregroundStyle(.white.opacity(0.5))
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: 0)
                     .fill(backgroundColor)
             )
             .contentShape(Rectangle())
