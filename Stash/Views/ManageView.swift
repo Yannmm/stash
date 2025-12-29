@@ -11,7 +11,7 @@ import AppKit
 // Refer to https://dribbble.com/shots/14567500-Bookmark-app-v2
 
 // MARK: - Data Models
-
+// TODO: remove
 struct Folder: Identifiable, Hashable {
     let id = UUID()
     let name: String
@@ -55,21 +55,30 @@ struct ManageView: View {
     @State private var selectedTag: ClipTag?
     @State private var showAllClips = true
     
+    @EnvironmentObject var cabinet: OkamuraCabinet
+    
+    private var groups: Binding<[Group]> {
+        Binding(
+            get: {
+                cabinet.storedEntries.compactMap { $0 as? Group }
+            },
+            set: { newGroups in
+                // Replace all entries with newGroups + non-Group entries
+//                let nonGroups = cabinet.storedEntries.filter { !($0 is Group) }
+//                cabinet.storedEntries = nonGroups + newGroups
+                print(newGroups)
+            }
+        )
+    }
+    
     var body: some View {
         HStack(spacing: 0) {
             ManageViewSidebar(
                 selectedCollection: .constant(nil),
-                groups: .constant([
-                    Group(id: group1, name: "Group 1", parentId: nil),
-                    Group(id: child1, name: "Child 1.1", parentId: group1),
-                    Group(id: child2, name: "Child 1.2", parentId: group1),
-                    Group(id: group2, name: "Group 2", parentId: nil),
-                    Group(id: group3, name: "Group 3", parentId: nil),
-                    Group(id: group4, name: "Group 1.1.1", parentId: child1)
-                ]),
+                groups: groups,
                 hashtags: .constant([])
             )
-            .frame(width: 260)
+            .frame(width: 300)
             
             BookmarkList(
                 selectedFolder: selectedFolder,
@@ -151,6 +160,6 @@ extension Clip {
 
 // MARK: - Preview
 
-#Preview {
-    ManageView()
-}
+//#Preview {
+//    ManageView()
+//}

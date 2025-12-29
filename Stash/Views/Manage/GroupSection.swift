@@ -331,6 +331,8 @@ extension ManageViewSidebar {
                 // Group name
                 Text(group.name)
                     .font(.system(size: 14))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                     .foregroundStyle(.white.opacity(0.9))
                 
                 Spacer()

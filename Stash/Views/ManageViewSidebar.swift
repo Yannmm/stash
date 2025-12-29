@@ -16,13 +16,9 @@ protocol Collection {
 
 struct ManageViewSidebar: View {
     @Binding var selectedCollection: Collection?
-    
     @State private var searchText = ""
-    
     @Binding var groups: [Group]
-    
     @Binding var hashtags: [Hashtag]
-    
     private let tags = ClipTag.sampleData
     private let totalClips = 6
     
@@ -230,27 +226,27 @@ private struct FooterView: View {
 }
 
 
-#Preview {
-    let group1 = UUID()
-    let group2 = UUID()
-    let group3 = UUID()
-    let child1 = UUID()
-    let child2 = UUID()
-    
-    return ManageViewSidebar(
-        selectedCollection: .constant(nil),
-        groups: .constant([
-            Group(id: group1, name: "Group 1", parentId: nil),
-            Group(id: child1, name: "Child 1.1", parentId: group1),
-            Group(id: child2, name: "Child 1.2", parentId: group1),
-            Group(id: group2, name: "Group 2", parentId: nil),
-            Group(id: group3, name: "Group 3", parentId: nil)
-        ]),
-        hashtags: .constant([
-            Hashtag(name: "tag1"),
-            Hashtag(name: "tag2"),
-            Hashtag(name: "tag=3"),
-        ])
-    )
-    .frame(width: 260, height: 700)
-}
+//#Preview {
+//    let group1 = UUID()
+//    let group2 = UUID()
+//    let group3 = UUID()
+//    let child1 = UUID()
+//    let child2 = UUID()
+//    
+//    return ManageViewSidebar(
+//        selectedCollection: .constant(nil),
+//        groups: .constant([
+//            Group(id: group1, name: "Group 1", parentId: nil),
+//            Group(id: child1, name: "Child 1.1", parentId: group1),
+//            Group(id: child2, name: "Child 1.2", parentId: group1),
+//            Group(id: group2, name: "Group 2", parentId: nil),
+//            Group(id: group3, name: "Group 3", parentId: nil)
+//        ]),
+//        hashtags: .constant([
+//            Hashtag(name: "tag1"),
+//            Hashtag(name: "tag2"),
+//            Hashtag(name: "tag=3"),
+//        ])
+//    )
+//    .frame(width: 260, height: 700)
+//}
