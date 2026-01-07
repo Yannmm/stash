@@ -80,7 +80,7 @@ struct ManageView: View {
             )
             .frame(width: 300)
             
-            BookmarkList(
+            Content(
                 selectedFolder: selectedFolder,
                 selectedTag: selectedTag,
                 showAllClips: showAllClips
