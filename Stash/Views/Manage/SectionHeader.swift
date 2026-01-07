@@ -7,7 +7,7 @@
 
 import SwiftUI
 
-extension ManageViewSidebar {
+extension ManageView.Sidebar {
     struct SectionHeader: View {
         let title: String
         

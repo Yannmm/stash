@@ -73,7 +73,7 @@ struct ManageView: View {
     
     var body: some View {
         HStack(spacing: 0) {
-            ManageViewSidebar(
+            Sidebar(
                 selectedCollection: .constant(nil),
                 groups: groups,
                 hashtags: .constant([])

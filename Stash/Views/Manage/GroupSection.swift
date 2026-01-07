@@ -8,7 +8,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 
-extension ManageViewSidebar {
+extension ManageView.Sidebar {
     struct GroupSection: View {
         @Binding var groups: [Group]
         @State private var expandedOnes: Set<UUID> = []
@@ -133,7 +133,7 @@ extension ManageViewSidebar {
     }
 }
 
-extension ManageViewSidebar {
+extension ManageView.Sidebar {
     private struct Node: View {
         let group: Group
         let getChildren: (UUID) -> [Group]
@@ -299,7 +299,7 @@ extension ManageViewSidebar {
     }
 }
 
-extension ManageViewSidebar {
+extension ManageView.Sidebar {
     private struct Row: View {
         let group: Group
         let level: Int

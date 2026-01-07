@@ -13,65 +13,69 @@ protocol Collection {
     
 }
 
-
-struct ManageViewSidebar: View {
-    @Binding var selectedCollection: Collection?
-    @State private var searchText = ""
-    @Binding var groups: [Group]
-    @Binding var hashtags: [Hashtag]
-    private let tags = ClipTag.sampleData
-    private let totalClips = 6
-    
-    var body: some View {
-        VStack(spacing: 0) {
-            // Traffic lights spacer
-            HStack {
+extension ManageView {
+    struct Sidebar: View {
+        @Binding var selectedCollection: Collection?
+        @State private var searchText = ""
+        @Binding var groups: [Group]
+        @Binding var hashtags: [Hashtag]
+        private let tags = ClipTag.sampleData
+        private let totalClips = 6
+        
+        var body: some View {
+            VStack(spacing: 0) {
+                // Traffic lights spacer
+                HStack {
+                    Spacer()
+                    Button(action: {}) {
+                        Image(systemName: "sidebar.left")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.white.opacity(0.6))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 12)
+                .padding(.bottom, 8)
+                
+                // Search bar
+                SearchBar(text: $searchText)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 20)
+                
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        AllBookmarksRow(
+                            count: totalClips,
+                            selected: false,
+                            onTap: {
+    //                            showAllClips = true
+    //                            selectedFolder = nil
+    //                            selectedTag = nil
+                            }
+                        )
+                        GroupSection(groups: $groups)
+                        TagSection(hashtags: $hashtags)
+                    }
+                    .padding(.horizontal, 16)
+                }
+                
                 Spacer()
-                Button(action: {}) {
-                    Image(systemName: "sidebar.left")
-                        .font(.system(size: 14))
-                        .foregroundStyle(.white.opacity(0.6))
-                }
-                .buttonStyle(.plain)
+                
+                // Footer
+                FooterView()
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 12)
-            .padding(.bottom, 8)
-            
-            // Search bar
-            SearchBar(text: $searchText)
-                .padding(.horizontal, 16)
-                .padding(.bottom, 20)
-            
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    AllBookmarksRow(
-                        count: totalClips,
-                        selected: false,
-                        onTap: {
-//                            showAllClips = true
-//                            selectedFolder = nil
-//                            selectedTag = nil
-                        }
-                    )
-                    GroupSection(groups: $groups)
-                    TagSection(hashtags: $hashtags)
-                }
-                .padding(.horizontal, 16)
-            }
-            
-            Spacer()
-            
-            // Footer
-            FooterView()
-                .padding(.horizontal, 16)
-                .padding(.bottom, 16)
+            .background(Color(hex: 0x22242B))
         }
-        .background(Color(hex: 0x22242B))
+        
+        
     }
-    
-    
 }
+
+
+
 
 // MARK: - Search Bar
 
@@ -98,9 +102,7 @@ private struct SearchBar: View {
     }
 }
 
-// MARK: - All Clips Row
-
-extension ManageViewSidebar {
+extension ManageView.Sidebar {
     private struct AllBookmarksRow: View {
         let count: Int
         let selected: Bool
@@ -138,7 +140,7 @@ extension ManageViewSidebar {
     }
 }
 
-extension ManageViewSidebar {
+extension ManageView.Sidebar {
     private struct TagSection: View {
         @Binding var hashtags: [Hashtag]
         

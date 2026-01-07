@@ -28,6 +28,10 @@ struct BookmarkList: View {
         return "All Clips"
     }
     
+    private var showBreadcrumb: Bool {
+        selectedFolder != nil || selectedTag != nil
+    }
+    
     private var filteredClips: [Clip] {
         if filterText.isEmpty {
             return clips
@@ -41,6 +45,7 @@ struct BookmarkList: View {
             HeaderView(
                 title: title,
                 itemCount: filteredClips.count,
+                showBreadcrumb: showBreadcrumb,
                 filterText: $filterText,
                 isListView: $isListView
             )
@@ -57,14 +62,21 @@ struct BookmarkList: View {
 private struct HeaderView: View {
     let title: String
     let itemCount: Int
+    let showBreadcrumb: Bool
     @Binding var filterText: String
     @Binding var isListView: Bool
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .top) {
+            HStack(alignment: .bottom) {
                 // Title and count
                 VStack(alignment: .leading, spacing: 4) {
+                    if showBreadcrumb {
+                        Text("All Clips")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                    }
+                    
                     Text(title)
                         .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(.primary)
@@ -177,6 +189,7 @@ private struct SortButton: View {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(Color.gray.opacity(0.3), lineWidth: 1)
             )
+            .fixedSize()
         }
         .buttonStyle(.plain)
     }
@@ -202,6 +215,7 @@ private struct AddClipButton: View {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(Color.accentGreen)
             )
+            .fixedSize()
         }
         .buttonStyle(.plain)
         .scaleEffect(isHovered ? 1.02 : 1.0)
@@ -264,14 +278,14 @@ private struct ClipRow: View {
     
     var body: some View {
         HStack(spacing: 16) {
-            // Initial avatar
+            // Initial avatar (circular)
             Text(clip.initial)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(.secondary)
                 .frame(width: 36, height: 36)
                 .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+                    Circle()
+                        .stroke(Color.gray.opacity(0.25), lineWidth: 1)
                 )
             
             // Title, tags, and domain
@@ -289,9 +303,9 @@ private struct ClipRow: View {
                 }
                 
                 HStack(spacing: 4) {
-                    Image(systemName: "link")
-                        .font(.system(size: 10))
-                        .foregroundStyle(.secondary.opacity(0.7))
+                    Image(systemName: "arrow.up.right")
+                        .font(.system(size: 9))
+                        .foregroundStyle(.secondary.opacity(0.6))
                     
                     Text(clip.domain)
                         .font(.system(size: 12))
