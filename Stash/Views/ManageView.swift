@@ -160,6 +160,6 @@ extension Clip {
 
 // MARK: - Preview
 
-//#Preview {
-//    ManageView()
-//}
+#Preview {
+    ManageView()
+}

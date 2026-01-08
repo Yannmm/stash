@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import AppKit
 
 extension ManageView {
     struct Content: View {
@@ -227,7 +228,7 @@ extension ManageView {
 
     // MARK: - Clip List View
 
-    private struct List: View {
+    struct List: View {
         let clips: [Clip]
         
         var body: some View {
@@ -256,15 +257,13 @@ extension ManageView {
                         ForEach(clips) { clip in
                             ClipRow(clip: clip)
                             Divider()
-                                .padding(.leading, 32)
                         }
                     }
                 }
             }
-            .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color(NSColor.controlBackgroundColor))
-                    .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+            .overlay(
+                RoundedRectangle(cornerRadius: 4)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
             )
             .padding(.horizontal, 32)
             .padding(.bottom, 32)
@@ -284,9 +283,9 @@ extension ManageView {
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(.secondary)
                     .frame(width: 36, height: 36)
-                    .background(
-                        Circle()
-                            .stroke(Color.gray.opacity(0.25), lineWidth: 1)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 4)
+                            .stroke(Color.gray.opacity(0.4), lineWidth: 0.5)
                     )
                 
                 // Title, tags, and domain
@@ -298,13 +297,13 @@ extension ManageView {
                         
                         ForEach(clip.tags, id: \.self) { tag in
                             Text("#\(tag)")
-                                .font(.system(size: 12))
+                                .font(.system(size: 14, weight: .thin))
                                 .foregroundStyle(.secondary)
                         }
                     }
                     
                     HStack(spacing: 4) {
-                        Image(systemName: "arrow.up.right")
+                        Image(systemName: "recordingtape")
                             .font(.system(size: 9))
                             .foregroundStyle(.secondary.opacity(0.6))
                         
@@ -320,11 +319,52 @@ extension ManageView {
                 Text(clip.formattedDate)
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
+                
+                // 3-dots menu (appears on hover)
+                if isHovered {
+                    Menu {
+                        Button(action: {
+                            copyClip()
+                        }) {
+                            Label("Copy", systemImage: "doc.on.doc")
+                        }
+                        
+                        Divider()
+                        
+                        Button(role: .destructive, action: {
+                            deleteClip()
+                        }) {
+                            Label("Delete", systemImage: "trash")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                            .frame(width: 24, height: 24)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
+                }
             }
-            .padding(.horizontal, 32)
+            .padding(.horizontal, 20)
             .padding(.vertical, 14)
-            .background(isHovered ? Color.gray.opacity(0.03) : Color.clear)
+            .background(
+                isHovered ? Color.gray.opacity(0.03) : Color.clear
+            )
+            .animation(.easeInOut(duration: 0.15), value: isHovered)
             .onHover { isHovered = $0 }
+        }
+        
+        private func copyClip() {
+            let pasteboard = NSPasteboard.general
+            pasteboard.clearContents()
+            pasteboard.setString(clip.title, forType: .string)
+        }
+        
+        private func deleteClip() {
+            // TODO: Implement delete functionality
+            print("Delete clip: \(clip.title)")
         }
     }
 }
@@ -333,4 +373,12 @@ extension ManageView {
 
 private extension Color {
     static let accentGreen = Color(red: 0.29, green: 0.73, blue: 0.45)
+}
+
+#Preview {
+    ManageView.Content(
+        selectedFolder: nil,
+        selectedTag: nil,
+        showAllClips: true
+    )
 }
