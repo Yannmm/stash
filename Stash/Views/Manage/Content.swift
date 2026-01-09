@@ -10,14 +10,21 @@ import AppKit
 
 extension ManageView {
     struct Content: View {
-        let selectedFolder: Folder?
+        @Binding var collection: Group?
+        @EnvironmentObject var cabinet: OkamuraCabinet
+        
+        private var bookmarks: [Bookmark] {
+            let entries = collection == nil ? cabinet.storedEntries : (collection?.children(among: cabinet.storedEntries) ?? [])
+            return entries.compactMap({ $0 as? Bookmark })
+        }
+        
+        
+        let selectedFolder: Folder? = nil
         let selectedTag: ClipTag?
         let showAllClips: Bool
         
         @State private var filterText = ""
         @State private var isListView = true
-        
-        private let clips = Clip.sampleData
         
         private var title: String {
             if showAllClips {
@@ -34,11 +41,12 @@ extension ManageView {
             selectedFolder != nil || selectedTag != nil
         }
         
-        private var filteredClips: [Clip] {
-            if filterText.isEmpty {
-                return clips
-            }
-            return clips.filter { $0.title.localizedCaseInsensitiveContains(filterText) }
+        private var filteredClips: [Bookmark] {
+//            if filterText.isEmpty {
+//                return clips
+//            }
+//            return clips.filter { $0.title.localizedCaseInsensitiveContains(filterText) }
+            return []
         }
         
         var body: some View {
@@ -53,7 +61,7 @@ extension ManageView {
                 )
                 
                 // Clip list
-                List(clips: filteredClips)
+                List(bookmarks: bookmarks)
             }
             .background(Color(NSColor.textBackgroundColor))
         }
@@ -229,7 +237,7 @@ extension ManageView {
     // MARK: - Clip List View
 
     struct List: View {
-        let clips: [Clip]
+        let bookmarks: [Bookmark]
         
         var body: some View {
             VStack(spacing: 0) {
@@ -238,14 +246,15 @@ extension ManageView {
                     Text("NAME")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.secondary)
+                        .padding(.leading, 16 + 36 + 20)
                     
                     Spacer()
                     
                     Text("ADDED")
                         .font(.system(size: 11, weight: .medium))
                         .foregroundStyle(.secondary)
+                        .padding(.trailing, 20)
                 }
-                .padding(.horizontal, 32)
                 .padding(.vertical, 12)
                 .background(Color.gray.opacity(0.03))
                 
@@ -254,8 +263,8 @@ extension ManageView {
                 // Clip rows
                 ScrollView {
                     LazyVStack(spacing: 0) {
-                        ForEach(clips) { clip in
-                            ClipRow(clip: clip)
+                        ForEach(bookmarks) { b in
+                            Row(bookmark: b)
                             Divider()
                         }
                     }
@@ -272,15 +281,22 @@ extension ManageView {
 
     // MARK: - Clip Row
 
-    private struct ClipRow: View {
-        let clip: Clip
+    private struct Row: View {
+        let bookmark: Bookmark
         @State private var isHovered = false
         
         var body: some View {
             HStack(spacing: 16) {
-                // Initial avatar (circular)
-                Text(clip.initial)
-                    .font(.system(size: 14, weight: .medium))
+//                Text("A")
+//                    .font(.system(size: 14, weight: .medium))
+//                    .foregroundStyle(.secondary)
+//                    .frame(width: 36, height: 36)
+//                    .overlay(
+//                        RoundedRectangle(cornerRadius: 4)
+//                            .stroke(Color.gray.opacity(0.4), lineWidth: 0.5)
+//                    )
+                
+                ViewHelper.icon(bookmark.icon, side: 24)
                     .foregroundStyle(.secondary)
                     .frame(width: 36, height: 36)
                     .overlay(
@@ -291,15 +307,15 @@ extension ManageView {
                 // Title, tags, and domain
                 VStack(alignment: .leading, spacing: 4) {
                     HStack(spacing: 8) {
-                        Text(clip.title)
+                        Text(bookmark.name)
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(.primary)
                         
-                        ForEach(clip.tags, id: \.self) { tag in
-                            Text("#\(tag)")
-                                .font(.system(size: 14, weight: .thin))
-                                .foregroundStyle(.secondary)
-                        }
+//                        ForEach(clip.tags, id: \.self) { tag in
+//                            Text("#\(tag)")
+//                                .font(.system(size: 14, weight: .thin))
+//                                .foregroundStyle(.secondary)
+//                        }
                     }
                     
                     HStack(spacing: 4) {
@@ -307,7 +323,7 @@ extension ManageView {
                             .font(.system(size: 9))
                             .foregroundStyle(.secondary.opacity(0.6))
                         
-                        Text(clip.domain)
+                        Text("baidu.com")
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
                     }
@@ -316,7 +332,7 @@ extension ManageView {
                 Spacer()
                 
                 // Date
-                Text(clip.formattedDate)
+                Text("this is group")
                     .font(.system(size: 13))
                     .foregroundStyle(.secondary)
                 
@@ -359,12 +375,12 @@ extension ManageView {
         private func copyClip() {
             let pasteboard = NSPasteboard.general
             pasteboard.clearContents()
-            pasteboard.setString(clip.title, forType: .string)
+            pasteboard.setString(bookmark.name, forType: .string)
         }
         
         private func deleteClip() {
             // TODO: Implement delete functionality
-            print("Delete clip: \(clip.title)")
+            print("Delete clip: \(bookmark.name)")
         }
     }
 }
@@ -375,10 +391,10 @@ private extension Color {
     static let accentGreen = Color(red: 0.29, green: 0.73, blue: 0.45)
 }
 
-#Preview {
-    ManageView.Content(
-        selectedFolder: nil,
-        selectedTag: nil,
-        showAllClips: true
-    )
-}
+//#Preview {
+//    ManageView.Content(
+//        selectedFolder: nil,
+//        selectedTag: nil,
+//        showAllClips: true
+//    )
+//}

@@ -23,23 +23,23 @@ struct ClipTag: Identifiable, Hashable {
     let name: String
 }
 
-struct Clip: Identifiable {
-    let id = UUID()
-    let title: String
-    let domain: String
-    let tags: [String]
-    let dateAdded: Date
-    
-    var initial: String {
-        String(title.prefix(1)).uppercased()
-    }
-    
-    var formattedDate: String {
-        let formatter = DateFormatter()
-        formatter.dateFormat = "MMM dd, yyyy"
-        return formatter.string(from: dateAdded)
-    }
-}
+//struct Clip: Identifiable {
+//    let id = UUID()
+//    let title: String
+//    let domain: String
+//    let tags: [String]
+//    let dateAdded: Date
+//    
+//    var initial: String {
+//        String(title.prefix(1)).uppercased()
+//    }
+//    
+//    var formattedDate: String {
+//        let formatter = DateFormatter()
+//        formatter.dateFormat = "MMM dd, yyyy"
+//        return formatter.string(from: dateAdded)
+//    }
+//}
 
 // MARK: - ManageView
 
@@ -81,7 +81,7 @@ struct ManageView: View {
             .frame(width: 300)
             
             Content(
-                selectedFolder: selectedFolder,
+                collection: .constant(nil),
                 selectedTag: selectedTag,
                 showAllClips: showAllClips
             )
@@ -107,55 +107,6 @@ extension ClipTag {
         ClipTag(name: "Design"),
         ClipTag(name: "Development")
     ]
-}
-
-extension Clip {
-    static let sampleData: [Clip] = [
-        Clip(
-            title: "Misguided Nostalgia for Our Paleo Pasts",
-            domain: "chronicle.com",
-            tags: [],
-            dateAdded: createDate(year: 2023, month: 11, day: 10)
-        ),
-        Clip(
-            title: "Visualizing The Beatles",
-            domain: "visualizingthebeatles.com",
-            tags: ["Design"],
-            dateAdded: createDate(year: 2023, month: 10, day: 28)
-        ),
-        Clip(
-            title: "Design for the Other 90%",
-            domain: "cooperhewitt.org",
-            tags: ["Design"],
-            dateAdded: createDate(year: 2023, month: 10, day: 6)
-        ),
-        Clip(
-            title: "CSS Grid Layout Guide",
-            domain: "css-tricks.com",
-            tags: ["Development"],
-            dateAdded: createDate(year: 2023, month: 9, day: 6)
-        ),
-        Clip(
-            title: "Refactoring UI",
-            domain: "refactoringui.com",
-            tags: ["Design", "Development"],
-            dateAdded: createDate(year: 2023, month: 7, day: 13)
-        ),
-        Clip(
-            title: "The Future of Interface Design",
-            domain: "interface.design",
-            tags: [],
-            dateAdded: createDate(year: 2023, month: 3, day: 22)
-        )
-    ]
-    
-    private static func createDate(year: Int, month: Int, day: Int) -> Date {
-        var components = DateComponents()
-        components.year = year
-        components.month = month
-        components.day = day
-        return Calendar.current.date(from: components) ?? Date()
-    }
 }
 
 // MARK: - Preview
