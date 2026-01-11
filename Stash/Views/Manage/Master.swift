@@ -9,7 +9,7 @@ import SwiftUI
 import AppKit
 
 extension ManageView {
-    struct Content: View {
+    struct Master: View {
         @Binding var collection: Group?
         @EnvironmentObject var cabinet: OkamuraCabinet
         
@@ -42,10 +42,10 @@ extension ManageView {
         }
         
         private var filteredClips: [Bookmark] {
-//            if filterText.isEmpty {
-//                return clips
-//            }
-//            return clips.filter { $0.title.localizedCaseInsensitiveContains(filterText) }
+            //            if filterText.isEmpty {
+            //                return clips
+            //            }
+            //            return clips.filter { $0.title.localizedCaseInsensitiveContains(filterText) }
             return []
         }
         
@@ -66,9 +66,9 @@ extension ManageView {
             .background(Color(NSColor.textBackgroundColor))
         }
     }
-
+    
     // MARK: - Header View
-
+    
     private struct HeaderView: View {
         let title: String
         let itemCount: Int
@@ -119,9 +119,9 @@ extension ManageView {
             .padding(.bottom, 24)
         }
     }
-
+    
     // MARK: - Filter Field
-
+    
     private struct FilterField: View {
         @Binding var text: String
         
@@ -144,9 +144,9 @@ extension ManageView {
             )
         }
     }
-
+    
     // MARK: - View Toggle
-
+    
     private struct ViewToggle: View {
         @Binding var isListView: Bool
         
@@ -176,9 +176,9 @@ extension ManageView {
             )
         }
     }
-
+    
     // MARK: - Sort Button
-
+    
     private struct SortButton: View {
         var body: some View {
             Menu {
@@ -204,9 +204,9 @@ extension ManageView {
             .buttonStyle(.plain)
         }
     }
-
+    
     // MARK: - Add Clip Button
-
+    
     private struct AddClipButton: View {
         @State private var isHovered = false
         
@@ -233,42 +233,32 @@ extension ManageView {
             .animation(.easeInOut(duration: 0.15), value: isHovered)
         }
     }
-
+    
     // MARK: - Clip List View
-
+    
     struct List: View {
         let bookmarks: [Bookmark]
+        @EnvironmentObject var cabinet: OkamuraCabinet
         
         var body: some View {
             VStack(spacing: 0) {
-                // Table header
-                HStack {
-                    Text("NAME")
-                        .font(.system(size: 11, weight: .medium))
+                Table(bookmarks) {
+                    TableColumn(Text("                   Name")
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(.secondary)
-                        .padding(.leading, 16 + 36 + 20)
-                    
-                    Spacer()
-                    
-                    Text("ADDED")
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .padding(.trailing, 20)
-                }
-                .padding(.vertical, 12)
-                .background(Color.gray.opacity(0.03))
-                
-                Divider()
-                
-                // Clip rows
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(bookmarks) { b in
-                            Row(bookmark: b)
-                            Divider()
-                        }
+                        ) { bookmark in
+                        TableRowView(bookmark: bookmark, cabinet: cabinet)
                     }
+                    .width(min: 200)
+                    
+                    TableColumn(Text("Group")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.secondary)) { bookmark in
+                            GroupColumnView(bookmark: bookmark, cabinet: cabinet)
+                        }
+                        .width(min: 100)
                 }
+                .tableStyle(.bordered)
             }
             .overlay(
                 RoundedRectangle(cornerRadius: 4)
@@ -278,24 +268,15 @@ extension ManageView {
             .padding(.bottom, 32)
         }
     }
-
-    // MARK: - Clip Row
-
-    private struct Row: View {
+    
+    // MARK: - Table Row View
+    
+    private struct TableRowView: View {
         let bookmark: Bookmark
-        @State private var isHovered = false
+        let cabinet: OkamuraCabinet
         
         var body: some View {
             HStack(spacing: 16) {
-//                Text("A")
-//                    .font(.system(size: 14, weight: .medium))
-//                    .foregroundStyle(.secondary)
-//                    .frame(width: 36, height: 36)
-//                    .overlay(
-//                        RoundedRectangle(cornerRadius: 4)
-//                            .stroke(Color.gray.opacity(0.4), lineWidth: 0.5)
-//                    )
-                
                 ViewHelper.icon(bookmark.icon, side: 24)
                     .foregroundStyle(.secondary)
                     .frame(width: 36, height: 36)
@@ -304,83 +285,50 @@ extension ManageView {
                             .stroke(Color.gray.opacity(0.4), lineWidth: 0.5)
                     )
                 
-                // Title, tags, and domain
+                // Title and domain
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack(spacing: 8) {
-                        Text(bookmark.name)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(.primary)
-                        
-//                        ForEach(clip.tags, id: \.self) { tag in
-//                            Text("#\(tag)")
-//                                .font(.system(size: 14, weight: .thin))
-//                                .foregroundStyle(.secondary)
-//                        }
-                    }
+                    Text(bookmark.name)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
                     
                     HStack(spacing: 4) {
                         Image(systemName: "recordingtape")
                             .font(.system(size: 9))
                             .foregroundStyle(.secondary.opacity(0.6))
                         
-                        Text("baidu.com")
+                        Text(bookmark.url.host() ?? bookmark.url.absoluteString)
                             .font(.system(size: 12))
                             .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
                     }
-                }
-                
-                Spacer()
-                
-                // Date
-                Text("this is group")
-                    .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
-                
-                // 3-dots menu (appears on hover)
-                if isHovered {
-                    Menu {
-                        Button(action: {
-                            copyClip()
-                        }) {
-                            Label("Copy", systemImage: "doc.on.doc")
-                        }
-                        
-                        Divider()
-                        
-                        Button(role: .destructive, action: {
-                            deleteClip()
-                        }) {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    } label: {
-                        Image(systemName: "ellipsis")
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
-                            .frame(width: 24, height: 24)
-                            .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                    .transition(.opacity.combined(with: .scale(scale: 0.9)))
                 }
             }
-            .padding(.horizontal, 20)
-            .padding(.vertical, 14)
-            .background(
-                isHovered ? Color.gray.opacity(0.03) : Color.clear
-            )
-            .animation(.easeInOut(duration: 0.15), value: isHovered)
-            .onHover { isHovered = $0 }
+            .padding(.vertical, 6)
+            .padding(.leading, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+    
+    // MARK: - Group Column View
+    
+    private struct GroupColumnView: View {
+        let bookmark: Bookmark
+        let cabinet: OkamuraCabinet
+        
+        var group: Group? {
+            cabinet.storedEntries.first(where: { $0.id == bookmark.parentId }) as? Group
         }
         
-        private func copyClip() {
-            let pasteboard = NSPasteboard.general
-            pasteboard.clearContents()
-            pasteboard.setString(bookmark.name, forType: .string)
-        }
-        
-        private func deleteClip() {
-            // TODO: Implement delete functionality
-            print("Delete clip: \(bookmark.name)")
+        var body: some View {
+            Text(group?.name ?? "")
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 }

@@ -80,7 +80,7 @@ struct ManageView: View {
             )
             .frame(width: 300)
             
-            Content(
+            Master(
                 collection: .constant(nil),
                 selectedTag: selectedTag,
                 showAllClips: showAllClips
