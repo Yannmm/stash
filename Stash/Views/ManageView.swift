@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AppKit
+import Combine
 
 // Refer to https://dribbble.com/shots/14567500-Bookmark-app-v2
 
@@ -55,6 +56,8 @@ struct ManageView: View {
     @State private var selectedTag: ClipTag?
     @State private var showAllClips = true
     
+    @State private var collection: Collectible?
+    
     @EnvironmentObject var cabinet: OkamuraCabinet
     
     private var groups: Binding<[Group]> {
@@ -74,7 +77,7 @@ struct ManageView: View {
     var body: some View {
         HStack(spacing: 0) {
             Sidebar(
-                selectedCollection: .constant(nil),
+                collection: $collection,
                 groups: groups,
                 hashtags: .constant([])
             )
@@ -82,11 +85,22 @@ struct ManageView: View {
             
             Master(
                 collection: .constant(nil),
-                selectedTag: selectedTag,
-                showAllClips: showAllClips
+                selectedTag: selectedTag
             )
         }
         .frame(minWidth: 1000, minHeight: 650)
+        .onReceive(Just(collection)) { newValue in
+            print("Collection changed:")
+//            print("  Old value: \(oldValue.map { String(describing: $0) } ?? "nil")")
+            print("  New value: \(newValue.map { String(describing: $0) } ?? "nil")")
+            if let group = newValue as? Group {
+                print("  Type: Group (id: \(group.id), name: \(group.name))")
+            } else if let hashtag = newValue as? Hashtag {
+                print("  Type: Hashtag (name: \(hashtag.name))")
+            } else {
+                print("  Type: nil")
+            }
+        }
     }
 }
 

@@ -18,27 +18,20 @@ extension ManageView {
             return entries.compactMap({ $0 as? Bookmark })
         }
         
-        
-        let selectedFolder: Folder? = nil
         let selectedTag: ClipTag?
-        let showAllClips: Bool
         
         @State private var filterText = ""
-        @State private var isListView = true
         
         private var title: String {
-            if showAllClips {
-                return "All Clips"
-            } else if let folder = selectedFolder {
-                return folder.name
-            } else if let tag = selectedTag {
-                return "#\(tag.name)"
+            if let c = collection {
+                return c.name
+            } else {
+                return "All Bookmarks"
             }
-            return "All Clips"
         }
         
         private var showBreadcrumb: Bool {
-            selectedFolder != nil || selectedTag != nil
+            true
         }
         
         private var filteredClips: [Bookmark] {
@@ -56,8 +49,7 @@ extension ManageView {
                     title: title,
                     itemCount: filteredClips.count,
                     showBreadcrumb: showBreadcrumb,
-                    filterText: $filterText,
-                    isListView: $isListView
+                    filterText: $filterText
                 )
                 
                 // Clip list
@@ -74,18 +66,17 @@ extension ManageView {
         let itemCount: Int
         let showBreadcrumb: Bool
         @Binding var filterText: String
-        @Binding var isListView: Bool
         
         var body: some View {
             VStack(alignment: .leading, spacing: 16) {
-                HStack(alignment: .bottom) {
+                HStack(alignment: .top) {
                     // Title and count
                     VStack(alignment: .leading, spacing: 4) {
-                        if showBreadcrumb {
-                            Text("All Clips")
-                                .font(.system(size: 13))
-                                .foregroundStyle(.secondary)
-                        }
+//                        if showBreadcrumb {
+//                            Text("All Clips")
+//                                .font(.system(size: 13))
+//                                .foregroundStyle(.secondary)
+//                        }
                         
                         Text(title)
                             .font(.system(size: 28, weight: .bold))
@@ -104,10 +95,7 @@ extension ManageView {
                         FilterField(text: $filterText)
                         
                         // View toggle
-                        ViewToggle(isListView: $isListView)
-                        
-                        // Sort button
-                        SortButton()
+//                        ViewToggle(isListView: $isListView)
                         
                         // Add Clip button
                         AddClipButton()
@@ -177,34 +165,6 @@ extension ManageView {
         }
     }
     
-    // MARK: - Sort Button
-    
-    private struct SortButton: View {
-        var body: some View {
-            Menu {
-                Button("Date Added") {}
-                Button("Name") {}
-                Button("Domain") {}
-            } label: {
-                HStack(spacing: 6) {
-                    Text("Sort")
-                        .font(.system(size: 14))
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 10))
-                }
-                .foregroundStyle(.primary)
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                )
-                .fixedSize()
-            }
-            .buttonStyle(.plain)
-        }
-    }
-    
     // MARK: - Add Clip Button
     
     private struct AddClipButton: View {
@@ -241,28 +201,29 @@ extension ManageView {
         @EnvironmentObject var cabinet: OkamuraCabinet
         
         var body: some View {
-            VStack(spacing: 0) {
-                Table(bookmarks) {
-                    TableColumn(Text("                   Name")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        ) { bookmark in
-                        TableRowView(bookmark: bookmark, cabinet: cabinet)
-                    }
-                    .width(min: 200)
-                    
-                    TableColumn(Text("Group")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.secondary)) { bookmark in
-                            GroupColumnView(bookmark: bookmark, cabinet: cabinet)
-                        }
-                        .width(min: 100)
+            Table(bookmarks) {
+                TableColumn(Text("                   Name")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                ) { bookmark in
+                    TableRowView(bookmark: bookmark, cabinet: cabinet)
                 }
-                .tableStyle(.bordered)
+                .width(min: 200)
+                
+                TableColumn(Text("Group")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)) { bookmark in
+                        GroupColumnView(bookmark: bookmark, cabinet: cabinet)
+                    }
+                    .width(min: 100)
             }
+            .tableStyle(.bordered) // ⬅️ important
+            .clipShape(
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+            )
             .overlay(
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 0.5)
+                RoundedRectangle(cornerRadius: 4, style: .continuous)
+                    .stroke(Color.gray.opacity(0.25), lineWidth: 0.5)
             )
             .padding(.horizontal, 32)
             .padding(.bottom, 32)

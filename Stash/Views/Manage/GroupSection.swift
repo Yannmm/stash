@@ -11,9 +11,9 @@ import UniformTypeIdentifiers
 extension ManageView.Sidebar {
     struct GroupSection: View {
         @Binding var groups: [Group]
+        @Binding var selectedOne: Group?
         @State private var expandedOnes: Set<UUID> = []
         @State private var draggingOne: Group?
-        @State private var selectedOne: Group?
         
         private var roots: [Group] {
             groups.filter { $0.parentId == nil }

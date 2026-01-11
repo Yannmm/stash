@@ -12,3 +12,5 @@ struct Hashtag {
 extension Hashtag: Identifiable {
     var id: String { name }
 }
+
+extension Hashtag: Collectible {}

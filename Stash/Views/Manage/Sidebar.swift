@@ -7,15 +7,9 @@
 
 import SwiftUI
 
-
-// A collection can be a group or hashtag
-protocol Collection {
-    
-}
-
 extension ManageView {
     struct Sidebar: View {
-        @Binding var selectedCollection: Collection?
+        @Binding var collection: Collectible?
         @State private var searchText = ""
         @Binding var groups: [Group]
         @Binding var hashtags: [Hashtag]
@@ -49,12 +43,20 @@ extension ManageView {
                             count: totalClips,
                             selected: false,
                             onTap: {
-    //                            showAllClips = true
-    //                            selectedFolder = nil
-    //                            selectedTag = nil
+                                //                            showAllClips = true
+                                //                            selectedFolder = nil
+                                //                            selectedTag = nil
+                                collection = nil
                             }
                         )
-                        GroupSection(groups: $groups)
+                        GroupSection(groups: $groups, selectedOne: Binding<Group?>(
+                            get: {
+                                collection as? Group
+                            },
+                            set: { newGroup in
+                                collection = newGroup
+                            }
+                        ))
                         TagSection(hashtags: $hashtags)
                     }
                     .padding(.horizontal, 16)
@@ -155,9 +157,9 @@ extension ManageView.Sidebar {
                             hashtag: tag,
                             isSelected: false,
                             action: {
-//                                    selectedTag = tag
-//                                    selectedFolder = nil
-//                                    showAllClips = false
+                                //                                    selectedTag = tag
+                                //                                    selectedFolder = nil
+                                //                                    showAllClips = false
                             }
                         )
                     }
@@ -234,7 +236,7 @@ private struct FooterView: View {
 //    let group3 = UUID()
 //    let child1 = UUID()
 //    let child2 = UUID()
-//    
+//
 //    return ManageViewSidebar(
 //        selectedCollection: .constant(nil),
 //        groups: .constant([

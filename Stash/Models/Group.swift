@@ -27,3 +27,5 @@ extension Group: Entry {
 extension Group {
     var unboxable: Bool { container }
 }
+
+extension Group: Collectible {}
