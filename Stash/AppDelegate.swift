@@ -173,7 +173,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func setupCollectionWindow() {
-        let manageView = ManageView().environmentObject(cabinet)
+        let manageView = ManageView(viewModel: WorkbenchViewModel(entries: self.cabinet.storedEntries)).environmentObject(cabinet)
         let hostingView = NSHostingView(rootView: manageView)
         
         collectionWindow = NSWindow(

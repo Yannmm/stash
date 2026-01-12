@@ -28,4 +28,10 @@ extension Group {
     var unboxable: Bool { container }
 }
 
-extension Group: Collectible {}
+extension Group: Collectible {
+    var title: String { name }
+    
+    func relatedEntries(_ entries: [any Entry]) -> [any Entry] {
+        self.children(among: entries)
+    }
+}

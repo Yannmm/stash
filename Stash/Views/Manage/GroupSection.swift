@@ -206,7 +206,7 @@ extension ManageView.Sidebar {
                     draggedGroup: $draggingOne,
                     dragOver: $dragOver,
                     dragOverPosition: $dragOverPosition,
-                    onDrop: onDrop
+                      onDrop: onDrop
                 ))
                 .onHover { isHovered = $0 }
                 

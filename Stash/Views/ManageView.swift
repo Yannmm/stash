@@ -56,9 +56,11 @@ struct ManageView: View {
     @State private var selectedTag: ClipTag?
     @State private var showAllClips = true
     
-    @State private var collection: Collectible?
+//    @State private var collection: Collectible?
     
     @EnvironmentObject var cabinet: OkamuraCabinet
+    
+    @StateObject var viewModel: WorkbenchViewModel
     
     private var groups: Binding<[Group]> {
         Binding(
@@ -77,30 +79,19 @@ struct ManageView: View {
     var body: some View {
         HStack(spacing: 0) {
             Sidebar(
-                collection: $collection,
+                collection: $viewModel.collection,
                 groups: groups,
                 hashtags: .constant([])
             )
             .frame(width: 300)
             
-            Master(
+            Workbench(
                 collection: .constant(nil),
                 selectedTag: selectedTag
             )
+            .environmentObject(viewModel)
         }
         .frame(minWidth: 1000, minHeight: 650)
-        .onReceive(Just(collection)) { newValue in
-            print("Collection changed:")
-//            print("  Old value: \(oldValue.map { String(describing: $0) } ?? "nil")")
-            print("  New value: \(newValue.map { String(describing: $0) } ?? "nil")")
-            if let group = newValue as? Group {
-                print("  Type: Group (id: \(group.id), name: \(group.name))")
-            } else if let hashtag = newValue as? Hashtag {
-                print("  Type: Hashtag (name: \(hashtag.name))")
-            } else {
-                print("  Type: nil")
-            }
-        }
     }
 }
 
@@ -125,6 +116,6 @@ extension ClipTag {
 
 // MARK: - Preview
 
-#Preview {
-    ManageView()
-}
+//#Preview {
+//    ManageView()
+//}

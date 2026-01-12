@@ -9,12 +9,15 @@ import SwiftUI
 import AppKit
 
 extension ManageView {
-    struct Master: View {
-        @Binding var collection: Group?
+    struct Workbench: View {
+        // TODO: how to insert WorkbenchViewModel here and down below?
+        
+        
+        @Binding var collection: Collectible?
         @EnvironmentObject var cabinet: OkamuraCabinet
         
         private var bookmarks: [Bookmark] {
-            let entries = collection == nil ? cabinet.storedEntries : (collection?.children(among: cabinet.storedEntries) ?? [])
+            let entries = collection == nil ? cabinet.storedEntries : ((collection as? Group)?.children(among: cabinet.storedEntries) ?? [])
             return entries.compactMap({ $0 as? Bookmark })
         }
         
@@ -23,15 +26,11 @@ extension ManageView {
         @State private var filterText = ""
         
         private var title: String {
-            if let c = collection {
-                return c.name
+            if let c = collection, let g = c as? Group {
+                return g.name
             } else {
                 return "All Bookmarks"
             }
-        }
-        
-        private var showBreadcrumb: Bool {
-            true
         }
         
         private var filteredClips: [Bookmark] {
@@ -44,11 +43,7 @@ extension ManageView {
         
         var body: some View {
             VStack(alignment: .leading, spacing: 0) {
-                // Header
-                HeaderView(
-                    title: title,
-                    itemCount: filteredClips.count,
-                    showBreadcrumb: showBreadcrumb,
+                Toolbar(
                     filterText: $filterText
                 )
                 
@@ -61,138 +56,11 @@ extension ManageView {
     
     // MARK: - Header View
     
-    private struct HeaderView: View {
-        let title: String
-        let itemCount: Int
-        let showBreadcrumb: Bool
-        @Binding var filterText: String
-        
-        var body: some View {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack(alignment: .top) {
-                    // Title and count
-                    VStack(alignment: .leading, spacing: 4) {
-//                        if showBreadcrumb {
-//                            Text("All Clips")
-//                                .font(.system(size: 13))
-//                                .foregroundStyle(.secondary)
-//                        }
-                        
-                        Text(title)
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundStyle(.primary)
-                        
-                        Text("\(itemCount) items")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.secondary)
-                    }
-                    
-                    Spacer()
-                    
-                    // Controls
-                    HStack(spacing: 12) {
-                        // Filter search
-                        FilterField(text: $filterText)
-                        
-                        // View toggle
-//                        ViewToggle(isListView: $isListView)
-                        
-                        // Add Clip button
-                        AddClipButton()
-                    }
-                }
-            }
-            .padding(.top, 40)
-            .padding(.horizontal, 32)
-            .padding(.bottom, 24)
-        }
-    }
+    
     
     // MARK: - Filter Field
     
-    private struct FilterField: View {
-        @Binding var text: String
-        
-        var body: some View {
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
-                
-                TextField("Filter...", text: $text)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 14))
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .frame(width: 160)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-            )
-        }
-    }
     
-    // MARK: - View Toggle
-    
-    private struct ViewToggle: View {
-        @Binding var isListView: Bool
-        
-        var body: some View {
-            HStack(spacing: 0) {
-                Button(action: { isListView = true }) {
-                    Image(systemName: "list.bullet")
-                        .font(.system(size: 13))
-                        .foregroundStyle(isListView ? .primary : .secondary)
-                        .frame(width: 32, height: 28)
-                        .background(isListView ? Color.gray.opacity(0.1) : Color.clear)
-                }
-                .buttonStyle(.plain)
-                
-                Button(action: { isListView = false }) {
-                    Image(systemName: "square.grid.2x2")
-                        .font(.system(size: 13))
-                        .foregroundStyle(!isListView ? .primary : .secondary)
-                        .frame(width: 32, height: 28)
-                        .background(!isListView ? Color.gray.opacity(0.1) : Color.clear)
-                }
-                .buttonStyle(.plain)
-            }
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-            )
-        }
-    }
-    
-    // MARK: - Add Clip Button
-    
-    private struct AddClipButton: View {
-        @State private var isHovered = false
-        
-        var body: some View {
-            Button(action: {}) {
-                HStack(spacing: 6) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 12, weight: .semibold))
-                    Text("Add Clip")
-                        .font(.system(size: 14, weight: .medium))
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.accentGreen)
-                )
-                .fixedSize()
-            }
-            .buttonStyle(.plain)
-            .scaleEffect(isHovered ? 1.02 : 1.0)
-            .onHover { isHovered = $0 }
-            .animation(.easeInOut(duration: 0.15), value: isHovered)
-        }
-    }
     
     // MARK: - Clip List View
     
@@ -290,6 +158,132 @@ extension ManageView {
                 .lineLimit(1)
                 .truncationMode(.tail)
                 .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+extension ManageView.Workbench {
+    
+    
+    struct Toolbar: View {
+        @Binding var filterText: String
+        @EnvironmentObject var viewModel: WorkbenchViewModel
+        
+        var body: some View {
+            VStack(alignment: .leading, spacing: 16) {
+                HStack(alignment: .top) {
+                    // Title and count
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(viewModel.title)
+                            .font(.system(size: 28, weight: .bold))
+                            .foregroundStyle(.primary)
+                        Text("\(viewModel.bookmarkCount) + \(viewModel.groupCount)")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    Spacer()
+                    
+                    // Controls
+                    HStack(spacing: 12) {
+                        // Filter search
+                        FilterField(text: $filterText)
+                        
+                        // View toggle
+//                        ViewToggle(isListView: $isListView)
+                        
+                        // Add Clip button
+                        AddClipButton()
+                    }
+                }
+            }
+            .padding(.top, 40)
+            .padding(.horizontal, 32)
+            .padding(.bottom, 24)
+        }
+    }
+    
+    private struct FilterField: View {
+        @Binding var text: String
+        
+        var body: some View {
+            HStack(spacing: 8) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.secondary)
+                
+                TextField("Filter...", text: $text)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 14))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .frame(width: 160)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+            )
+        }
+    }
+    
+    // MARK: - View Toggle
+    
+    private struct ViewToggle: View {
+        @Binding var isListView: Bool
+        
+        var body: some View {
+            HStack(spacing: 0) {
+                Button(action: { isListView = true }) {
+                    Image(systemName: "list.bullet")
+                        .font(.system(size: 13))
+                        .foregroundStyle(isListView ? .primary : .secondary)
+                        .frame(width: 32, height: 28)
+                        .background(isListView ? Color.gray.opacity(0.1) : Color.clear)
+                }
+                .buttonStyle(.plain)
+                
+                Button(action: { isListView = false }) {
+                    Image(systemName: "square.grid.2x2")
+                        .font(.system(size: 13))
+                        .foregroundStyle(!isListView ? .primary : .secondary)
+                        .frame(width: 32, height: 28)
+                        .background(!isListView ? Color.gray.opacity(0.1) : Color.clear)
+                }
+                .buttonStyle(.plain)
+            }
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+            )
+        }
+    }
+    
+    // MARK: - Add Clip Button
+    
+    private struct AddClipButton: View {
+        @State private var isHovered = false
+        
+        var body: some View {
+            Button(action: {}) {
+                HStack(spacing: 6) {
+                    Image(systemName: "plus")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text("Add Clip")
+                        .font(.system(size: 14, weight: .medium))
+                }
+                .foregroundColor(.white)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.accentGreen)
+                )
+                .fixedSize()
+            }
+            .buttonStyle(.plain)
+            .scaleEffect(isHovered ? 1.02 : 1.0)
+            .onHover { isHovered = $0 }
+            .animation(.easeInOut(duration: 0.15), value: isHovered)
         }
     }
 }

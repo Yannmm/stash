@@ -7,5 +7,7 @@
 
 // A collection can be a group or hashtag
 protocol Collectible {
+    var title: String { get }
     
+    func relatedEntries(_ entries: [any Entry]) -> [any Entry]
 }
