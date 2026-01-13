@@ -85,8 +85,7 @@ struct ManageView: View {
             )
             .frame(width: 300)
             
-            Workbench(
-                collection: .constant(nil),
+            WorkbenchView(
                 selectedTag: selectedTag
             )
             .environmentObject(viewModel)

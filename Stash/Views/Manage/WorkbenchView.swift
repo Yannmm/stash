@@ -9,24 +9,15 @@ import SwiftUI
 import AppKit
 
 extension ManageView {
-    struct Workbench: View {
-        // TODO: how to insert WorkbenchViewModel here and down below?
-        
-        
-        @Binding var collection: Collectible?
-        @EnvironmentObject var cabinet: OkamuraCabinet
-        
-        private var bookmarks: [Bookmark] {
-            let entries = collection == nil ? cabinet.storedEntries : ((collection as? Group)?.children(among: cabinet.storedEntries) ?? [])
-            return entries.compactMap({ $0 as? Bookmark })
-        }
+    struct WorkbenchView: View {
+        @EnvironmentObject var viewModel: WorkbenchViewModel
         
         let selectedTag: ClipTag?
         
         @State private var filterText = ""
         
         private var title: String {
-            if let c = collection, let g = c as? Group {
+            if let c = viewModel.collection, let g = c as? Group {
                 return g.name
             } else {
                 return "All Bookmarks"
@@ -46,24 +37,15 @@ extension ManageView {
                 Toolbar(
                     filterText: $filterText
                 )
+                .padding(.top, 36)
+                .padding(.horizontal, 32)
+                .padding(.bottom, 24)
                 
-                // Clip list
-                List(bookmarks: bookmarks)
+                List(bookmarks: viewModel.bookmarks)
             }
             .background(Color(NSColor.textBackgroundColor))
         }
     }
-    
-    // MARK: - Header View
-    
-    
-    
-    // MARK: - Filter Field
-    
-    
-    
-    // MARK: - Clip List View
-    
     struct List: View {
         let bookmarks: [Bookmark]
         @EnvironmentObject var cabinet: OkamuraCabinet
@@ -162,48 +144,32 @@ extension ManageView {
     }
 }
 
-extension ManageView.Workbench {
-    
-    
+extension ManageView.WorkbenchView {
     struct Toolbar: View {
         @Binding var filterText: String
         @EnvironmentObject var viewModel: WorkbenchViewModel
         
         var body: some View {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 8) {
                 HStack(alignment: .top) {
-                    // Title and count
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(viewModel.title)
-                            .font(.system(size: 28, weight: .bold))
-                            .foregroundStyle(.primary)
-                        Text("\(viewModel.bookmarkCount) + \(viewModel.groupCount)")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.secondary)
-                    }
-                    
+                    Text(viewModel.title)
+                        .font(.system(size: 28, weight: .bold))
+                        .foregroundStyle(.primary)
                     Spacer()
-                    
-                    // Controls
                     HStack(spacing: 12) {
-                        // Filter search
-                        FilterField(text: $filterText)
-                        
-                        // View toggle
-//                        ViewToggle(isListView: $isListView)
-                        
-                        // Add Clip button
+                        SearchField(text: $filterText)
+                        //                        ViewToggle(isListView: $isListView)
                         AddClipButton()
                     }
                 }
+                Text("\(viewModel.bookmarkCount) + \(viewModel.groupCount)")
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
             }
-            .padding(.top, 40)
-            .padding(.horizontal, 32)
-            .padding(.bottom, 24)
         }
     }
     
-    private struct FilterField: View {
+    private struct SearchField: View {
         @Binding var text: String
         
         var body: some View {
