@@ -12,10 +12,6 @@ extension ManageView {
     struct WorkbenchView: View {
         @EnvironmentObject var viewModel: WorkbenchViewModel
         
-        let selectedTag: ClipTag?
-        
-        @State private var filterText = ""
-        
         private var title: String {
             if let c = viewModel.collection, let g = c as? Group {
                 return g.name
@@ -24,20 +20,10 @@ extension ManageView {
             }
         }
         
-        private var filteredClips: [Bookmark] {
-            //            if filterText.isEmpty {
-            //                return clips
-            //            }
-            //            return clips.filter { $0.title.localizedCaseInsensitiveContains(filterText) }
-            return []
-        }
-        
         var body: some View {
             VStack(alignment: .leading, spacing: 0) {
-                Toolbar(
-                    filterText: $filterText
-                )
-                .padding(.top, 36)
+                Toolbar()
+                .padding(.top, 12)
                 .padding(.horizontal, 32)
                 .padding(.bottom, 24)
                 
@@ -146,26 +132,44 @@ extension ManageView {
 
 extension ManageView.WorkbenchView {
     struct Toolbar: View {
-        @Binding var filterText: String
         @EnvironmentObject var viewModel: WorkbenchViewModel
         
         var body: some View {
             VStack(alignment: .leading, spacing: 8) {
+                Text(countDescription)
+                    .font(.system(size: 14))
+                    .foregroundStyle(.secondary)
                 HStack(alignment: .top) {
                     Text(viewModel.title)
                         .font(.system(size: 28, weight: .bold))
                         .foregroundStyle(.primary)
                     Spacer()
                     HStack(spacing: 12) {
-                        SearchField(text: $filterText)
+                        SearchField(text: $viewModel.filter)
                         //                        ViewToggle(isListView: $isListView)
                         AddClipButton()
                     }
                 }
-                Text("\(viewModel.bookmarkCount) + \(viewModel.groupCount)")
-                    .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
             }
+            .background(Color.clear)
+        }
+        
+        var countDescription: AttributedString {
+            func _make(_ count: Int, _ unit: String) -> AttributedString {
+                var a1 = AttributedString("\(count) ")
+                a1.foregroundColor = .secondary
+                a1.font = .system(size: 14, weight: .bold)
+                var a2 = AttributedString(unit)
+                a2.foregroundColor = .gray
+                a2.font = .system(size: 14, weight: .ultraLight)
+                return a1 + a2
+            }
+            
+            var v = AttributedString(" / ")
+            v.foregroundColor = .gray
+            v.font = .system(size: 14, weight: .ultraLight)
+            
+            return _make(viewModel.bookmarkCount, "Bookmarks") + v + _make(viewModel.groupCount, "Groups")
         }
     }
     

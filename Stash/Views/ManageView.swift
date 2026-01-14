@@ -52,14 +52,7 @@ let child1 = UUID()
 let child2 = UUID()
 
 struct ManageView: View {
-    @State private var selectedFolder: Folder?
-    @State private var selectedTag: ClipTag?
-    @State private var showAllClips = true
-    
-//    @State private var collection: Collectible?
-    
     @EnvironmentObject var cabinet: OkamuraCabinet
-    
     @StateObject var viewModel: WorkbenchViewModel
     
     private var groups: Binding<[Group]> {
@@ -85,9 +78,7 @@ struct ManageView: View {
             )
             .frame(width: 300)
             
-            WorkbenchView(
-                selectedTag: selectedTag
-            )
+            WorkbenchView()
             .environmentObject(viewModel)
         }
         .frame(minWidth: 1000, minHeight: 650)

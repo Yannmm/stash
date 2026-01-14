@@ -10,6 +10,7 @@ import Combine
 class WorkbenchViewModel: ObservableObject {
     @Published var collection: Collectible?
     @Published var entries: [any Entry]
+    @Published var filter = ""
     
     init(entries: [any Entry]) {
         self.entries = entries
