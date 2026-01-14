@@ -29,8 +29,13 @@ class WorkbenchViewModel: ObservableObject {
     }
     
     var bookmarks: [Bookmark] {
-        let entries = collection == nil ? entries : ((collection as? Group)?.children(among: entries) ?? [])
-        return entries.compactMap({ $0 as? Bookmark })
+        let sublist = collection == nil ? entries : ((collection as? Group)?.children(among: entries) ?? [])
+        let result = sublist.compactMap({ $0 as? Bookmark })
+        return result
+    }
+    
+    func getGroup(_ bookmark: Bookmark) -> Group? {
+        entries.filter({ $0.id == bookmark.parentId }).first as? Group
     }
     
     var groupCount: Int {
@@ -39,5 +44,9 @@ class WorkbenchViewModel: ObservableObject {
         } else {
             return entries.compactMap({ $0 as? Group }).count
         }
+    }
+    
+    var nonEmptyGroupCount: Int {
+        xx
     }
 }
