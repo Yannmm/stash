@@ -31,52 +31,26 @@ fileprivate extension ManageView.WorkbenchView {
         @EnvironmentObject var viewModel: WorkbenchViewModel
         
         var body: some View {
-            if viewModel.groupCount > 1 {
-                table1
-            } else {
-                table2
-            }
+            table
         }
         
         // TODO: most of code of table1 and table2 are duplicate.
-        private var table1: some View {
-            Table(viewModel.bookmarks) {
+        private var table: some View {
+            Table(viewModel.rows) {
                 TableColumn(Text("                   Name")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
-                ) { b in
-                    TableRowView(bookmark: b)
+                ) { row in
+                    TableRowView(row: row)
                 }
                 .width(min: 200)
                 TableColumn(Text("Group & Tags")
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)) { b in
-                        GroupColumnView(trail: viewModel.trail(b))
+                    .foregroundStyle(.secondary)) { row in
+                        GroupColumnView(row: row)
                     }
                     .width(min: 60)
                 
-            }
-            .tableStyle(.bordered) // ⬅️ important
-            .clipShape(
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .stroke(Color.gray.opacity(0.25), lineWidth: 0.5)
-            )
-            .padding(.horizontal, 32)
-            .padding(.bottom, 32)
-        }
-        
-        private var table2: some View {
-            Table(viewModel.bookmarks) {
-                TableColumn(Text("                   Name")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
-                ) { b in
-                    TableRowView(bookmark: b)
-                }
-                .width(min: 200)
             }
             .tableStyle(.bordered) // ⬅️ important
             .clipShape(
@@ -94,11 +68,11 @@ fileprivate extension ManageView.WorkbenchView {
         // MARK: - Table Row View
         
         private struct TableRowView: View {
-            let bookmark: Bookmark
+            let row: WorkbenchViewModel.Row
             
             var body: some View {
                 HStack(spacing: 16) {
-                    ViewHelper.icon(bookmark.icon, side: 24)
+                    ViewHelper.icon(row.icon, side: 24)
                         .foregroundStyle(.secondary)
                         .frame(width: 36, height: 36)
                         .overlay(
@@ -108,7 +82,7 @@ fileprivate extension ManageView.WorkbenchView {
                     
                     // Title and domain
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(bookmark.name)
+                        Text(row.title)
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(.primary)
                             .lineLimit(1)
@@ -119,7 +93,7 @@ fileprivate extension ManageView.WorkbenchView {
                                 .font(.system(size: 9))
                                 .foregroundStyle(.secondary.opacity(0.6))
                             
-                            Text(bookmark.url.host() ?? bookmark.url.absoluteString)
+                            Text("url here") // bookmark.url.host() ?? bookmark.url.absoluteString
                                 .font(.system(size: 12))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
@@ -136,7 +110,7 @@ fileprivate extension ManageView.WorkbenchView {
         // MARK: - Group Column View
         
         private struct GroupColumnView: View {
-            let trail: [String]
+            let row: WorkbenchViewModel.Row
             
             var body: some View {
                 VStack(alignment: .leading, spacing: 4) {
@@ -155,6 +129,7 @@ fileprivate extension ManageView.WorkbenchView {
             }
             
             var trailDescription: AttributedString {
+                let trail = row.trail
                 if trail.isEmpty {
                     var a = AttributedString("/")
                     a.font = .system(size: 14, weight: .regular)
