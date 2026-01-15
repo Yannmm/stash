@@ -48,10 +48,10 @@ fileprivate extension ManageView.WorkbenchView {
                     TableRowView(bookmark: b)
                 }
                 .width(min: 200)
-                TableColumn(Text("Group")
+                TableColumn(Text("Group & Tags")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)) { b in
-                        GroupColumnView(group: viewModel.getGroup(b))
+                        GroupColumnView(trail: viewModel.trail(b))
                     }
                     .width(min: 60)
                 
@@ -67,7 +67,7 @@ fileprivate extension ManageView.WorkbenchView {
             .padding(.horizontal, 32)
             .padding(.bottom, 32)
         }
-
+        
         private var table2: some View {
             Table(viewModel.bookmarks) {
                 TableColumn(Text("                   Name")
@@ -89,7 +89,7 @@ fileprivate extension ManageView.WorkbenchView {
             .padding(.horizontal, 32)
             .padding(.bottom, 32)
         }
-
+        
         
         // MARK: - Table Row View
         
@@ -136,15 +136,46 @@ fileprivate extension ManageView.WorkbenchView {
         // MARK: - Group Column View
         
         private struct GroupColumnView: View {
-            let group: Group?
+            let trail: [String]
             
             var body: some View {
-                Text(group?.name ?? "")
-                    .font(.system(size: 13))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(trailDescription)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Text("#tag1, #tag2")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    
+                }
+                .padding(.vertical, 6)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            
+            var trailDescription: AttributedString {
+                if trail.isEmpty {
+                    var a = AttributedString("/")
+                    a.font = .system(size: 14, weight: .regular)
+                    a.foregroundColor = .secondary
+                    return a
+                } else {
+                    var separator = AttributedString("/")
+                    separator.font = .system(size: 14, weight: .light)
+                    separator.foregroundColor = .secondary
+                    
+                    let combined: AttributedString = trail.reduce(into: AttributedString()) { result, string in
+                        if !result.characters.isEmpty {
+                            result.append(separator)
+                        }
+                        var a = AttributedString(string)
+                        a.font = .system(size: 14, weight: .regular)
+                        a.foregroundColor = .secondary
+                        result.append(a)
+                    }
+                    return combined
+                }
             }
         }
     }

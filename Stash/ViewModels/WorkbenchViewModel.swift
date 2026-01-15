@@ -34,8 +34,18 @@ class WorkbenchViewModel: ObservableObject {
         return result
     }
     
-    func getGroup(_ bookmark: Bookmark) -> Group? {
-        entries.filter({ $0.id == bookmark.parentId }).first as? Group
+    func trail(_ bookmark: Bookmark) -> [String] {
+        var trail = [Group]()
+        
+        var pid = bookmark.parentId
+        while pid != nil {
+            let group = entries.filter({ $0.id == pid }).compactMap({ $0 as? Group }).first
+            if let g = group  {
+                trail.insert(g, at: 0)
+            }
+            pid = group?.parentId
+        }
+        return trail.map { $0.name }
     }
     
     var groupCount: Int {
@@ -44,9 +54,5 @@ class WorkbenchViewModel: ObservableObject {
         } else {
             return entries.compactMap({ $0 as? Group }).count
         }
-    }
-    
-    var nonEmptyGroupCount: Int {
-        xx
     }
 }
