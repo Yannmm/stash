@@ -45,8 +45,18 @@ extension Entry {
 }
 
 extension Entry {
-    func children(among list: [any Entry]) -> [any Entry] {
-        return list.filter { $0.parentId == id }
+    // Direct children
+    func children(among entries: [any Entry]) -> [any Entry] {
+        return entries.filter { $0.parentId == id }
+    }
+    
+    // All children below
+    func descendants(among entries: [any Entry]) -> [any Entry] {
+        func xxx(_ a: [any Entry]) -> [any Entry] {
+            if a.isEmpty {
+                return 
+            }
+        }
     }
     
     func siblings(among list: [any Entry]) -> [any Entry] {
