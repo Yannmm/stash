@@ -5,12 +5,14 @@
 //  Created by Yan Meng on 2025/12/21.
 //
 
+import Foundation
+
 struct Hashtag {
     let name: String
 }
 
 extension Hashtag: Identifiable {
-    var id: String { name }
+    var id: UUID { UUID.deterministic(from: name) }
 }
 
 extension Hashtag: Collectible {

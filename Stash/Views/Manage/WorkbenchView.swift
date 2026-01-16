@@ -89,11 +89,11 @@ fileprivate extension ManageView.WorkbenchView {
                             .truncationMode(.tail)
                         
                         HStack(spacing: 4) {
-                            Image(systemName: "recordingtape")
-                                .font(.system(size: 9))
-                                .foregroundStyle(.secondary.opacity(0.6))
+//                            Image(systemName: "recordingtape")
+//                                .font(.system(size: 9))
+//                                .foregroundStyle(.secondary.opacity(0.6))
                             
-                            Text("url here") // bookmark.url.host() ?? bookmark.url.absoluteString
+                            Text(row.description)
                                 .font(.system(size: 12))
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
