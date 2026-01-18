@@ -51,11 +51,25 @@ extension Entry {
     }
     
     // All children below
-    func descendants(among entries: [any Entry]) -> [any Entry] {
-        func xxx(_ a: [any Entry]) -> [any Entry] {
-            if a.isEmpty {
-                return 
-            }
+    func descendants(among entries: [any Entry], parent included: Bool = false) -> [any Entry] {
+        var result: [any Entry] = []
+        let directChildren = children(among: entries)
+        result.append(contentsOf: directChildren)
+        
+        // Recursively get descendants of each child
+        for (index, child) in directChildren.enumerated() {
+            result.insert(contentsOf: child.descendants(among: entries), at: index + 1)
+        }
+        
+//        for child in directChildren {
+//            result.append(contentsOf: child.descendants(among: entries))
+//        }
+        
+        if included {
+            result.insert(self, at: 0)
+            return result
+        } else {
+            return result
         }
     }
     

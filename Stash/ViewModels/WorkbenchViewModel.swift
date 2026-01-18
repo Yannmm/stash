@@ -12,6 +12,7 @@ class WorkbenchViewModel: ObservableObject {
     @Published var collection: Collectible?
     @Published var allEntries: [any Entry]
     @Published var filter = ""
+    @Published var hierarchy: Hierarchy = .direct
     
     init(entries: [any Entry]) {
         self.allEntries = entries
@@ -38,8 +39,7 @@ class WorkbenchViewModel: ObservableObject {
     }
     
     var rows: [Row] {
-        let sublist = collection == nil ? allEntries : ((collection as? Group)?.children(among: allEntries) ?? [])
-        let result = sublist.map {
+        let result = heirs().map {
             Row(id: $0.id,
                 icon: $0.icon,
                 title: $0.name,
@@ -48,6 +48,31 @@ class WorkbenchViewModel: ObservableObject {
                 tags: $0.name.hashtags)
         }
         return result
+    }
+    
+    private func heirs() -> [any Entry] {
+        switch hierarchy {
+        case .direct:
+            if let c = collection {
+                return (c as? Group)?.children(among: allEntries) ?? []
+            } else {
+                return allEntries.filter { $0.parentId == nil }
+            }
+        case .descendant:
+            if let c = collection {
+                return (c as? Group)?.descendants(among: allEntries) ?? []
+            } else {
+                let level1 = allEntries.filter { $0.parentId == nil }
+                var result: [any Entry] = []
+                
+                for child in level1 {
+                    let x = child.descendants(among: allEntries, parent: true)
+                    result.append(contentsOf: x)
+                }
+                
+                return result
+            }
+        }
     }
     
     private func _groupCount(_ entries: [any Entry]) -> Int {
@@ -60,23 +85,20 @@ class WorkbenchViewModel: ObservableObject {
     
     private func trail(_ entry: any Entry) -> [String] {
         var trail = [Group]()
-        
-        var track = false
-        
         var pid = entry.parentId
         while pid != nil {
             let group = allEntries.filter({ $0.id == pid }).compactMap({ $0 as? Group }).first
             pid = group?.parentId
+            if pid == collection?.id {
+                break
+            }
             if let g = group  {
-                if g.id == collection?.id {
-                    track = true
-                }
-                guard track else { continue }
                 trail.insert(g, at: 0)
             }
             
         }
         return trail.map { $0.name }
+//        return trail.map { _ in "*" }
     }
     
     private func description(_ entry: any Entry) -> String {
@@ -106,5 +128,12 @@ extension WorkbenchViewModel {
         let description: String
         let trail: [String]
         let tags: [String]
+    }
+}
+
+extension WorkbenchViewModel {
+    enum Hierarchy {
+        case direct
+        case descendant
     }
 }

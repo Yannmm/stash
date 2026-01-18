@@ -172,7 +172,7 @@ fileprivate extension ManageView.WorkbenchView {
                     Spacer()
                     HStack(spacing: 12) {
                         SearchField(text: $viewModel.filter)
-                        //                        ViewToggle(isListView: $isListView)
+                        ViewToggle()
                         AddBookmarkButton()
                     }
                 }
@@ -225,38 +225,6 @@ fileprivate extension ManageView.WorkbenchView {
         }
     }
     
-    // MARK: - View Toggle
-    
-    private struct ViewToggle: View {
-        @Binding var isListView: Bool
-        
-        var body: some View {
-            HStack(spacing: 0) {
-                Button(action: { isListView = true }) {
-                    Image(systemName: "list.bullet")
-                        .font(.system(size: 13))
-                        .foregroundStyle(isListView ? .primary : .secondary)
-                        .frame(width: 32, height: 28)
-                        .background(isListView ? Color.gray.opacity(0.1) : Color.clear)
-                }
-                .buttonStyle(.plain)
-                
-                Button(action: { isListView = false }) {
-                    Image(systemName: "square.grid.2x2")
-                        .font(.system(size: 13))
-                        .foregroundStyle(!isListView ? .primary : .secondary)
-                        .frame(width: 32, height: 28)
-                        .background(!isListView ? Color.gray.opacity(0.1) : Color.clear)
-                }
-                .buttonStyle(.plain)
-            }
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-            )
-        }
-    }
-    
     // MARK: - Add Clip Button
     
     private struct AddBookmarkButton: View {
@@ -283,6 +251,53 @@ fileprivate extension ManageView.WorkbenchView {
             .scaleEffect(isHovered ? 1.02 : 1.0)
             .onHover { isHovered = $0 }
             .animation(.easeInOut(duration: 0.15), value: isHovered)
+        }
+    }
+}
+
+fileprivate extension ManageView.WorkbenchView {
+    struct ViewToggle: View {
+        @EnvironmentObject var viewModel: WorkbenchViewModel
+        
+        var body: some View {
+            HStack(spacing: 0) {
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        viewModel.hierarchy = .direct
+                    }
+                }) {
+                    Image(systemName: "list.bullet")
+                        .font(.system(size: 13))
+                        .foregroundStyle(viewModel.hierarchy == .direct ? .primary : .secondary)
+                        .frame(width: 32, height: 28)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                
+                Button(action: {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        viewModel.hierarchy = .descendant
+                    }
+                }) {
+                    Image(systemName: "list.bullet.indent")
+                        .font(.system(size: 13))
+                        .foregroundStyle(viewModel.hierarchy == .descendant ? .primary : .secondary)
+                        .frame(width: 32, height: 28)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+            .background(
+                ZStack {
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color.gray.opacity(0.1))
+                        .frame(width: 32, height: 28)
+                        .offset(x: viewModel.hierarchy == .direct ? -16 : 16)
+                    
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                }
+            )
         }
     }
 }
