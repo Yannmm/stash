@@ -78,6 +78,30 @@ extension Entry {
     }
 }
 
+extension Optional where Wrapped: Entry {
+    func children(among entries: [any Entry]) -> [any Entry] {
+        switch self {
+        case .some(let value):
+            value.children(among: entries)
+        case .none:
+            entries.filter { $0.parentId == nil }
+        }
+    }
+    
+    func descendants(among entries: [any Entry], parent included: Bool = false) -> [any Entry] {
+        switch self {
+        case .some(let value):
+            return value.descendants(among: entries, parent: included)
+        case .none:
+            var result: [any Entry] = []
+            for child in entries.filter({ $0.parentId == nil }) {
+                result.append(contentsOf: child.descendants(among: entries, parent: true))
+            }
+            return result
+        }
+    }
+}
+
 extension Array<any Entry> {
     func findBy(id: UUID) -> (any Entry)? {
         return self.first { $0.id == id }

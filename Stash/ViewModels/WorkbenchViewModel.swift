@@ -53,25 +53,9 @@ class WorkbenchViewModel: ObservableObject {
     private func heirs() -> [any Entry] {
         switch hierarchy {
         case .direct:
-            if let c = collection {
-                return (c as? Group)?.children(among: allEntries) ?? []
-            } else {
-                return allEntries.filter { $0.parentId == nil }
-            }
+            return (collection as? Group).children(among: allEntries)
         case .descendant:
-            if let c = collection {
-                return (c as? Group)?.descendants(among: allEntries) ?? []
-            } else {
-                let level1 = allEntries.filter { $0.parentId == nil }
-                var result: [any Entry] = []
-                
-                for child in level1 {
-                    let x = child.descendants(among: allEntries, parent: true)
-                    result.append(contentsOf: x)
-                }
-                
-                return result
-            }
+            return (collection as? Group).descendants(among: allEntries)
         }
     }
     
@@ -89,16 +73,16 @@ class WorkbenchViewModel: ObservableObject {
         while pid != nil {
             let group = allEntries.filter({ $0.id == pid }).compactMap({ $0 as? Group }).first
             pid = group?.parentId
-            if pid == collection?.id {
-                break
-            }
+//            if pid == collection?.id {
+//                break
+//            }
             if let g = group  {
                 trail.insert(g, at: 0)
             }
             
         }
-        return trail.map { $0.name }
-//        return trail.map { _ in "*" }
+//        return trail.map { $0.name }
+        return trail.map { _ in "*" }
     }
     
     private func description(_ entry: any Entry) -> String {

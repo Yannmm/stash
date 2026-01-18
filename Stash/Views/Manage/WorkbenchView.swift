@@ -130,27 +130,28 @@ fileprivate extension ManageView.WorkbenchView {
             
             var trailDescription: AttributedString {
                 let trail = row.trail
-                if trail.isEmpty {
-                    var a = AttributedString("/")
-                    a.font = .system(size: 14, weight: .regular)
-                    a.foregroundColor = .secondary
-                    return a
-                } else {
-                    var separator = AttributedString("/")
-                    separator.font = .system(size: 14, weight: .light)
-                    separator.foregroundColor = .secondary
-                    
-                    let combined: AttributedString = trail.reduce(into: AttributedString()) { result, string in
-                        if !result.characters.isEmpty {
-                            result.append(separator)
-                        }
-                        var a = AttributedString(string)
-                        a.font = .system(size: 14, weight: .regular)
-                        a.foregroundColor = .secondary
-                        result.append(a)
-                    }
-                    return combined
-                }
+                return AttributedString(trail.joined(separator: "->"))
+//                if trail.isEmpty {
+//                    var a = AttributedString("/")
+//                    a.font = .system(size: 14, weight: .regular)
+//                    a.foregroundColor = .secondary
+//                    return a
+//                } else {
+//                    var separator = AttributedString("/")
+//                    separator.font = .system(size: 14, weight: .light)
+//                    separator.foregroundColor = .secondary
+//                    
+//                    let combined: AttributedString = trail.reduce(into: AttributedString()) { result, string in
+//                        if !result.characters.isEmpty {
+//                            result.append(separator)
+//                        }
+//                        var a = AttributedString(string)
+//                        a.font = .system(size: 14, weight: .regular)
+//                        a.foregroundColor = .secondary
+//                        result.append(a)
+//                    }
+//                    return combined
+//                }
             }
         }
     }
@@ -160,11 +161,10 @@ fileprivate extension ManageView.WorkbenchView {
     struct Toolbar: View {
         @EnvironmentObject var viewModel: WorkbenchViewModel
         
+        @State private var favoriteColor = 0
+        
         var body: some View {
             VStack(alignment: .leading, spacing: 8) {
-                Text(countDescription)
-                    .font(.system(size: 14))
-                    .foregroundStyle(.secondary)
                 HStack(alignment: .top) {
                     Text(viewModel.title)
                         .font(.system(size: 28, weight: .bold))
@@ -172,9 +172,15 @@ fileprivate extension ManageView.WorkbenchView {
                     Spacer()
                     HStack(spacing: 12) {
                         SearchField(text: $viewModel.filter)
-                        ViewToggle()
                         AddBookmarkButton()
                     }
+                }
+                HStack {
+                    Text(countDescription)
+                        .font(.system(size: 14))
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    ViewToggle()
                 }
             }
             .background(Color.clear)
