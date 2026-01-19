@@ -84,6 +84,7 @@ fileprivate extension ManageView.WorkbenchView {
             
             var body: some View {
                 HStack(spacing: 12) {
+                    Text(String(repeating: "1", count: row.trail.count))
                     ViewHelper.icon(row.icon, side: 16)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(row.title)
@@ -94,7 +95,8 @@ fileprivate extension ManageView.WorkbenchView {
                     }
                 }
                 .padding(.vertical, 6)
-                .padding(.leading, 12 + 16 * CGFloat(row.trail.count))
+//                .padding(.leading, 12 + 16 * CGFloat(row.trail.count))
+                .padding(.leading, 12)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
