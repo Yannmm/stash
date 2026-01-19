@@ -30,128 +30,86 @@ fileprivate extension ManageView.WorkbenchView {
     private struct List: View {
         @EnvironmentObject var viewModel: WorkbenchViewModel
         
-        var body: some View {
-            table
-        }
+        @State private var selection: UUID?
         
-        // TODO: most of code of table1 and table2 are duplicate.
-        private var table: some View {
-            Table(viewModel.rows) {
-                TableColumn(Text("                   Name")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)
-                ) { row in
-                    TableRowView(row: row)
-                }
-                .width(min: 200)
-                TableColumn(Text("Group & Tags")
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(.secondary)) { row in
-                        GroupColumnView(row: row)
-                    }
-                    .width(min: 60)
-                
+        var body: some View {
+            Table(viewModel.rows, selection: $selection) {
+                tableColumns
             }
-            .tableStyle(.bordered) // ⬅️ important
-            .clipShape(
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 4, style: .continuous)
+            .tableStyle(.bordered)
+            // Combining clipShape and overlay for a clean border
+            .background(
+                RoundedRectangle(cornerRadius: 4)
                     .stroke(Color.gray.opacity(0.25), lineWidth: 0.5)
             )
+            .clipShape(RoundedRectangle(cornerRadius: 4))
             .padding(.horizontal, 32)
             .padding(.bottom, 32)
         }
         
+        @TableColumnBuilder<WorkbenchViewModel.Row, Never> // Use TableColumnBuilder for clarity
+        private var tableColumns: some TableColumnContent<WorkbenchViewModel.Row, Never> {
+            TableColumn(
+                Text("\tName")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+            ) { row in
+                IconAndNameCell(row: row)
+            }
+            .width(min: 150)
+            TableColumn(
+                Text("Description")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+            ) { row in
+                Text(row.description)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+            .width(min: 60)
+            TableColumn(
+                Text("Tags")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+            ) { row in
+                Text(row.tags.joined(separator: ", "))
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+            .width(min: 20)
+        }
         
-        // MARK: - Table Row View
-        
-        private struct TableRowView: View {
+        private struct IconAndNameCell: View {
             let row: WorkbenchViewModel.Row
             
             var body: some View {
-                HStack(spacing: 16) {
-                    ViewHelper.icon(row.icon, side: 24)
-                        .foregroundStyle(.secondary)
-                        .frame(width: 36, height: 36)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 4)
-                                .stroke(Color.gray.opacity(0.4), lineWidth: 0.5)
-                        )
-                    
-                    // Title and domain
+                HStack(spacing: 12) {
+                    ViewHelper.icon(row.icon, side: 16)
                     VStack(alignment: .leading, spacing: 4) {
                         Text(row.title)
                             .font(.system(size: 14, weight: .medium))
                             .foregroundStyle(.primary)
                             .lineLimit(1)
                             .truncationMode(.tail)
-                        
-                        HStack(spacing: 4) {
-//                            Image(systemName: "recordingtape")
-//                                .font(.system(size: 9))
-//                                .foregroundStyle(.secondary.opacity(0.6))
-                            
-                            Text(row.description)
-                                .font(.system(size: 12))
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                        }
                     }
                 }
                 .padding(.vertical, 6)
-                .padding(.leading, 12)
+                .padding(.leading, 12 + 16 * CGFloat(row.trail.count))
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
         
         // MARK: - Group Column View
         
-        private struct GroupColumnView: View {
-            let row: WorkbenchViewModel.Row
+        private struct TextCell: View {
+            let text: String
             
             var body: some View {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(trailDescription)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                    Text("#tag1, #tag2")
-                        .font(.system(size: 12))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                    
-                }
-                .padding(.vertical, 6)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            
-            var trailDescription: AttributedString {
-                let trail = row.trail
-                return AttributedString(trail.joined(separator: "->"))
-//                if trail.isEmpty {
-//                    var a = AttributedString("/")
-//                    a.font = .system(size: 14, weight: .regular)
-//                    a.foregroundColor = .secondary
-//                    return a
-//                } else {
-//                    var separator = AttributedString("/")
-//                    separator.font = .system(size: 14, weight: .light)
-//                    separator.foregroundColor = .secondary
-//                    
-//                    let combined: AttributedString = trail.reduce(into: AttributedString()) { result, string in
-//                        if !result.characters.isEmpty {
-//                            result.append(separator)
-//                        }
-//                        var a = AttributedString(string)
-//                        a.font = .system(size: 14, weight: .regular)
-//                        a.foregroundColor = .secondary
-//                        result.append(a)
-//                    }
-//                    return combined
-//                }
+                Text(text)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .padding(.vertical, 6)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }

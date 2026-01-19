@@ -82,7 +82,8 @@ class WorkbenchViewModel: ObservableObject {
             
         }
 //        return trail.map { $0.name }
-        return trail.map { _ in "*" }
+        var result = trail.map { _ in "\t" }
+        return result
     }
     
     private func description(_ entry: any Entry) -> String {
