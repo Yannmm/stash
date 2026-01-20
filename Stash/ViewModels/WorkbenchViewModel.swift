@@ -7,6 +7,7 @@
 
 import Combine
 import Foundation
+import SwiftUI
 
 class WorkbenchViewModel: ObservableObject {
     @Published var collection: Collectible?
@@ -117,5 +118,48 @@ extension WorkbenchViewModel {
     enum Hierarchy {
         case direct
         case descendant
+    }
+}
+
+extension WorkbenchViewModel {
+    enum DropPosition {
+        case before
+        case after
+    }
+    
+    /// Move an entry from source position to before/after target position
+    func moveRow(from sourceID: UUID, to targetID: UUID, position: DropPosition) {
+        // Find indices in allEntries
+        guard let sourceIndex = allEntries.firstIndex(where: { $0.id == sourceID }),
+              let targetIndex = allEntries.firstIndex(where: { $0.id == targetID }),
+              sourceIndex != targetIndex else {
+            return
+        }
+        
+        // Get the entry to move
+        let sourceEntry = allEntries[sourceIndex]
+        
+        // Create new array with source removed
+        var newEntries = allEntries
+        newEntries.remove(at: sourceIndex)
+        
+        // Calculate new target index (adjusted after removal)
+        var newTargetIndex = newEntries.firstIndex(where: { $0.id == targetID }) ?? 0
+        
+        // Adjust based on drop position
+        if position == .after {
+            newTargetIndex += 1
+        }
+        
+        // Ensure index is valid
+        newTargetIndex = min(max(0, newTargetIndex), newEntries.count)
+        
+        // Insert at new position
+        newEntries.insert(sourceEntry, at: newTargetIndex)
+        
+        // Update with animation
+        withAnimation(.easeInOut(duration: 0.2)) {
+            allEntries = newEntries
+        }
     }
 }

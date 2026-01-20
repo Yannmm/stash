@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AppKit
+import UniformTypeIdentifiers
 
 extension ManageView {
     struct WorkbenchView: View {
@@ -19,110 +20,293 @@ extension ManageView {
                     .padding(.horizontal, 32)
                     .padding(.bottom, 24)
                 
-                List()
+                DraggableList()
             }
             .background(Color(NSColor.textBackgroundColor))
         }
     }
 }
 
+// MARK: - Drop Position Alias
+
 fileprivate extension ManageView.WorkbenchView {
-    private struct List: View {
+    typealias DropPosition = WorkbenchViewModel.DropPosition
+}
+
+// MARK: - Draggable List
+
+fileprivate extension ManageView.WorkbenchView {
+    private struct DraggableList: View {
         @EnvironmentObject var viewModel: WorkbenchViewModel
         
         @State private var selection: UUID?
+        @State private var draggingRow: WorkbenchViewModel.Row?
         
         var body: some View {
-            Table(viewModel.rows, selection: $selection) {
-                tableColumns
+            VStack(spacing: 0) {
+                // Table Header
+                TableHeader()
+                
+                // Scrollable rows
+                ScrollView {
+                    LazyVStack(spacing: 0) {
+                        ForEach(viewModel.rows) { row in
+                            TableRow(
+                                row: row,
+                                isSelected: selection == row.id,
+                                draggingRow: $draggingRow,
+                                onSelect: { selection = row.id },
+                                onDrop: { droppedRow, targetRow, position in
+                                    viewModel.moveRow(from: droppedRow.id, to: targetRow.id, position: position)
+                                }
+                            )
+                        }
+                    }
+                }
             }
-            .tableStyle(.bordered)
-            // Combining clipShape and overlay for a clean border
-            .background(
+            .background(Color(NSColor.controlBackgroundColor))
+            .clipShape(RoundedRectangle(cornerRadius: 4))
+            .overlay(
                 RoundedRectangle(cornerRadius: 4)
                     .stroke(Color.gray.opacity(0.25), lineWidth: 0.5)
             )
-            .clipShape(RoundedRectangle(cornerRadius: 4))
             .padding(.horizontal, 32)
             .padding(.bottom, 32)
         }
-        
-        @TableColumnBuilder<WorkbenchViewModel.Row, Never> // Use TableColumnBuilder for clarity
-        private var tableColumns: some TableColumnContent<WorkbenchViewModel.Row, Never> {
-            TableColumn(
-                Text("\tName")
+    }
+}
+
+// MARK: - Table Header
+
+fileprivate extension ManageView.WorkbenchView {
+    private struct TableHeader: View {
+        var body: some View {
+            HStack(spacing: 0) {
+                Text("Name")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
-            ) { row in
-                IconAndNameCell(row: row)
-            }
-            .width(min: 150)
-            TableColumn(
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 12)
+                
                 Text("Description")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
-            ) { row in
-                Text(row.description)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.secondary)
-            }
-            .width(min: 60)
-            TableColumn(
+                    .frame(width: 200, alignment: .leading)
+                
                 Text("Tags")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
-            ) { row in
-                Text(row.tags.joined(separator: ", "))
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.secondary)
+                    .frame(width: 150, alignment: .leading)
             }
-            .width(min: 20)
+            .padding(.vertical, 8)
+            .background(Color(NSColor.windowBackgroundColor))
+            .overlay(
+                Rectangle()
+                    .fill(Color.gray.opacity(0.2))
+                    .frame(height: 1),
+                alignment: .bottom
+            )
         }
+    }
+}
+
+// MARK: - Table Row with Drag and Drop
+
+fileprivate extension ManageView.WorkbenchView {
+    private struct TableRow: View {
+        let row: WorkbenchViewModel.Row
+        let isSelected: Bool
+        @Binding var draggingRow: WorkbenchViewModel.Row?
+        let onSelect: () -> Void
+        let onDrop: (WorkbenchViewModel.Row, WorkbenchViewModel.Row, DropPosition) -> Void
         
-        private struct IconAndNameCell: View {
-            let row: WorkbenchViewModel.Row
-            
-            var body: some View {
-                HStack(spacing: 12) {
-                    ForEach(0..<row.trail.count, id: \.self) { _ in
-                        Rectangle()
-                            .frame(width: 1)
-                            .frame(width: 12) // outer layout width
-                            .frame(maxHeight: .infinity)
-                            .foregroundColor(.random)
-                    }
-                    HStack(spacing: 12) {
-                        ViewHelper.icon(row.icon, side: 16)
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(row.title)
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundStyle(.primary)
-                                .lineLimit(1)
-                                .truncationMode(.tail)
-                        }
-                    }
-                    .padding(.vertical, 6)
-                    //                .padding(.leading, 12 + 16 * CGFloat(row.trail.count))
-                    .frame(maxWidth: .infinity, alignment: .leading)
+        @State private var isHovered = false
+        @State private var dragOver = false
+        @State private var dragOverPosition: DropPosition? = nil
+        
+        private let rowHeight: CGFloat = 36
+        
+        var body: some View {
+            VStack(spacing: 0) {
+                // Drop indicator line (before)
+                if dragOver && dragOverPosition == .before {
+                    Rectangle()
+                        .fill(Color.accentColor)
+                        .frame(height: 2)
                 }
-                .padding(.leading, 12)
                 
+                // Row content
+                HStack(spacing: 0) {
+                    // Name column
+                    IconAndNameCell(row: row)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    
+                    // Description column
+                    Text(row.description)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .frame(width: 200, alignment: .leading)
+                    
+                    // Tags column
+                    Text(row.tags.joined(separator: ", "))
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .frame(width: 150, alignment: .leading)
+                }
+                .frame(height: rowHeight)
+                .background(backgroundColor)
+                .contentShape(Rectangle())
+                .onTapGesture { onSelect() }
+                .onHover { isHovered = $0 }
+                .onDrag {
+                    draggingRow = row
+                    return NSItemProvider(object: row.id.uuidString as NSString)
+                } preview: {
+                    // Drag preview
+                    HStack(spacing: 8) {
+                        ViewHelper.icon(row.icon, side: 16)
+                        Text(row.title)
+                            .font(.system(size: 14))
+                            .foregroundStyle(.primary)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color(NSColor.controlBackgroundColor).opacity(0.95))
+                    .cornerRadius(6)
+                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+                }
+                .onDrop(of: [UTType.plainText], delegate: RowDropDelegate(
+                    row: row,
+                    draggedRow: $draggingRow,
+                    dragOver: $dragOver,
+                    dragOverPosition: $dragOverPosition,
+                    rowHeight: rowHeight,
+                    onDrop: onDrop
+                ))
                 
+                // Drop indicator line (after)
+                if dragOver && dragOverPosition == .after {
+                    Rectangle()
+                        .fill(Color.accentColor)
+                        .frame(height: 2)
+                }
+                
+                // Separator line
+                if !dragOver || dragOverPosition != .after {
+                    Rectangle()
+                        .fill(Color.gray.opacity(0.15))
+                        .frame(height: 1)
+                }
             }
         }
         
-        // MARK: - Group Column View
-        
-        private struct TextCell: View {
-            let text: String
-            
-            var body: some View {
-                Text(text)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .padding(.vertical, 6)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+        private var backgroundColor: Color {
+            if isSelected {
+                return Color.accentColor.opacity(0.15)
+            } else if isHovered {
+                return Color.gray.opacity(0.08)
             }
+            return Color.clear
+        }
+    }
+}
+
+// MARK: - Row Drop Delegate
+
+fileprivate extension ManageView.WorkbenchView {
+    private struct RowDropDelegate: DropDelegate {
+        let row: WorkbenchViewModel.Row
+        @Binding var draggedRow: WorkbenchViewModel.Row?
+        @Binding var dragOver: Bool
+        @Binding var dragOverPosition: DropPosition?
+        let rowHeight: CGFloat
+        let onDrop: (WorkbenchViewModel.Row, WorkbenchViewModel.Row, DropPosition) -> Void
+        
+        // Only before/after zones - middle zone is rejected
+        private var threshold: CGFloat { rowHeight / 2 }
+        
+        func validateDrop(info: DropInfo) -> Bool {
+            guard let draggedRow = draggedRow else { return false }
+            return draggedRow.id != row.id
+        }
+        
+        func performDrop(info: DropInfo) -> Bool {
+            guard let draggedRow = draggedRow,
+                  draggedRow.id != row.id,
+                  let position = dragOverPosition else {
+                resetState()
+                return false
+            }
+            
+            onDrop(draggedRow, row, position)
+            self.draggedRow = nil
+            resetState()
+            return true
+        }
+        
+        func dropEntered(info: DropInfo) {
+            guard draggedRow?.id != row.id else { return }
+            dragOver = true
+        }
+        
+        func dropExited(info: DropInfo) {
+            resetState()
+        }
+        
+        func dropUpdated(info: DropInfo) -> DropProposal? {
+            guard draggedRow?.id != row.id else {
+                return DropProposal(operation: .forbidden)
+            }
+            
+            let location = info.location
+            
+            // Only allow dropping in top or bottom zone, reject middle
+            if location.y < threshold {
+                dragOverPosition = .before
+                return DropProposal(operation: .move)
+            } else {
+                dragOverPosition = .after
+                return DropProposal(operation: .move)
+            }
+        }
+        
+        private func resetState() {
+            dragOver = false
+            dragOverPosition = nil
+        }
+    }
+}
+
+// MARK: - Icon and Name Cell
+
+fileprivate extension ManageView.WorkbenchView {
+    private struct IconAndNameCell: View {
+        let row: WorkbenchViewModel.Row
+        
+        var body: some View {
+            HStack(spacing: 12) {
+                ForEach(0..<row.trail.count, id: \.self) { _ in
+                    Rectangle()
+                        .frame(width: 1)
+                        .frame(width: 12)
+                        .frame(maxHeight: .infinity)
+                        .foregroundColor(.random)
+                }
+                HStack(spacing: 12) {
+                    ViewHelper.icon(row.icon, side: 16)
+                    Text(row.title)
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .padding(.leading, 12)
         }
     }
 }
