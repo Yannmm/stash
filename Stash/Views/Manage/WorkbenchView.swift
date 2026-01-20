@@ -84,20 +84,30 @@ fileprivate extension ManageView.WorkbenchView {
             
             var body: some View {
                 HStack(spacing: 12) {
-                    Text(String(repeating: "1", count: row.trail.count))
-                    ViewHelper.icon(row.icon, side: 16)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(row.title)
-                            .font(.system(size: 14, weight: .medium))
-                            .foregroundStyle(.primary)
-                            .lineLimit(1)
-                            .truncationMode(.tail)
+                    ForEach(0..<row.trail.count, id: \.self) { _ in
+                        Rectangle()
+                            .frame(width: 1)
+                            .frame(width: 12) // outer layout width
+                            .frame(maxHeight: .infinity)
+                            .foregroundColor(.random)
                     }
+                    HStack(spacing: 12) {
+                        ViewHelper.icon(row.icon, side: 16)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(row.title)
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(.primary)
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                        }
+                    }
+                    .padding(.vertical, 6)
+                    //                .padding(.leading, 12 + 16 * CGFloat(row.trail.count))
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .padding(.vertical, 6)
-//                .padding(.leading, 12 + 16 * CGFloat(row.trail.count))
                 .padding(.leading, 12)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                
+                
             }
         }
         

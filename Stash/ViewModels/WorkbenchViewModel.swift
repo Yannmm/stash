@@ -67,23 +67,20 @@ class WorkbenchViewModel: ObservableObject {
         entries.compactMap({ $0 as? Bookmark }).count
     }
     
-    private func trail(_ entry: any Entry) -> [String] {
+    private func trail(_ entry: any Entry) -> [Group] {
         var trail = [Group]()
         var pid = entry.parentId
         while pid != nil {
             let group = allEntries.filter({ $0.id == pid }).compactMap({ $0 as? Group }).first
-            pid = group?.parentId
-//            if pid == collection?.id {
-//                break
-//            }
-            if let g = group  {
-                trail.insert(g, at: 0)
+            if (pid == collection?.id) {
+                break
             }
-            
+            if let g = group  {
+                trail.append(g)
+            }
+            pid = group?.parentId
         }
-//        return trail.map { $0.name }
-        var result = trail.map { _ in "\t" }
-        return result
+        return trail
     }
     
     private func description(_ entry: any Entry) -> String {
@@ -111,7 +108,7 @@ extension WorkbenchViewModel {
         let icon: Icon
         let title: String
         let description: String
-        let trail: [String]
+        let trail: [Group]
         let tags: [String]
     }
 }
