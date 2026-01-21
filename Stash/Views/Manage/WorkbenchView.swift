@@ -41,27 +41,40 @@ fileprivate extension ManageView.WorkbenchView {
         
         @State private var selection: UUID?
         @State private var draggingRow: WorkbenchViewModel.Row?
+        @State private var nameWidth: CGFloat = 280
+        @State private var descriptionWidth: CGFloat = 220
+        @State private var tagsWidth: CGFloat = 180
         
         var body: some View {
-            VStack(spacing: 0) {
-                // Table Header
-                TableHeader()
-                
-                // Scrollable rows
-                ScrollView {
-                    LazyVStack(spacing: 0) {
-                        ForEach(viewModel.rows) { row in
-                            TableRow(
-                                row: row,
-                                isSelected: selection == row.id,
-                                draggingRow: $draggingRow,
-                                onSelect: { selection = row.id },
-                                onDrop: { droppedRow, targetRow, position in
-                                    viewModel.moveRow(from: droppedRow.id, to: targetRow.id, position: position)
-                                }
+            GeometryReader { proxy in
+                ScrollView([.vertical, .horizontal]) {
+                    LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+                        Section(
+                            header: TableHeader(
+                                nameWidth: $nameWidth,
+                                descriptionWidth: $descriptionWidth,
+                                tagsWidth: $tagsWidth,
+                                totalWidth: totalWidth
                             )
+                        ) {
+                            ForEach(viewModel.rows) { row in
+                                TableRow(
+                                    row: row,
+                                    isSelected: selection == row.id,
+                                    draggingRow: $draggingRow,
+                                    nameWidth: nameWidth,
+                                    descriptionWidth: descriptionWidth,
+                                    tagsWidth: tagsWidth,
+                                    totalWidth: totalWidth,
+                                    onSelect: { selection = row.id },
+                                    onDrop: { droppedRow, targetRow, position in
+                                        viewModel.moveRow(from: droppedRow.id, to: targetRow.id, position: position)
+                                    }
+                                )
+                            }
                         }
                     }
+                    .frame(minWidth: max(totalWidth, proxy.size.width), alignment: .leading)
                 }
             }
             .background(Color(NSColor.controlBackgroundColor))
@@ -73,6 +86,10 @@ fileprivate extension ManageView.WorkbenchView {
             .padding(.horizontal, 32)
             .padding(.bottom, 32)
         }
+        
+        private var totalWidth: CGFloat {
+            nameWidth + descriptionWidth + tagsWidth
+        }
     }
 }
 
@@ -80,24 +97,34 @@ fileprivate extension ManageView.WorkbenchView {
 
 fileprivate extension ManageView.WorkbenchView {
     private struct TableHeader: View {
+        @Binding var nameWidth: CGFloat
+        @Binding var descriptionWidth: CGFloat
+        @Binding var tagsWidth: CGFloat
+        let totalWidth: CGFloat
+        
         var body: some View {
             HStack(spacing: 0) {
                 Text("Name")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .frame(width: nameWidth, alignment: .leading)
                     .padding(.leading, 12)
+                
+                ColumnResizer(width: $nameWidth, minWidth: 180)
                 
                 Text("Description")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
-                    .frame(width: 200, alignment: .leading)
+                    .frame(width: descriptionWidth, alignment: .leading)
+                
+                ColumnResizer(width: $descriptionWidth, minWidth: 140)
                 
                 Text("Tags")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
-                    .frame(width: 150, alignment: .leading)
+                    .frame(width: tagsWidth, alignment: .leading)
             }
+            .frame(width: totalWidth, alignment: .leading)
             .padding(.vertical, 8)
             .background(Color(NSColor.windowBackgroundColor))
             .overlay(
@@ -117,6 +144,10 @@ fileprivate extension ManageView.WorkbenchView {
         let row: WorkbenchViewModel.Row
         let isSelected: Bool
         @Binding var draggingRow: WorkbenchViewModel.Row?
+        let nameWidth: CGFloat
+        let descriptionWidth: CGFloat
+        let tagsWidth: CGFloat
+        let totalWidth: CGFloat
         let onSelect: () -> Void
         let onDrop: (WorkbenchViewModel.Row, WorkbenchViewModel.Row, DropPosition) -> Void
         
@@ -139,7 +170,7 @@ fileprivate extension ManageView.WorkbenchView {
                 HStack(spacing: 0) {
                     // Name column
                     IconAndNameCell(row: row)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .frame(width: nameWidth, alignment: .leading)
                     
                     // Description column
                     Text(row.description)
@@ -147,7 +178,7 @@ fileprivate extension ManageView.WorkbenchView {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .frame(width: 200, alignment: .leading)
+                        .frame(width: descriptionWidth, alignment: .leading)
                     
                     // Tags column
                     Text(row.tags.joined(separator: ", "))
@@ -155,7 +186,7 @@ fileprivate extension ManageView.WorkbenchView {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .frame(width: 150, alignment: .leading)
+                        .frame(width: tagsWidth, alignment: .leading)
                 }
                 .frame(height: rowHeight)
                 .background(backgroundColor)
@@ -202,6 +233,7 @@ fileprivate extension ManageView.WorkbenchView {
                         .frame(height: 1)
                 }
             }
+            .frame(width: totalWidth, alignment: .leading)
         }
         
         private var backgroundColor: Color {
@@ -227,7 +259,7 @@ fileprivate extension ManageView.WorkbenchView {
         let onDrop: (WorkbenchViewModel.Row, WorkbenchViewModel.Row, DropPosition) -> Void
         
         // Only before/after zones - middle zone is rejected
-        private var threshold: CGFloat { rowHeight / 2 }
+        private var threshold: CGFloat { rowHeight / 3 }
         
         func validateDrop(info: DropInfo) -> Bool {
             guard let draggedRow = draggedRow else { return false }
@@ -264,13 +296,16 @@ fileprivate extension ManageView.WorkbenchView {
             
             let location = info.location
             
-            // Only allow dropping in top or bottom zone, reject middle
+            // Only allow dropping near top or bottom, reject middle
             if location.y < threshold {
                 dragOverPosition = .before
                 return DropProposal(operation: .move)
-            } else {
+            } else if location.y > (rowHeight - threshold) {
                 dragOverPosition = .after
                 return DropProposal(operation: .move)
+            } else {
+                dragOverPosition = nil
+                return DropProposal(operation: .forbidden)
             }
         }
         
@@ -307,6 +342,56 @@ fileprivate extension ManageView.WorkbenchView {
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
             .padding(.leading, 12)
+        }
+    }
+}
+
+// MARK: - Column Resizer
+
+fileprivate extension ManageView.WorkbenchView {
+    private struct ColumnResizer: View {
+        @Binding var width: CGFloat
+        let minWidth: CGFloat
+        
+        @State private var startWidth: CGFloat?
+        @State private var startX: CGFloat?
+        @State private var isHovering = false
+        
+        var body: some View {
+            ZStack {
+                Rectangle()
+                    .fill(Color.clear)
+                Rectangle()
+                    .fill(Color.gray.opacity(0.35))
+                    .frame(width: 1)
+            }
+            .frame(width: 8)
+            .contentShape(Rectangle())
+            .onHover { hovering in
+                isHovering = hovering
+                if hovering {
+                    NSCursor.resizeLeftRight.set()
+                } else {
+                    NSCursor.arrow.set()
+                }
+            }
+            .highPriorityGesture(
+                DragGesture(minimumDistance: 0, coordinateSpace: .global)
+                    .onChanged { value in
+                        if startWidth == nil {
+                            startWidth = width
+                            startX = value.startLocation.x
+                        }
+                        let delta = value.location.x - (startX ?? value.startLocation.x)
+                        let proposed = (startWidth ?? width) + delta
+                        width = max(minWidth, proposed)
+                    }
+                    .onEnded { _ in
+                        startWidth = nil
+                        startX = nil
+                    }
+            )
+            .background(isHovering ? Color.gray.opacity(0.08) : Color.clear)
         }
     }
 }
