@@ -44,29 +44,41 @@ fileprivate extension ManageView.WorkbenchView {
         @State private var columnWidth1: CGFloat = 280
         @State private var columnWidth2: CGFloat = 220
         @State private var columnWidth3: CGFloat = 180
-//        @State private var recentTotalWidth: CGFloat?
         
         var body: some View {
             GeometryReader { proxy in
+                //                VStack(alignment: .leading, spacing: 0) {
+                //                    TableHeader(
+                //                        columnWidth1: $columnWidth1,
+                //                        columnWidth2: $columnWidth2,
+                //                        columnWidth3: $columnWidth3,
+                //                        totalWidth: max(totalWidth, proxy.size.width)
+                //                    )
+                
+                
+                
+                // Scrollable content
                 ScrollView([.vertical, .horizontal]) {
-                    LazyVStack(alignment: .leading, spacing: 0, pinnedViews: [.sectionHeaders]) {
+                    LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                         Section(
                             header: TableHeader(
                                 columnWidth1: $columnWidth1,
                                 columnWidth2: $columnWidth2,
                                 columnWidth3: $columnWidth3,
-                                totalWidth: totalWidth
+                                totalWidth: max(totalWidth, proxy.size.width)
                             )
-                        ) {
+                            //                                )
+                        )
+                        {
                             ForEach(viewModel.rows) { row in
                                 TableRow(
                                     row: row,
                                     isSelected: selection == row.id,
                                     draggingRow: $draggingRow,
-                                    nameWidth: columnWidth1,
-                                    descriptionWidth: columnWidth2,
-                                    tagsWidth: columnWidth3,
-                                    totalWidth: totalWidth,
+                                    column1Width: columnWidth1,
+                                    column2Width: columnWidth2,
+                                    column3Width: columnWidth3,
+                                    totalWidth: max(totalWidth, proxy.size.width),
                                     onSelect: { selection = row.id },
                                     onDrop: { droppedRow, targetRow, position in
                                         viewModel.moveRow(from: droppedRow.id, to: targetRow.id, position: position)
@@ -75,23 +87,19 @@ fileprivate extension ManageView.WorkbenchView {
                             }
                         }
                     }
-                    .frame(minWidth: max(totalWidth, proxy.size.width), alignment: .leading)
+                    //                        .frame(minWidth: max(totalWidth, proxy.size.width), alignment: .leading)
                 }
-//                .onAppear {
-//                    recentTotalWidth = proxy.size.width
-//                }
+                //                }
+                
                 .onChange(of: proxy.size.width) { newWidth in
-//                    guard let lastWidth = recentTotalWidth else {
-//                        recentTotalWidth = newWidth
-//                        return
-//                    }
+                    
                     let delta = newWidth - totalWidth
                     print("xxx -> \(delta)")
                     if delta != 0 {
                         let proposed = columnWidth1 + delta
                         columnWidth1 = max(Constant.column1MinWidth, proposed)
                     }
-//                    recentTotalWidth = newWidth
+                    //                    recentTotalWidth = newWidth
                 }
             }
             .background(Color(NSColor.controlBackgroundColor))
@@ -124,26 +132,25 @@ fileprivate extension ManageView.WorkbenchView {
                 Text("Name")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
-                    .padding(.leading, 12 * 3.5)
+                    .padding(.leading, 12 * 4)
                     .frame(width: columnWidth1, alignment: .leading)
                 
-                ColumnResizer(width: $columnWidth1, minWidth: 180)
+                ColumnWidthDragger(width: $columnWidth1, min: 180)
                 
                 Text("Description")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
                     .frame(width: columnWidth2, alignment: .leading)
                 
-                ColumnResizer(width: $columnWidth2, minWidth: 140)
+                ColumnWidthDragger(width: $columnWidth2, min: 140)
                 
                 Text("Tags")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
-//                    .frame(width: columnWidth3, alignment: .leading)
+                //                    .frame(width: columnWidth3, alignment: .leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(width: totalWidth)
-            .padding(.vertical, 8)
+            .frame(width: totalWidth, height: 28)
             .background(Color(NSColor.windowBackgroundColor))
             .overlay(
                 Rectangle()
@@ -162,14 +169,14 @@ fileprivate extension ManageView.WorkbenchView {
         let row: WorkbenchViewModel.Row
         let isSelected: Bool
         @Binding var draggingRow: WorkbenchViewModel.Row?
-        let nameWidth: CGFloat
-        let descriptionWidth: CGFloat
-        let tagsWidth: CGFloat
+        let column1Width: CGFloat
+        let column2Width: CGFloat
+        let column3Width: CGFloat
         let totalWidth: CGFloat
         let onSelect: () -> Void
         let onDrop: (WorkbenchViewModel.Row, WorkbenchViewModel.Row, DropPosition) -> Void
         
-        @State private var isHovered = false
+        //        @State private var isHovered = false
         @State private var dragOver = false
         @State private var dragOverPosition: DropPosition? = nil
         
@@ -188,7 +195,7 @@ fileprivate extension ManageView.WorkbenchView {
                 HStack(spacing: 0) {
                     // Name column
                     IconAndNameCell(row: row)
-                        .frame(width: nameWidth, alignment: .leading)
+                        .frame(width: column1Width, alignment: .leading)
                     
                     Spacer()
                         .frame(width: Constant.resizerWidth)
@@ -199,7 +206,7 @@ fileprivate extension ManageView.WorkbenchView {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .frame(width: descriptionWidth, alignment: .leading)
+                        .frame(width: column2Width, alignment: .leading)
                     
                     Spacer()
                         .frame(width: Constant.resizerWidth)
@@ -210,14 +217,14 @@ fileprivate extension ManageView.WorkbenchView {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.tail)
-//                        .frame(width: tagsWidth, alignment: .leading)
+                    //                        .frame(width: tagsWidth, alignment: .leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .frame(height: rowHeight)
                 .background(backgroundColor)
                 .contentShape(Rectangle())
                 .onTapGesture { onSelect() }
-                .onHover { isHovered = $0 }
+                //                .onHover { isHovered = $0 }
                 .onDrag {
                     draggingRow = row
                     return NSItemProvider(object: row.id.uuidString as NSString)
@@ -264,9 +271,10 @@ fileprivate extension ManageView.WorkbenchView {
         private var backgroundColor: Color {
             if isSelected {
                 return Color.accentColor.opacity(0.15)
-            } else if isHovered {
-                return Color.gray.opacity(0.08)
             }
+            //            else if isHovered {
+            //                return Color.gray.opacity(0.08)
+            //            }
             return Color.clear
         }
     }
@@ -374,49 +382,45 @@ fileprivate extension ManageView.WorkbenchView {
 // MARK: - Column Resizer
 
 fileprivate extension ManageView.WorkbenchView {
-    private struct ColumnResizer: View {
+    private struct ColumnWidthDragger: View {
         @Binding var width: CGFloat
-        let minWidth: CGFloat
+        let min: CGFloat
         
         @State private var startWidth: CGFloat?
         @State private var startX: CGFloat?
-        @State private var isHovering = false
+        @State private var hovering = false
         
         var body: some View {
-            ZStack {
-                Rectangle()
-                    .fill(Color.clear)
-                Rectangle()
-                    .fill(Color.gray.opacity(0.35))
-                    .frame(width: 1)
-            }
-            .frame(width: Constant.resizerWidth)
-            .contentShape(Rectangle())
-            .onHover { hovering in
-                isHovering = hovering
-                if hovering {
-                    NSCursor.resizeLeftRight.set()
-                } else {
-                    NSCursor.arrow.set()
+            Rectangle()
+                .fill(Color.gray.opacity(0.35))
+                .frame(width: 1)
+                .frame(width: Constant.resizerWidth)
+                .padding(.vertical, 6)
+                .contentShape(Rectangle())
+                .onHover { hovering in
+                    self.hovering = hovering
+                    if hovering {
+                        NSCursor.resizeLeftRight.set()
+                    } else {
+                        NSCursor.arrow.set()
+                    }
                 }
-            }
-            .highPriorityGesture(
-                DragGesture(minimumDistance: 0, coordinateSpace: .global)
-                    .onChanged { value in
-                        if startWidth == nil {
-                            startWidth = width
-                            startX = value.startLocation.x
+                .highPriorityGesture(
+                    DragGesture(minimumDistance: 0, coordinateSpace: .global)
+                        .onChanged { value in
+                            if startWidth == nil {
+                                startWidth = width
+                                startX = value.startLocation.x
+                            }
+                            let delta = value.location.x - (startX ?? value.startLocation.x)
+                            let proposed = (startWidth ?? width) + delta
+                            width = max(min, proposed)
                         }
-                        let delta = value.location.x - (startX ?? value.startLocation.x)
-                        let proposed = (startWidth ?? width) + delta
-                        width = max(minWidth, proposed)
-                    }
-                    .onEnded { _ in
-                        startWidth = nil
-                        startX = nil
-                    }
-            )
-            .background(isHovering ? Color.gray.opacity(0.08) : Color.clear)
+                        .onEnded { _ in
+                            startWidth = nil
+                            startX = nil
+                        }
+                )
         }
     }
 }
