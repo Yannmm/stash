@@ -41,45 +41,35 @@ fileprivate extension ManageView.WorkbenchView {
         
         @State private var selection: UUID?
         @State private var draggingRow: WorkbenchViewModel.Row?
-        @State private var columnWidth1: CGFloat = 280
-        @State private var columnWidth2: CGFloat = 220
-        @State private var columnWidth3: CGFloat = 180
+        @State private var width1: CGFloat = Constant.initialWidth1
+        @State private var width2: CGFloat = Constant.initialWidth2
+        @State private var width3: CGFloat = Constant.initialWidth3
         
         var body: some View {
             GeometryReader { proxy in
-                //                VStack(alignment: .leading, spacing: 0) {
-                //                    TableHeader(
-                //                        columnWidth1: $columnWidth1,
-                //                        columnWidth2: $columnWidth2,
-                //                        columnWidth3: $columnWidth3,
-                //                        totalWidth: max(totalWidth, proxy.size.width)
-                //                    )
-                
-                
-                
-                // Scrollable content
                 ScrollView([.vertical, .horizontal]) {
                     LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
                         Section(
-                            header: TableHeader(
-                                columnWidth1: $columnWidth1,
-                                columnWidth2: $columnWidth2,
-                                columnWidth3: $columnWidth3,
-                                totalWidth: max(totalWidth, proxy.size.width)
+                            header: Header(
+                                width1: $width1,
+                                width2: $width2,
+                                min1: Constant.minWidth1,
+                                min2: Constant.minWidth2,
+                                total: max(totalWidth, proxy.size.width)
                             )
                             //                                )
                         )
                         {
-                            ForEach(viewModel.rows) { row in
-                                TableRow(
-                                    row: row,
-                                    isSelected: selection == row.id,
+                            ForEach(viewModel.rows.indices, id: \.self) { index in
+                                Row(
+                                    index: index,
+                                    row: viewModel.rows[index],
+                                    isSelected: selection == viewModel.rows[index].id,
                                     draggingRow: $draggingRow,
-                                    column1Width: columnWidth1,
-                                    column2Width: columnWidth2,
-                                    column3Width: columnWidth3,
+                                    width1: width1,
+                                    width2: width2,
                                     totalWidth: max(totalWidth, proxy.size.width),
-                                    onSelect: { selection = row.id },
+                                    onSelect: { selection = viewModel.rows[index].id },
                                     onDrop: { droppedRow, targetRow, position in
                                         viewModel.moveRow(from: droppedRow.id, to: targetRow.id, position: position)
                                     }
@@ -87,19 +77,13 @@ fileprivate extension ManageView.WorkbenchView {
                             }
                         }
                     }
-                    //                        .frame(minWidth: max(totalWidth, proxy.size.width), alignment: .leading)
                 }
-                //                }
-                
                 .onChange(of: proxy.size.width) { newWidth in
-                    
                     let delta = newWidth - totalWidth
-                    print("xxx -> \(delta)")
                     if delta != 0 {
-                        let proposed = columnWidth1 + delta
-                        columnWidth1 = max(Constant.column1MinWidth, proposed)
+                        let proposed = width1 + delta
+                        width1 = max(Constant.minWidth1, proposed)
                     }
-                    //                    recentTotalWidth = newWidth
                 }
             }
             .background(Color(NSColor.controlBackgroundColor))
@@ -113,7 +97,7 @@ fileprivate extension ManageView.WorkbenchView {
         }
         
         private var totalWidth: CGFloat {
-            columnWidth1 + columnWidth2 + columnWidth3 + Constant.resizerWidth * 2
+            width1 + width2 + width3 + Constant.resizerWidth * 2
         }
     }
 }
@@ -121,11 +105,12 @@ fileprivate extension ManageView.WorkbenchView {
 // MARK: - Table Header
 
 fileprivate extension ManageView.WorkbenchView {
-    private struct TableHeader: View {
-        @Binding var columnWidth1: CGFloat
-        @Binding var columnWidth2: CGFloat
-        @Binding var columnWidth3: CGFloat
-        let totalWidth: CGFloat
+    private struct Header: View {
+        @Binding var width1: CGFloat
+        @Binding var width2: CGFloat
+        let min1: CGFloat
+        let min2: CGFloat
+        let total: CGFloat
         
         var body: some View {
             HStack(spacing: 0) {
@@ -133,24 +118,23 @@ fileprivate extension ManageView.WorkbenchView {
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
                     .padding(.leading, 12 * 4)
-                    .frame(width: columnWidth1, alignment: .leading)
+                    .frame(width: width1, alignment: .leading)
                 
-                ColumnWidthDragger(width: $columnWidth1, min: 180)
+                ColumnWidthDragger(width: $width1, min: min1)
                 
                 Text("Description")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
-                    .frame(width: columnWidth2, alignment: .leading)
+                    .frame(width: width2, alignment: .leading)
                 
-                ColumnWidthDragger(width: $columnWidth2, min: 140)
+                ColumnWidthDragger(width: $width2, min: min2)
                 
                 Text("Tags")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
-                //                    .frame(width: columnWidth3, alignment: .leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .frame(width: totalWidth, height: 28)
+            .frame(width: total, height: 28)
             .background(Color(NSColor.windowBackgroundColor))
             .overlay(
                 Rectangle()
@@ -165,13 +149,13 @@ fileprivate extension ManageView.WorkbenchView {
 // MARK: - Table Row with Drag and Drop
 
 fileprivate extension ManageView.WorkbenchView {
-    private struct TableRow: View {
+    private struct Row: View {
+        let index: Int
         let row: WorkbenchViewModel.Row
         let isSelected: Bool
         @Binding var draggingRow: WorkbenchViewModel.Row?
-        let column1Width: CGFloat
-        let column2Width: CGFloat
-        let column3Width: CGFloat
+        let width1: CGFloat
+        let width2: CGFloat
         let totalWidth: CGFloat
         let onSelect: () -> Void
         let onDrop: (WorkbenchViewModel.Row, WorkbenchViewModel.Row, DropPosition) -> Void
@@ -195,7 +179,7 @@ fileprivate extension ManageView.WorkbenchView {
                 HStack(spacing: 0) {
                     // Name column
                     IconAndNameCell(row: row)
-                        .frame(width: column1Width, alignment: .leading)
+                        .frame(width: width1, alignment: .leading)
                     
                     Spacer()
                         .frame(width: Constant.resizerWidth)
@@ -206,7 +190,7 @@ fileprivate extension ManageView.WorkbenchView {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.tail)
-                        .frame(width: column2Width, alignment: .leading)
+                        .frame(width: width2, alignment: .leading)
                     
                     Spacer()
                         .frame(width: Constant.resizerWidth)
@@ -217,7 +201,6 @@ fileprivate extension ManageView.WorkbenchView {
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
                         .truncationMode(.tail)
-                    //                        .frame(width: tagsWidth, alignment: .leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
                 .frame(height: rowHeight)
@@ -272,10 +255,8 @@ fileprivate extension ManageView.WorkbenchView {
             if isSelected {
                 return Color.accentColor.opacity(0.15)
             }
-            //            else if isHovered {
-            //                return Color.gray.opacity(0.08)
-            //            }
-            return Color.clear
+            let colors = NSColor.alternatingContentBackgroundColors
+            return Color(colors[index % colors.count])
         }
     }
 }
@@ -579,6 +560,10 @@ fileprivate extension ManageView.WorkbenchView {
 fileprivate extension ManageView.WorkbenchView {
     enum Constant {
         static let resizerWidth: CGFloat = 12
-        static let column1MinWidth: CGFloat = 180
+        static let initialWidth1: CGFloat = 280
+        static let initialWidth2: CGFloat = 220
+        static let initialWidth3: CGFloat = 100
+        static let minWidth1: CGFloat = 180
+        static let minWidth2: CGFloat = 120
     }
 }

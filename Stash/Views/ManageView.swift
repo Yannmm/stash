@@ -11,45 +11,10 @@ import Combine
 
 // Refer to https://dribbble.com/shots/14567500-Bookmark-app-v2
 
-// MARK: - Data Models
-// TODO: remove
-struct Folder: Identifiable, Hashable {
-    let id = UUID()
-    let name: String
-    let count: Int
-}
-
 struct ClipTag: Identifiable, Hashable {
     let id = UUID()
     let name: String
 }
-
-//struct Clip: Identifiable {
-//    let id = UUID()
-//    let title: String
-//    let domain: String
-//    let tags: [String]
-//    let dateAdded: Date
-//    
-//    var initial: String {
-//        String(title.prefix(1)).uppercased()
-//    }
-//    
-//    var formattedDate: String {
-//        let formatter = DateFormatter()
-//        formatter.dateFormat = "MMM dd, yyyy"
-//        return formatter.string(from: dateAdded)
-//    }
-//}
-
-// MARK: - ManageView
-
-let group1 = UUID()
-let group2 = UUID()
-let group3 = UUID()
-let group4 = UUID()
-let child1 = UUID()
-let child2 = UUID()
 
 struct ManageView: View {
     @EnvironmentObject var cabinet: OkamuraCabinet
@@ -62,8 +27,8 @@ struct ManageView: View {
             },
             set: { newGroups in
                 // Replace all entries with newGroups + non-Group entries
-//                let nonGroups = cabinet.storedEntries.filter { !($0 is Group) }
-//                cabinet.storedEntries = nonGroups + newGroups
+                //                let nonGroups = cabinet.storedEntries.filter { !($0 is Group) }
+                //                cabinet.storedEntries = nonGroups + newGroups
                 print(newGroups)
             }
         )
@@ -76,25 +41,21 @@ struct ManageView: View {
                 groups: groups,
                 hashtags: .constant([])
             )
-            .frame(width: 300)
+            .frame(width: Constant.sidebarWidth)
             
             WorkbenchView()
-            .environmentObject(viewModel)
+                .environmentObject(viewModel)
         }
-        .frame(minWidth: 1000, minHeight: 650)
+        .frame(minWidth: Constant.minTotalWidth, minHeight: Constant.minTotalHeight)
     }
 }
 
-// MARK: - Sample Data
-
-extension Folder {
-    static let sampleData: [Folder] = [
-        Folder(name: "Awesome", count: 12),
-        Folder(name: "Dribbble Likes", count: 45),
-        Folder(name: "Grandcentral Beta", count: 8),
-        Folder(name: "Inspiration", count: 156),
-        Folder(name: "Read Later", count: 24)
-    ]
+fileprivate extension ManageView {
+    enum Constant {
+        static let minTotalWidth: CGFloat = 1000
+        static let minTotalHeight: CGFloat = 650
+        static let sidebarWidth: CGFloat = 300
+    }
 }
 
 extension ClipTag {
