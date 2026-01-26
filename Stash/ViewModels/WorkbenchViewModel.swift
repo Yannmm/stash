@@ -121,14 +121,9 @@ extension WorkbenchViewModel {
     }
 }
 
-extension WorkbenchViewModel {
-    enum DropPosition {
-        case before
-        case after
-    }
-    
+extension WorkbenchViewModel {    
     /// Move an entry from source position to before/after target position
-    func moveRow(from sourceID: UUID, to targetID: UUID, position: DropPosition) {
+    func moveRow(from sourceID: UUID, to targetID: UUID, insertAfter: Bool) {
         // Find indices in allEntries
         guard let sourceIndex = allEntries.firstIndex(where: { $0.id == sourceID }),
               let targetIndex = allEntries.firstIndex(where: { $0.id == targetID }),
@@ -147,7 +142,7 @@ extension WorkbenchViewModel {
         var newTargetIndex = newEntries.firstIndex(where: { $0.id == targetID }) ?? 0
         
         // Adjust based on drop position
-        if position == .after {
+        if insertAfter {
             newTargetIndex += 1
         }
         

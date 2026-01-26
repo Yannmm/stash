@@ -27,12 +27,6 @@ extension ManageView {
     }
 }
 
-// MARK: - Drop Position Alias
-
-fileprivate extension ManageView.WorkbenchView {
-    typealias DropPosition = WorkbenchViewModel.DropPosition
-}
-
 // MARK: - Draggable List
 
 fileprivate extension ManageView.WorkbenchView {
@@ -40,7 +34,7 @@ fileprivate extension ManageView.WorkbenchView {
         @EnvironmentObject var viewModel: WorkbenchViewModel
         
         @State private var selection: UUID?
-        @State private var draggingRow: WorkbenchViewModel.Row?
+        @State private var dragging: WorkbenchViewModel.Row?
         @State private var width1: CGFloat = Constant.initialWidth1
         @State private var width2: CGFloat = Constant.initialWidth2
         @State private var width3: CGFloat = Constant.initialWidth3
@@ -57,28 +51,27 @@ fileprivate extension ManageView.WorkbenchView {
                                 min2: Constant.minWidth2,
                                 total: max(totalWidth, proxy.size.width)
                             )
-                            //                                )
                         )
                         {
                             ForEach(viewModel.rows.indices, id: \.self) { index in
                                 Row(
                                     index: index,
                                     row: viewModel.rows[index],
-                                    isSelected: selection == viewModel.rows[index].id,
-                                    draggingRow: $draggingRow,
+                                    selected: selection == viewModel.rows[index].id,
+                                    dragging: $dragging,
                                     width1: width1,
                                     width2: width2,
                                     totalWidth: max(totalWidth, proxy.size.width),
-                                    onSelect: { selection = viewModel.rows[index].id },
-                                    onDrop: { droppedRow, targetRow, position in
-                                        viewModel.moveRow(from: droppedRow.id, to: targetRow.id, position: position)
+                                    onDrop: { droppedRow, targetRow, insertAfter in
+                                        viewModel.moveRow(from: droppedRow.id, to: targetRow.id, insertAfter: insertAfter)
                                     }
                                 )
+                                .onTapGesture { selection = viewModel.rows[index].id }
                             }
                         }
                     }
                 }
-                .onChange(of: proxy.size.width) { newWidth in
+                .onChange(of: proxy.size.width) { _, newWidth in
                     let delta = newWidth - totalWidth
                     if delta != 0 {
                         let proposed = width1 + delta
@@ -149,32 +142,26 @@ fileprivate extension ManageView.WorkbenchView {
 // MARK: - Table Row with Drag and Drop
 
 fileprivate extension ManageView.WorkbenchView {
-    private struct Row: View {
+    enum DragPosition {
+        case over
+        case before
+        case after
+    }
+    
+    struct Row: View {
         let index: Int
         let row: WorkbenchViewModel.Row
-        let isSelected: Bool
-        @Binding var draggingRow: WorkbenchViewModel.Row?
+        let selected: Bool
+        @Binding var dragging: WorkbenchViewModel.Row?
         let width1: CGFloat
         let width2: CGFloat
         let totalWidth: CGFloat
-        let onSelect: () -> Void
-        let onDrop: (WorkbenchViewModel.Row, WorkbenchViewModel.Row, DropPosition) -> Void
-        
-        //        @State private var isHovered = false
-        @State private var dragOver = false
-        @State private var dragOverPosition: DropPosition? = nil
-        
-        private let rowHeight: CGFloat = 36
+        let onDrop: (WorkbenchViewModel.Row, WorkbenchViewModel.Row, Bool) -> Void
+        @State private var dragPosition: DragPosition? = nil
+        private var height: CGFloat { Constant.rowHeight }
         
         var body: some View {
             VStack(spacing: 0) {
-                // Drop indicator line (before)
-                if dragOver && dragOverPosition == .before {
-                    Rectangle()
-                        .fill(Color.accentColor)
-                        .frame(height: 2)
-                }
-                
                 // Row content
                 HStack(spacing: 0) {
                     // Name column
@@ -203,13 +190,25 @@ fileprivate extension ManageView.WorkbenchView {
                         .truncationMode(.tail)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(height: rowHeight)
+                .frame(height: height)
                 .background(backgroundColor)
+                .overlay(alignment: .top) {
+                    if dragPosition == .before {
+                        Rectangle()
+                            .fill(Color.accentColor)
+                            .frame(height: 2)
+                    }
+                }
+                .overlay(alignment: .bottom) {
+                    if dragPosition == .after {
+                        Rectangle()
+                            .fill(Color.accentColor)
+                            .frame(height: 2)
+                    }
+                }
                 .contentShape(Rectangle())
-                .onTapGesture { onSelect() }
-                //                .onHover { isHovered = $0 }
                 .onDrag {
-                    draggingRow = row
+                    dragging = row
                     return NSItemProvider(object: row.id.uuidString as NSString)
                 } preview: {
                     // Drag preview
@@ -226,33 +225,18 @@ fileprivate extension ManageView.WorkbenchView {
                     .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                 }
                 .onDrop(of: [UTType.plainText], delegate: RowDropDelegate(
-                    row: row,
-                    draggedRow: $draggingRow,
-                    dragOver: $dragOver,
-                    dragOverPosition: $dragOverPosition,
-                    rowHeight: rowHeight,
+                    current: row,
+                    dragging: $dragging,
+                    dragPosition: $dragPosition,
+                    rowHeight: height,
                     onDrop: onDrop
                 ))
-                
-                // Drop indicator line (after)
-                if dragOver && dragOverPosition == .after {
-                    Rectangle()
-                        .fill(Color.accentColor)
-                        .frame(height: 2)
-                }
-                
-                // Separator line
-                if !dragOver || dragOverPosition != .after {
-                    Rectangle()
-                        .fill(Color.gray.opacity(0.15))
-                        .frame(height: 1)
-                }
             }
             .frame(width: totalWidth, alignment: .leading)
         }
         
         private var backgroundColor: Color {
-            if isSelected {
+            if selected {
                 return Color.accentColor.opacity(0.15)
             }
             let colors = NSColor.alternatingContentBackgroundColors
@@ -264,47 +248,46 @@ fileprivate extension ManageView.WorkbenchView {
 // MARK: - Row Drop Delegate
 
 fileprivate extension ManageView.WorkbenchView {
-    private struct RowDropDelegate: DropDelegate {
-        let row: WorkbenchViewModel.Row
-        @Binding var draggedRow: WorkbenchViewModel.Row?
-        @Binding var dragOver: Bool
-        @Binding var dragOverPosition: DropPosition?
+    struct RowDropDelegate: DropDelegate {
+        let current: WorkbenchViewModel.Row
+        @Binding var dragging: WorkbenchViewModel.Row?
+        @Binding var dragPosition: DragPosition?
         let rowHeight: CGFloat
-        let onDrop: (WorkbenchViewModel.Row, WorkbenchViewModel.Row, DropPosition) -> Void
+        let onDrop: (WorkbenchViewModel.Row, WorkbenchViewModel.Row, Bool) -> Void
         
         // Only before/after zones - middle zone is rejected
         private var threshold: CGFloat { rowHeight / 3 }
         
         func validateDrop(info: DropInfo) -> Bool {
-            guard let draggedRow = draggedRow else { return false }
-            return draggedRow.id != row.id
+            guard let drag = dragging else { return false }
+            return drag.id != current.id
         }
         
         func performDrop(info: DropInfo) -> Bool {
-            guard let draggedRow = draggedRow,
-                  draggedRow.id != row.id,
-                  let position = dragOverPosition else {
-                resetState()
+            guard let drag = dragging,
+                  drag.id != current.id,
+                  let position = dragPosition, position == .before || position == .after else {
+                reset()
                 return false
             }
             
-            onDrop(draggedRow, row, position)
-            self.draggedRow = nil
-            resetState()
+            onDrop(drag, current, position == .after)
+            self.dragging = nil
+            reset()
             return true
         }
         
         func dropEntered(info: DropInfo) {
-            guard draggedRow?.id != row.id else { return }
-            dragOver = true
+            guard dragging?.id != current.id else { return }
+            dragPosition = .over
         }
         
         func dropExited(info: DropInfo) {
-            resetState()
+            reset()
         }
         
         func dropUpdated(info: DropInfo) -> DropProposal? {
-            guard draggedRow?.id != row.id else {
+            guard dragging?.id != current.id else {
                 return DropProposal(operation: .forbidden)
             }
             
@@ -312,20 +295,19 @@ fileprivate extension ManageView.WorkbenchView {
             
             // Only allow dropping near top or bottom, reject middle
             if location.y < threshold {
-                dragOverPosition = .before
+                dragPosition = .before
                 return DropProposal(operation: .move)
             } else if location.y > (rowHeight - threshold) {
-                dragOverPosition = .after
+                dragPosition = .after
                 return DropProposal(operation: .move)
             } else {
-                dragOverPosition = nil
+                dragPosition = nil
                 return DropProposal(operation: .forbidden)
             }
         }
         
-        private func resetState() {
-            dragOver = false
-            dragOverPosition = nil
+        private func reset() {
+            dragPosition = nil
         }
     }
 }
@@ -559,6 +541,7 @@ fileprivate extension ManageView.WorkbenchView {
 
 fileprivate extension ManageView.WorkbenchView {
     enum Constant {
+        static let rowHeight: CGFloat = 36
         static let resizerWidth: CGFloat = 12
         static let initialWidth1: CGFloat = 280
         static let initialWidth2: CGFloat = 220

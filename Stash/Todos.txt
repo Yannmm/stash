@@ -67,3 +67,5 @@
 // 62. hungrymark -> hungrymarks
 // 63. drag in manage view, view should also scroll along side
 // 64. after creating a new item, list should auto scroll to the position
+
+// 65. in manage view, enter -> edit, space -> preview, double click -> open

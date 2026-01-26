@@ -60,7 +60,7 @@ extension ManageView.Sidebar {
             }
         }
         
-        private func handleDrop(droppedGroup: Group, targetGroup: Group?, position: DropPosition) {
+        private func handleDrop(droppedGroup: Group, targetGroup: Group?, position: DragPosition) {
             guard let droppedIndex = groups.firstIndex(where: { $0.id == droppedGroup.id }) else { return }
             
             var updatedGroup = droppedGroup
@@ -126,7 +126,7 @@ extension ManageView.Sidebar {
         }
     }
     
-    enum DropPosition {
+    enum DragPosition {
         case on
         case before
         case after
@@ -143,12 +143,12 @@ extension ManageView.Sidebar {
         @Binding var draggingOne: Group?
         @Binding var selectedOne: Group?
         let onToggleExpansion: (UUID) -> Void
-        let onDrop: (Group, Group?, DropPosition) -> Void
+        let onDrop: (Group, Group?, DragPosition) -> Void
         let action: (Group) -> Void
         
         @State private var isHovered = false
         @State private var dragOver = false
-        @State private var dragOverPosition: DropPosition? = nil
+        @State private var dragOverPosition: DragPosition? = nil
         
         var body: some View {
             VStack(spacing: 0) {
@@ -239,8 +239,8 @@ extension ManageView.Sidebar {
         let group: Group
         @Binding var draggedGroup: Group?
         @Binding var dragOver: Bool
-        @Binding var dragOverPosition: DropPosition?
-        let onDrop: (Group, Group?, DropPosition) -> Void
+        @Binding var dragOverPosition: DragPosition?
+        let onDrop: (Group, Group?, DragPosition) -> Void
         
         // Estimated row height (8 padding top + 8 padding bottom + ~20 content = 36)
         private let estimatedRowHeight: CGFloat = 36
@@ -307,7 +307,7 @@ extension ManageView.Sidebar {
         let checkExpanded: (UUID) -> Bool
         let isHovered: Bool
         let dragOver: Bool
-        let dragOverPosition: DropPosition?
+        let dragOverPosition: DragPosition?
         let onToggleExpansion: () -> Void
         let action: (Group) -> Void
         let selected: Bool
