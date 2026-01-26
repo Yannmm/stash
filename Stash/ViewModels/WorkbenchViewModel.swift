@@ -123,38 +123,38 @@ extension WorkbenchViewModel {
 
 extension WorkbenchViewModel {    
     /// Move an entry from source position to before/after target position
-    func moveRow(from sourceID: UUID, to targetID: UUID, insertAfter: Bool) {
+    func moveRow(_ subjectId: UUID, to destinationId: UUID, insertAfter: Bool) {
         // Find indices in allEntries
-        guard let sourceIndex = allEntries.firstIndex(where: { $0.id == sourceID }),
-              let targetIndex = allEntries.firstIndex(where: { $0.id == targetID }),
-              sourceIndex != targetIndex else {
+        guard let subjectIndex = allEntries.firstIndex(where: { $0.id == subjectId }),
+              let destinationIndex = allEntries.firstIndex(where: { $0.id == destinationId }),
+              subjectIndex != destinationIndex else {
             return
         }
         
         // Get the entry to move
-        let sourceEntry = allEntries[sourceIndex]
+        var subject = allEntries[subjectIndex]
         
         // Create new array with source removed
-        var newEntries = allEntries
-        newEntries.remove(at: sourceIndex)
+        var copies = allEntries
+        copies.remove(at: subjectIndex)
+        
+        let destination = allEntries[destinationIndex]
+        subject.parentId = destination.parentId
         
         // Calculate new target index (adjusted after removal)
-        var newTargetIndex = newEntries.firstIndex(where: { $0.id == targetID }) ?? 0
+        var newIndex = copies.firstIndex(where: { $0.id == destinationId }) ?? 0
         
         // Adjust based on drop position
         if insertAfter {
-            newTargetIndex += 1
+            newIndex += 1
         }
         
         // Ensure index is valid
-        newTargetIndex = min(max(0, newTargetIndex), newEntries.count)
+        newIndex = min(max(0, newIndex), copies.count)
         
         // Insert at new position
-        newEntries.insert(sourceEntry, at: newTargetIndex)
-        
-        // Update with animation
-        withAnimation(.easeInOut(duration: 0.2)) {
-            allEntries = newEntries
-        }
+        copies.insert(subject, at: newIndex)
+                
+        allEntries = copies
     }
 }

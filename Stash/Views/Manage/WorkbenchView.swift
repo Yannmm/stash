@@ -57,16 +57,17 @@ fileprivate extension ManageView.WorkbenchView {
                                 Row(
                                     index: index,
                                     row: viewModel.rows[index],
-                                    selected: selection == viewModel.rows[index].id,
+                                    selection: $selection,
                                     dragging: $dragging,
                                     width1: width1,
                                     width2: width2,
                                     totalWidth: max(totalWidth, proxy.size.width),
-                                    onDrop: { droppedRow, targetRow, insertAfter in
-                                        viewModel.moveRow(from: droppedRow.id, to: targetRow.id, insertAfter: insertAfter)
+                                    onDrop: { drag, over, insertAfter in
+                                        withAnimation(.easeInOut(duration: 0.25)) {
+                                            viewModel.moveRow(drag.id, to: over.id, insertAfter: insertAfter)
+                                        }
                                     }
                                 )
-                                .onTapGesture { selection = viewModel.rows[index].id }
                             }
                         }
                     }
@@ -142,16 +143,10 @@ fileprivate extension ManageView.WorkbenchView {
 // MARK: - Table Row with Drag and Drop
 
 fileprivate extension ManageView.WorkbenchView {
-    enum DragPosition {
-        case over
-        case before
-        case after
-    }
-    
     struct Row: View {
         let index: Int
         let row: WorkbenchViewModel.Row
-        let selected: Bool
+        @Binding var selection: UUID?
         @Binding var dragging: WorkbenchViewModel.Row?
         let width1: CGFloat
         let width2: CGFloat
@@ -207,7 +202,9 @@ fileprivate extension ManageView.WorkbenchView {
                     }
                 }
                 .contentShape(Rectangle())
+                .onTapGesture { selection = row.id }
                 .onDrag {
+                    selection = row.id
                     dragging = row
                     return NSItemProvider(object: row.id.uuidString as NSString)
                 } preview: {
@@ -224,7 +221,7 @@ fileprivate extension ManageView.WorkbenchView {
                     .cornerRadius(6)
                     .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
                 }
-                .onDrop(of: [UTType.plainText], delegate: RowDropDelegate(
+                .onDrop(of: [UTType.plainText], delegate: Dropper(
                     current: row,
                     dragging: $dragging,
                     dragPosition: $dragPosition,
@@ -236,7 +233,7 @@ fileprivate extension ManageView.WorkbenchView {
         }
         
         private var backgroundColor: Color {
-            if selected {
+            if selection == row.id {
                 return Color.accentColor.opacity(0.15)
             }
             let colors = NSColor.alternatingContentBackgroundColors
@@ -245,10 +242,18 @@ fileprivate extension ManageView.WorkbenchView {
     }
 }
 
+
+
 // MARK: - Row Drop Delegate
 
-fileprivate extension ManageView.WorkbenchView {
-    struct RowDropDelegate: DropDelegate {
+fileprivate extension ManageView.WorkbenchView.Row {
+    enum DragPosition {
+        case over
+        case before
+        case after
+    }
+    
+    struct Dropper: SwiftUI.DropDelegate {
         let current: WorkbenchViewModel.Row
         @Binding var dragging: WorkbenchViewModel.Row?
         @Binding var dragPosition: DragPosition?
