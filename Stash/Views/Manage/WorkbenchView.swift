@@ -39,6 +39,11 @@ fileprivate extension ManageView.WorkbenchView {
         @State private var width2: CGFloat = Constant.initialWidth2
         @State private var width3: CGFloat = Constant.initialWidth3
         
+        // macOS 26 SwiftUI List reuse bug:
+        // Row @State leaks after drag reorder.
+        // Remove _version hack once fixed.
+        @State private var _version = 0
+        
         var body: some View {
             GeometryReader { proxy in
                 ScrollView([.vertical, .horizontal]) {
@@ -53,10 +58,10 @@ fileprivate extension ManageView.WorkbenchView {
                             )
                         )
                         {
-                            ForEach(viewModel.rows.indices, id: \.self) { index in
+                            ForEach(Array(viewModel.rows.enumerated()), id: \.element.id) { index, row in
                                 Row(
                                     index: index,
-                                    row: viewModel.rows[index],
+                                    row: row,
                                     selection: $selection,
                                     dragging: $dragging,
                                     width1: width1,
@@ -65,9 +70,13 @@ fileprivate extension ManageView.WorkbenchView {
                                     onDrop: { drag, over, insertAfter in
                                         withAnimation(.easeInOut(duration: 0.25)) {
                                             viewModel.moveRow(drag.id, to: over.id, insertAfter: insertAfter)
+                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                                _version += 1
+                                            }
                                         }
                                     }
                                 )
+                                .id("\(row.id)-\(_version)")
                             }
                         }
                     }
