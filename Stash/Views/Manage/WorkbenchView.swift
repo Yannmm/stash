@@ -47,39 +47,44 @@ fileprivate extension ManageView.WorkbenchView {
         var body: some View {
             GeometryReader { proxy in
                 ScrollView([.vertical, .horizontal]) {
-                    LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                        Section(
-                            header: Header(
-                                width1: $width1,
-                                width2: $width2,
-                                min1: Constant.minWidth1,
-                                min2: Constant.minWidth2,
-                                total: max(totalWidth, proxy.size.width)
+                    VStack(spacing: 0) {
+                        LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                            Section(
+                                header: Header(
+                                    width1: $width1,
+                                    width2: $width2,
+                                    min1: Constant.minWidth1,
+                                    min2: Constant.minWidth2,
+                                    total: max(totalWidth, proxy.size.width)
+                                )
                             )
-                        )
-                        {
-                            ForEach(Array(viewModel.rows.enumerated()), id: \.element.id) { index, row in
-                                Row(
-                                    index: index,
-                                    row: row,
-                                    selection: $selection,
-                                    dragging: $dragging,
-                                    width1: width1,
-                                    width2: width2,
-                                    totalWidth: max(totalWidth, proxy.size.width),
-                                    onDrop: { drag, over, insertAfter in
-                                        withAnimation(.easeInOut(duration: 0.25)) {
-                                            viewModel.moveRow(drag.id, to: over.id, insertAfter: insertAfter)
-                                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                                                _version += 1
+                            {
+                                ForEach(Array(viewModel.rows.enumerated()), id: \.element.id) { index, row in
+                                    Row(
+                                        index: index,
+                                        row: row,
+                                        selection: $selection,
+                                        dragging: $dragging,
+                                        width1: width1,
+                                        width2: width2,
+                                        totalWidth: max(totalWidth, proxy.size.width),
+                                        onDrop: { drag, over, insertAfter in
+                                            withAnimation(.easeInOut(duration: 0.25)) {
+                                                viewModel.moveRow(drag.id, to: over.id, insertAfter: insertAfter)
+                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                                    _version += 1
+                                                }
                                             }
                                         }
-                                    }
-                                )
-                                .id("\(row.id)-\(_version)")
+                                    )
+                                    .id("\(row.id)-\(_version)")
+                                }
                             }
                         }
+                        Spacer(minLength: 0)
                     }
+//                    .frame(width: proxy.size.width)
+                    .frame(minHeight: proxy.size.height)
                 }
                 .onChange(of: proxy.size.width) { _, newWidth in
                     let delta = newWidth - totalWidth
