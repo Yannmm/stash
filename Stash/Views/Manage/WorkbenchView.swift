@@ -16,13 +16,16 @@ extension ManageView {
         var body: some View {
             VStack(alignment: .leading, spacing: 0) {
                 Toolbar()
-                    .padding(.top, 12)
-                    .padding(.horizontal, 32)
-                    .padding(.bottom, 24)
+                    .padding(.horizontal, 12)
+                
+                Divider()
                 
                 DraggableList()
             }
             .background(Color(NSColor.textBackgroundColor))
+            .toolbar {
+                // Empty toolbar to prevent default sidebar toggle from appearing
+            }
         }
     }
 }
@@ -411,102 +414,137 @@ fileprivate extension ManageView.WorkbenchView {
     struct Toolbar: View {
         @EnvironmentObject var viewModel: WorkbenchViewModel
         
-        @State private var favoriteColor = 0
-        
         var body: some View {
-            VStack(alignment: .leading, spacing: 8) {
-                HStack(alignment: .top) {
-                    Text(viewModel.title)
-                        .font(.system(size: 28, weight: .bold))
-                        .foregroundStyle(.primary)
-                    Spacer()
-                    HStack(spacing: 12) {
-                        SearchField(text: $viewModel.filter)
-                        AddBookmarkButton()
-                    }
+            HStack(spacing: 0) {
+                // Left: Navigation buttons
+                HStack(spacing: 2) {
+                    ToolbarButton(icon: "chevron.left", action: {})
+                        .disabled(true)
+                    ToolbarButton(icon: "chevron.right", action: {})
+                        .disabled(true)
                 }
-                HStack {
+                
+                Spacer()
+                
+                // Center: Title and item count
+                VStack(spacing: 2) {
+                    Text(viewModel.title)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(.primary)
                     Text(countDescription)
-                        .font(.system(size: 14))
+                        .font(.system(size: 11))
                         .foregroundStyle(.secondary)
-                    Spacer()
+                }
+                
+                Spacer()
+                
+                // Right: View toggle, actions, and search
+                HStack(spacing: 8) {
                     ViewToggle()
+                    
+                    Divider()
+                        .frame(height: 18)
+                    
+                    // Action buttons
+                    HStack(spacing: 2) {
+                        ToolbarButton(icon: "square.and.arrow.up", action: {})
+                        ToolbarButton(icon: "tag", action: {})
+                        
+                        Menu {
+                            Button("New Folder", action: {})
+                            Button("Add Bookmark", action: {})
+                            Divider()
+                            Button("Sort By Name", action: {})
+                            Button("Sort By Date", action: {})
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                                .font(.system(size: 14))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 28, height: 22)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    
+                    Divider()
+                        .frame(height: 18)
+                    
+                    SearchField(text: $viewModel.filter)
                 }
             }
-            .background(Color.clear)
+            .padding(.vertical, 6)
         }
         
-        var countDescription: AttributedString {
-            func _make(_ count: Int, _ unit: String) -> AttributedString {
-                var a1 = AttributedString("\(count) ")
-                a1.foregroundColor = .secondary
-                a1.font = .system(size: 14, weight: .bold)
-                var a2 = AttributedString(unit)
-                a2.foregroundColor = .gray
-                a2.font = .system(size: 14, weight: .ultraLight)
-                return a1 + a2
-            }
-            
-            if (viewModel.groupCount > 0) {
-                var v = AttributedString(" / ")
-                v.foregroundColor = .gray
-                v.font = .system(size: 14, weight: .ultraLight)
-                return _make(viewModel.bookmarkCount, "Bookmarks") + v + _make(viewModel.groupCount, "Groups")
+        private var countDescription: String {
+            if viewModel.groupCount > 0 {
+                return "\(viewModel.bookmarkCount) items, \(viewModel.groupCount) folders"
             } else {
-                return _make(viewModel.bookmarkCount, "Bookmarks")
+                return "\(viewModel.bookmarkCount) items"
             }
+        }
+    }
+    
+    private struct ToolbarButton: View {
+        let icon: String
+        let action: () -> Void
+        
+        @State private var isHovered = false
+        @Environment(\.isEnabled) private var isEnabled
+        
+        var body: some View {
+            Button(action: action) {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(isEnabled ? (isHovered ? .primary : .secondary) : .quaternary)
+                    .frame(width: 28, height: 22)
+                    .background(
+                        RoundedRectangle(cornerRadius: 5)
+                            .fill(isHovered && isEnabled ? Color.gray.opacity(0.15) : Color.clear)
+                    )
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .onHover { isHovered = $0 }
         }
     }
     
     private struct SearchField: View {
         @Binding var text: String
+        @FocusState private var isFocused: Bool
         
         var body: some View {
-            HStack(spacing: 8) {
+            HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass")
-                    .font(.system(size: 13))
+                    .font(.system(size: 12))
                     .foregroundStyle(.secondary)
                 
-                TextField("Filter...", text: $text)
+                TextField("Search", text: $text)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 14))
+                    .font(.system(size: 13))
+                    .focused($isFocused)
+                
+                if !text.isEmpty {
+                    Button(action: { text = "" }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .frame(width: 160)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 4)
+            .frame(width: isFocused || !text.isEmpty ? 180 : 140)
             .background(
                 RoundedRectangle(cornerRadius: 6)
-                    .stroke(Color.gray.opacity(0.3), lineWidth: 1)
+                    .fill(Color(NSColor.controlBackgroundColor))
             )
-        }
-    }
-    
-    // MARK: - Add Clip Button
-    
-    private struct AddBookmarkButton: View {
-        @State private var isHovered = false
-        
-        var body: some View {
-            Button(action: {}) {
-                HStack(spacing: 6) {
-                    Image(systemName: "plus")
-                        .font(.system(size: 12, weight: .semibold))
-                    Text("Add Bookmark")
-                        .font(.system(size: 14, weight: .medium))
-                }
-                .foregroundColor(.white)
-                .padding(.horizontal, 16)
-                .padding(.vertical, 8)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.green)
-                )
-                .fixedSize()
-            }
-            .buttonStyle(.plain)
-            .scaleEffect(isHovered ? 1.02 : 1.0)
-            .onHover { isHovered = $0 }
-            .animation(.easeInOut(duration: 0.15), value: isHovered)
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(isFocused ? Color.accentColor.opacity(0.5) : Color.gray.opacity(0.2), lineWidth: 1)
+            )
+            .animation(.easeInOut(duration: 0.15), value: isFocused)
+            .animation(.easeInOut(duration: 0.15), value: text.isEmpty)
         }
     }
 }
@@ -515,45 +553,49 @@ fileprivate extension ManageView.WorkbenchView {
     struct ViewToggle: View {
         @EnvironmentObject var viewModel: WorkbenchViewModel
         
+        private let options: [(icon: String, hierarchy: WorkbenchViewModel.Hierarchy)] = [
+            ("square.grid.2x2", .direct),
+            ("list.bullet", .direct),
+            ("rectangle.grid.1x2", .descendant),
+            ("squares.below.rectangle", .descendant)
+        ]
+        
         var body: some View {
-            HStack(spacing: 0) {
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        viewModel.hierarchy = .direct
+            HStack(spacing: 1) {
+                ForEach(Array(options.enumerated()), id: \.offset) { index, option in
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            viewModel.hierarchy = option.hierarchy
+                        }
+                    }) {
+                        Image(systemName: option.icon)
+                            .font(.system(size: 12))
+                            .foregroundStyle(isSelected(index) ? .primary : .secondary)
+                            .frame(width: 26, height: 20)
+                            .background(
+                                RoundedRectangle(cornerRadius: 4)
+                                    .fill(isSelected(index) ? Color(NSColor.controlBackgroundColor) : Color.clear)
+                                    .shadow(color: isSelected(index) ? Color.black.opacity(0.1) : Color.clear, radius: 1, y: 1)
+                            )
+                            .contentShape(Rectangle())
                     }
-                }) {
-                    Image(systemName: "list.bullet")
-                        .font(.system(size: 13))
-                        .foregroundStyle(viewModel.hierarchy == .direct ? .primary : .secondary)
-                        .frame(width: 32, height: 28)
-                        .contentShape(Rectangle())
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
-                
-                Button(action: {
-                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
-                        viewModel.hierarchy = .descendant
-                    }
-                }) {
-                    Image(systemName: "list.bullet.indent")
-                        .font(.system(size: 13))
-                        .foregroundStyle(viewModel.hierarchy == .descendant ? .primary : .secondary)
-                        .frame(width: 32, height: 28)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
             }
+            .padding(2)
             .background(
-                ZStack {
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.gray.opacity(0.1))
-                        .frame(width: 32, height: 28)
-                        .offset(x: viewModel.hierarchy == .direct ? -16 : 16)
-                    
-                    RoundedRectangle(cornerRadius: 6)
-                        .stroke(Color.gray.opacity(0.3), lineWidth: 1)
-                }
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.gray.opacity(0.12))
             )
+        }
+        
+        private func isSelected(_ index: Int) -> Bool {
+            // For now, index 1 (list) = .direct, index 2-3 = .descendant
+            if viewModel.hierarchy == .direct {
+                return index == 1
+            } else {
+                return index == 2
+            }
         }
     }
 }

@@ -17,59 +17,38 @@ extension ManageView {
         private let totalClips = 6
         
         var body: some View {
-            VStack(spacing: 0) {
-                // Traffic lights spacer
-                HStack {
-                    Spacer()
-                    Button(action: {}) {
-                        Image(systemName: "sidebar.left")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.white.opacity(0.6))
+            List {
+                // All Bookmarks row
+                AllBookmarksRow(
+                    count: totalClips,
+                    selected: collection == nil,
+                    onTap: {
+                        collection = nil
                     }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 12)
-                .padding(.bottom, 8)
+                )
+                .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
+                .listRowSeparator(.hidden)
                 
-                // Search bar
-                SearchBar(text: $searchText)
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 20)
-                
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        AllBookmarksRow(
-                            count: totalClips,
-                            selected: false,
-                            onTap: {
-                                //                            showAllClips = true
-                                //                            selectedFolder = nil
-                                //                            selectedTag = nil
-                                collection = nil
-                            }
-                        )
-                        GroupSection(groups: $groups, selectedOne: Binding<Group?>(
-                            get: {
-                                collection as? Group
-                            },
-                            set: { newGroup in
-                                collection = newGroup
-                            }
-                        ))
-                        TagSection(hashtags: $hashtags)
+                // Groups Section
+                GroupSection(groups: $groups, selectedOne: Binding<Group?>(
+                    get: {
+                        collection as? Group
+                    },
+                    set: { newGroup in
+                        collection = newGroup
                     }
-                    .padding(.horizontal, 16)
-                }
+                ))
                 
-                Spacer()
-                
-                // Footer
+                // Tags Section
+                TagSection(hashtags: $hashtags)
+            }
+            .listStyle(.sidebar)
+            .searchable(text: $searchText, prompt: "Search clips...")
+            .safeAreaInset(edge: .bottom) {
                 FooterView()
                     .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
+                    .padding(.vertical, 12)
             }
-            .background(Color(hex: 0x22242B))
         }
         
         
@@ -78,31 +57,6 @@ extension ManageView {
 
 
 
-
-// MARK: - Search Bar
-
-private struct SearchBar: View {
-    @Binding var text: String
-    
-    var body: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass")
-                .font(.system(size: 14))
-                .foregroundStyle(.white.opacity(0.5))
-            
-            TextField("Search clips...", text: $text)
-                .textFieldStyle(.plain)
-                .font(.system(size: 14))
-                .foregroundStyle(.white)
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 8)
-                .fill(Color.white.opacity(0.1))
-        )
-    }
-}
 
 extension ManageView.Sidebar {
     private struct AllBookmarksRow: View {
@@ -110,34 +64,22 @@ extension ManageView.Sidebar {
         let selected: Bool
         let onTap: () -> Void
         
-        @State private var isHovered = false
-        
         var body: some View {
             Button(action: onTap) {
-                HStack(spacing: 10) {
+                Label {
+                    HStack {
+                        Text("All Bookmarks")
+                        Spacer()
+                        Text("\(count)")
+                            .foregroundStyle(.secondary)
+                            .font(.callout)
+                    }
+                } icon: {
                     Image(systemName: "infinity")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.white)
-                    
-                    Text("All Bookmarks")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.white)
-                    
-                    Spacer()
-                    
-                    Text("\(count)")
-                        .font(.system(size: 13))
-                        .foregroundStyle(.white.opacity(0.6))
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 10)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(selected ? Color.white.opacity(0.15) : (isHovered ? Color.white.opacity(0.08) : Color.clear))
-                )
             }
             .buttonStyle(.plain)
-            .onHover { isHovered = $0 }
+            .listRowBackground(selected ? Color.accentColor.opacity(0.2) : Color.clear)
         }
     }
 }
@@ -147,22 +89,15 @@ extension ManageView.Sidebar {
         @Binding var hashtags: [Hashtag]
         
         var body: some View {
-            VStack(alignment: .leading, spacing: 12) {
-                // Tags Section
-                SectionHeader(title: "TAGS")
-                
-                VStack(spacing: 0) {
-                    ForEach(hashtags) { tag in
-                        HashtagRow(
-                            hashtag: tag,
-                            isSelected: false,
-                            action: {
-                                //                                    selectedTag = tag
-                                //                                    selectedFolder = nil
-                                //                                    showAllClips = false
-                            }
-                        )
-                    }
+            Section("Tags") {
+                ForEach(hashtags) { tag in
+                    HashtagRow(
+                        hashtag: tag,
+                        isSelected: false,
+                        action: {
+                            // TODO: Handle tag selection
+                        }
+                    )
                 }
             }
         }
@@ -184,30 +119,12 @@ private struct HashtagRow: View {
     let isSelected: Bool
     let action: () -> Void
     
-    @State private var isHovered = false
-    
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 10) {
-                Text("#")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.white.opacity(0.7))
-                
-                Text(hashtag.name)
-                    .font(.system(size: 14))
-                    .foregroundStyle(.white.opacity(0.9))
-                
-                Spacer()
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isSelected ? Color.white.opacity(0.15) : (isHovered ? Color.white.opacity(0.08) : Color.clear))
-            )
+            Label(hashtag.name, systemImage: "number")
         }
         .buttonStyle(.plain)
-        .onHover { isHovered = $0 }
+        .listRowBackground(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
     }
 }
 
@@ -217,14 +134,14 @@ private struct FooterView: View {
     var body: some View {
         HStack {
             Text("Pro Account")
-                .font(.system(size: 12))
-                .foregroundStyle(.white.opacity(0.5))
+                .font(.caption)
+                .foregroundStyle(.secondary)
             
             Spacer()
             
             Text("70% used")
-                .font(.system(size: 12))
-                .foregroundStyle(.white.opacity(0.5))
+                .font(.caption)
+                .foregroundStyle(.secondary)
         }
     }
 }

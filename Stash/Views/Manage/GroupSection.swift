@@ -15,46 +15,62 @@ extension ManageView.Sidebar {
         @State private var expandedOnes: Set<UUID> = []
         @State private var draggingOne: Group?
         
-        private var roots: [Group] {
-            groups.filter { $0.parentId == nil }
+        // Flattened visible nodes for proper List rendering
+        private var visibleNodes: [(group: Group, level: Int)] {
+            var result: [(Group, Int)] = []
+            
+            func flatten(_ group: Group, level: Int) {
+                result.append((group, level))
+                if expandedOnes.contains(group.id) {
+                    let children = groups.filter { $0.parentId == group.id }
+                    for child in children {
+                        flatten(child, level: level + 1)
+                    }
+                }
+            }
+            
+            let roots = groups.filter { $0.parentId == nil }
+            for root in roots {
+                flatten(root, level: 0)
+            }
+            return result
+        }
+        
+        private func getChildren(of groupId: UUID) -> [Group] {
+            groups.filter { $0.parentId == groupId }
         }
         
         var body: some View {
             if groups.count <= 0 {
                 EmptyView()
             } else {
-                VStack(alignment: .leading, spacing: 12) {
-                    SectionHeader(title: "GROUPS")
-                    
-                    VStack(spacing: 0) {
-                        ForEach(roots) { group in
-                            Node(
-                                group: group,
-                                getChildren: { gid in groups.filter { $0.parentId == gid } },
-                                checkExpanded: expandedOnes.contains,
-                                level: 0,
-                                draggingOne: $draggingOne,
-                                selectedOne: $selectedOne,
-                                onToggleExpansion: { groupId in
-                                    withAnimation(.easeInOut(duration: 0.25)) {
-                                        if expandedOnes.contains(groupId) {
-                                            expandedOnes.remove(groupId)
-                                        } else {
-                                            expandedOnes.insert(groupId)
-                                        }
+                Section("Groups") {
+                    ForEach(visibleNodes, id: \.group.id) { node in
+                        NodeRow(
+                            group: node.group,
+                            level: node.level,
+                            getChildren: getChildren,
+                            isExpanded: expandedOnes.contains(node.group.id),
+                            draggingOne: $draggingOne,
+                            selectedOne: $selectedOne,
+                            onToggleExpansion: {
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    if expandedOnes.contains(node.group.id) {
+                                        expandedOnes.remove(node.group.id)
+                                    } else {
+                                        expandedOnes.insert(node.group.id)
                                     }
-                                },
-                                onDrop: { droppedGroup, targetGroup, position in
-                                    handleDrop(droppedGroup: droppedGroup, targetGroup: targetGroup, position: position)
-                                },
-                                action: { group in
-                                    selectedOne = group
-                                    //                                    selectedFolder = group
-                                    //                                    selectedTag = nil
-                                    //                                    showAllClips = false
                                 }
-                            )
-                        }
+                            },
+                            onDrop: { droppedGroup, targetGroup, position in
+                                handleDrop(droppedGroup: droppedGroup, targetGroup: targetGroup, position: position)
+                            },
+                            action: { group in
+                                selectedOne = group
+                            }
+                        )
+                        .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
+                        .listRowSeparator(.hidden)
                     }
                 }
             }
@@ -134,15 +150,15 @@ extension ManageView.Sidebar {
 }
 
 extension ManageView.Sidebar {
-    private struct Node: View {
+    private struct NodeRow: View {
         let group: Group
-        let getChildren: (UUID) -> [Group]
-        let checkExpanded: (UUID) -> Bool
         let level: Int
+        let getChildren: (UUID) -> [Group]
+        let isExpanded: Bool
         
         @Binding var draggingOne: Group?
         @Binding var selectedOne: Group?
-        let onToggleExpansion: (UUID) -> Void
+        let onToggleExpansion: () -> Void
         let onDrop: (Group, Group?, DragPosition) -> Void
         let action: (Group) -> Void
         
@@ -152,86 +168,62 @@ extension ManageView.Sidebar {
         
         var body: some View {
             VStack(spacing: 0) {
-                VStack(spacing: 0) {
-                    // Drop indicator line (before)
-                    if dragOver && dragOverPosition == .before {
-                        Rectangle()
-                            .fill(Color.accentColor)
-                            .frame(height: 2)
-                            .padding(.horizontal, 12 + CGFloat(level) * 16)
-                    }
-                    
-                    Row(
-                        group: group,
-                        level: level,
-                        getChildren: getChildren,
-                        checkExpanded: checkExpanded,
-                        isHovered: isHovered,
-                        dragOver: dragOver && dragOverPosition == .on,
-                        dragOverPosition: dragOverPosition,
-                        onToggleExpansion: { onToggleExpansion(group.id) },
-                        action: action,
-                        selected: selectedOne?.id == group.id
-                    )
-                    
-                    // Drop indicator line (after)
-                    if dragOver && dragOverPosition == .after {
-                        Rectangle()
-                            .fill(Color.accentColor)
-                            .frame(height: 2)
-                            .padding(.horizontal, 12 + CGFloat(level) * 16)
-                    }
+                // Drop indicator line (before)
+                if dragOver && dragOverPosition == .before {
+                    Rectangle()
+                        .fill(Color.accentColor)
+                        .frame(height: 2)
+                        .padding(.leading, CGFloat(level) * 16)
                 }
-                .contentShape(Rectangle())
-                .onDrag {
-                    draggingOne = group
-                    return NSItemProvider(object: group.id.uuidString as NSString)
-                } preview: {
-                    // Drag preview
-                    HStack(spacing: 8) {
-                        Image(systemName: "folder")
-                            .font(.system(size: 14))
-                            .foregroundStyle(.white)
-                        Text(group.name)
-                            .font(.system(size: 14))
-                            .foregroundStyle(.white)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color(hex: 0x22242B).opacity(0.9))
-                    .cornerRadius(6)
-                }
-                .onDrop(of: [UTType.plainText], delegate: GroupDropDelegate(
-                    group: group,
-                    draggedGroup: $draggingOne,
-                    dragOver: $dragOver,
-                    dragOverPosition: $dragOverPosition,
-                      onDrop: onDrop
-                ))
-                .onHover { isHovered = $0 }
                 
-                if getChildren(group.id).count > 0 {
-                    if checkExpanded(group.id) {
-                        ForEach(getChildren(group.id)) { child in
-                            Node(
-                                group: child,
-                                getChildren: getChildren,
-                                checkExpanded: checkExpanded,
-                                level: level + 1,
-                                draggingOne: $draggingOne,
-                                selectedOne: $selectedOne,
-                                onToggleExpansion: onToggleExpansion,
-                                onDrop: onDrop,
-                                action: action
-                            )
-                            .transition(.asymmetric(
-                                insertion: .opacity.combined(with: .move(edge: .top)),
-                                removal: .opacity.combined(with: .move(edge: .top))
-                            ))
-                        }
-                    }
+                Row(
+                    group: group,
+                    level: level,
+                    getChildren: getChildren,
+                    isExpanded: isExpanded,
+                    isHovered: isHovered,
+                    dragOver: dragOver && dragOverPosition == .on,
+                    dragOverPosition: dragOverPosition,
+                    onToggleExpansion: onToggleExpansion,
+                    action: action,
+                    selected: selectedOne?.id == group.id
+                )
+                
+                // Drop indicator line (after)
+                if dragOver && dragOverPosition == .after {
+                    Rectangle()
+                        .fill(Color.accentColor)
+                        .frame(height: 2)
+                        .padding(.leading, CGFloat(level) * 16)
                 }
             }
+            .contentShape(Rectangle())
+            .onDrag {
+                draggingOne = group
+                return NSItemProvider(object: group.id.uuidString as NSString)
+            } preview: {
+                HStack(spacing: 8) {
+                    Image(systemName: "folder")
+                        .font(.system(size: 14))
+                        .foregroundStyle(.primary)
+                    Text(group.name)
+                        .font(.system(size: 14))
+                        .foregroundStyle(.primary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(NSColor.controlBackgroundColor).opacity(0.95))
+                .cornerRadius(6)
+                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+            }
+            .onDrop(of: [UTType.plainText], delegate: GroupDropDelegate(
+                group: group,
+                draggedGroup: $draggingOne,
+                dragOver: $dragOver,
+                dragOverPosition: $dragOverPosition,
+                onDrop: onDrop
+            ))
+            .onHover { isHovered = $0 }
         }
     }
     
@@ -304,7 +296,7 @@ extension ManageView.Sidebar {
         let group: Group
         let level: Int
         let getChildren: (UUID) -> [Group]
-        let checkExpanded: (UUID) -> Bool
+        let isExpanded: Bool
         let isHovered: Bool
         let dragOver: Bool
         let dragOverPosition: DragPosition?
@@ -326,9 +318,9 @@ extension ManageView.Sidebar {
                 }
                 
                 // Folder icon
-                Image(systemName: (getChildren(group.id).count > 0 && !checkExpanded(group.id)) ? "folder.fill" : "folder")
+                Image(systemName: (groupCount > 0 && !isExpanded) ? "folder.fill" : "folder")
                     .font(.system(size: 14))
-                    .foregroundStyle(.white.opacity(0.7))
+                    .foregroundStyle(.secondary)
                     .onTapGesture {
                         onToggleExpansion()
                     }
@@ -338,19 +330,19 @@ extension ManageView.Sidebar {
                     .font(.system(size: 14))
                     .lineLimit(1)
                     .truncationMode(.tail)
-                    .foregroundStyle(.white.opacity(0.9))
+                    .foregroundStyle(.primary)
                 
                 Spacer()
                 
                 // Count
                 Text(groupCount > 0 ? "\(bookmarkCount)/\(groupCount)" : "\(bookmarkCount)")
                     .font(.system(size: 13))
-                    .foregroundStyle(.white.opacity(0.5))
+                    .foregroundStyle(.tertiary)
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
             .background(
-                RoundedRectangle(cornerRadius: 0)
+                RoundedRectangle(cornerRadius: 6)
                     .fill(backgroundColor)
             )
             .contentShape(Rectangle())
@@ -363,14 +355,14 @@ extension ManageView.Sidebar {
             if dragOver {
                 switch dragOverPosition {
                 case .before, .after:
-                    return Color.white.opacity(0.12)
+                    return Color.accentColor.opacity(0.15)
                 case .on:
-                    return Color.white.opacity(0.15)
+                    return Color.accentColor.opacity(0.2)
                 case .none:
-                    return Color.white.opacity(0.08)
+                    return Color.primary.opacity(0.05)
                 }
             }
-            return selected ? Color.white.opacity(0.15) : (isHovered ? Color.white.opacity(0.08) : Color.clear)
+            return selected ? Color.accentColor.opacity(0.2) : (isHovered ? Color.primary.opacity(0.05) : Color.clear)
         }
     }
 }

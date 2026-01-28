@@ -34,18 +34,22 @@ struct ManageView: View {
         )
     }
     
+    @State private var columnVisibility: NavigationSplitViewVisibility = .all
+    
     var body: some View {
-        HStack(spacing: 0) {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             Sidebar(
                 collection: $viewModel.collection,
                 groups: groups,
                 hashtags: .constant([])
             )
-            .frame(width: Constant.sidebarWidth)
-            
+            .navigationSplitViewColumnWidth(min: 200, ideal: Constant.sidebarWidth, max: 400)
+        } detail: {
             WorkbenchView()
                 .environmentObject(viewModel)
         }
+        .navigationSplitViewStyle(.balanced)
+        .toolbar(removing: .sidebarToggle)
         .frame(minWidth: Constant.minTotalWidth, minHeight: Constant.minTotalHeight)
     }
 }
