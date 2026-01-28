@@ -14,9 +14,31 @@ class WorkbenchViewModel: ObservableObject {
     @Published var allEntries: [any Entry]
     @Published var filter = ""
     @Published var hierarchy: Hierarchy = .direct
+    @Published private(set) var rows: [Row] = []
+    
+    private var _cancellables = Set<AnyCancellable>()
     
     init(entries: [any Entry]) {
         self.allEntries = entries
+        
+        _bind()
+    }
+    
+    private func _bind() {
+        Publishers.CombineLatest4($collection, $allEntries, $hierarchy, $filter)
+            .map { [unowned self] a, b, c, d in
+                let result = self.heirs(c).map {
+                    Row(id: $0.id,
+                        icon: $0.icon,
+                        title: $0.name,
+                        description: description($0),
+                        trail: trail($0) ,
+                        tags: $0.name.hashtags)
+                }
+                return result
+            }
+            .sink(receiveValue: { [weak self] in self?.rows = $0 })
+            .store(in: &_cancellables)
     }
     
     var title: String {
@@ -39,19 +61,9 @@ class WorkbenchViewModel: ObservableObject {
         }
     }
     
-    var rows: [Row] {
-        let result = heirs().map {
-            Row(id: $0.id,
-                icon: $0.icon,
-                title: $0.name,
-                description: description($0),
-                trail: trail($0) ,
-                tags: $0.name.hashtags)
-        }
-        return result
-    }
     
-    private func heirs() -> [any Entry] {
+    
+    private func heirs(_ hierarchy: Hierarchy) -> [any Entry] {
         switch hierarchy {
         case .direct:
             return (collection as? Group).children(among: allEntries)
@@ -121,7 +133,7 @@ extension WorkbenchViewModel {
     }
 }
 
-extension WorkbenchViewModel {    
+extension WorkbenchViewModel {
     /// Move an entry from source position to before/after target position
     func moveRow(_ subjectId: UUID, to destinationId: UUID, insertAfter: Bool) {
         // Find indices in allEntries
@@ -154,7 +166,7 @@ extension WorkbenchViewModel {
         
         // Insert at new position
         copies.insert(subject, at: newIndex)
-                
+        
         allEntries = copies
     }
 }
