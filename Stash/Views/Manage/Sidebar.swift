@@ -10,28 +10,19 @@ import AppKit
 
 extension ManageView {
     struct Sidebar: View {
-        @Binding var collection: Collectible?
-        @Binding var groups: [Group]
-        @Binding var hashtags: [Hashtag]
+        @EnvironmentObject var viewModel: GroupSectionViewModel
         
         var body: some View {
             List {
                 RootRow(
                     count: 33,
-                    selected: collection == nil,
+                    selected: viewModel.selection == nil,
                     onTap: {
-                        collection = nil
+                        viewModel.selection = nil
                     }
                 )
-                GroupSection(groups: $groups, selectedOne: Binding<Group?>(
-                    get: {
-                        collection as? Group
-                    },
-                    set: { newGroup in
-                        collection = newGroup
-                    }
-                ))
-                TagSection(hashtags: $hashtags)
+                GroupSection()
+                TagSection(hashtags: .constant([]))
             }
             .listStyle(.sidebar)
         }

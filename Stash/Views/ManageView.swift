@@ -11,40 +11,35 @@ import Combine
 
 struct ManageView: View {
     @EnvironmentObject var cabinet: OkamuraCabinet
-    @StateObject var viewModel: WorkbenchViewModel
+    @StateObject var workbenchViewModel: WorkbenchViewModel
+    @StateObject var groupSectionViewModel: GroupSectionViewModel
     
-    private var groups: Binding<[Group]> {
-        Binding(
-            get: {
-                cabinet.storedEntries.groups
-            },
-            set: { newGroups in
-                // Replace all entries with newGroups + non-Group entries
-                //                let nonGroups = cabinet.storedEntries.filter { !($0 is Group) }
-                //                cabinet.storedEntries = nonGroups + newGroups
-                print(newGroups)
-            }
+    
+    
+    init() {
+        _workbenchViewModel = StateObject(
+            wrappedValue: WorkbenchViewModel(entries: self.cabinet.storedEntries)
+        )
+        
+        _groupSectionViewModel = StateObject(
+            // TODO: fix selection
+            wrappedValue: GroupSectionViewModel(selection: nil, entries: self.cabinet.storedEntries)
         )
     }
     
-    @State private var columnVisibility: NavigationSplitViewVisibility = .all
-    
     var body: some View {
         NavigationSplitView(columnVisibility: .constant(.all)) {
-            Sidebar(
-                collection: $viewModel.collection,
-                groups: groups,
-                hashtags: .constant([])
-            )
+            Sidebar()
             .toolbar(removing: .sidebarToggle)      // 🔑 works now
             .navigationSplitViewColumnWidth(
                 min: 200,
                 ideal: Constant.sidebarWidth,
                 max: 400
             )
+            .environmentObject(groupSectionViewModel)
         } detail: {
             WorkbenchView()
-                .environmentObject(viewModel)
+                .environmentObject(workbenchViewModel)
         }
         .navigationSplitViewStyle(.prominentDetail)   // 🔑 NOT balanced
         .toolbarBackground(.hidden, for: .windowToolbar)

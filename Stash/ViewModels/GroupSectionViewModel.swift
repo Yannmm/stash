@@ -23,5 +23,7 @@ class GroupSectionViewModel: ObservableObject {
         self.allEntries = entries
         
 //        _bind()
+        
+        groups = allEntries.groups
     }
 }

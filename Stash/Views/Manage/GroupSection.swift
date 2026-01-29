@@ -10,8 +10,10 @@ import UniformTypeIdentifiers
 
 extension ManageView.Sidebar {
     struct GroupSection: View {
-        @Binding var groups: [Group]
-        @Binding var selectedOne: Group?
+        @EnvironmentObject var viewModel: GroupSectionViewModel
+        
+//        @Binding var groups: [Group]
+//        @Binding var selectedOne: Group?
         @State private var expandedOnes: Set<UUID> = []
         @State private var draggingOne: Group?
         
@@ -22,14 +24,14 @@ extension ManageView.Sidebar {
             func flatten(_ group: Group, level: Int) {
                 result.append((group, level))
                 if expandedOnes.contains(group.id) {
-                    let children = groups.filter { $0.parentId == group.id }
+                    let children = viewModel.groups.filter { $0.parentId == group.id }
                     for child in children {
                         flatten(child, level: level + 1)
                     }
                 }
             }
             
-            let roots = groups.filter { $0.parentId == nil }
+            let roots = viewModel.groups.filter { $0.parentId == nil }
             for root in roots {
                 flatten(root, level: 0)
             }
@@ -37,20 +39,20 @@ extension ManageView.Sidebar {
         }
         
         private func getChildren(of groupId: UUID) -> [Group] {
-            groups.filter { $0.parentId == groupId }
+            viewModel.groups.filter { $0.parentId == groupId }
         }
         
         var body: some View {
-            if groups.count > 0 {
+            if viewModel.groups.count > 0 {
                 Section("Groups") {
                     ForEach(visibleNodes, id: \.group.id) { node in
-                        NodeRow(
+                        Row(
                             group: node.group,
                             level: node.level,
                             getChildren: getChildren,
                             isExpanded: expandedOnes.contains(node.group.id),
-                            draggingOne: $draggingOne,
-                            selectedOne: $selectedOne,
+//                            draggingOne: $draggingOne,
+//                            selectedOne: $selectedOne,
                             onToggleExpansion: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     if expandedOnes.contains(node.group.id) {
@@ -60,12 +62,14 @@ extension ManageView.Sidebar {
                                     }
                                 }
                             },
-                            onDrop: { droppedGroup, targetGroup, position in
-                                handleDrop(droppedGroup: droppedGroup, targetGroup: targetGroup, position: position)
-                            },
+                            
+//                            onDrop: { droppedGroup, targetGroup, position in
+//                                handleDrop(droppedGroup: droppedGroup, targetGroup: targetGroup, position: position)
+//                            },
                             action: { group in
-                                selectedOne = group
-                            }
+                                viewModel.selection = group
+                            },
+                            selected: false
                         )
                         .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
                         .listRowSeparator(.hidden)
@@ -75,7 +79,7 @@ extension ManageView.Sidebar {
         }
         
         private func handleDrop(droppedGroup: Group, targetGroup: Group?, position: DragPosition) {
-            guard let droppedIndex = groups.firstIndex(where: { $0.id == droppedGroup.id }) else { return }
+            guard let droppedIndex = viewModel.groups.firstIndex(where: { $0.id == droppedGroup.id }) else { return }
             
             var updatedGroup = droppedGroup
             
@@ -95,12 +99,12 @@ extension ManageView.Sidebar {
             
             // Prevent circular references: check if the new parent is a descendant of the dragged group
             if let newParentId = updatedGroup.parentId,
-               isDescendant(of: newParentId, ancestor: updatedGroup.id, in: groups) {
+               isDescendant(of: newParentId, ancestor: updatedGroup.id, in: viewModel.groups) {
                 return
             }
             
             // Create a new array to ensure SwiftUI detects the change
-            var newGroups = groups
+            var newGroups = viewModel.groups
             
             // Remove the group from its current position
             newGroups.remove(at: droppedIndex)
@@ -124,7 +128,8 @@ extension ManageView.Sidebar {
             
             // Assign the new array to trigger view update
             withAnimation(.easeInOut(duration: 0.2)) {
-                groups = newGroups
+                // TODO edit
+//                viewModel.groups = newGroups
             }
         }
         
@@ -166,17 +171,17 @@ extension ManageView.Sidebar {
         var body: some View {
             VStack(spacing: 0) {
 
-                Row(
-                    group: group,
-                    level: level,
-                    getChildren: getChildren,
-                    isExpanded: isExpanded,
-                    dragOver: dragOver && dragOverPosition == .on,
-                    dragOverPosition: dragOverPosition,
-                    onToggleExpansion: onToggleExpansion,
-                    action: action,
-                    selected: selectedOne?.id == group.id
-                )
+//                Row(
+//                    group: group,
+//                    level: level,
+//                    getChildren: getChildren,
+//                    isExpanded: isExpanded,
+//                    dragOver: dragOver && dragOverPosition == .on,
+//                    dragOverPosition: dragOverPosition,
+//                    onToggleExpansion: onToggleExpansion,
+//                    action: action,
+//                    selected: selectedOne?.id == group.id
+//                )
             }
             .contentShape(Rectangle())
         }
@@ -252,8 +257,8 @@ extension ManageView.Sidebar {
         let level: Int
         let getChildren: (UUID) -> [Group]
         let isExpanded: Bool
-        let dragOver: Bool
-        let dragOverPosition: DragPosition?
+//        let dragOver: Bool
+//        let dragOverPosition: DragPosition?
         let onToggleExpansion: () -> Void
         let action: (Group) -> Void
         let selected: Bool
@@ -306,17 +311,18 @@ extension ManageView.Sidebar {
         }
         
         private var backgroundColor: Color {
-            if dragOver {
-                switch dragOverPosition {
-                case .before, .after:
-                    return Color.accentColor.opacity(0.15)
-                case .on:
-                    return Color.accentColor.opacity(0.2)
-                case .none:
-                    return Color.primary.opacity(0.05)
-                }
-            }
-            return selected ? Color.accentColor.opacity(0.2) : Color.clear
+//            if dragOver {
+//                switch dragOverPosition {
+//                case .before, .after:
+//                    return Color.accentColor.opacity(0.15)
+//                case .on:
+//                    return Color.accentColor.opacity(0.2)
+//                case .none:
+//                    return Color.primary.opacity(0.05)
+//                }
+//            }
+//            return selected ? Color.accentColor.opacity(0.2) : Color.clear
+            return  Color.clear
         }
     }
 }
