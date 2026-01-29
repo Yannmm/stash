@@ -41,9 +41,7 @@ extension ManageView.Sidebar {
         }
         
         var body: some View {
-            if groups.count <= 0 {
-                EmptyView()
-            } else {
+            if groups.count > 0 {
                 Section("Groups") {
                     ForEach(visibleNodes, id: \.group.id) { node in
                         NodeRow(
@@ -162,68 +160,25 @@ extension ManageView.Sidebar {
         let onDrop: (Group, Group?, DragPosition) -> Void
         let action: (Group) -> Void
         
-        @State private var isHovered = false
         @State private var dragOver = false
         @State private var dragOverPosition: DragPosition? = nil
         
         var body: some View {
             VStack(spacing: 0) {
-                // Drop indicator line (before)
-                if dragOver && dragOverPosition == .before {
-                    Rectangle()
-                        .fill(Color.accentColor)
-                        .frame(height: 2)
-                        .padding(.leading, CGFloat(level) * 16)
-                }
-                
+
                 Row(
                     group: group,
                     level: level,
                     getChildren: getChildren,
                     isExpanded: isExpanded,
-                    isHovered: isHovered,
                     dragOver: dragOver && dragOverPosition == .on,
                     dragOverPosition: dragOverPosition,
                     onToggleExpansion: onToggleExpansion,
                     action: action,
                     selected: selectedOne?.id == group.id
                 )
-                
-                // Drop indicator line (after)
-                if dragOver && dragOverPosition == .after {
-                    Rectangle()
-                        .fill(Color.accentColor)
-                        .frame(height: 2)
-                        .padding(.leading, CGFloat(level) * 16)
-                }
             }
             .contentShape(Rectangle())
-            .onDrag {
-                draggingOne = group
-                return NSItemProvider(object: group.id.uuidString as NSString)
-            } preview: {
-                HStack(spacing: 8) {
-                    Image(systemName: "folder")
-                        .font(.system(size: 14))
-                        .foregroundStyle(.primary)
-                    Text(group.name)
-                        .font(.system(size: 14))
-                        .foregroundStyle(.primary)
-                }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(Color(NSColor.controlBackgroundColor).opacity(0.95))
-                .cornerRadius(6)
-                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-            }
-            .onDrop(of: [UTType.plainText], delegate: GroupDropDelegate(
-                group: group,
-                draggedGroup: $draggingOne,
-                dragOver: $dragOver,
-                dragOverPosition: $dragOverPosition,
-                onDrop: onDrop
-            ))
-            .onHover { isHovered = $0 }
         }
     }
     
@@ -297,7 +252,6 @@ extension ManageView.Sidebar {
         let level: Int
         let getChildren: (UUID) -> [Group]
         let isExpanded: Bool
-        let isHovered: Bool
         let dragOver: Bool
         let dragOverPosition: DragPosition?
         let onToggleExpansion: () -> Void
@@ -362,7 +316,7 @@ extension ManageView.Sidebar {
                     return Color.primary.opacity(0.05)
                 }
             }
-            return selected ? Color.accentColor.opacity(0.2) : (isHovered ? Color.primary.opacity(0.05) : Color.clear)
+            return selected ? Color.accentColor.opacity(0.2) : Color.clear
         }
     }
 }

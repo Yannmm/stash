@@ -178,26 +178,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         collectionWindow = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1000, height: 700),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+            styleMask: [
+                .titled,
+                .closable,
+                .miniaturizable,
+                .resizable,
+                .fullSizeContentView
+            ],
             backing: .buffered,
             defer: false
         )
+
         collectionWindow?.title = ""
+        collectionWindow?.titleVisibility = .hidden
+        collectionWindow?.titlebarAppearsTransparent = true
         collectionWindow?.isReleasedWhenClosed = false
         collectionWindow?.center()
         collectionWindow?.contentView = hostingView
         collectionWindow?.minSize = NSSize(width: 900, height: 600)
-        
-        // Make titlebar transparent so content extends to top
-        collectionWindow?.titlebarAppearsTransparent = true
-        collectionWindow?.titleVisibility = .hidden
-        
-        // Use unified compact style for seamless look
-        collectionWindow?.toolbarStyle = .unifiedCompact
-        
-        // Create an empty toolbar to get the proper layout
+
+        // 🔑 IMPORTANT
+        collectionWindow?.toolbarStyle = .unified   // ← not unifiedCompact
+
         let toolbar = NSToolbar(identifier: "CollectionToolbar")
+        toolbar.displayMode = .iconOnly
         toolbar.showsBaselineSeparator = false
+        toolbar.allowsUserCustomization = false
+        toolbar.isVisible = true
+
         collectionWindow?.toolbar = toolbar
     }
     

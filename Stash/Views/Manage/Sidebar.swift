@@ -6,30 +6,23 @@
 //
 
 import SwiftUI
+import AppKit
 
 extension ManageView {
     struct Sidebar: View {
         @Binding var collection: Collectible?
-        @State private var searchText = ""
         @Binding var groups: [Group]
         @Binding var hashtags: [Hashtag]
-        private let tags = ClipTag.sampleData
-        private let totalClips = 6
         
         var body: some View {
             List {
-                // All Bookmarks row
-                AllBookmarksRow(
-                    count: totalClips,
+                RootRow(
+                    count: 33,
                     selected: collection == nil,
                     onTap: {
                         collection = nil
                     }
                 )
-                .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
-                .listRowSeparator(.hidden)
-                
-                // Groups Section
                 GroupSection(groups: $groups, selectedOne: Binding<Group?>(
                     get: {
                         collection as? Group
@@ -38,28 +31,15 @@ extension ManageView {
                         collection = newGroup
                     }
                 ))
-                
-                // Tags Section
                 TagSection(hashtags: $hashtags)
             }
             .listStyle(.sidebar)
-            .searchable(text: $searchText, prompt: "Search clips...")
-            .safeAreaInset(edge: .bottom) {
-                FooterView()
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 12)
-            }
         }
-        
-        
     }
 }
 
-
-
-
-extension ManageView.Sidebar {
-    private struct AllBookmarksRow: View {
+fileprivate extension ManageView.Sidebar {
+    struct RootRow: View {
         let count: Int
         let selected: Bool
         let onTap: () -> Void
@@ -84,7 +64,7 @@ extension ManageView.Sidebar {
     }
 }
 
-extension ManageView.Sidebar {
+fileprivate extension ManageView.Sidebar {
     private struct TagSection: View {
         @Binding var hashtags: [Hashtag]
         
@@ -104,16 +84,6 @@ extension ManageView.Sidebar {
     }
 }
 
-// MARK: - Group Tree Node
-
-
-
-// MARK: - Folder Row
-
-
-
-// MARK: - Clip Tag Row
-
 private struct HashtagRow: View {
     let hashtag: Hashtag
     let isSelected: Bool
@@ -127,47 +97,3 @@ private struct HashtagRow: View {
         .listRowBackground(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
     }
 }
-
-// MARK: - Footer View
-
-private struct FooterView: View {
-    var body: some View {
-        HStack {
-            Text("Pro Account")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            
-            Spacer()
-            
-            Text("70% used")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-    }
-}
-
-
-//#Preview {
-//    let group1 = UUID()
-//    let group2 = UUID()
-//    let group3 = UUID()
-//    let child1 = UUID()
-//    let child2 = UUID()
-//
-//    return ManageViewSidebar(
-//        selectedCollection: .constant(nil),
-//        groups: .constant([
-//            Group(id: group1, name: "Group 1", parentId: nil),
-//            Group(id: child1, name: "Child 1.1", parentId: group1),
-//            Group(id: child2, name: "Child 1.2", parentId: group1),
-//            Group(id: group2, name: "Group 2", parentId: nil),
-//            Group(id: group3, name: "Group 3", parentId: nil)
-//        ]),
-//        hashtags: .constant([
-//            Hashtag(name: "tag1"),
-//            Hashtag(name: "tag2"),
-//            Hashtag(name: "tag=3"),
-//        ])
-//    )
-//    .frame(width: 260, height: 700)
-//}
