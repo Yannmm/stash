@@ -61,10 +61,6 @@ extension Entry {
             result.insert(contentsOf: child.descendants(among: entries), at: index + 1)
         }
         
-//        for child in directChildren {
-//            result.append(contentsOf: child.descendants(among: entries))
-//        }
-        
         if included {
             result.insert(self, at: 0)
             return result
