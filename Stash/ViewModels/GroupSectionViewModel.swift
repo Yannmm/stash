@@ -13,14 +13,19 @@ class GroupSectionViewModel: ObservableObject {
     @Published var expansions: Set<UUID> = []
     @Published var hashtags: [Hashtag] = []
     @Published private(set) var groups: [Group] = []
-    @Published private var allEntries: [any Entry]
     
+    private var allEntries: [any Entry] {
+        _selectionStore.cabinet.storedEntries
+    }
+    
+    
+    private let _selectionStore: ManageSelectionStore
     private var _cancellables = Set<AnyCancellable>()
     
     
-    init(selection: Collectible?, entries: [any Entry]) {
-        self.selection = selection
-        self.allEntries = entries
+    init(selectionStore: ManageSelectionStore) {
+        self._selectionStore = selectionStore
+        
         
 //        _bind()
         

@@ -11,21 +11,21 @@ import SwiftUI
 
 class WorkbenchViewModel: ObservableObject {
     @Published var collection: Collectible?
-    @Published var allEntries: [any Entry]
     @Published var filter = ""
     @Published var hierarchy: Hierarchy = .direct
     @Published private(set) var rows: [Row] = []
     
+    private let _selectionStore: ManageSelectionStore
     private var _cancellables = Set<AnyCancellable>()
     
-    init(entries: [any Entry]) {
-        self.allEntries = entries
+    init(selectionStore: ManageSelectionStore) {
+        self._selectionStore = selectionStore
         
         _bind()
     }
     
     private func _bind() {
-        Publishers.CombineLatest4($collection, $allEntries, $hierarchy, $filter)
+        Publishers.CombineLatest4($collection, _selectionStore.cabinet.$storedEntries, $hierarchy, $filter)
             .map { [unowned self] a, b, c, d in
                 let result = self.heirs(c).map {
                     Row(id: $0.id,
@@ -47,17 +47,17 @@ class WorkbenchViewModel: ObservableObject {
     
     var bookmarkCount: Int {
         if let c = collection {
-            return _bookmarkCount(c.relatedEntries(allEntries))
+            return _bookmarkCount(c.relatedEntries(_selectionStore.cabinet.storedEntries))
         } else {
-            return _bookmarkCount(allEntries)
+            return _bookmarkCount(_selectionStore.cabinet.storedEntries)
         }
     }
     
     var groupCount: Int {
         if let c = collection {
-            return _groupCount(c.relatedEntries(allEntries))
+            return _groupCount(c.relatedEntries(_selectionStore.cabinet.storedEntries))
         } else {
-            return _groupCount(allEntries)
+            return _groupCount(_selectionStore.cabinet.storedEntries)
         }
     }
     
@@ -66,9 +66,9 @@ class WorkbenchViewModel: ObservableObject {
     private func heirs(_ hierarchy: Hierarchy) -> [any Entry] {
         switch hierarchy {
         case .direct:
-            return (collection as? Group).children(among: allEntries)
+            return (collection as? Group).children(among: _selectionStore.cabinet.storedEntries)
         case .descendant:
-            return (collection as? Group).descendants(among: allEntries)
+            return (collection as? Group).descendants(among: _selectionStore.cabinet.storedEntries)
         }
     }
     
@@ -84,7 +84,7 @@ class WorkbenchViewModel: ObservableObject {
         var trail = [Group]()
         var pid = entry.parentId
         while pid != nil {
-            let group = allEntries.filter({ $0.id == pid }).compactMap({ $0 as? Group }).first
+            let group = _selectionStore.cabinet.storedEntries.filter({ $0.id == pid }).compactMap({ $0 as? Group }).first
             if (pid == collection?.id) {
                 break
             }
@@ -101,7 +101,7 @@ class WorkbenchViewModel: ObservableObject {
         case let b as Bookmark:
             return b.url.host() ?? b.url.absoluteString
         case let g as Group:
-            let children = g.children(among: allEntries)
+            let children = g.children(among: _selectionStore.cabinet.storedEntries)
             let gcount = _groupCount(children)
             let bcount = _bookmarkCount(children)
             var result = "\(bcount) bookmarks"
@@ -137,20 +137,20 @@ extension WorkbenchViewModel {
     /// Move an entry from source position to before/after target position
     func moveRow(_ subjectId: UUID, to destinationId: UUID, insertAfter: Bool) {
         // Find indices in allEntries
-        guard let subjectIndex = allEntries.firstIndex(where: { $0.id == subjectId }),
-              let destinationIndex = allEntries.firstIndex(where: { $0.id == destinationId }),
+        guard let subjectIndex = _selectionStore.cabinet.storedEntries.firstIndex(where: { $0.id == subjectId }),
+              let destinationIndex = _selectionStore.cabinet.storedEntries.firstIndex(where: { $0.id == destinationId }),
               subjectIndex != destinationIndex else {
             return
         }
         
         // Get the entry to move
-        var subject = allEntries[subjectIndex]
+        var subject = _selectionStore.cabinet.storedEntries[subjectIndex]
         
         // Create new array with source removed
-        var copies = allEntries
+        var copies = _selectionStore.cabinet.storedEntries
         copies.remove(at: subjectIndex)
         
-        let destination = allEntries[destinationIndex]
+        let destination = _selectionStore.cabinet.storedEntries[destinationIndex]
         subject.parentId = destination.parentId
         
         // Calculate new target index (adjusted after removal)
@@ -167,6 +167,6 @@ extension WorkbenchViewModel {
         // Insert at new position
         copies.insert(subject, at: newIndex)
         
-        allEntries = copies
+        _selectionStore.cabinet.storedEntries = copies
     }
 }

@@ -11,11 +11,8 @@ import UniformTypeIdentifiers
 extension ManageView.Sidebar {
     struct GroupSection: View {
         @EnvironmentObject var viewModel: GroupSectionViewModel
-        
-//        @Binding var groups: [Group]
-//        @Binding var selectedOne: Group?
         @State private var expandedOnes: Set<UUID> = []
-        @State private var draggingOne: Group?
+        @State private var drag: Group?
         
         // Flattened visible nodes for proper List rendering
         private var visibleNodes: [(group: Group, level: Int)] {
@@ -262,9 +259,10 @@ extension ManageView.Sidebar {
         let onToggleExpansion: () -> Void
         let action: (Group) -> Void
         let selected: Bool
-        @EnvironmentObject var cabinet: OkamuraCabinet
         
-        private var bookmarkCount: Int { group.children(among: cabinet.storedEntries).bookmarks.count }
+        
+//        private var bookmarkCount: Int { group.children(among: .storedEntries).bookmarks.count }
+        private var bookmarkCount: Int { 321 }
         
         private var groupCount: Int { getChildren(group.id).count }
         

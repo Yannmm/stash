@@ -10,7 +10,7 @@ import AppKit
 
 extension ManageView {
     struct Sidebar: View {
-        @EnvironmentObject var viewModel: GroupSectionViewModel
+        @StateObject var viewModel: GroupSectionViewModel
         
         var body: some View {
             List {
@@ -25,7 +25,9 @@ extension ManageView {
                 TagSection(hashtags: .constant([]))
             }
             .listStyle(.sidebar)
+            .environmentObject(viewModel)
         }
+            
     }
 }
 

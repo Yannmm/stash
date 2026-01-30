@@ -11,7 +11,7 @@ import UniformTypeIdentifiers
 
 extension ManageView {
     struct WorkbenchView: View {
-        @EnvironmentObject var viewModel: WorkbenchViewModel
+        @StateObject var viewModel: WorkbenchViewModel
         
         var body: some View {
             VStack(alignment: .leading, spacing: 0) {
@@ -26,6 +26,7 @@ extension ManageView {
             .toolbar {
                 // Empty toolbar to prevent default sidebar toggle from appearing
             }
+            .environmentObject(viewModel)
         }
     }
 }

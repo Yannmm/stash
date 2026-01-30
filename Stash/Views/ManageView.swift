@@ -10,36 +10,32 @@ import AppKit
 import Combine
 
 struct ManageView: View {
-    @EnvironmentObject var cabinet: OkamuraCabinet
-    @StateObject var workbenchViewModel: WorkbenchViewModel
-    @StateObject var groupSectionViewModel: GroupSectionViewModel
+//    @StateObject var workbenchViewModel: WorkbenchViewModel
+//    @StateObject var groupSectionViewModel: GroupSectionViewModel
+    @StateObject var selectionStore: ManageSelectionStore
     
-    
-    
-    init() {
-        _workbenchViewModel = StateObject(
-            wrappedValue: WorkbenchViewModel(entries: self.cabinet.storedEntries)
-        )
-        
-        _groupSectionViewModel = StateObject(
-            // TODO: fix selection
-            wrappedValue: GroupSectionViewModel(selection: nil, entries: self.cabinet.storedEntries)
-        )
-    }
+//    init() {
+//        _workbenchViewModel = StateObject(
+//            wrappedValue: WorkbenchViewModel(entries: self.cabinet.storedEntries)
+//        )
+//        
+//        _groupSectionViewModel = StateObject(
+//            // TODO: fix selection
+//            wrappedValue: GroupSectionViewModel(selection: nil, entries: self.cabinet.storedEntries)
+//        )
+//    }
     
     var body: some View {
         NavigationSplitView(columnVisibility: .constant(.all)) {
-            Sidebar()
+            Sidebar(viewModel: GroupSectionViewModel(selectionStore: selectionStore))
             .toolbar(removing: .sidebarToggle)      // 🔑 works now
             .navigationSplitViewColumnWidth(
                 min: 200,
                 ideal: Constant.sidebarWidth,
                 max: 400
             )
-            .environmentObject(groupSectionViewModel)
         } detail: {
-            WorkbenchView()
-                .environmentObject(workbenchViewModel)
+            WorkbenchView(viewModel: WorkbenchViewModel(selectionStore: selectionStore))
         }
         .navigationSplitViewStyle(.prominentDetail)   // 🔑 NOT balanced
         .toolbarBackground(.hidden, for: .windowToolbar)
