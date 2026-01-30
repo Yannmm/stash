@@ -16,9 +16,9 @@ extension ManageView {
             List {
                 RootRow(
                     count: 33,
-                    selected: viewModel.selection == nil,
+                    selected: viewModel.selectionStore.collection == nil,
                     onTap: {
-                        viewModel.selection = nil
+                        viewModel.selectionStore.collection = nil
                     }
                 )
                 GroupSection()

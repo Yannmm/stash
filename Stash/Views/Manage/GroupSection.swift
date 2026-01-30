@@ -20,6 +20,9 @@ extension ManageView.Sidebar {
                     ForEach(Array(viewModel.rows.enumerated()), id: \.element.id) { index, row in
                         Row(
                             row: row,
+                            onToggleExpansion: {
+                                viewModel.toggleExpansion(row.id)
+                            },
 //                            draggingOne: $draggingOne,
 //                            selectedOne: $selectedOne,
         
@@ -114,40 +117,6 @@ extension ManageView.Sidebar {
 }
 
 extension ManageView.Sidebar {
-    private struct NodeRow: View {
-        let group: Group
-        let level: Int
-        let getChildren: (UUID) -> [Group]
-        let isExpanded: Bool
-        
-        @Binding var draggingOne: Group?
-        @Binding var selectedOne: Group?
-        let onToggleExpansion: () -> Void
-        let onDrop: (Group, Group?, DragPosition) -> Void
-        let action: (Group) -> Void
-        
-        @State private var dragOver = false
-        @State private var dragOverPosition: DragPosition? = nil
-        
-        var body: some View {
-            VStack(spacing: 0) {
-
-//                Row(
-//                    group: group,
-//                    level: level,
-//                    getChildren: getChildren,
-//                    isExpanded: isExpanded,
-//                    dragOver: dragOver && dragOverPosition == .on,
-//                    dragOverPosition: dragOverPosition,
-//                    onToggleExpansion: onToggleExpansion,
-//                    action: action,
-//                    selected: selectedOne?.id == group.id
-//                )
-            }
-            .contentShape(Rectangle())
-        }
-    }
-    
     private struct GroupDropDelegate: DropDelegate {
         let group: Group
         @Binding var draggedGroup: Group?
@@ -217,33 +186,25 @@ extension ManageView.Sidebar {
         let row: GroupSectionViewModel.Row
 //        let dragOver: Bool
 //        let dragOverPosition: DragPosition?
+        let onToggleExpansion: () -> Void
         let action: (Group) -> Void
         let selected: Bool
         
-        
-//        private var bookmarkCount: Int { group.children(among: .storedEntries).bookmarks.count }
-        private var bookmarkCount: Int { 321 }
-        
-        
-        
         var body: some View {
             HStack(spacing: 6) {
-                // Indentation
                 ForEach(0..<row.level, id: \.self) { _ in
-                    Spacer()
-                        .frame(width: 16)
+                    Spacer().frame(width: 16)
                 }
-                
-                // Folder icon
-                Image(systemName: (groupCount > 0 && !row.expanded) ? "folder.fill" : "folder")
-                    .font(.system(size: 14))
+                Image(systemName: row.expanded ? "folder.fill" : (row.groupCount > 0 ? "folder.fill.badge.plus" : "folder"))
+                    .font(.system(size: 16))
                     .foregroundStyle(.secondary)
                     .onTapGesture {
-//                        onToggleExpansion()
+                        guard row.groupCount > 0 else { return }
+                        onToggleExpansion()
                     }
                 
                 // Group name
-                Text(group.name)
+                Text(row.name)
                     .font(.system(size: 14))
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -252,7 +213,7 @@ extension ManageView.Sidebar {
                 Spacer()
                 
                 // Count
-                Text(groupCount > 0 ? "\(bookmarkCount)/\(groupCount)" : "\(bookmarkCount)")
+                Text(row.groupCount > 0 ? "\(row.bookmarkCount)/\(row.groupCount)" : "\(row.bookmarkCount)")
                     .font(.system(size: 13))
                     .foregroundStyle(.tertiary)
             }
@@ -264,7 +225,7 @@ extension ManageView.Sidebar {
             )
             .contentShape(Rectangle())
             .onTapGesture {
-                action(group)
+//                action(group)
             }
         }
         

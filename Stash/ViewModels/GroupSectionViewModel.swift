@@ -9,22 +9,40 @@ import Combine
 import Foundation
 
 class GroupSectionViewModel: ObservableObject {
-    @Published var expansions: Set<UUID> = []
+    @Published private var expansions: Set<UUID> = []
     @Published var hashtags: [Hashtag] = []
     @Published private(set) var rows: [Row] = []
     
     private var allEntries: [any Entry] {
-        _selectionStore.cabinet.storedEntries
+        selectionStore.cabinet.storedEntries
+    }
+    
+    func toggleExpansion(_ id: UUID) {
+        if expansions.contains(id) {
+            expansions.remove(id)
+        } else {
+            expansions.insert(id)
+        }
     }
     
     
-    private let _selectionStore: ManageSelectionStore
+    let selectionStore: ManageSelectionStore
     private var _cancellables = Set<AnyCancellable>()
     
     
     init(selectionStore: ManageSelectionStore) {
-        self._selectionStore = selectionStore
-        rows = visibleGroups(_selectionStore.cabinet.storedEntries, expansions)
+        self.selectionStore = selectionStore
+        
+        _bind()
+    }
+    
+    private func _bind() {
+        Publishers.CombineLatest(selectionStore.cabinet.$storedEntries, $expansions)
+            .map { [unowned self] a, b in
+                self.visibleGroups(a, b)
+            }
+            .sink(receiveValue: { [weak self] in self?.rows = $0 })
+            .store(in: &_cancellables)
     }
     
     private func visibleGroups(_ entries: [any Entry], _ expansions: Set<UUID>) -> [Row] {
@@ -32,7 +50,17 @@ class GroupSectionViewModel: ObservableObject {
         var result = [Row]()
         func flatten(_ group: Group, level: Int) {
             let expanded = expansions.contains(group.id)
-            result.append(Row(id: group.id, name: group.name, level: level, expanded: expanded))
+            let children = group.children(among: entries)
+            let gcount = children.compactMap { $0 as? Group }.count
+            let bcount = children.compactMap { $0 as? Bookmark }.count
+            result.append(
+                Row(id: group.id,
+                    name: group.name,
+                    level: level,
+                    expanded: expanded,
+                    groupCount: gcount,
+                    bookmarkCount: bcount)
+            )
             if expanded {
                 let children = allGroups.filter { $0.parentId == group.id }
                 for child in children {
@@ -53,5 +81,7 @@ extension GroupSectionViewModel {
         let name: String
         let level: Int
         let expanded: Bool
+        let groupCount: Int
+        let bookmarkCount: Int
     }
 }
