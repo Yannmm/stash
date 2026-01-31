@@ -12,6 +12,7 @@ class SidebarViewModel: ObservableObject {
     @Published private var expansions: Set<UUID> = []
     @Published var hashtags: [Hashtag] = []
     @Published private(set) var rows: [Row] = []
+    @Published private(set) var rootRow: Row!
     
     private var allEntries: [any Entry] {
         selectionStore.cabinet.storedEntries
@@ -25,8 +26,8 @@ class SidebarViewModel: ObservableObject {
         }
     }
     
-    func setSelection(_ id: UUID) {
-        selectionStore.collection = allEntries.filter { $0.id == id }.first as? Group
+    func setSelection(_ id: UUID?) {
+        selectionStore.collection = id == nil ? nil : (allEntries.filter { $0.id == id }.first as? Group)
     }
     
     let selectionStore: ManageSelectionStore
@@ -45,6 +46,21 @@ class SidebarViewModel: ObservableObject {
                 self.visibleGroups(a, b, c?.id)
             }
             .sink(receiveValue: { [weak self] in self?.rows = $0 })
+            .store(in: &_cancellables)
+        
+        Publishers.CombineLatest(selectionStore.cabinet.$storedEntries, selectionStore.$collection.map { $0?.id })
+            .map { a, b in
+                Row(
+                    id: UUID(),
+                    name: "All Bookmarks",
+                    level: 0,
+                    expanded: false,
+                    groupCount: a.compactMap { $0 as? Group }.count,
+                    bookmarkCount: a.compactMap { $0 as? Bookmark }.count,
+                    selected: b == nil)
+                
+            }
+            .sink(receiveValue: { [weak self] in self?.rootRow = $0 })
             .store(in: &_cancellables)
     }
     
