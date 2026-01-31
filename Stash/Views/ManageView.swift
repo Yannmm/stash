@@ -10,24 +10,11 @@ import AppKit
 import Combine
 
 struct ManageView: View {
-//    @StateObject var workbenchViewModel: WorkbenchViewModel
-//    @StateObject var groupSectionViewModel: GroupSectionViewModel
     @StateObject var selectionStore: ManageSelectionStore
-    
-//    init() {
-//        _workbenchViewModel = StateObject(
-//            wrappedValue: WorkbenchViewModel(entries: self.cabinet.storedEntries)
-//        )
-//        
-//        _groupSectionViewModel = StateObject(
-//            // TODO: fix selection
-//            wrappedValue: GroupSectionViewModel(selection: nil, entries: self.cabinet.storedEntries)
-//        )
-//    }
     
     var body: some View {
         NavigationSplitView(columnVisibility: .constant(.all)) {
-            Sidebar(viewModel: GroupSectionViewModel(selectionStore: selectionStore))
+            Sidebar(viewModel: SidebarViewModel(selectionStore: selectionStore))
             .toolbar(removing: .sidebarToggle)      // 🔑 works now
             .navigationSplitViewColumnWidth(
                 min: 200,

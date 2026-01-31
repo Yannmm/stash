@@ -10,14 +10,14 @@ import UniformTypeIdentifiers
 
 extension ManageView.Sidebar {
     struct GroupSection: View {
-        @EnvironmentObject var viewModel: GroupSectionViewModel
+        @EnvironmentObject var viewModel: SidebarViewModel
         @State private var drag: Group?
         
         
         var body: some View {
             if viewModel.rows.count > 0 {
                 Section("Groups") {
-                    ForEach(Array(viewModel.rows.enumerated()), id: \.element.id) { index, row in
+                    ForEach(viewModel.rows, id: \.id) { row in
                         Row(
                             row: row,
                             onToggleExpansion: {
@@ -30,10 +30,9 @@ extension ManageView.Sidebar {
 //                            onDrop: { droppedGroup, targetGroup, position in
 //                                handleDrop(droppedGroup: droppedGroup, targetGroup: targetGroup, position: position)
 //                            },
-                            action: { group in
-//                                viewModel.selection = group
-                            },
-                            selected: false
+                            onTap: {
+                                viewModel.setSelection(row.id)
+                            }
                         )
                         .listRowInsets(EdgeInsets(top: 2, leading: 0, bottom: 2, trailing: 0))
                         .listRowSeparator(.hidden)
@@ -182,23 +181,22 @@ extension ManageView.Sidebar {
 }
 
 extension ManageView.Sidebar {
-    private struct Row: View {
-        let row: GroupSectionViewModel.Row
-//        let dragOver: Bool
-//        let dragOverPosition: DragPosition?
+    struct Row: View {
+        let row: SidebarViewModel.Row
         let onToggleExpansion: () -> Void
-        let action: (Group) -> Void
-        let selected: Bool
+        let onTap: () -> Void
         
         var body: some View {
             HStack(spacing: 6) {
                 ForEach(0..<row.level, id: \.self) { _ in
                     Spacer().frame(width: 16)
                 }
-                Image(systemName: row.expanded ? "folder.fill" : (row.groupCount > 0 ? "folder.fill.badge.plus" : "folder"))
+                Image(systemName: row.expanded ? "hexagon.fill" : (row.groupCount > 0 ? "cube.box.fill" : "cube.box"))
                     .font(.system(size: 16))
+                    .frame(width: 16, height: 16, alignment: .center)
                     .foregroundStyle(.secondary)
                     .onTapGesture {
+                        onTap()
                         guard row.groupCount > 0 else { return }
                         onToggleExpansion()
                     }
@@ -225,7 +223,7 @@ extension ManageView.Sidebar {
             )
             .contentShape(Rectangle())
             .onTapGesture {
-//                action(group)
+                onTap()
             }
         }
         
@@ -240,8 +238,7 @@ extension ManageView.Sidebar {
 //                    return Color.primary.opacity(0.05)
 //                }
 //            }
-//            return selected ? Color.accentColor.opacity(0.2) : Color.clear
-            return  Color.clear
+            return row.selected ? Color.accentColor : Color.clear
         }
     }
 }

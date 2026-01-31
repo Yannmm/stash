@@ -10,16 +10,12 @@ import AppKit
 
 extension ManageView {
     struct Sidebar: View {
-        @StateObject var viewModel: GroupSectionViewModel
+        @StateObject var viewModel: SidebarViewModel
         
         var body: some View {
             List {
                 RootRow(
-                    count: 33,
-                    selected: viewModel.selectionStore.collection == nil,
-                    onTap: {
-                        viewModel.selectionStore.collection = nil
-                    }
+                    row: SidebarViewModel.Row(id: UUID(), name: "All Bookmarks", level: 0, expanded: false, groupCount: 33, bookmarkCount: 44, selected: false)
                 )
                 GroupSection()
                 TagSection(hashtags: .constant([]))
@@ -33,26 +29,43 @@ extension ManageView {
 
 fileprivate extension ManageView.Sidebar {
     struct RootRow: View {
-        let count: Int
-        let selected: Bool
-        let onTap: () -> Void
+        let row: SidebarViewModel.Row
         
         var body: some View {
-            Button(action: onTap) {
-                Label {
-                    HStack {
-                        Text("All Bookmarks")
-                        Spacer()
-                        Text("\(count)")
-                            .foregroundStyle(.secondary)
-                            .font(.callout)
+            HStack(spacing: 6) {
+                Image(systemName: "infinity")
+                    .font(.system(size: 16))
+                    .foregroundStyle(.secondary)
+                    .onTapGesture {
+//                        onTap()
+//                        guard row.groupCount > 0 else { return }
+//                        onToggleExpansion()
                     }
-                } icon: {
-                    Image(systemName: "infinity")
-                }
+                
+                // Group name
+                Text(row.name)
+                    .font(.system(size: 14))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .foregroundStyle(.primary)
+                
+                Spacer()
+                
+                // Count
+                Text(row.groupCount > 0 ? "\(row.bookmarkCount)/\(row.groupCount)" : "\(row.bookmarkCount)")
+                    .font(.system(size: 13))
+                    .foregroundStyle(.tertiary)
             }
-            .buttonStyle(.plain)
-            .listRowBackground(selected ? Color.accentColor.opacity(0.2) : Color.clear)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color.clear)
+            )
+            .contentShape(Rectangle())
+            .onTapGesture {
+//                onTap()
+            }
         }
     }
 }
