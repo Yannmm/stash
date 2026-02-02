@@ -14,61 +14,67 @@ extension ManageView {
         
         var body: some View {
             List {
-//                RootRow()
-                Row(row: viewModel.rootRow, onToggleExpansion: {}) {
-                    viewModel.setSelection(nil)
-                }
+                GroupSection.Row(
+                    row: viewModel.rootRow,
+                    dragging: .constant(nil),
+                    onToggleExpansion: {},
+                    onTap: {
+                        viewModel.setSelection(nil)
+                    },
+                    onDrop: { _, __, ___ in
+                        
+                    })
                 GroupSection()
                 TagSection(hashtags: .constant([]))
             }
             .listStyle(.sidebar)
             .environmentObject(viewModel)
         }
-            
+        
     }
 }
 
 fileprivate extension ManageView.Sidebar {
-//    struct RootRow: View {
-//        @EnvironmentObject var viewModel: SidebarViewModel
-//        
-//        var body: some View {
-//            HStack(spacing: 6) {
-//                Image(systemName: "infinity")
-//                    .font(.system(size: 16))
-//                    .foregroundStyle(.secondary)
-//                    .onTapGesture {
-////                        onTap()
-////                        guard row.groupCount > 0 else { return }
-////                        onToggleExpansion()
-//                    }
-//                
-//                // Group name
-//                Text(row.name)
-//                    .font(.system(size: 14))
-//                    .lineLimit(1)
-//                    .truncationMode(.tail)
-//                    .foregroundStyle(.primary)
-//                
-//                Spacer()
-//                
-//                // Count
-//                Text(row.groupCount > 0 ? "\(row.bookmarkCount)/\(row.groupCount)" : "\(row.bookmarkCount)")
-//                    .font(.system(size: 13))
-//                    .foregroundStyle(.tertiary)
-//            }
-//            .padding(.horizontal, 12)
-//            .padding(.vertical, 8)
-//            .background(
-//                RoundedRectangle(cornerRadius: 6)
-//                    .fill(Color.clear)
-//            )
-//            .contentShape(Rectangle())
-//            .onTapGesture {
-////                onTap()
-//            }
-//        }
-//    }
+    //    struct RootRow: View {
+    //        @EnvironmentObject var viewModel: SidebarViewModel
+    //
+    //        var body: some View {
+    //            HStack(spacing: 6) {
+    //                Image(systemName: "infinity")
+    //                    .font(.system(size: 16))
+    //                    .foregroundStyle(.secondary)
+    //                    .onTapGesture {
+    ////                        onTap()
+    ////                        guard row.groupCount > 0 else { return }
+    ////                        onToggleExpansion()
+    //                    }
+    //
+    //                // Group name
+    //                Text(row.name)
+    //                    .font(.system(size: 14))
+    //                    .lineLimit(1)
+    //                    .truncationMode(.tail)
+    //                    .foregroundStyle(.primary)
+    //
+    //                Spacer()
+    //
+    //                // Count
+    //                Text(row.groupCount > 0 ? "\(row.bookmarkCount)/\(row.groupCount)" : "\(row.bookmarkCount)")
+    //                    .font(.system(size: 13))
+    //                    .foregroundStyle(.tertiary)
+    //            }
+    //            .padding(.horizontal, 12)
+    //            .padding(.vertical, 8)
+    //            .background(
+    //                RoundedRectangle(cornerRadius: 6)
+    //                    .fill(Color.clear)
+    //            )
+    //            .contentShape(Rectangle())
+    //            .onTapGesture {
+    ////                onTap()
+    //            }
+    //        }
+    //    }
 }
 
 fileprivate extension ManageView.Sidebar {

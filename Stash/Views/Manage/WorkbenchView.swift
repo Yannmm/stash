@@ -17,9 +17,7 @@ extension ManageView {
             VStack(alignment: .leading, spacing: 0) {
                 Toolbar()
                     .padding(.horizontal, 12)
-                
                 Divider()
-                
                 DraggableList()
             }
             .background(Color(NSColor.textBackgroundColor))
