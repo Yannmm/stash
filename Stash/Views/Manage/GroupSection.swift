@@ -219,20 +219,35 @@ extension ManageView.Sidebar.GroupSection {
                 RoundedRectangle(cornerRadius: 6)
                     .fill(backgroundColor)
             )
-            .overlay(alignment: .top) {
-                if dragPosition == .before {
-                    Rectangle()
-                        .fill(Color.accentColor)
-                        .frame(height: 2)
-                }
+//            .overlay(alignment: .top) {
+//                if dragPosition == .before {
+//                    Rectangle()
+//                        .fill(Color.accentColor)
+//                        .frame(height: 2)
+//                }
+//            }
+//            .overlay(alignment: .bottom) {
+//                if dragPosition == .after {
+//                    Rectangle()
+//                        .fill(Color.accentColor)
+//                        .frame(height: 2)
+//                }
+//            }
+            .overlay(alignment: .top){
+                
+                    if dragPosition == .before {
+                        Rectangle()
+                            .fill(Color.accentColor)
+                            .frame(height: 20)
+                            .offset(y: -10)
+                        // This allows the view to be larger than the parent
+                        // without affecting the layout flow of the list
+                        .allowsHitTesting(false)
+                    }
+                
             }
-            .overlay(alignment: .bottom) {
-                if dragPosition == .after {
-                    Rectangle()
-                        .fill(Color.accentColor)
-                        .frame(height: 2)
-                }
-            }
+            .zIndex(dragPosition == .before ? 1 : 0)
+            
             .onTapGesture {
                 onTap()
             }
