@@ -24,13 +24,13 @@ extension ManageView.Sidebar {
                             onToggleExpansion: {
                                 viewModel.toggleExpansion(row.id)
                             },
-//                            draggingOne: $draggingOne,
-//                            selectedOne: $selectedOne,
-        
+                            //                            draggingOne: $draggingOne,
+                            //                            selectedOne: $selectedOne,
                             
-//                            onDrop: { droppedGroup, targetGroup, position in
-//                                handleDrop(droppedGroup: droppedGroup, targetGroup: targetGroup, position: position)
-//                            },
+                            
+                            //                            onDrop: { droppedGroup, targetGroup, position in
+                            //                                handleDrop(droppedGroup: droppedGroup, targetGroup: targetGroup, position: position)
+                            //                            },
                             onTap: {
                                 viewModel.setSelection(row.id)
                             },
@@ -44,66 +44,66 @@ extension ManageView.Sidebar {
         }
         
         private func handleDrop(droppedGroup: Group, targetGroup: Group?) {
-//            guard let droppedIndex = viewModel.groups.firstIndex(where: { $0.id == droppedGroup.id }) else { return }
-//            
-//            var updatedGroup = droppedGroup
-//            
-//            switch position {
-//            case .on:
-//                // Drop on target group (make it a child)
-//                updatedGroup.parentId = targetGroup?.id
-//            case .before, .after:
-//                // Drop before/after target group (same level as target)
-//                updatedGroup.parentId = targetGroup?.parentId
-//            }
-//            
-//            // Prevent dropping on itself
-//            if updatedGroup.parentId == updatedGroup.id {
-//                return
-//            }
-//            
-//            // Prevent circular references: check if the new parent is a descendant of the dragged group
-//            if let newParentId = updatedGroup.parentId,
-//               isDescendant(of: newParentId, ancestor: updatedGroup.id, in: viewModel.groups) {
-//                return
-//            }
-//            
-//            // Create a new array to ensure SwiftUI detects the change
-//            var newGroups = viewModel.groups
-//            
-//            // Remove the group from its current position
-//            newGroups.remove(at: droppedIndex)
-//            
-//            // Find the new insertion point
-//            if let targetGroup = targetGroup, let targetIndex = newGroups.firstIndex(where: { $0.id == targetGroup.id }) {
-//                let insertIndex: Int
-//                if position == .on {
-//                    // Insert at the end of the target's children
-//                    insertIndex = targetIndex + 1
-//                } else {
-//                    // Adjust target index based on position
-//                    insertIndex = position == .after ? targetIndex + 1 : targetIndex
-//                }
-//                let safeIndex = min(max(0, insertIndex), newGroups.count)
-//                newGroups.insert(updatedGroup, at: safeIndex)
-//            } else {
-//                // Dropping at root level, just append
-//                newGroups.append(updatedGroup)
-//            }
-//            
-//            // Assign the new array to trigger view update
-//            withAnimation(.easeInOut(duration: 0.2)) {
-//                // TODO edit
-////                viewModel.groups = newGroups
-//            }
+            //            guard let droppedIndex = viewModel.groups.firstIndex(where: { $0.id == droppedGroup.id }) else { return }
+            //
+            //            var updatedGroup = droppedGroup
+            //
+            //            switch position {
+            //            case .on:
+            //                // Drop on target group (make it a child)
+            //                updatedGroup.parentId = targetGroup?.id
+            //            case .before, .after:
+            //                // Drop before/after target group (same level as target)
+            //                updatedGroup.parentId = targetGroup?.parentId
+            //            }
+            //
+            //            // Prevent dropping on itself
+            //            if updatedGroup.parentId == updatedGroup.id {
+            //                return
+            //            }
+            //
+            //            // Prevent circular references: check if the new parent is a descendant of the dragged group
+            //            if let newParentId = updatedGroup.parentId,
+            //               isDescendant(of: newParentId, ancestor: updatedGroup.id, in: viewModel.groups) {
+            //                return
+            //            }
+            //
+            //            // Create a new array to ensure SwiftUI detects the change
+            //            var newGroups = viewModel.groups
+            //
+            //            // Remove the group from its current position
+            //            newGroups.remove(at: droppedIndex)
+            //
+            //            // Find the new insertion point
+            //            if let targetGroup = targetGroup, let targetIndex = newGroups.firstIndex(where: { $0.id == targetGroup.id }) {
+            //                let insertIndex: Int
+            //                if position == .on {
+            //                    // Insert at the end of the target's children
+            //                    insertIndex = targetIndex + 1
+            //                } else {
+            //                    // Adjust target index based on position
+            //                    insertIndex = position == .after ? targetIndex + 1 : targetIndex
+            //                }
+            //                let safeIndex = min(max(0, insertIndex), newGroups.count)
+            //                newGroups.insert(updatedGroup, at: safeIndex)
+            //            } else {
+            //                // Dropping at root level, just append
+            //                newGroups.append(updatedGroup)
+            //            }
+            //
+            //            // Assign the new array to trigger view update
+            //            withAnimation(.easeInOut(duration: 0.2)) {
+            //                // TODO edit
+            ////                viewModel.groups = newGroups
+            //            }
         }
     }
     
-//    enum DragPosition {
-//        case on
-//        case before
-//        case after
-//    }
+    //    enum DragPosition {
+    //        case on
+    //        case before
+    //        case after
+    //    }
 }
 
 //extension ManageView.Sidebar {
@@ -113,17 +113,17 @@ extension ManageView.Sidebar {
 //        @Binding var dragOver: Bool
 //        @Binding var dragOverPosition: DragPosition?
 //        let onDrop: (Group, Group?, DragPosition) -> Void
-//        
+//
 //        // Estimated row height (8 padding top + 8 padding bottom + ~20 content = 36)
 //        private let estimatedRowHeight: CGFloat = 36
 //        private var threshold: CGFloat { estimatedRowHeight / 3 }
-//        
+//
 //        func validateDrop(info: DropInfo) -> Bool {
 //            // Allow drop if we have a dragged group and it's not the same as target
 //            guard let draggedGroup = draggedGroup else { return false }
 //            return draggedGroup.id != group.id
 //        }
-//        
+//
 //        func performDrop(info: DropInfo) -> Bool {
 //            guard let draggedGroup = draggedGroup,
 //                  draggedGroup.id != group.id else {
@@ -131,7 +131,7 @@ extension ManageView.Sidebar {
 //                dragOverPosition = nil
 //                return false
 //            }
-//            
+//
 //            let position = dragOverPosition ?? .on
 //            onDrop(draggedGroup, group, position)
 //            self.draggedGroup = nil
@@ -139,25 +139,25 @@ extension ManageView.Sidebar {
 //            dragOverPosition = nil
 //            return true
 //        }
-//        
+//
 //        func dropEntered(info: DropInfo) {
 //            guard draggedGroup?.id != group.id else { return }
 //            dragOver = true
 //        }
-//        
+//
 //        func dropExited(info: DropInfo) {
 //            dragOver = false
 //            dragOverPosition = nil
 //        }
-//        
+//
 //        func dropUpdated(info: DropInfo) -> DropProposal? {
 //            guard draggedGroup?.id != group.id else {
 //                return DropProposal(operation: .forbidden)
 //            }
-//            
+//
 //            // The location.y is relative to the view, with 0 at top
 //            let location = info.location
-//            
+//
 //            if location.y < threshold {
 //                dragOverPosition = .before
 //            } else if location.y > (estimatedRowHeight - threshold) {
@@ -165,7 +165,7 @@ extension ManageView.Sidebar {
 //            } else {
 //                dragOverPosition = .on
 //            }
-//            
+//
 //            return DropProposal(operation: .move)
 //        }
 //    }
@@ -179,7 +179,7 @@ extension ManageView.Sidebar.GroupSection {
         let onToggleExpansion: () -> Void
         let onTap: () -> Void
         let onDrop: (SidebarViewModel.Row, SidebarViewModel.Row, DragPosition) -> Void
-        private var height: CGFloat { 36 }
+        private var height: CGFloat { Constant.rowHeight }
         
         
         var body: some View {
@@ -218,36 +218,33 @@ extension ManageView.Sidebar.GroupSection {
             .background(
                 RoundedRectangle(cornerRadius: 6)
                     .fill(backgroundColor)
+                    .if(dragPosition == .in, content: {
+                        $0.stroke(Color.accentColor, lineWidth: Constant.dragIndicatorHeight)
+                    })
             )
-//            .overlay(alignment: .top) {
-//                if dragPosition == .before {
-//                    Rectangle()
-//                        .fill(Color.accentColor)
-//                        .frame(height: 2)
-//                }
-//            }
-//            .overlay(alignment: .bottom) {
-//                if dragPosition == .after {
-//                    Rectangle()
-//                        .fill(Color.accentColor)
-//                        .frame(height: 2)
-//                }
-//            }
-            .overlay(alignment: .top){
-                
-                    if dragPosition == .before {
-                        Rectangle()
-                            .fill(Color.accentColor)
-                            .frame(height: 20)
-                            .offset(y: -10)
-                        // This allows the view to be larger than the parent
-                        // without affecting the layout flow of the list
+            .overlay(alignment: .top) {
+                if dragPosition == .before {
+                    Rectangle()
+                        .fill(Color.accentColor)
+                        .frame(height: Constant.dragIndicatorHeight)
+                        .offset(y: -(Constant.dragIndicatorHeight * 0.5))
+                    // This allows the view to be larger than the parent
+                    // without affecting the layout flow of the list
                         .allowsHitTesting(false)
-                    }
-                
+                }
             }
-            .zIndex(dragPosition == .before ? 1 : 0)
-            
+            .overlay(alignment: .bottom) {
+                if dragPosition == .after {
+                    Rectangle()
+                        .fill(Color.accentColor)
+                        .frame(height: Constant.dragIndicatorHeight)
+                        .offset(y: Constant.dragIndicatorHeight * 0.5)
+                    // This allows the view to be larger than the parent
+                    // without affecting the layout flow of the list
+                        .allowsHitTesting(false)
+                }
+            }
+            .zIndex((dragPosition == .before) ? 1 : 0)
             .onTapGesture {
                 onTap()
             }
@@ -279,22 +276,20 @@ extension ManageView.Sidebar.GroupSection {
                 rowHeight: height,
                 onDrop: onDrop
             ))
-
+            
         }
         
         private var backgroundColor: Color {
-//            if dragOver {
-//                switch dragOverPosition {
-//                case .before, .after:
-//                    return Color.accentColor.opacity(0.15)
-//                case .on:
-//                    return Color.accentColor.opacity(0.2)
-//                case .none:
-//                    return Color.primary.opacity(0.05)
-//                }
-//            }
-//            return row.selected ? Color.accentColor : Color.clear
-            return Color.random
+            if let _ = dragPosition {
+                return row.selected ? Color.accentColor.opacity(0.15) : Color.clear
+            }
+            return row.selected ? Color.accentColor : Color.clear
+            //            return Color.random
+        }
+        
+        enum Constant {
+            static let rowHeight: CGFloat = 36
+            static let dragIndicatorHeight: CGFloat = 3
         }
     }
 }
@@ -318,7 +313,7 @@ extension ManageView.Sidebar.GroupSection {
         func performDrop(info: DropInfo) -> Bool {
             guard let drag = dragging,
                   drag.id != current.id,
-                  let position = dragPosition, position.within else {
+                  let position = dragPosition else {
                 reset()
                 return false
             }
@@ -331,7 +326,7 @@ extension ManageView.Sidebar.GroupSection {
         
         func dropEntered(info: DropInfo) {
             guard dragging?.id != current.id else { return }
-            dragPosition = .over
+            _updatePosition(info)
         }
         
         func dropExited(info: DropInfo) {
@@ -343,47 +338,32 @@ extension ManageView.Sidebar.GroupSection {
                 return DropProposal(operation: .forbidden)
             }
             
-            let location = info.location
-            
-            // Only allow dropping near top or bottom, reject middle
-            if location.y < threshold {
-                dragPosition = .before
-                return DropProposal(operation: .move)
-            } else if location.y > (rowHeight - threshold) {
-                dragPosition = .after
-                return DropProposal(operation: .move)
-            } else {
-                print("onnnn")
-                dragPosition = .on
-                return DropProposal(operation: .move)
-            }
+            _updatePosition(info)
+            return DropProposal(operation: .move)
         }
         
         private func reset() {
             dragPosition = nil
+        }
+        
+        private func _updatePosition(_ info: DropInfo) {
+            let location = info.location
+            
+            if location.y < threshold {
+                dragPosition = .before
+            } else if location.y > (rowHeight - threshold) {
+                dragPosition = .after
+            } else {
+                dragPosition = .in
+            }
         }
     }
 }
 
 extension ManageView.Sidebar.GroupSection {
     enum DragPosition {
-        case over
-        case on
+        case `in`
         case before
         case after
-        
-        var within: Bool {
-            switch self {
-            case .on, .after, .before:
-                return true
-            default: return false
-            }
-        }
-    }
-}
-
-fileprivate extension ManageView.WorkbenchView {
-    enum Constant {
-        static let rowHeight: CGFloat = 36
     }
 }
