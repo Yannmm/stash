@@ -38,8 +38,6 @@ extension ManageView.Sidebar {
                                 print("drag popsition: \(insertAfter)")
                             }
                         )
-                        .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                        .listRowSeparator(.hidden)
                     }
                 }
             }
@@ -215,6 +213,8 @@ extension ManageView.Sidebar.GroupSection {
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
+            .contentShape(Rectangle())
+            .frame(height: height)
             .background(
                 RoundedRectangle(cornerRadius: 6)
                     .fill(backgroundColor)
@@ -223,8 +223,7 @@ extension ManageView.Sidebar.GroupSection {
                 if dragPosition == .before {
                     Rectangle()
                         .fill(Color.accentColor)
-                        .frame(height: 4)
-                        .padding(.top, -4)
+                        .frame(height: 2)
                 }
             }
             .overlay(alignment: .bottom) {
@@ -234,8 +233,6 @@ extension ManageView.Sidebar.GroupSection {
                         .frame(height: 2)
                 }
             }
-            .contentShape(Rectangle())
-            .frame(height: height)
             .onTapGesture {
                 onTap()
             }
