@@ -12,10 +12,17 @@ extension ManageView.Sidebar {
         let title: String
         
         var body: some View {
+            
             Text(title)
                 .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(.white.opacity(0.5))
+                .foregroundStyle(.secondary)
                 .tracking(0.5)
+                .textCase(.uppercase)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 12)
+                .padding(.top, 18)
+                .padding(.bottom, 6)
+            
         }
     }
 }

@@ -13,32 +13,34 @@ extension ManageView.Sidebar {
         @EnvironmentObject var viewModel: SidebarViewModel
         @State private var dragging: SidebarViewModel.Row?
         
+        // macOS 26 SwiftUI List reuse bug:
+        // Row @State leaks after drag reorder.
+        // Remove _version hack once fixed.
+        @State private var _version = 0
         
         var body: some View {
             if viewModel.rows.count > 0 {
-                Section("Groups") {
+                Section {
                     ForEach(viewModel.rows, id: \.id) { row in
                         Row(
                             row: row,
+                            icon: nil,
                             dragging: $dragging,
                             onToggleExpansion: {
                                 viewModel.toggleExpansion(row.id)
                             },
-                            //                            draggingOne: $draggingOne,
-                            //                            selectedOne: $selectedOne,
-                            
-                            
-                            //                            onDrop: { droppedGroup, targetGroup, position in
-                            //                                handleDrop(droppedGroup: droppedGroup, targetGroup: targetGroup, position: position)
-                            //                            },
                             onTap: {
                                 viewModel.setSelection(row.id)
                             },
                             onDrop: { drag, over, insertAfter in
                                 print("drag popsition: \(insertAfter)")
+                                _version += 1
                             }
                         )
+                        .id("\(row.id)-\(_version)")
                     }
+                } header: {
+                    SectionHeader(title: "Groups")
                 }
             }
         }
@@ -174,20 +176,25 @@ extension ManageView.Sidebar {
 extension ManageView.Sidebar.GroupSection {
     struct Row: View {
         let row: SidebarViewModel.Row
+        let icon: String?
         @Binding var dragging: SidebarViewModel.Row?
         @State private var dragPosition: DragPosition? = nil
+        @State private var hoverExpandTask: Task<Void, Never>? = nil
         let onToggleExpansion: () -> Void
         let onTap: () -> Void
         let onDrop: (SidebarViewModel.Row, SidebarViewModel.Row, DragPosition) -> Void
         private var height: CGFloat { Constant.rowHeight }
         
+        /// Duration to hover before auto-expanding (in seconds)
+        private let hoverExpandDelay: UInt64 = 700_000_000 // 0.7 seconds in nanoseconds
+        
         
         var body: some View {
-            HStack(spacing: 6) {
+            HStack(alignment: .center, spacing: 6) {
                 ForEach(0..<row.level, id: \.self) { _ in
                     Spacer().frame(width: 16)
                 }
-                Image(systemName: row.expanded ? "hexagon.fill" : (row.groupCount > 0 ? "cube.box.fill" : "cube.box"))
+                Image(systemName: icon ?? (row.expanded ? "hexagon.fill" : (row.groupCount > 0 ? "cube.box.fill" : "cube.box")))
                     .font(.system(size: 16))
                     .frame(width: 16, height: 16, alignment: .center)
                     .foregroundStyle(.secondary)
@@ -276,15 +283,60 @@ extension ManageView.Sidebar.GroupSection {
                 rowHeight: height,
                 onDrop: onDrop
             ))
+            .onChange(of: dragPosition) { oldValue, newValue in
+                handleDragPositionChange(newValue)
+            }
             
+        }
+        
+        /// Handles auto-expand when hovering over an expandable item during drag
+        private func handleDragPositionChange(_ position: DragPosition?) {
+            // Cancel any existing hover task
+            hoverExpandTask?.cancel()
+            hoverExpandTask = nil
+            
+            // Only start expand timer if:
+            // 1. Position is .in (hovering over middle zone)
+            // 2. The row has children (groupCount > 0)
+            // 3. The row is not already expanded
+            // 4. We're actually dragging something (not self)
+            guard position == .in,
+                  row.groupCount > 0,
+                  !row.expanded,
+                  let drag = dragging,
+                  drag.id != row.id else {
+                return
+            }
+            
+            // Start a delayed task to expand
+            hoverExpandTask = Task {
+                do {
+                    try await Task.sleep(nanoseconds: hoverExpandDelay)
+                    // Check if still valid after delay
+                    if !Task.isCancelled {
+                        await MainActor.run {
+                            onToggleExpansion()
+                        }
+                    }
+                } catch {
+                    // Task was cancelled, do nothing
+                }
+            }
         }
         
         private var backgroundColor: Color {
             if let _ = dragPosition {
                 return row.selected ? Color.accentColor.opacity(0.15) : Color.clear
             }
-            return row.selected ? Color.accentColor : Color.clear
-            //            return Color.random
+            if row.selected {
+                if dragging?.id == row.id {
+                    return Color.accentColor.opacity(0.15)
+                } else {
+                    return Color.accentColor
+                }
+            } else {
+                return Color.clear
+            }
         }
         
         enum Constant {

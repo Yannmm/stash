@@ -13,27 +13,11 @@ extension ManageView {
         @StateObject var viewModel: SidebarViewModel
         
         var body: some View {
-            //            List {
-            //                GroupSection.Row(
-            //                    row: viewModel.rootRow,
-            //                    dragging: .constant(nil),
-            //                    onToggleExpansion: {},
-            //                    onTap: {
-            //                        viewModel.setSelection(nil)
-            //                    },
-            //                    onDrop: { _, __, ___ in
-            //
-            //                    })
-            //                GroupSection()
-            //                TagSection(hashtags: .constant([]))
-            //            }
-            //            .listStyle(.sidebar)
-            //            .environmentObject(viewModel)
-            
             ScrollView {
                 LazyVStack(spacing: 0) {
                     GroupSection.Row(
                         row: viewModel.rootRow,
+                        icon: "infinity",
                         dragging: .constant(nil),
                         onToggleExpansion: {},
                         onTap: {
@@ -45,6 +29,7 @@ extension ManageView {
                     GroupSection()
                     TagSection(hashtags: .constant([]))
                 }
+                .padding(.horizontal, 16)
             }
             .environmentObject(viewModel)
         }
@@ -56,7 +41,7 @@ fileprivate extension ManageView.Sidebar {
         @Binding var hashtags: [Hashtag]
         
         var body: some View {
-            Section("Tags") {
+            Section {
                 ForEach(hashtags) { tag in
                     HashtagRow(
                         hashtag: tag,
@@ -66,6 +51,8 @@ fileprivate extension ManageView.Sidebar {
                         }
                     )
                 }
+            } header: {
+                SectionHeader(title: "Tags")
             }
         }
     }
