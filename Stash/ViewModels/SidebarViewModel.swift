@@ -42,6 +42,7 @@ class SidebarViewModel: ObservableObject {
         return count
     }
     
+    // TODO: expand will hinder adjacent
     func adjacent(_ hostId: UUID, guestId: UUID) -> Bool {
         guard let hostIndex = rows.firstIndex(where: { $0.id == hostId }),
               let guestIndex = rows.firstIndex(where: { $0.id == guestId }),
@@ -64,6 +65,10 @@ class SidebarViewModel: ObservableObject {
             }
         }
         return true
+    }
+    
+    func handleDrop(_ guestId: UUID, to hostId: UUID) {
+        
     }
     
     let selectionStore: ManageSelectionStore

@@ -103,78 +103,7 @@ extension ManageView.Sidebar {
             //            }
         }
     }
-    
-    //    enum DragPosition {
-    //        case on
-    //        case before
-    //        case after
-    //    }
 }
-
-//extension ManageView.Sidebar {
-//    private struct GroupDropDelegate: DropDelegate {
-//        let group: Group
-//        @Binding var draggedGroup: Group?
-//        @Binding var dragOver: Bool
-//        @Binding var dragOverPosition: DragPosition?
-//        let onDrop: (Group, Group?, DragPosition) -> Void
-//
-//        // Estimated row height (8 padding top + 8 padding bottom + ~20 content = 36)
-//        private let estimatedRowHeight: CGFloat = 36
-//        private var threshold: CGFloat { estimatedRowHeight / 3 }
-//
-//        func validateDrop(info: DropInfo) -> Bool {
-//            // Allow drop if we have a dragged group and it's not the same as target
-//            guard let draggedGroup = draggedGroup else { return false }
-//            return draggedGroup.id != group.id
-//        }
-//
-//        func performDrop(info: DropInfo) -> Bool {
-//            guard let draggedGroup = draggedGroup,
-//                  draggedGroup.id != group.id else {
-//                dragOver = false
-//                dragOverPosition = nil
-//                return false
-//            }
-//
-//            let position = dragOverPosition ?? .on
-//            onDrop(draggedGroup, group, position)
-//            self.draggedGroup = nil
-//            dragOver = false
-//            dragOverPosition = nil
-//            return true
-//        }
-//
-//        func dropEntered(info: DropInfo) {
-//            guard draggedGroup?.id != group.id else { return }
-//            dragOver = true
-//        }
-//
-//        func dropExited(info: DropInfo) {
-//            dragOver = false
-//            dragOverPosition = nil
-//        }
-//
-//        func dropUpdated(info: DropInfo) -> DropProposal? {
-//            guard draggedGroup?.id != group.id else {
-//                return DropProposal(operation: .forbidden)
-//            }
-//
-//            // The location.y is relative to the view, with 0 at top
-//            let location = info.location
-//
-//            if location.y < threshold {
-//                dragOverPosition = .before
-//            } else if location.y > (estimatedRowHeight - threshold) {
-//                dragOverPosition = .after
-//            } else {
-//                dragOverPosition = .on
-//            }
-//
-//            return DropProposal(operation: .move)
-//        }
-//    }
-//}
 
 extension ManageView.Sidebar.GroupSection {
     struct Row: View {
@@ -193,8 +122,8 @@ extension ManageView.Sidebar.GroupSection {
         @EnvironmentObject var viewModel: SidebarViewModel
         
         var body: some View {
-            HStack(alignment: .center, spacing: 6) {
-                _leadingGap()
+            HStack(alignment: .center, spacing: 0) {
+                _leadingGap(row.level)
                 Image(systemName: icon ?? (row.expanded ? "cube.fill" : (row.groupCount > 0 ? "cube.box.fill" : "cube.box")))
                     .font(.system(size: 16))
                     .frame(width: 16, height: 16, alignment: .center)
@@ -204,17 +133,14 @@ extension ManageView.Sidebar.GroupSection {
                         guard row.groupCount > 0 else { return }
                         onToggleExpansion()
                     }
-                
-                // Group name
+                Spacer()
+                    .frame(width: 6)
                 Text(row.name)
                     .font(.system(size: 14))
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .foregroundStyle(.primary)
-                
                 Spacer()
-                
-                // Count
                 Text(row.groupCount > 0 ? "\(row.bookmarkCount)/\(row.groupCount)" : "\(row.bookmarkCount)")
                     .font(.system(size: 13))
                     .foregroundStyle(.tertiary)
@@ -326,12 +252,15 @@ extension ManageView.Sidebar.GroupSection {
         }
         
         private var backgroundColor: Color {
-            return row.selected ? Color.accentColor.opacity(0.5) : Color.clear
+            if dragPosition != nil {
+                return Color.accentColor.opacity(0.1)
+            }
+            return row.selected ? Color.accentColor.opacity(0.6) : Color.clear
         }
         
         private func _indicator1() -> some View {
             HStack(spacing: 0) {
-                _leadingGap()
+                _leadingGap(row.level)
                 Rectangle()
                     .fill(Color.accentColor)
             }
@@ -346,8 +275,8 @@ extension ManageView.Sidebar.GroupSection {
                 .frame(height: (Double(childCount) + 1) * height)
         }
         
-        private func _leadingGap() -> some View {
-            ForEach(0..<row.level, id: \.self) { _ in
+        private func _leadingGap(_ count: Int) -> some View {
+            ForEach(0..<count, id: \.self) { _ in
                 Spacer().frame(width: Constant.leadingGap)
             }
         }
