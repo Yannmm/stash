@@ -30,6 +30,42 @@ class SidebarViewModel: ObservableObject {
         selectionStore.collection = id == nil ? nil : (allEntries.filter { $0.id == id }.first as? Group)
     }
     
+    func effectiveChildrenCount(_ id: UUID) -> Int {
+        guard let index = rows.firstIndex(where: { $0.id == id }), rows[index].expanded else { return 0 }
+        let level = rows[index].level
+        var count = 0
+        for row in rows[(index + 1)...] {
+            guard level < row.level else { break }
+            count += 1
+        }
+        
+        return count
+    }
+    
+    func adjacent(_ hostId: UUID, guestId: UUID) -> Bool {
+        guard let hostIndex = rows.firstIndex(where: { $0.id == hostId }),
+              let guestIndex = rows.firstIndex(where: { $0.id == guestId }),
+              hostIndex != guestIndex,
+              rows[hostIndex].level != rows[guestIndex].level else {
+            return false
+        }
+        
+        if hostIndex < guestIndex {
+            for row in rows[(hostIndex + 1)...guestIndex].reversed() {
+                if row.level <= rows[hostIndex].level {
+                    return false
+                }
+            }
+        } else {
+            for row in rows[(guestIndex + 1)...hostIndex].reversed() {
+                if row.level <= rows[guestIndex].level {
+                    return false
+                }
+            }
+        }
+        return true
+    }
+    
     let selectionStore: ManageSelectionStore
     private var _cancellables = Set<AnyCancellable>()
     

@@ -32,9 +32,12 @@ extension ManageView.Sidebar {
                             onTap: {
                                 viewModel.setSelection(row.id)
                             },
-                            onDrop: { drag, over, insertAfter in
+                            onDrop: { hostId, guestId, insertAfter in
                                 print("drag popsition: \(insertAfter)")
                                 _version += 1
+                            },
+                            adjacent: { hostId, guestId in
+                                viewModel.adjacent(hostId, guestId: guestId)
                             }
                         )
                         .id("\(row.id)-\(_version)")
@@ -178,23 +181,21 @@ extension ManageView.Sidebar.GroupSection {
         let row: SidebarViewModel.Row
         let icon: String?
         @Binding var dragging: SidebarViewModel.Row?
-        @State private var dragPosition: DragPosition? = nil
-        @State private var hoverExpandTask: Task<Void, Never>? = nil
         let onToggleExpansion: () -> Void
         let onTap: () -> Void
-        let onDrop: (SidebarViewModel.Row, SidebarViewModel.Row, DragPosition) -> Void
+        let onDrop: (UUID, UUID, DragPosition) -> Void
+        let adjacent: (UUID, UUID) -> Bool
         private var height: CGFloat { Constant.rowHeight }
         
-        /// Duration to hover before auto-expanding (in seconds)
-        private let hoverExpandDelay: UInt64 = 700_000_000 // 0.7 seconds in nanoseconds
+        @State private var dragPosition: DragPosition? = nil
+        @State private var expandTask: Task<Void, Never>? = nil
         
+        @EnvironmentObject var viewModel: SidebarViewModel
         
         var body: some View {
             HStack(alignment: .center, spacing: 6) {
-                ForEach(0..<row.level, id: \.self) { _ in
-                    Spacer().frame(width: 16)
-                }
-                Image(systemName: icon ?? (row.expanded ? "hexagon.fill" : (row.groupCount > 0 ? "cube.box.fill" : "cube.box")))
+                _leadingGap()
+                Image(systemName: icon ?? (row.expanded ? "cube.fill" : (row.groupCount > 0 ? "cube.box.fill" : "cube.box")))
                     .font(.system(size: 16))
                     .frame(width: 16, height: 16, alignment: .center)
                     .foregroundStyle(.secondary)
@@ -223,35 +224,31 @@ extension ManageView.Sidebar.GroupSection {
             .contentShape(Rectangle())
             .frame(height: height)
             .background(
-                RoundedRectangle(cornerRadius: 6)
+                RoundedRectangle(cornerRadius: Constant.cornerRadius)
                     .fill(backgroundColor)
-                    .if(dragPosition == .in, content: {
-                        $0.stroke(Color.accentColor, lineWidth: Constant.dragIndicatorHeight)
-                    })
             )
             .overlay(alignment: .top) {
-                if dragPosition == .before {
-                    Rectangle()
-                        .fill(Color.accentColor)
-                        .frame(height: Constant.dragIndicatorHeight)
-                        .offset(y: -(Constant.dragIndicatorHeight * 0.5))
-                    // This allows the view to be larger than the parent
-                    // without affecting the layout flow of the list
-                        .allowsHitTesting(false)
+                if let position = dragPosition {
+                    switch position {
+                    case .before:
+                        _indicator1()
+                            .offset(y: -(Constant.dragIndicatorHeight * 0.5))
+                        // This allows the view to be larger than the parent
+                        // without affecting the layout flow of the list
+                            .allowsHitTesting(false)
+                    case .in:
+                        _indicator2(childCount: viewModel.effectiveChildrenCount(row.id))
+                            .allowsHitTesting(false)
+                    case .after:
+                        
+                        _indicator1()
+                            .offset(y: height - Constant.dragIndicatorHeight * 0.5)
+                            .allowsHitTesting(false)
+                        
+                    }
                 }
             }
-            .overlay(alignment: .bottom) {
-                if dragPosition == .after {
-                    Rectangle()
-                        .fill(Color.accentColor)
-                        .frame(height: Constant.dragIndicatorHeight)
-                        .offset(y: Constant.dragIndicatorHeight * 0.5)
-                    // This allows the view to be larger than the parent
-                    // without affecting the layout flow of the list
-                        .allowsHitTesting(false)
-                }
-            }
-            .zIndex((dragPosition == .before) ? 1 : 0)
+            .zIndex(dragPosition != nil ? 1 : 0)
             .onTapGesture {
                 onTap()
             }
@@ -277,11 +274,13 @@ extension ManageView.Sidebar.GroupSection {
                 .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
             }
             .onDrop(of: [UTType.plainText], delegate: Dropper(
-                current: row,
+                hostId: row.id,
                 dragging: $dragging,
                 dragPosition: $dragPosition,
                 rowHeight: height,
-                onDrop: onDrop
+                expanded: row.expanded,
+                onDrop: onDrop,
+                adjacent: adjacent
             ))
             .onChange(of: dragPosition) { oldValue, newValue in
                 handleDragPositionChange(newValue)
@@ -291,9 +290,10 @@ extension ManageView.Sidebar.GroupSection {
         
         /// Handles auto-expand when hovering over an expandable item during drag
         private func handleDragPositionChange(_ position: DragPosition?) {
-            // Cancel any existing hover task
-            hoverExpandTask?.cancel()
-            hoverExpandTask = nil
+            expandTask?.cancel()
+            expandTask = nil
+            
+            guard !row.expanded else { return }
             
             // Only start expand timer if:
             // 1. Position is .in (hovering over middle zone)
@@ -302,16 +302,17 @@ extension ManageView.Sidebar.GroupSection {
             // 4. We're actually dragging something (not self)
             guard position == .in,
                   row.groupCount > 0,
-                  !row.expanded,
                   let drag = dragging,
                   drag.id != row.id else {
                 return
             }
             
+            let delay: UInt64 = 2_000_000_000 // 0.7 seconds in nanoseconds
+            
             // Start a delayed task to expand
-            hoverExpandTask = Task {
+            expandTask = Task {
                 do {
-                    try await Task.sleep(nanoseconds: hoverExpandDelay)
+                    try await Task.sleep(nanoseconds: delay)
                     // Check if still valid after delay
                     if !Task.isCancelled {
                         await MainActor.run {
@@ -325,59 +326,75 @@ extension ManageView.Sidebar.GroupSection {
         }
         
         private var backgroundColor: Color {
-            if let _ = dragPosition {
-                return row.selected ? Color.accentColor.opacity(0.15) : Color.clear
+            return row.selected ? Color.accentColor.opacity(0.5) : Color.clear
+        }
+        
+        private func _indicator1() -> some View {
+            HStack(spacing: 0) {
+                _leadingGap()
+                Rectangle()
+                    .fill(Color.accentColor)
             }
-            if row.selected {
-                if dragging?.id == row.id {
-                    return Color.accentColor.opacity(0.15)
-                } else {
-                    return Color.accentColor
-                }
-            } else {
-                return Color.clear
+                .frame(height: Constant.dragIndicatorHeight)
+            
+        }
+        
+        private func _indicator2(childCount: Int) -> some View {
+            RoundedRectangle(cornerRadius: Constant.cornerRadius)
+                .fill(Color.clear)
+                .stroke(Color.accentColor, lineWidth: Constant.dragIndicatorHeight)
+                .frame(height: (Double(childCount) + 1) * height)
+        }
+        
+        private func _leadingGap() -> some View {
+            ForEach(0..<row.level, id: \.self) { _ in
+                Spacer().frame(width: Constant.leadingGap)
             }
         }
         
         enum Constant {
             static let rowHeight: CGFloat = 36
-            static let dragIndicatorHeight: CGFloat = 3
+            static let dragIndicatorHeight: CGFloat = 2
+            static let cornerRadius: CGFloat = 6
+            static let leadingGap: CGFloat = 16
         }
     }
 }
 
 extension ManageView.Sidebar.GroupSection {
     struct Dropper: SwiftUI.DropDelegate {
-        let current: SidebarViewModel.Row
+        let hostId: UUID
         @Binding var dragging: SidebarViewModel.Row?
         @Binding var dragPosition: DragPosition?
         let rowHeight: CGFloat
-        let onDrop: (SidebarViewModel.Row, SidebarViewModel.Row, DragPosition) -> Void
+        let expanded: Bool
+        let onDrop: (UUID, UUID, DragPosition) -> Void
+        let adjacent: (UUID, UUID) -> Bool
         
         // Only before/after zones - middle zone is rejected
         private var threshold: CGFloat { rowHeight / 3 }
         
         func validateDrop(info: DropInfo) -> Bool {
             guard let drag = dragging else { return false }
-            return drag.id != current.id
+            return drag.id != hostId
         }
         
         func performDrop(info: DropInfo) -> Bool {
             guard let drag = dragging,
-                  drag.id != current.id,
+                  drag.id != hostId,
                   let position = dragPosition else {
                 reset()
                 return false
             }
             
-            onDrop(drag, current, position)
+            onDrop(hostId, drag.id, position)
             self.dragging = nil
             reset()
             return true
         }
         
         func dropEntered(info: DropInfo) {
-            guard dragging?.id != current.id else { return }
+            guard dragging?.id != hostId else { return }
             _updatePosition(info)
         }
         
@@ -386,7 +403,7 @@ extension ManageView.Sidebar.GroupSection {
         }
         
         func dropUpdated(info: DropInfo) -> DropProposal? {
-            guard dragging?.id != current.id else {
+            guard dragging?.id != hostId else {
                 return DropProposal(operation: .forbidden)
             }
             
@@ -399,7 +416,15 @@ extension ManageView.Sidebar.GroupSection {
         }
         
         private func _updatePosition(_ info: DropInfo) {
+            guard let drag = dragging else { return }
+            guard !adjacent(hostId, drag.id) else { return }
+            
             let location = info.location
+            
+            if expanded {
+                dragPosition = .in
+                return
+            }
             
             if location.y < threshold {
                 dragPosition = .before
