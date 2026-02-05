@@ -32,8 +32,8 @@ extension ManageView.Sidebar {
                             onTap: {
                                 viewModel.setSelection(row.id)
                             },
-                            onDrop: { hostId, guestId, insertAfter in
-                                print("drag popsition: \(insertAfter)")
+                            onDrop: { hostId, guestId, position in
+                                viewModel.move(guestId, relativeTo: hostId, position: position)
                                 _version += 1
                             },
                             adjacent: { hostId, guestId in
@@ -46,61 +46,6 @@ extension ManageView.Sidebar {
                     SectionHeader(title: "Groups")
                 }
             }
-        }
-        
-        private func handleDrop(droppedGroup: Group, targetGroup: Group?) {
-            //            guard let droppedIndex = viewModel.groups.firstIndex(where: { $0.id == droppedGroup.id }) else { return }
-            //
-            //            var updatedGroup = droppedGroup
-            //
-            //            switch position {
-            //            case .on:
-            //                // Drop on target group (make it a child)
-            //                updatedGroup.parentId = targetGroup?.id
-            //            case .before, .after:
-            //                // Drop before/after target group (same level as target)
-            //                updatedGroup.parentId = targetGroup?.parentId
-            //            }
-            //
-            //            // Prevent dropping on itself
-            //            if updatedGroup.parentId == updatedGroup.id {
-            //                return
-            //            }
-            //
-            //            // Prevent circular references: check if the new parent is a descendant of the dragged group
-            //            if let newParentId = updatedGroup.parentId,
-            //               isDescendant(of: newParentId, ancestor: updatedGroup.id, in: viewModel.groups) {
-            //                return
-            //            }
-            //
-            //            // Create a new array to ensure SwiftUI detects the change
-            //            var newGroups = viewModel.groups
-            //
-            //            // Remove the group from its current position
-            //            newGroups.remove(at: droppedIndex)
-            //
-            //            // Find the new insertion point
-            //            if let targetGroup = targetGroup, let targetIndex = newGroups.firstIndex(where: { $0.id == targetGroup.id }) {
-            //                let insertIndex: Int
-            //                if position == .on {
-            //                    // Insert at the end of the target's children
-            //                    insertIndex = targetIndex + 1
-            //                } else {
-            //                    // Adjust target index based on position
-            //                    insertIndex = position == .after ? targetIndex + 1 : targetIndex
-            //                }
-            //                let safeIndex = min(max(0, insertIndex), newGroups.count)
-            //                newGroups.insert(updatedGroup, at: safeIndex)
-            //            } else {
-            //                // Dropping at root level, just append
-            //                newGroups.append(updatedGroup)
-            //            }
-            //
-            //            // Assign the new array to trigger view update
-            //            withAnimation(.easeInOut(duration: 0.2)) {
-            //                // TODO edit
-            ////                viewModel.groups = newGroups
-            //            }
         }
     }
 }
