@@ -85,10 +85,9 @@ class SidebarViewModel: ObservableObject {
         return count
     }
     
-    // TODO: expand will hinder adjacent
-    func adjacent(_ hostId: UUID, guestId: UUID) -> Bool {
-        guard let hostIndex = rows.firstIndex(where: { $0.id == hostId }),
-              let guestIndex = rows.firstIndex(where: { $0.id == guestId }),
+    func adjacent(from subjectId: UUID, to anchorId: UUID) -> Bool {
+        guard let hostIndex = rows.firstIndex(where: { $0.id == anchorId }),
+              let guestIndex = rows.firstIndex(where: { $0.id == subjectId }),
               hostIndex != guestIndex,
               rows[hostIndex].level != rows[guestIndex].level else {
             return false

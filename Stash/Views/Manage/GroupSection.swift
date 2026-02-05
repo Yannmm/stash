@@ -32,12 +32,13 @@ extension ManageView.Sidebar {
                             onTap: {
                                 viewModel.setSelection(row.id)
                             },
-                            onDrop: { hostId, guestId, position in
-                                viewModel.move(guestId, relativeTo: hostId, position: position)
+                            onDrop: { id, subjectId, position in
+//                                viewModel.move(subjectId, relativeTo: id, position: position)
+                                print("position: \(position)")
                                 _version += 1
                             },
-                            adjacent: { hostId, guestId in
-                                viewModel.adjacent(hostId, guestId: guestId)
+                            adjacent: { id, subjectId in
+                                viewModel.adjacent(from: subjectId, to: id)
                             }
                         )
                         .id("\(row.id)-\(_version)")
@@ -145,7 +146,7 @@ extension ManageView.Sidebar.GroupSection {
                 .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
             }
             .onDrop(of: [UTType.plainText], delegate: Dropper(
-                hostId: row.id,
+                id: row.id,
                 dragging: $dragging,
                 dragPosition: $dragPosition,
                 rowHeight: height,
@@ -237,7 +238,7 @@ extension ManageView.Sidebar.GroupSection {
 
 extension ManageView.Sidebar.GroupSection {
     struct Dropper: SwiftUI.DropDelegate {
-        let hostId: UUID
+        let id: UUID
         @Binding var dragging: SidebarViewModel.Row?
         @Binding var dragPosition: DragPosition?
         let rowHeight: CGFloat
@@ -250,25 +251,25 @@ extension ManageView.Sidebar.GroupSection {
         
         func validateDrop(info: DropInfo) -> Bool {
             guard let drag = dragging else { return false }
-            return drag.id != hostId
+            return drag.id != id
         }
         
         func performDrop(info: DropInfo) -> Bool {
             guard let drag = dragging,
-                  drag.id != hostId,
+                  drag.id != id,
                   let position = dragPosition else {
                 reset()
                 return false
             }
             
-            onDrop(hostId, drag.id, position)
+            onDrop(id, drag.id, position)
             self.dragging = nil
             reset()
             return true
         }
         
         func dropEntered(info: DropInfo) {
-            guard dragging?.id != hostId else { return }
+            guard dragging?.id != id else { return }
             _updatePosition(info)
         }
         
@@ -277,7 +278,7 @@ extension ManageView.Sidebar.GroupSection {
         }
         
         func dropUpdated(info: DropInfo) -> DropProposal? {
-            guard dragging?.id != hostId else {
+            guard dragging?.id != id else {
                 return DropProposal(operation: .forbidden)
             }
             
@@ -291,19 +292,18 @@ extension ManageView.Sidebar.GroupSection {
         
         private func _updatePosition(_ info: DropInfo) {
             guard let drag = dragging else { return }
-            guard !adjacent(hostId, drag.id) else { return }
+            guard !adjacent(id, drag.id) else { return }
             
             let location = info.location
-            
-            if expanded {
-                dragPosition = .in
-                return
-            }
             
             if location.y < threshold {
                 dragPosition = .before
             } else if location.y > (rowHeight - threshold) {
-                dragPosition = .after
+                if expanded {
+                    dragPosition = .in
+                } else {
+                    dragPosition = .after
+                }
             } else {
                 dragPosition = .in
             }
