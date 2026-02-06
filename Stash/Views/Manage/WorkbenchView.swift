@@ -21,51 +21,10 @@ extension ManageView {
             DraggableList()
                 .searchable(text: $search, placement: .toolbar)
                 .toolbar {
-                    if #available(macOS 26.0, *) {
-                        ToolbarItem(placement: .navigation) {
-                            Text("Format")
-                                .font(.system(size: 20, weight: .semibold))
-                                .fixedSize(horizontal: true, vertical: false)
-                        }
-                        .sharedBackgroundVisibility(.hidden)
-                    } else {
-                        ToolbarItem(placement: .navigation) {
-                            Text("Format")
-                                .font(.title2)
-                                .fixedSize(horizontal: true, vertical: false)
-                        }
-                    }
-                    // 2. Grouping primary actions together
-                    ToolbarItemGroup(placement: .primaryAction) {
-                        Picker("", selection: $mode) {
-                            Image(systemName: "square.grid.2x2").tag(0)
-                            Image(systemName: "list.bullet").tag(1)
-                            Image(systemName: "rectangle.grid.1x2").tag(2)
-                            Image(systemName: "rectangle").tag(3)
-                        }
-                        .pickerStyle(.segmented)
-                        .frame(width: 180)
-
-                        Button {
-                            // viewModel.refresh()
-                        } label: {
-                            Image(systemName: "arrow.clockwise")
-                        }
-
-                        Menu {
-                            Button("New Folder") { }
-                            Button("New Smart Folder") { }
-                            Divider()
-                            Button("Get Info") { }
-                        } label: {
-                            Image(systemName: "ellipsis.circle")
-                        }
-                        
-//                        ToolbarItem(placement: .automatic) {
-//                                    
-//                                }
-                        Spacer()
-                    }
+                    Toolbar(mode: $mode,
+                            title: viewModel.title,
+                            groupCount: viewModel.groupCount,
+                            bookmarkCount: viewModel.bookmarkCount)
                 }
                 .environmentObject(viewModel)
         }
