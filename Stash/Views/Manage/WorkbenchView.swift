@@ -19,9 +19,22 @@ extension ManageView {
         
         var body: some View {
             DraggableList()
-                // 1. Move searchable above the toolbar
                 .searchable(text: $search, placement: .toolbar)
                 .toolbar {
+                    if #available(macOS 26.0, *) {
+                        ToolbarItem(placement: .navigation) {
+                            Text("Format")
+                                .font(.system(size: 20, weight: .semibold))
+                                .fixedSize(horizontal: true, vertical: false)
+                        }
+                        .sharedBackgroundVisibility(.hidden)
+                    } else {
+                        ToolbarItem(placement: .navigation) {
+                            Text("Format")
+                                .font(.title2)
+                                .fixedSize(horizontal: true, vertical: false)
+                        }
+                    }
                     // 2. Grouping primary actions together
                     ToolbarItemGroup(placement: .primaryAction) {
                         Picker("", selection: $mode) {
