@@ -19,7 +19,7 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Toolbar(present: $present) {
+                Toolbar1(present: $present) {
                     do {
                         let name = cabinet.directoryDefaultName(anchorId: anchorId)
                         let directory = Group(id: UUID(), name: name)
