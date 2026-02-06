@@ -13,19 +13,48 @@ extension ManageView {
     struct WorkbenchView: View {
         @StateObject var viewModel: WorkbenchViewModel
         
+        @State private var mode: Int = 0
+        
+        @State private var search = ""
+        
         var body: some View {
-            VStack(alignment: .leading, spacing: 0) {
-                Toolbar()
-                    .padding(.horizontal, 1)
-                Divider()
-                DraggableList()
-            }
-            .background(Color(NSColor.textBackgroundColor))
-            .ignoresSafeArea(.container, edges: .top)
-            .toolbar {
-                // Empty toolbar to prevent default sidebar toggle from appearing
-            }
-            .environmentObject(viewModel)
+            DraggableList()
+                // 1. Move searchable above the toolbar
+                .searchable(text: $search, placement: .toolbar)
+                .toolbar {
+                    // 2. Grouping primary actions together
+                    ToolbarItemGroup(placement: .primaryAction) {
+                        Picker("", selection: $mode) {
+                            Image(systemName: "square.grid.2x2").tag(0)
+                            Image(systemName: "list.bullet").tag(1)
+                            Image(systemName: "rectangle.grid.1x2").tag(2)
+                            Image(systemName: "rectangle").tag(3)
+                        }
+                        .pickerStyle(.segmented)
+                        .frame(width: 180)
+
+                        Button {
+                            // viewModel.refresh()
+                        } label: {
+                            Image(systemName: "arrow.clockwise")
+                        }
+
+                        Menu {
+                            Button("New Folder") { }
+                            Button("New Smart Folder") { }
+                            Divider()
+                            Button("Get Info") { }
+                        } label: {
+                            Image(systemName: "ellipsis.circle")
+                        }
+                        
+//                        ToolbarItem(placement: .automatic) {
+//                                    
+//                                }
+                        Spacer()
+                    }
+                }
+                .environmentObject(viewModel)
         }
     }
 }
@@ -86,7 +115,7 @@ fileprivate extension ManageView.WorkbenchView {
                         }
                         Spacer(minLength: 0)
                     }
-//                    .frame(width: proxy.size.width)
+                    //                    .frame(width: proxy.size.width)
                     .frame(minHeight: proxy.size.height)
                 }
                 .onChange(of: proxy.size.width) { _, newWidth in
@@ -103,8 +132,8 @@ fileprivate extension ManageView.WorkbenchView {
                 RoundedRectangle(cornerRadius: 4)
                     .stroke(Color.gray.opacity(0.25), lineWidth: 0.5)
             )
-            .padding(.horizontal, 32)
-            .padding(.bottom, 32)
+            .padding(.horizontal, 12)
+            .padding(.bottom, 12)
         }
         
         private var totalWidth: CGFloat {
@@ -128,7 +157,7 @@ fileprivate extension ManageView.WorkbenchView {
                 Text("Name")
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(.secondary)
-                    .padding(.leading, 12 * 4)
+                    .padding(.leading, Constant.leading1 + Constant.gap1 + Constant.iconWidth)
                     .frame(width: width1, alignment: .leading)
                 
                 ColumnWidthDragger(width: $width1, min: min1)
@@ -173,79 +202,76 @@ fileprivate extension ManageView.WorkbenchView {
         private var height: CGFloat { Constant.rowHeight }
         
         var body: some View {
-            VStack(spacing: 0) {
-                // Row content
-                HStack(spacing: 0) {
-                    // Name column
-                    IconAndNameCell(row: row)
-                        .frame(width: width1, alignment: .leading)
-                    
-                    Spacer()
-                        .frame(width: Constant.resizerWidth)
-                    
-                    // Description column
-                    Text(row.description)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .frame(width: width2, alignment: .leading)
-                    
-                    Spacer()
-                        .frame(width: Constant.resizerWidth)
-                    
-                    // Tags column
-                    Text(row.tags.joined(separator: ", "))
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.secondary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
-                .frame(height: height)
-                .background(backgroundColor)
-                .overlay(alignment: .top) {
-                    if dragPosition == .before {
-                        Rectangle()
-                            .fill(Color.accentColor)
-                            .frame(height: 2)
-                    }
-                }
-                .overlay(alignment: .bottom) {
-                    if dragPosition == .after {
-                        Rectangle()
-                            .fill(Color.accentColor)
-                            .frame(height: 2)
-                    }
-                }
-                .contentShape(Rectangle())
-                .onTapGesture { selection = row.id }
-                .onDrag {
-                    selection = row.id
-                    dragging = row
-                    return NSItemProvider(object: row.id.uuidString as NSString)
-                } preview: {
-                    // Drag preview
-                    HStack(spacing: 8) {
-                        ViewHelper.icon(row.icon, side: 16)
-                        Text(row.title)
-                            .font(.system(size: 14))
-                            .foregroundStyle(.primary)
-                    }
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Color(NSColor.controlBackgroundColor).opacity(0.95))
-                    .cornerRadius(6)
-                    .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
-                }
-                .onDrop(of: [UTType.plainText], delegate: Dropper(
-                    current: row,
-                    dragging: $dragging,
-                    dragPosition: $dragPosition,
-                    rowHeight: height,
-                    onDrop: onDrop
-                ))
+            HStack(spacing: 0) {
+                // Name column
+                IconAndNameCell(row: row)
+                    .frame(width: width1, alignment: .leading)
+                
+                Spacer()
+                    .frame(width: Constant.resizerWidth)
+                
+                // Description column
+                Text(row.description)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(width: width2, alignment: .leading)
+                
+                Spacer()
+                    .frame(width: Constant.resizerWidth)
+                
+                // Tags column
+                Text(row.tags.joined(separator: ", "))
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
+            .frame(height: height)
+            .background(backgroundColor)
+            .overlay(alignment: .top) {
+                if dragPosition == .before {
+                    Rectangle()
+                        .fill(Color.accentColor)
+                        .frame(height: 2)
+                }
+            }
+            .overlay(alignment: .bottom) {
+                if dragPosition == .after {
+                    Rectangle()
+                        .fill(Color.accentColor)
+                        .frame(height: 2)
+                }
+            }
+            .contentShape(Rectangle())
+            .onTapGesture { selection = row.id }
+            .onDrag {
+                selection = row.id
+                dragging = row
+                return NSItemProvider(object: row.id.uuidString as NSString)
+            } preview: {
+                // Drag preview
+                HStack(spacing: 8) {
+                    ViewHelper.icon(row.icon, side: 16)
+                    Text(row.title)
+                        .font(.system(size: 14))
+                        .foregroundStyle(.primary)
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color(NSColor.controlBackgroundColor).opacity(0.95))
+                .cornerRadius(6)
+                .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
+            }
+            .onDrop(of: [UTType.plainText], delegate: Dropper(
+                current: row,
+                dragging: $dragging,
+                dragPosition: $dragPosition,
+                rowHeight: height,
+                onDrop: onDrop
+            ))
             .frame(width: totalWidth, alignment: .leading)
         }
         
@@ -341,7 +367,7 @@ fileprivate extension ManageView.WorkbenchView {
         let row: WorkbenchViewModel.Row
         
         var body: some View {
-            HStack(spacing: 12) {
+            HStack(spacing: 0) {
                 ForEach(0..<row.trail.count, id: \.self) { _ in
                     Rectangle()
                         .frame(width: 1)
@@ -349,8 +375,8 @@ fileprivate extension ManageView.WorkbenchView {
                         .frame(maxHeight: .infinity)
                         .foregroundColor(.random)
                 }
-                HStack(spacing: 12) {
-                    ViewHelper.icon(row.icon, side: 16)
+                HStack(spacing: Constant.gap1) {
+                    ViewHelper.icon(row.icon, side: Constant.iconWidth)
                     Text(row.title)
                         .font(.system(size: 14, weight: .medium))
                         .foregroundStyle(.primary)
@@ -359,7 +385,7 @@ fileprivate extension ManageView.WorkbenchView {
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
-            .padding(.leading, 12)
+            .padding(.leading, Constant.leading1)
         }
     }
 }
@@ -419,5 +445,9 @@ fileprivate extension ManageView.WorkbenchView {
         static let initialWidth3: CGFloat = 100
         static let minWidth1: CGFloat = 180
         static let minWidth2: CGFloat = 120
+        
+        static let leading1: CGFloat = 24
+        static let gap1: CGFloat = 12
+        static let iconWidth: CGFloat = 16
     }
 }

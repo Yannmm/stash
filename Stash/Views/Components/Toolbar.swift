@@ -12,17 +12,8 @@ extension ManageView.WorkbenchView {
         @EnvironmentObject var viewModel: WorkbenchViewModel
         
         var body: some View {
+    
             HStack(alignment: .top, spacing: 0) {
-                // Left: Navigation buttons
-                HStack(spacing: 2) {
-                    ToolbarButton(icon: "chevron.left", action: {})
-                        .disabled(true)
-                    ToolbarButton(icon: "chevron.right", action: {})
-                        .disabled(true)
-                }
-                
-                Spacer()
-                
                 // Center: Title and item count
                 VStack(spacing: 2) {
                     Text(viewModel.title)
