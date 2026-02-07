@@ -10,12 +10,13 @@ import Foundation
 import SwiftUI
 
 class WorkbenchViewModel: ObservableObject {
-    @Published var filter = ""
-    @Published var hierarchy: Hierarchy = .direct
+    @Published var search = ""
+    @Published var hierarchy: Hierarchy = .child
     @Published private(set) var rows: [Row] = []
     
     private let selectionStore: ManageSelectionStore
     private var _cancellables = Set<AnyCancellable>()
+    fileprivate var indentColorStorage = [Color]()
     
     init(selectionStore: ManageSelectionStore) {
         self.selectionStore = selectionStore
@@ -24,19 +25,24 @@ class WorkbenchViewModel: ObservableObject {
     }
     
     private func _bind() {
-        Publishers.CombineLatest4(selectionStore.$collection, selectionStore.cabinet.$storedEntries, $hierarchy, $filter)
+        Publishers.CombineLatest4(selectionStore.$collection, selectionStore.cabinet.$storedEntries, $hierarchy, $search)
             .map { [unowned self] a, b, c, d in
-                let result = self.heirs(c).map {
+                let result = self.heirs(b, a, c).map {
                     Row(id: $0.id,
                         icon: $0.icon,
                         title: $0.name,
-                        description: description($0),
-                        trail: trail($0) ,
+                        description: description($0, b),
+                        trail: trail($0, b, a?.id) ,
                         tags: $0.name.hashtags)
                 }
                 return result
             }
             .sink(receiveValue: { [weak self] in self?.rows = $0 })
+            .store(in: &_cancellables)
+        
+        $hierarchy
+            .map { _ in [] }
+            .sink(receiveValue: { [weak self] in self?.indentColorStorage = $0 })
             .store(in: &_cancellables)
     }
     
@@ -62,12 +68,14 @@ class WorkbenchViewModel: ObservableObject {
     
     
     
-    private func heirs(_ hierarchy: Hierarchy) -> [any Entry] {
+    private func heirs(_ entries: [any Entry], _ selection: Collectible?, _ hierarchy: Hierarchy) -> [any Entry] {
         switch hierarchy {
-        case .direct:
-            return (selectionStore.collection as? Group).children(among: selectionStore.cabinet.storedEntries)
+        case .child:
+            // TODO: selection maybe hashtag as well
+            return (selection as? Group).children(among: entries)
         case .descendant:
-            return (selectionStore.collection as? Group).descendants(among: selectionStore.cabinet.storedEntries)
+            // TODO: selection maybe hashtag as well
+            return (selection as? Group).descendants(among: entries)
         }
     }
     
@@ -79,12 +87,12 @@ class WorkbenchViewModel: ObservableObject {
         entries.compactMap({ $0 as? Bookmark }).count
     }
     
-    private func trail(_ entry: any Entry) -> [Group] {
+    private func trail(_ target: any Entry, _ entries: [any Entry], _ selectionId: UUID?) -> [Group] {
         var trail = [Group]()
-        var pid = entry.parentId
+        var pid = target.parentId
         while pid != nil {
-            let group = selectionStore.cabinet.storedEntries.filter({ $0.id == pid }).compactMap({ $0 as? Group }).first
-            if (pid == selectionStore.collection?.id) {
+            let group = entries.filter({ $0.id == pid }).compactMap({ $0 as? Group }).first
+            if (pid == selectionId) {
                 break
             }
             if let g = group  {
@@ -95,12 +103,12 @@ class WorkbenchViewModel: ObservableObject {
         return trail
     }
     
-    private func description(_ entry: any Entry) -> String {
+    private func description(_ entry: any Entry, _ entries: [any Entry]) -> String {
         switch entry {
         case let b as Bookmark:
             return b.url.host() ?? b.url.absoluteString
         case let g as Group:
-            let children = g.children(among: selectionStore.cabinet.storedEntries)
+            let children = g.children(among: entries)
             let gcount = _groupCount(children)
             let bcount = _bookmarkCount(children)
             var result = "\(bcount) bookmarks"
@@ -127,7 +135,7 @@ extension WorkbenchViewModel {
 
 extension WorkbenchViewModel {
     enum Hierarchy {
-        case direct
+        case child
         case descendant
     }
 }
@@ -167,5 +175,15 @@ extension WorkbenchViewModel {
         copies.insert(subject, at: newIndex)
         
         selectionStore.cabinet.storedEntries = copies
+    }
+}
+
+extension WorkbenchViewModel {
+    func indentColor(_ index: Int) -> Color {
+        if index >= indentColorStorage.count {
+            let colors = Array(repeating: Color.random, count: (index + 1) - indentColorStorage.count)
+            indentColorStorage.append(contentsOf: colors)
+        }
+        return indentColorStorage[index]
     }
 }

@@ -13,15 +13,11 @@ extension ManageView {
     struct WorkbenchView: View {
         @StateObject var viewModel: WorkbenchViewModel
         
-        @State private var mode: Int = 0
-        
-        @State private var search = ""
-        
         var body: some View {
             DraggableList()
-                .searchable(text: $search, placement: .toolbar)
+                .searchable(text: $viewModel.search, placement: .toolbar)
                 .toolbar {
-                    Toolbar(mode: $mode,
+                    Toolbar(hierarchy: $viewModel.hierarchy,
                             title: viewModel.title,
                             groupCount: viewModel.groupCount,
                             bookmarkCount: viewModel.bookmarkCount)
@@ -79,6 +75,9 @@ fileprivate extension ManageView.WorkbenchView {
                                                     _version += 1
                                                 }
                                             }
+                                        },
+                                        indentColor: { index in
+                                            viewModel.indentColor(index)
                                         }
                                     )
                                     .id("\(row.id)-\(_version)")
@@ -113,6 +112,8 @@ fileprivate extension ManageView.WorkbenchView {
         }
     }
 }
+
+
 
 // MARK: - Table Header
 
@@ -170,13 +171,14 @@ fileprivate extension ManageView.WorkbenchView {
         let width2: CGFloat
         let totalWidth: CGFloat
         let onDrop: (WorkbenchViewModel.Row, WorkbenchViewModel.Row, Bool) -> Void
+        let indentColor: (Int) -> Color
         @State private var dragPosition: DragPosition? = nil
         private var height: CGFloat { Constant.rowHeight }
         
         var body: some View {
             HStack(spacing: 0) {
                 // Name column
-                IconAndNameCell(row: row)
+                IconAndNameCell(row: row, indentColor: indentColor)
                     .frame(width: width1, alignment: .leading)
                 
                 Spacer()
@@ -337,15 +339,16 @@ fileprivate extension ManageView.WorkbenchView.Row {
 fileprivate extension ManageView.WorkbenchView {
     private struct IconAndNameCell: View {
         let row: WorkbenchViewModel.Row
+        let indentColor: (Int) -> Color
         
         var body: some View {
             HStack(spacing: 0) {
-                ForEach(0..<row.trail.count, id: \.self) { _ in
+                ForEach(0..<row.trail.count, id: \.self) { index in
                     Rectangle()
                         .frame(width: 1)
                         .frame(width: 12)
                         .frame(maxHeight: .infinity)
-                        .foregroundColor(.random)
+                        .foregroundColor(indentColor(index))
                 }
                 HStack(spacing: Constant.gap1) {
                     ViewHelper.icon(row.icon, side: Constant.iconWidth)

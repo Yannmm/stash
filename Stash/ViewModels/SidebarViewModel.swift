@@ -143,7 +143,7 @@ class SidebarViewModel: ObservableObject {
             .store(in: &_cancellables)
     }
     
-    private func visibleGroups(_ entries: [any Entry], _ expansions: Set<UUID>, _ selection: UUID?) -> [Row] {
+    private func visibleGroups(_ entries: [any Entry], _ expansions: Set<UUID>, _ selectionId: UUID?) -> [Row] {
         let allGroups = entries.compactMap { $0 as? Group }
         var result = [Row]()
         func flatten(_ group: Group, level: Int) {
@@ -158,7 +158,7 @@ class SidebarViewModel: ObservableObject {
                     expanded: expanded,
                     groupCount: gcount,
                     bookmarkCount: bcount,
-                    selected: group.id == selection)
+                    selected: group.id == selectionId)
             )
             if expanded {
                 let children = allGroups.filter { $0.parentId == group.id }

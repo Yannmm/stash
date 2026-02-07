@@ -17,9 +17,9 @@ struct ManageView: View {
             Sidebar(viewModel: SidebarViewModel(selectionStore: selectionStore))
             .toolbar(removing: .sidebarToggle)      // 🔑 works now
             .navigationSplitViewColumnWidth(
-                min: 200,
-                ideal: Constant.sidebarWidth,
-                max: 400
+                min: 180,
+                ideal: 240,
+                max: 350
             )
         } detail: {
             WorkbenchView(viewModel: WorkbenchViewModel(selectionStore: selectionStore))
@@ -27,24 +27,10 @@ struct ManageView: View {
         .navigationSplitViewStyle(.prominentDetail)   // 🔑 NOT balanced
         .toolbarBackground(.hidden, for: .windowToolbar)
         .frame(
-            minWidth: Constant.minTotalWidth,
-            minHeight: Constant.minTotalHeight
+            minWidth: 600,
+            minHeight: 400
         )
         .background(.windowBackground)
         
     }
 }
-
-fileprivate extension ManageView {
-    enum Constant {
-        static let minTotalWidth: CGFloat = 1000
-        static let minTotalHeight: CGFloat = 650
-        static let sidebarWidth: CGFloat = 300
-    }
-}
-
-// MARK: - Preview
-
-//#Preview {
-//    ManageView()
-//}

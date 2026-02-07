@@ -9,39 +9,51 @@ import SwiftUI
 
 extension ManageView.WorkbenchView {
     struct Toolbar: ToolbarContent {
-        @Binding var mode: Int
+        @Binding var hierarchy: WorkbenchViewModel.Hierarchy
         let title: String
         let groupCount: Int
         let bookmarkCount: Int
 
         var body: some ToolbarContent {
-            if #available(macOS 26.0, *) {
+//            if #available(macOS 26.0, *) {
+//                ToolbarItem(placement: .navigation) {
+//                    Title(title: title, groupCount: groupCount, bookmarkCount: bookmarkCount)
+//                }
+//                .sharedBackgroundVisibility(hidden)
+//            } else {
                 ToolbarItem(placement: .navigation) {
                     Title(title: title, groupCount: groupCount, bookmarkCount: bookmarkCount)
                 }
-                .sharedBackgroundVisibility(.hidden)
-            } else {
-                ToolbarItem(placement: .navigation) {
-                    Title(title: title, groupCount: groupCount, bookmarkCount: bookmarkCount)
-                }
-            }
+//            }
             
             ToolbarItemGroup(placement: .primaryAction) {
                 Spacer()
-                Picker("", selection: $mode) {
-                    Image(systemName: "square.grid.2x2").tag(0)
-                    Image(systemName: "list.bullet").tag(1)
-                    Image(systemName: "rectangle.grid.1x2").tag(2)
-                    Image(systemName: "rectangle").tag(3)
+
+                Picker("", selection: $hierarchy) {
+                    Label("Children", systemImage: "list.bullet")
+                        .tag(WorkbenchViewModel.Hierarchy.child)
+                        .help("Show Direct Children")
+                    Label("Descedants", systemImage: "list.bullet.indent")
+                        .tag(WorkbenchViewModel.Hierarchy.descendant)
+                        .help("Show All Descendants")
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 180)
+                .frame(width: 100)
 
                 Button {
-                    // viewModel.refresh()
+                    // refresh
                 } label: {
-                    Image(systemName: "arrow.clockwise")
+                    Label("Add Bookmark", systemImage: "link.badge.plus")
                 }
+                .help("Add Bookmark")
+                
+                Button {
+                    // refresh
+                } label: {
+                    Label("Add Group", systemImage: "folder.badge.plus")
+                }
+                .help("Add Group")
+                
 
                 Menu {
                     Button("New Folder") { }
@@ -49,9 +61,10 @@ extension ManageView.WorkbenchView {
                     Divider()
                     Button("Get Info") { }
                 } label: {
-                    Image(systemName: "ellipsis.circle")
+                    Label("More", systemImage: "ellipsis.circle")
                 }
             }
+
             
 
         }
