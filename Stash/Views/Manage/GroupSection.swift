@@ -33,8 +33,7 @@ extension ManageView.Sidebar {
                                 viewModel.setSelection(row.id)
                             },
                             onDrop: { id, subjectId, position in
-//                                viewModel.move(subjectId, relativeTo: id, position: position)
-                                print("position: \(position)")
+                                viewModel.move(subjectId, relativeTo: id, position: position)
                                 _version += 1
                             },
                             adjacent: { id, subjectId in

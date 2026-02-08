@@ -79,11 +79,19 @@ extension ManageView.WorkbenchView {
                     Text(title)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundStyle(.primary)
-                    Text("\(bookmarkCount) Bookmarks | \(groupCount) Groups")
+                    Text(description)
                         .font(.system(size: 14, weight: .light))
                         .foregroundStyle(.secondary)
                 }
                 .padding(.horizontal, 6)
+            }
+            
+            private var description: String {
+                if groupCount > 0 {
+                    return "\(bookmarkCount) Bookmarks | \(groupCount) Groups"
+                } else {
+                    return "\(bookmarkCount) Bookmarks"
+                }
             }
         }
     }
