@@ -9,7 +9,7 @@ import Combine
 import Foundation
 import SwiftUI
 
-class WorkbenchViewModel: ObservableObject {
+class EssentialViewModel: ObservableObject {
     @Published var search = ""
     @Published var hierarchy: Hierarchy = .child
     @Published private(set) var rows: [Row] = []
@@ -37,6 +37,7 @@ class WorkbenchViewModel: ObservableObject {
                 }
                 return result
             }
+            .receive(on: DispatchQueue.main)
             .sink(receiveValue: { [weak self] in self?.rows = $0 })
             .store(in: &_cancellables)
         
@@ -122,7 +123,7 @@ class WorkbenchViewModel: ObservableObject {
     }
 }
 
-extension WorkbenchViewModel {
+extension EssentialViewModel {
     struct Row: Identifiable {
         let id: UUID
         let icon: Icon
@@ -133,14 +134,14 @@ extension WorkbenchViewModel {
     }
 }
 
-extension WorkbenchViewModel {
+extension EssentialViewModel {
     enum Hierarchy {
         case child
         case descendant
     }
 }
 
-extension WorkbenchViewModel {
+extension EssentialViewModel {
     /// Move an entry from source position to before/after target position
     func moveRow(_ subjectId: UUID, to destinationId: UUID, insertAfter: Bool) {
         // Find indices in allEntries
@@ -178,7 +179,7 @@ extension WorkbenchViewModel {
     }
 }
 
-extension WorkbenchViewModel {
+extension EssentialViewModel {
     func indentColor(_ index: Int) -> Color {
         if index >= indentColorStorage.count {
             let colors = Array(repeating: Color.random, count: (index + 1) - indentColorStorage.count)

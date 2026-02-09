@@ -7,9 +7,9 @@
 
 import SwiftUI
 
-extension ManageView.WorkbenchView {
+extension ManageView.EssentialView {
     struct Toolbar: ToolbarContent {
-        @Binding var hierarchy: WorkbenchViewModel.Hierarchy
+        @Binding var hierarchy: EssentialViewModel.Hierarchy
         let title: String
         let groupCount: Int
         let bookmarkCount: Int
@@ -31,10 +31,10 @@ extension ManageView.WorkbenchView {
 
                 Picker("", selection: $hierarchy) {
                     Label("Children", systemImage: "list.bullet")
-                        .tag(WorkbenchViewModel.Hierarchy.child)
+                        .tag(EssentialViewModel.Hierarchy.child)
                         .help("Show Direct Children")
                     Label("Descedants", systemImage: "list.bullet.indent")
-                        .tag(WorkbenchViewModel.Hierarchy.descendant)
+                        .tag(EssentialViewModel.Hierarchy.descendant)
                         .help("Show All Descendants")
                 }
                 .pickerStyle(.segmented)

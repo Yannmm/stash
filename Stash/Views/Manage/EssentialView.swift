@@ -10,11 +10,11 @@ import AppKit
 import UniformTypeIdentifiers
 
 extension ManageView {
-    struct WorkbenchView: View {
-        @StateObject var viewModel: WorkbenchViewModel
+    struct EssentialView: View {
+        @StateObject var viewModel: EssentialViewModel
         
         var body: some View {
-            DraggableList()
+            Sheet()
                 .searchable(text: $viewModel.search, placement: .toolbar)
                 .toolbar {
                     Toolbar(hierarchy: $viewModel.hierarchy,
@@ -29,12 +29,12 @@ extension ManageView {
 
 // MARK: - Draggable List
 
-fileprivate extension ManageView.WorkbenchView {
-    private struct DraggableList: View {
-        @EnvironmentObject var viewModel: WorkbenchViewModel
+fileprivate extension ManageView.EssentialView {
+    private struct Sheet: View {
+        @EnvironmentObject var viewModel: EssentialViewModel
         
         @State private var selection: UUID?
-        @State private var dragging: WorkbenchViewModel.Row?
+        @State private var dragging: EssentialViewModel.Row?
         @State private var width1: CGFloat = Constant.initialWidth1
         @State private var width2: CGFloat = Constant.initialWidth2
         @State private var width3: CGFloat = Constant.initialWidth3
@@ -117,7 +117,7 @@ fileprivate extension ManageView.WorkbenchView {
 
 // MARK: - Table Header
 
-fileprivate extension ManageView.WorkbenchView {
+fileprivate extension ManageView.EssentialView {
     private struct Header: View {
         @Binding var width1: CGFloat
         @Binding var width2: CGFloat
@@ -161,16 +161,16 @@ fileprivate extension ManageView.WorkbenchView {
 
 // MARK: - Table Row with Drag and Drop
 
-fileprivate extension ManageView.WorkbenchView {
+fileprivate extension ManageView.EssentialView {
     struct Row: View {
         let index: Int
-        let row: WorkbenchViewModel.Row
+        let row: EssentialViewModel.Row
         @Binding var selection: UUID?
-        @Binding var dragging: WorkbenchViewModel.Row?
+        @Binding var dragging: EssentialViewModel.Row?
         let width1: CGFloat
         let width2: CGFloat
         let totalWidth: CGFloat
-        let onDrop: (WorkbenchViewModel.Row, WorkbenchViewModel.Row, Bool) -> Void
+        let onDrop: (EssentialViewModel.Row, EssentialViewModel.Row, Bool) -> Void
         let indentColor: (Int) -> Color
         @State private var dragPosition: DragPosition? = nil
         private var height: CGFloat { Constant.rowHeight }
@@ -263,7 +263,7 @@ fileprivate extension ManageView.WorkbenchView {
 
 // MARK: - Row Drop Delegate
 
-fileprivate extension ManageView.WorkbenchView.Row {
+fileprivate extension ManageView.EssentialView.Row {
     enum DragPosition {
         case over
         case before
@@ -271,11 +271,11 @@ fileprivate extension ManageView.WorkbenchView.Row {
     }
     
     struct Dropper: SwiftUI.DropDelegate {
-        let current: WorkbenchViewModel.Row
-        @Binding var dragging: WorkbenchViewModel.Row?
+        let current: EssentialViewModel.Row
+        @Binding var dragging: EssentialViewModel.Row?
         @Binding var dragPosition: DragPosition?
         let rowHeight: CGFloat
-        let onDrop: (WorkbenchViewModel.Row, WorkbenchViewModel.Row, Bool) -> Void
+        let onDrop: (EssentialViewModel.Row, EssentialViewModel.Row, Bool) -> Void
         
         // Only before/after zones - middle zone is rejected
         private var threshold: CGFloat { rowHeight / 3 }
@@ -336,9 +336,9 @@ fileprivate extension ManageView.WorkbenchView.Row {
 
 // MARK: - Icon and Name Cell
 
-fileprivate extension ManageView.WorkbenchView {
+fileprivate extension ManageView.EssentialView {
     private struct IconAndNameCell: View {
-        let row: WorkbenchViewModel.Row
+        let row: EssentialViewModel.Row
         let indentColor: (Int) -> Color
         
         var body: some View {
@@ -367,7 +367,7 @@ fileprivate extension ManageView.WorkbenchView {
 
 // MARK: - Column Resizer
 
-fileprivate extension ManageView.WorkbenchView {
+fileprivate extension ManageView.EssentialView {
     private struct ColumnWidthDragger: View {
         @Binding var width: CGFloat
         let min: CGFloat
@@ -411,7 +411,7 @@ fileprivate extension ManageView.WorkbenchView {
     }
 }
 
-fileprivate extension ManageView.WorkbenchView {
+fileprivate extension ManageView.EssentialView {
     enum Constant {
         static let rowHeight: CGFloat = 36
         static let resizerWidth: CGFloat = 12
