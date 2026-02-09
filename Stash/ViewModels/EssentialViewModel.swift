@@ -35,7 +35,8 @@ class EssentialViewModel: ObservableObject {
                                description: info.0,
                                trail: trail($0, b, a?.id) ,
                                tags: $0.name.hashtags,
-                               expanded: info.1)
+                               expanded: info.1,
+                               expandable: $0.container)
                 }
                 return result
             }
@@ -188,6 +189,7 @@ extension EssentialViewModel {
         let trail: [Group]
         let tags: [String]
         let expanded: Bool
+        let expandable: Bool
     }
 }
 

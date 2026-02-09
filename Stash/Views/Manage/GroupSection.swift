@@ -104,14 +104,11 @@ extension ManageView.Sidebar.GroupSection {
                     case .before:
                         _indicator1()
                             .offset(y: -(Constant.dragIndicatorHeight * 0.5))
-                        // This allows the view to be larger than the parent
-                        // without affecting the layout flow of the list
                             .allowsHitTesting(false)
                     case .in:
                         _indicator2(childCount: viewModel.effectiveChildrenCount(row.id))
                             .allowsHitTesting(false)
                     case .after:
-                        
                         _indicator1()
                             .offset(y: height - Constant.dragIndicatorHeight * 0.5)
                             .allowsHitTesting(false)
@@ -151,7 +148,10 @@ extension ManageView.Sidebar.GroupSection {
                 rowHeight: height,
                 expanded: row.expanded,
                 onDrop: onDrop,
-                cascade: cascade
+                cascade: cascade,
+                propose: { _ in
+                    return DropProposal(operation: .move)
+                }
             ))
             .onChange(of: dragPosition) { oldValue, newValue in
                 handleDragPositionChange(newValue)
@@ -204,11 +204,8 @@ extension ManageView.Sidebar.GroupSection {
         }
         
         private func _indicator1() -> some View {
-            HStack(spacing: 0) {
-                _leadingGap(row.level)
                 Rectangle()
                     .fill(Color.accentColor)
-            }
                 .frame(height: Constant.dragIndicatorHeight)
             
         }

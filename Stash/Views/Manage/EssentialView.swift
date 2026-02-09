@@ -69,12 +69,12 @@ fileprivate extension ManageView.EssentialView {
                                         width2: width2,
                                         totalWidth: max(totalWidth, proxy.size.width),
                                         onDrop: { id, subjectId, position in
-//                                            withAnimation(.easeInOut(duration: 0.25)) {
-//                                                viewModel.moveRow(drag.id, to: over.id, insertAfter: insertAfter)
-//                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-//                                                    _version += 1
-//                                                }
-//                                            }
+                                            //                                            withAnimation(.easeInOut(duration: 0.25)) {
+                                            //                                                viewModel.moveRow(drag.id, to: over.id, insertAfter: insertAfter)
+                                            //                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                            //                                                    _version += 1
+                                            //                                                }
+                                            //                                            }
                                         },
                                         cascade: { id, subjectId in
                                             return false
@@ -209,23 +209,30 @@ fileprivate extension ManageView.EssentialView {
             .frame(height: height)
             .background(backgroundColor)
             .overlay(alignment: .top) {
-                if dragPosition == .before {
-                    Rectangle()
-                        .fill(Color.accentColor)
-                        .frame(height: 2)
+                // TODO: combine dragPosition and operation move/forbidden
+                if let position = dragPosition,
+                    _propose(position).operation == .move {
+                    switch position {
+                    case .before:
+                        _indicator1()
+                            .offset(y: -(Constant.dragIndicatorHeight * 0.5))
+                            .allowsHitTesting(false)
+                    case .in:
+                        _indicator2(childCount: 0)
+                            .allowsHitTesting(false)
+                    case .after:
+                        _indicator1()
+                            .offset(y: height - Constant.dragIndicatorHeight * 0.5)
+                            .allowsHitTesting(false)
+                        
+                    }
                 }
             }
-            .overlay(alignment: .bottom) {
-                if dragPosition == .after {
-                    Rectangle()
-                        .fill(Color.accentColor)
-                        .frame(height: 2)
-                }
-            }
+            .zIndex(dragPosition != nil ? 1 : 0)
             .contentShape(Rectangle())
             .onTapGesture { selection = row.id }
             .onDrag {
-                selection = row.id
+                //                selection = row.id
                 dragging = row
                 return NSItemProvider(object: row.id.uuidString as NSString)
             } preview: {
@@ -249,14 +256,45 @@ fileprivate extension ManageView.EssentialView {
                 rowHeight: height,
                 expanded: row.expanded,
                 onDrop: onDrop,
-                cascade: cascade
+                cascade: cascade,
+                propose: _propose
             ))
             .frame(width: totalWidth, alignment: .leading)
         }
         
+        private func _propose(_ position: DragPosition) -> DropProposal {
+            if row.expandable {
+                return DropProposal(operation: .move)
+            } else {
+                switch position {
+                case .before, .after:
+                    return DropProposal(operation: .move)
+                case .in:
+                    return DropProposal(operation: .forbidden)
+                }
+            }
+        }
+        
+        private func _indicator1() -> some View {
+            Rectangle()
+                .fill(Color.accentColor)
+                .frame(height: Constant.dragIndicatorHeight)
+            
+        }
+        
+        private func _indicator2(childCount: Int) -> some View {
+            RoundedRectangle(cornerRadius: Constant.cornerRadius)
+                .fill(Color.clear)
+                .stroke(Color.accentColor, lineWidth: Constant.dragIndicatorHeight)
+                .frame(height: (Double(childCount) + 1) * height)
+        }
+        
         private var backgroundColor: Color {
+            if dragPosition != nil {
+                return Color.accentColor.opacity(0.3)
+            }
             if selection == row.id {
-                return Color.accentColor.opacity(0.15)
+                return Color.accentColor.opacity(0.8)
             }
             let colors = NSColor.alternatingContentBackgroundColors
             return Color(colors[index % colors.count])
@@ -277,15 +315,15 @@ fileprivate extension ManageView.EssentialView {
 //        let expanded: Bool
 //        let onDrop: (UUID, UUID, DragPosition) -> Void
 //        let cascade: (UUID, UUID) -> Bool
-//        
+//
 //        // Only before/after zones - middle zone is rejected
 //        private var threshold: CGFloat { rowHeight / 3 }
-//        
+//
 //        func validateDrop(info: DropInfo) -> Bool {
 //            guard let drag = dragging else { return false }
 //            return drag.id != id
 //        }
-//        
+//
 //        func performDrop(info: DropInfo) -> Bool {
 //            guard let drag = dragging,
 //                  drag.id != id,
@@ -293,29 +331,29 @@ fileprivate extension ManageView.EssentialView {
 //                reset()
 //                return false
 //            }
-//            
+//
 //            onDrop(id, drag.id, position)
 //            self.dragging = nil
 //            reset()
 //            return true
 //        }
-//        
+//
 //        func dropEntered(info: DropInfo) {
 //            guard dragging?.id != id else { return }
 ////            dragPosition = .over
 //        }
-//        
+//
 //        func dropExited(info: DropInfo) {
 //            reset()
 //        }
-//        
+//
 //        func dropUpdated(info: DropInfo) -> DropProposal? {
 //            guard dragging?.id != id else {
 //                return DropProposal(operation: .forbidden)
 //            }
-//            
+//
 //            let location = info.location
-//            
+//
 //            // Only allow dropping near top or bottom, reject middle
 //            if location.y < threshold {
 //                dragPosition = .before
@@ -328,7 +366,7 @@ fileprivate extension ManageView.EssentialView {
 //                return DropProposal(operation: .forbidden)
 //            }
 //        }
-//        
+//
 //        private func reset() {
 //            dragPosition = nil
 //        }
@@ -425,5 +463,9 @@ fileprivate extension ManageView.EssentialView {
         static let leading1: CGFloat = 24
         static let gap1: CGFloat = 12
         static let iconWidth: CGFloat = 16
+        
+        static let dragIndicatorHeight: CGFloat = 2
+        
+        static let cornerRadius: CGFloat = 2
     }
 }
