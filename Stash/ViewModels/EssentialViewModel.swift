@@ -14,26 +14,28 @@ class EssentialViewModel: ObservableObject {
     @Published var hierarchy: Hierarchy = .child
     @Published private(set) var rows: [Row] = []
     
-    private let selectionStore: ManageSelectionStore
+    private let dataStore: ManageSelectionStore
     private var _cancellables = Set<AnyCancellable>()
     fileprivate var indentColorStorage = [Color]()
     
     init(selectionStore: ManageSelectionStore) {
-        self.selectionStore = selectionStore
+        self.dataStore = selectionStore
         
         _bind()
     }
     
     private func _bind() {
-        Publishers.CombineLatest4(selectionStore.$collection, selectionStore.cabinet.$storedEntries, $hierarchy, $search)
+        Publishers.CombineLatest4(dataStore.$collection, dataStore.cabinet.$storedEntries, $hierarchy, $search)
             .map { [unowned self] a, b, c, d in
                 let result = self.heirs(b, a, c).map {
-                    Row(id: $0.id,
-                        icon: $0.icon,
-                        title: $0.name,
-                        description: description($0, b),
-                        trail: trail($0, b, a?.id) ,
-                        tags: $0.name.hashtags)
+                    let info = _info($0, b, c)
+                    return Row(id: $0.id,
+                               icon: $0.icon,
+                               title: $0.name,
+                               description: info.0,
+                               trail: trail($0, b, a?.id) ,
+                               tags: $0.name.hashtags,
+                               expanded: info.1)
                 }
                 return result
             }
@@ -48,22 +50,22 @@ class EssentialViewModel: ObservableObject {
     }
     
     var title: String {
-        selectionStore.collection?.title ?? "All Bookmarks"
+        dataStore.collection?.title ?? "All Bookmarks"
     }
     
     var bookmarkCount: Int {
-        if let c = selectionStore.collection {
-            return _bookmarkCount(c.relatedEntries(selectionStore.cabinet.storedEntries))
+        if let c = dataStore.collection {
+            return _bookmarkCount(c.relatedEntries(dataStore.cabinet.storedEntries))
         } else {
-            return _bookmarkCount(selectionStore.cabinet.storedEntries)
+            return _bookmarkCount(dataStore.cabinet.storedEntries)
         }
     }
     
     var groupCount: Int {
-        if let c = selectionStore.collection {
-            return _groupCount(c.relatedEntries(selectionStore.cabinet.storedEntries))
+        if let c = dataStore.collection {
+            return _groupCount(c.relatedEntries(dataStore.cabinet.storedEntries))
         } else {
-            return _groupCount(selectionStore.cabinet.storedEntries)
+            return _groupCount(dataStore.cabinet.storedEntries)
         }
     }
     
@@ -104,10 +106,10 @@ class EssentialViewModel: ObservableObject {
         return trail
     }
     
-    private func description(_ entry: any Entry, _ entries: [any Entry]) -> String {
+    private func _info(_ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, Bool) {
         switch entry {
         case let b as Bookmark:
-            return b.url.host() ?? b.url.absoluteString
+            return (b.url.host() ?? b.url.absoluteString, false)
         case let g as Group:
             let children = g.children(among: entries)
             let gcount = _groupCount(children)
@@ -116,28 +118,16 @@ class EssentialViewModel: ObservableObject {
             if gcount > 0 {
                 result += " / \(gcount) groups"
             }
-            return result
+            switch hierarchy {
+            case .child:
+                return (result, false)
+            case .descendant:
+                return (result, children.count > 0)
+            }
+            
         default:
-            return ""
+            return ("", false)
         }
-    }
-}
-
-extension EssentialViewModel {
-    struct Row: Identifiable {
-        let id: UUID
-        let icon: Icon
-        let title: String
-        let description: String
-        let trail: [Group]
-        let tags: [String]
-    }
-}
-
-extension EssentialViewModel {
-    enum Hierarchy {
-        case child
-        case descendant
     }
 }
 
@@ -145,20 +135,20 @@ extension EssentialViewModel {
     /// Move an entry from source position to before/after target position
     func moveRow(_ subjectId: UUID, to destinationId: UUID, insertAfter: Bool) {
         // Find indices in allEntries
-        guard let subjectIndex = selectionStore.cabinet.storedEntries.firstIndex(where: { $0.id == subjectId }),
-              let destinationIndex = selectionStore.cabinet.storedEntries.firstIndex(where: { $0.id == destinationId }),
+        guard let subjectIndex = dataStore.cabinet.storedEntries.firstIndex(where: { $0.id == subjectId }),
+              let destinationIndex = dataStore.cabinet.storedEntries.firstIndex(where: { $0.id == destinationId }),
               subjectIndex != destinationIndex else {
             return
         }
         
         // Get the entry to move
-        var subject = selectionStore.cabinet.storedEntries[subjectIndex]
+        var subject = dataStore.cabinet.storedEntries[subjectIndex]
         
         // Create new array with source removed
-        var copies = selectionStore.cabinet.storedEntries
+        var copies = dataStore.cabinet.storedEntries
         copies.remove(at: subjectIndex)
         
-        let destination = selectionStore.cabinet.storedEntries[destinationIndex]
+        let destination = dataStore.cabinet.storedEntries[destinationIndex]
         subject.parentId = destination.parentId
         
         // Calculate new target index (adjusted after removal)
@@ -175,7 +165,7 @@ extension EssentialViewModel {
         // Insert at new position
         copies.insert(subject, at: newIndex)
         
-        selectionStore.cabinet.storedEntries = copies
+        dataStore.cabinet.storedEntries = copies
     }
 }
 
@@ -186,5 +176,24 @@ extension EssentialViewModel {
             indentColorStorage.append(contentsOf: colors)
         }
         return indentColorStorage[index]
+    }
+}
+
+extension EssentialViewModel {
+    struct Row: Identifiable {
+        let id: UUID
+        let icon: Icon
+        let title: String
+        let description: String
+        let trail: [Group]
+        let tags: [String]
+        let expanded: Bool
+    }
+}
+
+extension EssentialViewModel {
+    enum Hierarchy {
+        case child
+        case descendant
     }
 }

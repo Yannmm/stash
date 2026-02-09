@@ -36,8 +36,8 @@ extension ManageView.Sidebar {
                                 viewModel.move(subjectId, relativeTo: id, position: position)
                                 _version += 1
                             },
-                            adjacent: { id, subjectId in
-                                viewModel.adjacent(from: subjectId, to: id)
+                            cascade: { id, subjectId in
+                                viewModel.cascade(from: subjectId, to: id)
                             }
                         )
                         .id("\(row.id)-\(_version)")
@@ -58,7 +58,7 @@ extension ManageView.Sidebar.GroupSection {
         let onToggleExpansion: () -> Void
         let onTap: () -> Void
         let onDrop: (UUID, UUID, DragPosition) -> Void
-        let adjacent: (UUID, UUID) -> Bool
+        let cascade: (UUID, UUID) -> Bool
         private var height: CGFloat { Constant.rowHeight }
         
         @State private var dragPosition: DragPosition? = nil
@@ -151,7 +151,7 @@ extension ManageView.Sidebar.GroupSection {
                 rowHeight: height,
                 expanded: row.expanded,
                 onDrop: onDrop,
-                adjacent: adjacent
+                cascade: cascade
             ))
             .onChange(of: dragPosition) { oldValue, newValue in
                 handleDragPositionChange(newValue)
@@ -232,88 +232,5 @@ extension ManageView.Sidebar.GroupSection {
             static let cornerRadius: CGFloat = 6
             static let leadingGap: CGFloat = 16
         }
-    }
-}
-
-extension ManageView.Sidebar.GroupSection {
-    struct Dropper: SwiftUI.DropDelegate {
-        let id: UUID
-        @Binding var dragging: SidebarViewModel.Row?
-        @Binding var dragPosition: DragPosition?
-        let rowHeight: CGFloat
-        let expanded: Bool
-        let onDrop: (UUID, UUID, DragPosition) -> Void
-        let adjacent: (UUID, UUID) -> Bool
-        
-        // Only before/after zones - middle zone is rejected
-        private var threshold: CGFloat { rowHeight / 3 }
-        
-        func validateDrop(info: DropInfo) -> Bool {
-            guard let drag = dragging else { return false }
-            return drag.id != id
-        }
-        
-        func performDrop(info: DropInfo) -> Bool {
-            guard let drag = dragging,
-                  drag.id != id,
-                  let position = dragPosition else {
-                reset()
-                return false
-            }
-            
-            onDrop(id, drag.id, position)
-            self.dragging = nil
-            reset()
-            return true
-        }
-        
-        func dropEntered(info: DropInfo) {
-            guard dragging?.id != id else { return }
-            _updatePosition(info)
-        }
-        
-        func dropExited(info: DropInfo) {
-            reset()
-        }
-        
-        func dropUpdated(info: DropInfo) -> DropProposal? {
-            guard dragging?.id != id else {
-                return DropProposal(operation: .forbidden)
-            }
-            
-            _updatePosition(info)
-            return DropProposal(operation: .move)
-        }
-        
-        private func reset() {
-            dragPosition = nil
-        }
-        
-        private func _updatePosition(_ info: DropInfo) {
-            guard let drag = dragging else { return }
-            guard !adjacent(id, drag.id) else { return }
-            
-            let location = info.location
-            
-            if location.y < threshold {
-                dragPosition = .before
-            } else if location.y > (rowHeight - threshold) {
-                if expanded {
-                    dragPosition = .in
-                } else {
-                    dragPosition = .after
-                }
-            } else {
-                dragPosition = .in
-            }
-        }
-    }
-}
-
-extension ManageView.Sidebar.GroupSection {
-    enum DragPosition {
-        case `in`
-        case before
-        case after
     }
 }

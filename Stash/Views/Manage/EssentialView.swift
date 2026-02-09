@@ -68,13 +68,16 @@ fileprivate extension ManageView.EssentialView {
                                         width1: width1,
                                         width2: width2,
                                         totalWidth: max(totalWidth, proxy.size.width),
-                                        onDrop: { drag, over, insertAfter in
-                                            withAnimation(.easeInOut(duration: 0.25)) {
-                                                viewModel.moveRow(drag.id, to: over.id, insertAfter: insertAfter)
-                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                                                    _version += 1
-                                                }
-                                            }
+                                        onDrop: { id, subjectId, position in
+//                                            withAnimation(.easeInOut(duration: 0.25)) {
+//                                                viewModel.moveRow(drag.id, to: over.id, insertAfter: insertAfter)
+//                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+//                                                    _version += 1
+//                                                }
+//                                            }
+                                        },
+                                        cascade: { id, subjectId in
+                                            return false
                                         },
                                         indentColor: { index in
                                             viewModel.indentColor(index)
@@ -86,7 +89,6 @@ fileprivate extension ManageView.EssentialView {
                         }
                         Spacer(minLength: 0)
                     }
-                    //                    .frame(width: proxy.size.width)
                     .frame(minHeight: proxy.size.height)
                 }
                 .onChange(of: proxy.size.width) { _, newWidth in
@@ -170,7 +172,8 @@ fileprivate extension ManageView.EssentialView {
         let width1: CGFloat
         let width2: CGFloat
         let totalWidth: CGFloat
-        let onDrop: (EssentialViewModel.Row, EssentialViewModel.Row, Bool) -> Void
+        let onDrop: (UUID, UUID, DragPosition) -> Void
+        let cascade: (UUID, UUID) -> Bool
         let indentColor: (Int) -> Color
         @State private var dragPosition: DragPosition? = nil
         private var height: CGFloat { Constant.rowHeight }
@@ -240,11 +243,13 @@ fileprivate extension ManageView.EssentialView {
                 .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
             }
             .onDrop(of: [UTType.plainText], delegate: Dropper(
-                current: row,
+                id: row.id,
                 dragging: $dragging,
                 dragPosition: $dragPosition,
                 rowHeight: height,
-                onDrop: onDrop
+                expanded: row.expanded,
+                onDrop: onDrop,
+                cascade: cascade
             ))
             .frame(width: totalWidth, alignment: .leading)
         }
@@ -263,76 +268,72 @@ fileprivate extension ManageView.EssentialView {
 
 // MARK: - Row Drop Delegate
 
-fileprivate extension ManageView.EssentialView.Row {
-    enum DragPosition {
-        case over
-        case before
-        case after
-    }
-    
-    struct Dropper: SwiftUI.DropDelegate {
-        let current: EssentialViewModel.Row
-        @Binding var dragging: EssentialViewModel.Row?
-        @Binding var dragPosition: DragPosition?
-        let rowHeight: CGFloat
-        let onDrop: (EssentialViewModel.Row, EssentialViewModel.Row, Bool) -> Void
-        
-        // Only before/after zones - middle zone is rejected
-        private var threshold: CGFloat { rowHeight / 3 }
-        
-        func validateDrop(info: DropInfo) -> Bool {
-            guard let drag = dragging else { return false }
-            return drag.id != current.id
-        }
-        
-        func performDrop(info: DropInfo) -> Bool {
-            guard let drag = dragging,
-                  drag.id != current.id,
-                  let position = dragPosition, position == .before || position == .after else {
-                reset()
-                return false
-            }
-            
-            onDrop(drag, current, position == .after)
-            self.dragging = nil
-            reset()
-            return true
-        }
-        
-        func dropEntered(info: DropInfo) {
-            guard dragging?.id != current.id else { return }
-            dragPosition = .over
-        }
-        
-        func dropExited(info: DropInfo) {
-            reset()
-        }
-        
-        func dropUpdated(info: DropInfo) -> DropProposal? {
-            guard dragging?.id != current.id else {
-                return DropProposal(operation: .forbidden)
-            }
-            
-            let location = info.location
-            
-            // Only allow dropping near top or bottom, reject middle
-            if location.y < threshold {
-                dragPosition = .before
-                return DropProposal(operation: .move)
-            } else if location.y > (rowHeight - threshold) {
-                dragPosition = .after
-                return DropProposal(operation: .move)
-            } else {
-                dragPosition = nil
-                return DropProposal(operation: .forbidden)
-            }
-        }
-        
-        private func reset() {
-            dragPosition = nil
-        }
-    }
-}
+//fileprivate extension ManageView.EssentialView.Row {
+//    struct Dropper: SwiftUI.DropDelegate {
+//        let id: UUID
+//        @Binding var dragging: EssentialViewModel.Row?
+//        @Binding var dragPosition: DragPosition?
+//        let rowHeight: CGFloat
+//        let expanded: Bool
+//        let onDrop: (UUID, UUID, DragPosition) -> Void
+//        let cascade: (UUID, UUID) -> Bool
+//        
+//        // Only before/after zones - middle zone is rejected
+//        private var threshold: CGFloat { rowHeight / 3 }
+//        
+//        func validateDrop(info: DropInfo) -> Bool {
+//            guard let drag = dragging else { return false }
+//            return drag.id != id
+//        }
+//        
+//        func performDrop(info: DropInfo) -> Bool {
+//            guard let drag = dragging,
+//                  drag.id != id,
+//                  let position = dragPosition, position == .before || position == .after else {
+//                reset()
+//                return false
+//            }
+//            
+//            onDrop(id, drag.id, position)
+//            self.dragging = nil
+//            reset()
+//            return true
+//        }
+//        
+//        func dropEntered(info: DropInfo) {
+//            guard dragging?.id != id else { return }
+////            dragPosition = .over
+//        }
+//        
+//        func dropExited(info: DropInfo) {
+//            reset()
+//        }
+//        
+//        func dropUpdated(info: DropInfo) -> DropProposal? {
+//            guard dragging?.id != id else {
+//                return DropProposal(operation: .forbidden)
+//            }
+//            
+//            let location = info.location
+//            
+//            // Only allow dropping near top or bottom, reject middle
+//            if location.y < threshold {
+//                dragPosition = .before
+//                return DropProposal(operation: .move)
+//            } else if location.y > (rowHeight - threshold) {
+//                dragPosition = .after
+//                return DropProposal(operation: .move)
+//            } else {
+//                dragPosition = nil
+//                return DropProposal(operation: .forbidden)
+//            }
+//        }
+//        
+//        private func reset() {
+//            dragPosition = nil
+//        }
+//    }
+//}
 
 // MARK: - Icon and Name Cell
 

@@ -9,7 +9,7 @@ import Combine
 import Foundation
 
 extension SidebarViewModel {
-    func move(_ subjectId: UUID, relativeTo anchorId: UUID, position: ManageView.Sidebar.GroupSection.DragPosition) {
+    func move(_ subjectId: UUID, relativeTo anchorId: UUID, position: DragPosition) {
         guard let subjectIndex = selectionStore.cabinet.storedEntries.firstIndex(where: { $0.id == subjectId }),
               let anchorIndex = selectionStore.cabinet.storedEntries.firstIndex(where: { $0.id == anchorId }),
               subjectIndex != anchorIndex else {
@@ -85,7 +85,7 @@ class SidebarViewModel: ObservableObject {
         return count
     }
     
-    func adjacent(from subjectId: UUID, to anchorId: UUID) -> Bool {
+    func cascade(from subjectId: UUID, to anchorId: UUID) -> Bool {
         guard let hostIndex = rows.firstIndex(where: { $0.id == anchorId }),
               let guestIndex = rows.firstIndex(where: { $0.id == subjectId }),
               hostIndex != guestIndex,
@@ -175,7 +175,7 @@ class SidebarViewModel: ObservableObject {
 }
 
 extension SidebarViewModel {
-    struct Row {
+    struct Row: Identifiable {
         let id: UUID
         let name: String
         let level: Int

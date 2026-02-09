@@ -26,7 +26,7 @@ extension ManageView {
                         onDrop: { _, __, ___ in
                             
                         },
-                    adjacent: { _, __ in
+                    cascade: { _, __ in
                         return false
                     })
                     GroupSection()
