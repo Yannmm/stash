@@ -27,7 +27,14 @@ extension ManageView {
     }
 }
 
-// MARK: - Draggable List
+struct RowFrameKey: PreferenceKey {
+    static var defaultValue: [Int: Anchor<CGRect>] = [:]
+    
+    static func reduce(value: inout [Int: Anchor<CGRect>],
+                       nextValue: () -> [Int: Anchor<CGRect>]) {
+        value.merge(nextValue(), uniquingKeysWith: { $1 })
+    }
+}
 
 fileprivate extension ManageView.EssentialView {
     private struct Sheet: View {
@@ -39,74 +46,143 @@ fileprivate extension ManageView.EssentialView {
         @State private var width2: CGFloat = Constant.initialWidth2
         @State private var width3: CGFloat = Constant.initialWidth3
         
+        @State private var indicating: (Int, DragPosition)?
+        
         // macOS 26 SwiftUI List reuse bug:
         // Row @State leaks after drag reorder.
         // Remove _version hack once fixed.
         @State private var _version = 0
         
         var body: some View {
-            GeometryReader { proxy in
-                ScrollView([.vertical, .horizontal]) {
-                    VStack(spacing: 0) {
-                        LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                            Section(
-                                header: Header(
-                                    width1: $width1,
-                                    width2: $width2,
-                                    min1: Constant.minWidth1,
-                                    min2: Constant.minWidth2,
-                                    total: max(totalWidth, proxy.size.width)
-                                )
-                            )
-                            {
-                                ForEach(Array(viewModel.rows.enumerated()), id: \.element.id) { index, row in
-                                    Row(
-                                        index: index,
-                                        row: row,
-                                        selection: $selection,
-                                        dragging: $dragging,
-                                        width1: width1,
-                                        width2: width2,
-                                        totalWidth: max(totalWidth, proxy.size.width),
-                                        onDrop: { id, subjectId, position in
-                                            //                                            withAnimation(.easeInOut(duration: 0.25)) {
-                                            //                                                viewModel.moveRow(drag.id, to: over.id, insertAfter: insertAfter)
-                                            //                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                                            //                                                    _version += 1
-                                            //                                                }
-                                            //                                            }
-                                        },
-                                        cascade: { id, subjectId in
-                                            return false
-                                        },
-                                        indentColor: { index in
-                                            viewModel.indentColor(index)
-                                        }
+            ZStack {
+                GeometryReader { proxy in
+                    ScrollView([.vertical, .horizontal]) {
+                        VStack(spacing: 0) {
+                            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                                Section(
+                                    header: Header(
+                                        width1: $width1,
+                                        width2: $width2,
+                                        min1: Constant.minWidth1,
+                                        min2: Constant.minWidth2,
+                                        total: max(totalWidth, proxy.size.width)
                                     )
-                                    .id("\(row.id)-\(_version)")
+                                )
+                                {
+                                    ForEach(Array(viewModel.rows.enumerated()), id: \.element.id) { index, row in
+                                        Row(
+                                            index: index,
+                                            row: row,
+                                            selection: $selection,
+                                            dragging: $dragging,
+                                            width1: width1,
+                                            width2: width2,
+                                            totalWidth: max(totalWidth, proxy.size.width),
+                                            onDrop: { id, subjectId, position in
+                                                //                                            withAnimation(.easeInOut(duration: 0.25)) {
+                                                //                                                viewModel.moveRow(drag.id, to: over.id, insertAfter: insertAfter)
+                                                //                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+                                                //                                                    _version += 1
+                                                //                                                }
+                                                //                                            }
+                                            },
+                                            cascade: { id, subjectId in
+                                                return false
+                                            },
+                                            indentColor: { index in
+                                                viewModel.indentColor(index)
+                                            },
+                                            indicating: $indicating
+                                        )
+                                        .id("\(row.id)-\(_version)")
+                                        .anchorPreference(
+                                            key: RowFrameKey.self,
+                                            value: .bounds
+                                        ) {
+                                            [index: $0]
+                                        }
+                                    }
                                 }
                             }
+                            Spacer(minLength: 0)
                         }
-                        Spacer(minLength: 0)
+                        .frame(minHeight: proxy.size.height)
                     }
-                    .frame(minHeight: proxy.size.height)
-                }
-                .onChange(of: proxy.size.width) { _, newWidth in
-                    let delta = newWidth - totalWidth
-                    if delta != 0 {
-                        let proposed = width1 + delta
-                        width1 = max(Constant.minWidth1, proposed)
+                    .onChange(of: proxy.size.width) { _, newWidth in
+                        let delta = newWidth - totalWidth
+                        if delta != 0 {
+                            let proposed = width1 + delta
+                            width1 = max(Constant.minWidth1, proposed)
+                        }
                     }
                 }
+                .overlayPreferenceValue(RowFrameKey.self) { anchors in
+                    GeometryReader { proxy in
+                        if let index = indicating?.0,
+                           let position = indicating?.1,
+                           let anchor = anchors[index] {
+
+                            let frame = proxy[anchor]
+                            let h = Constant.dragIndicatorHeight
+
+                            switch position {
+
+                            case .before:
+                                // indicator sits ABOVE the row
+                                _indicator1()
+                                    .position(
+                                        x: frame.midX,
+                                        y: frame.minY
+                                    )
+                                    .zIndex(999)
+
+                            case .after:
+                                // indicator sits BELOW the row
+                                _indicator1()
+                                    .position(
+                                        x: frame.midX,
+                                        y: frame.maxY
+                                    )
+                                    .zIndex(999)
+
+                            case .in:
+                                // indicator sits INSIDE, aligned to top
+                                _indicator2(childCount: 1)
+                                    .position(
+                                        x: frame.midX,
+                                        y: frame.minY
+                                    )
+                                    .zIndex(999)
+                            }
+                        }
+                    }
+                }
+
+                .background(Color(NSColor.controlBackgroundColor))
+                .clipShape(RoundedRectangle(cornerRadius: 4))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 4)
+                        .stroke(Color.gray.opacity(0.25), lineWidth: 0.5)
+                )
+                .padding(.horizontal, 12)
+                .padding(.bottom, 12)
             }
-            .background(Color(NSColor.controlBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 4))
-            .overlay(
-                RoundedRectangle(cornerRadius: 4)
-                    .stroke(Color.gray.opacity(0.25), lineWidth: 0.5)
-            )
-            .padding(.horizontal, 12)
-            .padding(.bottom, 12)
+        }
+        
+        private func _indicator1() -> some View {
+            Rectangle()
+                .fill(Color.accentColor)
+                .frame(height: Constant.dragIndicatorHeight)
+                .allowsHitTesting(false)
+            
+        }
+        
+        private func _indicator2(childCount: Int) -> some View {
+            RoundedRectangle(cornerRadius: Constant.cornerRadius)
+                .fill(Color.clear)
+                .stroke(Color.accentColor, lineWidth: Constant.dragIndicatorHeight)
+                .frame(height: (Double(childCount) + 1) * Constant.rowHeight)
+                .allowsHitTesting(false)
         }
         
         private var totalWidth: CGFloat {
@@ -175,6 +251,7 @@ fileprivate extension ManageView.EssentialView {
         let onDrop: (UUID, UUID, DragPosition) -> Void
         let cascade: (UUID, UUID) -> Bool
         let indentColor: (Int) -> Color
+        @Binding var indicating: (Int, DragPosition)?
         @State private var dragPosition: DragPosition? = nil
         private var hasIndicator: Bool { _propose(dragPosition)?.operation == .move }
         private var height: CGFloat { Constant.rowHeight }
@@ -208,27 +285,27 @@ fileprivate extension ManageView.EssentialView {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(height: height)
+            .frame(width: totalWidth, alignment: .leading)
             .background(backgroundColor)
-            .overlay(alignment: .top) {
-                if hasIndicator {
-                    switch dragPosition! {
-                    case .before:
-                        _indicator1()
-                            .offset(y: -(Constant.dragIndicatorHeight * 0.5))
-                            .allowsHitTesting(false)
-                    case .in:
-                        _indicator2(childCount: 0)
-                            .allowsHitTesting(false)
-                    case .after:
-                        _indicator1()
-                            .offset(y: height - Constant.dragIndicatorHeight * 0.5)
-                            .allowsHitTesting(false)
-                        
-                    }
-                }
-            }
-            .zIndex(hasIndicator ? 1 : 0)
-            .contentShape(Rectangle())
+            //            .overlay(alignment: .top) {
+            //                if hasIndicator {
+            //                    switch dragPosition! {
+            //                    case .before:
+            //                        _indicator1()
+            //                            .offset(y: -(Constant.dragIndicatorHeight * 0.5))
+            //                            .allowsHitTesting(false)
+            //                    case .in:
+            //                        _indicator2(childCount: 0)
+            //                            .allowsHitTesting(false)
+            //                    case .after:
+            //                        _indicator1()
+            //                            .offset(y: height - Constant.dragIndicatorHeight * 0.5)
+            //                            .allowsHitTesting(false)
+            //
+            //                    }
+            //                }
+            //            }
+            //            .zIndex(hasIndicator ? 1 : 0)
             .onTapGesture { selection = row.id }
             .onDrag {
                 dragging = row
@@ -256,7 +333,10 @@ fileprivate extension ManageView.EssentialView {
                 cascade: cascade,
                 propose: _propose
             ))
-            .frame(width: totalWidth, alignment: .leading)
+            .onChange(of: dragPosition) { _, newValue in
+                guard let position = newValue else { return }
+                indicating = hasIndicator ? (index, position) : nil
+            }
         }
         
         private func _propose(_ position: DragPosition?) -> DropProposal? {
@@ -273,20 +353,6 @@ fileprivate extension ManageView.EssentialView {
                     return DropProposal(operation: .forbidden)
                 }
             }
-        }
-        
-        private func _indicator1() -> some View {
-            Rectangle()
-                .fill(Color.accentColor)
-                .frame(height: Constant.dragIndicatorHeight)
-            
-        }
-        
-        private func _indicator2(childCount: Int) -> some View {
-            RoundedRectangle(cornerRadius: Constant.cornerRadius)
-                .fill(Color.clear)
-                .stroke(Color.accentColor, lineWidth: Constant.dragIndicatorHeight)
-                .frame(height: (Double(childCount) + 1) * height)
         }
         
         private var backgroundColor: Color {
