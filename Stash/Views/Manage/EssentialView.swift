@@ -176,6 +176,7 @@ fileprivate extension ManageView.EssentialView {
         let cascade: (UUID, UUID) -> Bool
         let indentColor: (Int) -> Color
         @State private var dragPosition: DragPosition? = nil
+        private var hasIndicator: Bool { _propose(dragPosition)?.operation == .move }
         private var height: CGFloat { Constant.rowHeight }
         
         var body: some View {
@@ -209,10 +210,8 @@ fileprivate extension ManageView.EssentialView {
             .frame(height: height)
             .background(backgroundColor)
             .overlay(alignment: .top) {
-                // TODO: combine dragPosition and operation move/forbidden
-                if let position = dragPosition,
-                    _propose(position).operation == .move {
-                    switch position {
+                if hasIndicator {
+                    switch dragPosition! {
                     case .before:
                         _indicator1()
                             .offset(y: -(Constant.dragIndicatorHeight * 0.5))
@@ -228,15 +227,13 @@ fileprivate extension ManageView.EssentialView {
                     }
                 }
             }
-            .zIndex(dragPosition != nil ? 1 : 0)
+            .zIndex(hasIndicator ? 1 : 0)
             .contentShape(Rectangle())
             .onTapGesture { selection = row.id }
             .onDrag {
-                //                selection = row.id
                 dragging = row
                 return NSItemProvider(object: row.id.uuidString as NSString)
             } preview: {
-                // Drag preview
                 HStack(spacing: 8) {
                     ViewHelper.icon(row.icon, side: 16)
                     Text(row.title)
@@ -262,11 +259,14 @@ fileprivate extension ManageView.EssentialView {
             .frame(width: totalWidth, alignment: .leading)
         }
         
-        private func _propose(_ position: DragPosition) -> DropProposal {
+        private func _propose(_ position: DragPosition?) -> DropProposal? {
+            guard let p = position else {
+                return nil
+            }
             if row.expandable {
                 return DropProposal(operation: .move)
             } else {
-                switch position {
+                switch p {
                 case .before, .after:
                     return DropProposal(operation: .move)
                 case .in:
@@ -290,7 +290,7 @@ fileprivate extension ManageView.EssentialView {
         }
         
         private var backgroundColor: Color {
-            if dragPosition != nil {
+            if hasIndicator {
                 return Color.accentColor.opacity(0.3)
             }
             if selection == row.id {

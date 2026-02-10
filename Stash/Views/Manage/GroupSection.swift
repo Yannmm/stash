@@ -62,6 +62,7 @@ extension ManageView.Sidebar.GroupSection {
         private var height: CGFloat { Constant.rowHeight }
         
         @State private var dragPosition: DragPosition? = nil
+        private var hasIndicator: Bool { _propose(dragPosition)?.operation == .move }
         @State private var expandTask: Task<Void, Never>? = nil
         
         @EnvironmentObject var viewModel: SidebarViewModel
@@ -99,8 +100,8 @@ extension ManageView.Sidebar.GroupSection {
                     .fill(backgroundColor)
             )
             .overlay(alignment: .top) {
-                if let position = dragPosition {
-                    switch position {
+                if hasIndicator {
+                    switch dragPosition! {
                     case .before:
                         _indicator1()
                             .offset(y: -(Constant.dragIndicatorHeight * 0.5))
@@ -116,7 +117,7 @@ extension ManageView.Sidebar.GroupSection {
                     }
                 }
             }
-            .zIndex(dragPosition != nil ? 1 : 0)
+            .zIndex(hasIndicator ? 1 : 0)
             .onTapGesture {
                 onTap()
             }
@@ -149,9 +150,7 @@ extension ManageView.Sidebar.GroupSection {
                 expanded: row.expanded,
                 onDrop: onDrop,
                 cascade: cascade,
-                propose: { _ in
-                    return DropProposal(operation: .move)
-                }
+                propose: _propose
             ))
             .onChange(of: dragPosition) { oldValue, newValue in
                 handleDragPositionChange(newValue)
@@ -196,8 +195,15 @@ extension ManageView.Sidebar.GroupSection {
             }
         }
         
+        private func _propose(_ position: DragPosition?) -> DropProposal? {
+            guard let _ = position else {
+                return nil
+            }
+            return DropProposal(operation: .move)
+        }
+        
         private var backgroundColor: Color {
-            if dragPosition != nil {
+            if hasIndicator {
                 return Color.accentColor.opacity(0.1)
             }
             return row.selected ? Color.accentColor.opacity(0.6) : Color.clear
