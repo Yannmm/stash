@@ -46,7 +46,7 @@ fileprivate extension ManageView.EssentialView {
         @State private var width2: CGFloat = Constant.initialWidth2
         @State private var width3: CGFloat = Constant.initialWidth3
         
-        @State private var indicating: (Int, DragPosition)?
+        @State private var indicating: (Int, DragPosition, UUID)?
         
         // macOS 26 SwiftUI List reuse bug:
         // Row @State leaks after drag reorder.
@@ -87,7 +87,7 @@ fileprivate extension ManageView.EssentialView {
                                                 //                                            }
                                             },
                                             cascade: { id, subjectId in
-                                                return false
+                                                viewModel.cascade(from: subjectId, to: id)
                                             },
                                             indentColor: { index in
                                                 viewModel.indentColor(index)
@@ -120,44 +120,41 @@ fileprivate extension ManageView.EssentialView {
                     GeometryReader { proxy in
                         if let index = indicating?.0,
                            let position = indicating?.1,
+                           let id = indicating?.2,
                            let anchor = anchors[index] {
-
                             let frame = proxy[anchor]
-                            let h = Constant.dragIndicatorHeight
-
                             switch position {
-
                             case .before:
-                                // indicator sits ABOVE the row
                                 _indicator1()
                                     .position(
                                         x: frame.midX,
                                         y: frame.minY
                                     )
-                                    .zIndex(999)
-
+                                    .zIndex(1)
                             case .after:
-                                // indicator sits BELOW the row
                                 _indicator1()
                                     .position(
                                         x: frame.midX,
                                         y: frame.maxY
                                     )
-                                    .zIndex(999)
-
+                                    .zIndex(1)
                             case .in:
-                                // indicator sits INSIDE, aligned to top
-                                _indicator2(childCount: 1)
-                                    .position(
-                                        x: frame.midX,
+                                _indicator2(childCount: viewModel.strideCount(id))
+                                    .frame(
+                                        width: proxy.size.width,
+                                        height: proxy.size.height,
+                                        alignment: .topLeading
+                                    )
+                                    .offset(
+                                        x: 0,
                                         y: frame.minY
                                     )
-                                    .zIndex(999)
+                                    .zIndex(1)
                             }
                         }
                     }
                 }
-
+                
                 .background(Color(NSColor.controlBackgroundColor))
                 .clipShape(RoundedRectangle(cornerRadius: 4))
                 .overlay(
@@ -178,7 +175,7 @@ fileprivate extension ManageView.EssentialView {
         }
         
         private func _indicator2(childCount: Int) -> some View {
-            RoundedRectangle(cornerRadius: Constant.cornerRadius)
+            Rectangle()
                 .fill(Color.clear)
                 .stroke(Color.accentColor, lineWidth: Constant.dragIndicatorHeight)
                 .frame(height: (Double(childCount) + 1) * Constant.rowHeight)
@@ -251,7 +248,7 @@ fileprivate extension ManageView.EssentialView {
         let onDrop: (UUID, UUID, DragPosition) -> Void
         let cascade: (UUID, UUID) -> Bool
         let indentColor: (Int) -> Color
-        @Binding var indicating: (Int, DragPosition)?
+        @Binding var indicating: (Int, DragPosition, UUID)?
         @State private var dragPosition: DragPosition? = nil
         private var hasIndicator: Bool { _propose(dragPosition)?.operation == .move }
         private var height: CGFloat { Constant.rowHeight }
@@ -287,25 +284,6 @@ fileprivate extension ManageView.EssentialView {
             .frame(height: height)
             .frame(width: totalWidth, alignment: .leading)
             .background(backgroundColor)
-            //            .overlay(alignment: .top) {
-            //                if hasIndicator {
-            //                    switch dragPosition! {
-            //                    case .before:
-            //                        _indicator1()
-            //                            .offset(y: -(Constant.dragIndicatorHeight * 0.5))
-            //                            .allowsHitTesting(false)
-            //                    case .in:
-            //                        _indicator2(childCount: 0)
-            //                            .allowsHitTesting(false)
-            //                    case .after:
-            //                        _indicator1()
-            //                            .offset(y: height - Constant.dragIndicatorHeight * 0.5)
-            //                            .allowsHitTesting(false)
-            //
-            //                    }
-            //                }
-            //            }
-            //            .zIndex(hasIndicator ? 1 : 0)
             .onTapGesture { selection = row.id }
             .onDrag {
                 dragging = row
@@ -335,7 +313,7 @@ fileprivate extension ManageView.EssentialView {
             ))
             .onChange(of: dragPosition) { _, newValue in
                 guard let position = newValue else { return }
-                indicating = hasIndicator ? (index, position) : nil
+                indicating = hasIndicator ? (index, position, row.id) : nil
             }
         }
         

@@ -51,7 +51,7 @@ extension SidebarViewModel {
 }
 
 
-class SidebarViewModel: ObservableObject {
+class SidebarViewModel: ObservableObject, CascadeJudge {
     @Published private var expansions: Set<UUID> = []
     @Published var hashtags: [Hashtag] = []
     @Published private(set) var rows: [Row] = []
@@ -71,42 +71,6 @@ class SidebarViewModel: ObservableObject {
     
     func setSelection(_ id: UUID?) {
         selectionStore.collection = id == nil ? nil : (allEntries.filter { $0.id == id }.first as? Group)
-    }
-    
-    func effectiveChildrenCount(_ id: UUID) -> Int {
-        guard let index = rows.firstIndex(where: { $0.id == id }), rows[index].expanded else { return 0 }
-        let level = rows[index].level
-        var count = 0
-        for row in rows[(index + 1)...] {
-            guard level < row.level else { break }
-            count += 1
-        }
-        
-        return count
-    }
-    
-    func cascade(from subjectId: UUID, to anchorId: UUID) -> Bool {
-        guard let hostIndex = rows.firstIndex(where: { $0.id == anchorId }),
-              let guestIndex = rows.firstIndex(where: { $0.id == subjectId }),
-              hostIndex != guestIndex,
-              rows[hostIndex].level != rows[guestIndex].level else {
-            return false
-        }
-        
-        if hostIndex < guestIndex {
-            for row in rows[(hostIndex + 1)...guestIndex].reversed() {
-                if row.level <= rows[hostIndex].level {
-                    return false
-                }
-            }
-        } else {
-            for row in rows[(guestIndex + 1)...hostIndex].reversed() {
-                if row.level <= rows[guestIndex].level {
-                    return false
-                }
-            }
-        }
-        return true
     }
     
     let selectionStore: ManageSelectionStore
@@ -175,7 +139,7 @@ class SidebarViewModel: ObservableObject {
 }
 
 extension SidebarViewModel {
-    struct Row: Identifiable {
+    struct Row: LeveledIdentifiable {
         let id: UUID
         let name: String
         let level: Int

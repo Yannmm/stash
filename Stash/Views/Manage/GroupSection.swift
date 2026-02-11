@@ -107,7 +107,7 @@ extension ManageView.Sidebar.GroupSection {
                             .offset(y: -(Constant.dragIndicatorHeight * 0.5))
                             .allowsHitTesting(false)
                     case .in:
-                        _indicator2(childCount: viewModel.effectiveChildrenCount(row.id))
+                        _indicator2(childCount: viewModel.strideCount(row.id))
                             .allowsHitTesting(false)
                     case .after:
                         _indicator1()

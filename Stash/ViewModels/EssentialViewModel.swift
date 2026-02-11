@@ -9,7 +9,7 @@ import Combine
 import Foundation
 import SwiftUI
 
-class EssentialViewModel: ObservableObject {
+class EssentialViewModel: ObservableObject, CascadeJudge {
     @Published var search = ""
     @Published var hierarchy: Hierarchy = .child
     @Published private(set) var rows: [Row] = []
@@ -181,7 +181,7 @@ extension EssentialViewModel {
 }
 
 extension EssentialViewModel {
-    struct Row: Identifiable {
+    struct Row: LeveledIdentifiable {
         let id: UUID
         let icon: Icon
         let title: String
@@ -190,6 +190,8 @@ extension EssentialViewModel {
         let tags: [String]
         let expanded: Bool
         let expandable: Bool
+        
+        var level: Int { trail.count }
     }
 }
 
