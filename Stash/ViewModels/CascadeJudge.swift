@@ -83,7 +83,7 @@ extension CascadeJudge {
         // Adjust based on drop position
         switch position {
         case .before:
-            newIndex = newIndex - 1
+            break // by default insert right in front of specified index
         case .after:
             newIndex = newIndex + 1
         case .in:

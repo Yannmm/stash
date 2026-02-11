@@ -74,9 +74,7 @@ fileprivate extension ManageView.EssentialView {
                                             width2: width2,
                                             totalWidth: max(totalWidth, proxy.size.width),
                                             onDrop: { id, subjectId, position in
-                                                withAnimation(.easeInOut(duration: 0.25)) {
-                                                    viewModel.move(subjectId, relativeTo: id, position: position)
-                                                }
+                                                viewModel.move(subjectId, relativeTo: id, position: position)
                                                 
                                                 Task { @MainActor in
                                                     try? await Task.sleep(for: .milliseconds(250))
@@ -101,6 +99,8 @@ fileprivate extension ManageView.EssentialView {
                                     }
                                 }
                             }
+                            // Animate reorder even when `rows` is updated asynchronously via Combine.
+                            .animation(.easeInOut(duration: 0.25), value: viewModel.rows.map(\.id))
                             Spacer(minLength: 0)
                         }
                         .frame(minHeight: proxy.size.height)
