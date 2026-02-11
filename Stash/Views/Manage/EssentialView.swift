@@ -48,11 +48,6 @@ fileprivate extension ManageView.EssentialView {
         
         @State private var indicating: (Int, DragPosition, UUID)?
         
-        // macOS 26 SwiftUI List reuse bug:
-        // Row @State leaks after drag reorder.
-        // Remove _version hack once fixed.
-        @State private var _version = 0
-        
         var body: some View {
             ZStack {
                 GeometryReader { proxy in
@@ -79,12 +74,14 @@ fileprivate extension ManageView.EssentialView {
                                             width2: width2,
                                             totalWidth: max(totalWidth, proxy.size.width),
                                             onDrop: { id, subjectId, position in
-                                                //                                            withAnimation(.easeInOut(duration: 0.25)) {
-                                                //                                                viewModel.moveRow(drag.id, to: over.id, insertAfter: insertAfter)
-                                                //                                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
-                                                //                                                    _version += 1
-                                                //                                                }
-                                                //                                            }
+                                                withAnimation(.easeInOut(duration: 0.25)) {
+                                                    viewModel.move(subjectId, relativeTo: id, position: position)
+                                                }
+                                                
+                                                Task { @MainActor in
+                                                    try? await Task.sleep(for: .milliseconds(250))
+                                                    indicating = nil
+                                                }
                                             },
                                             cascade: { id, subjectId in
                                                 viewModel.cascade(from: subjectId, to: id)
@@ -94,7 +91,7 @@ fileprivate extension ManageView.EssentialView {
                                             },
                                             indicating: $indicating
                                         )
-                                        .id("\(row.id)-\(_version)")
+                                        .id(row.id)
                                         .anchorPreference(
                                             key: RowFrameKey.self,
                                             value: .bounds

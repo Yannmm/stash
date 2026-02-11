@@ -8,54 +8,17 @@
 import Combine
 import Foundation
 
-extension SidebarViewModel {
-    func move(_ subjectId: UUID, relativeTo anchorId: UUID, position: DragPosition) {
-        guard let subjectIndex = selectionStore.cabinet.storedEntries.firstIndex(where: { $0.id == subjectId }),
-              let anchorIndex = selectionStore.cabinet.storedEntries.firstIndex(where: { $0.id == anchorId }),
-              subjectIndex != anchorIndex else {
-            return
-        }
-        
-        // Get the entry to move
-        var subject = selectionStore.cabinet.storedEntries[subjectIndex]
-        
-        // Create new array with source removed
-        var copies = selectionStore.cabinet.storedEntries
-        copies.remove(at: subjectIndex)
-        
-        let anchor = selectionStore.cabinet.storedEntries[anchorIndex]
-        subject.parentId = anchor.parentId
-        
-        // Calculate new target index (adjusted after removal)
-        var newIndex = copies.firstIndex(where: { $0.id == anchorId }) ?? 0
-        
-        // Adjust based on drop position
-        switch position {
-        case .before:
-            newIndex = newIndex - 1
-        case .after:
-            newIndex = newIndex + 1
-        case .in:
-            newIndex = newIndex + 1
-            subject.parentId = anchorId
-        }
-        
-        // Ensure index is valid
-        newIndex = min(max(0, newIndex), copies.count)
-        
-        // Insert at new position
-        copies.insert(subject, at: newIndex)
-        
-        selectionStore.cabinet.storedEntries = copies
-    }
-}
-
-
 class SidebarViewModel: ObservableObject, CascadeJudge {
     @Published private var expansions: Set<UUID> = []
     @Published var hashtags: [Hashtag] = []
     @Published private(set) var rows: [Row] = []
     @Published private(set) var rootRow: Row!
+    
+    var entries: [any Entry] { selectionStore.cabinet.storedEntries }
+    
+    func updateEntries(_ entries: [any Entry]) {
+        selectionStore.cabinet.storedEntries = entries
+    }
     
     private var allEntries: [any Entry] {
         selectionStore.cabinet.storedEntries

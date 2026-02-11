@@ -18,6 +18,12 @@ class EssentialViewModel: ObservableObject, CascadeJudge {
     private var _cancellables = Set<AnyCancellable>()
     fileprivate var indentColorStorage = [Color]()
     
+    var entries: [any Entry] { dataStore.cabinet.storedEntries }
+    
+    func updateEntries(_ entries: [any Entry]) {
+        dataStore.cabinet.storedEntries = entries
+    }
+    
     init(selectionStore: ManageSelectionStore) {
         self.dataStore = selectionStore
         
@@ -129,44 +135,6 @@ class EssentialViewModel: ObservableObject, CascadeJudge {
         default:
             return ("", false)
         }
-    }
-}
-
-extension EssentialViewModel {
-    /// Move an entry from source position to before/after target position
-    func moveRow(_ subjectId: UUID, to destinationId: UUID, insertAfter: Bool) {
-        // Find indices in allEntries
-        guard let subjectIndex = dataStore.cabinet.storedEntries.firstIndex(where: { $0.id == subjectId }),
-              let destinationIndex = dataStore.cabinet.storedEntries.firstIndex(where: { $0.id == destinationId }),
-              subjectIndex != destinationIndex else {
-            return
-        }
-        
-        // Get the entry to move
-        var subject = dataStore.cabinet.storedEntries[subjectIndex]
-        
-        // Create new array with source removed
-        var copies = dataStore.cabinet.storedEntries
-        copies.remove(at: subjectIndex)
-        
-        let destination = dataStore.cabinet.storedEntries[destinationIndex]
-        subject.parentId = destination.parentId
-        
-        // Calculate new target index (adjusted after removal)
-        var newIndex = copies.firstIndex(where: { $0.id == destinationId }) ?? 0
-        
-        // Adjust based on drop position
-        if insertAfter {
-            newIndex += 1
-        }
-        
-        // Ensure index is valid
-        newIndex = min(max(0, newIndex), copies.count)
-        
-        // Insert at new position
-        copies.insert(subject, at: newIndex)
-        
-        dataStore.cabinet.storedEntries = copies
     }
 }
 

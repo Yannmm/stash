@@ -17,6 +17,10 @@ protocol CascadeJudge {
     associatedtype Row: LeveledIdentifiable
     
     var rows: [Row] { get }
+    
+    var entries: [any Entry] { get }
+    
+    func updateEntries(_ entries: [any Entry])
 }
 
 extension CascadeJudge {
@@ -54,5 +58,46 @@ extension CascadeJudge {
         }
         
         return count
+    }
+    
+    func move(_ subjectId: UUID, relativeTo anchorId: UUID, position: DragPosition) {
+        guard let subjectIndex = entries.firstIndex(where: { $0.id == subjectId }),
+              let anchorIndex = entries.firstIndex(where: { $0.id == anchorId }),
+              subjectIndex != anchorIndex else {
+            return
+        }
+        
+        // Get the entry to move
+        var subject = entries[subjectIndex]
+        
+        // Create new array with source removed
+        var copies = entries
+        copies.remove(at: subjectIndex)
+        
+        let anchor = entries[anchorIndex]
+        subject.parentId = anchor.parentId
+        
+        // Calculate new target index (adjusted after removal)
+        var newIndex = copies.firstIndex(where: { $0.id == anchorId }) ?? 0
+        
+        // Adjust based on drop position
+        switch position {
+        case .before:
+            newIndex = newIndex - 1
+        case .after:
+            newIndex = newIndex + 1
+        case .in:
+            guard anchor.container else { return }
+            newIndex = newIndex + 1
+            subject.parentId = anchorId
+        }
+        
+        // Ensure index is valid
+        newIndex = min(max(0, newIndex), copies.count)
+        
+        // Insert at new position
+        copies.insert(subject, at: newIndex)
+        
+        updateEntries(copies)
     }
 }
