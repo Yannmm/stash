@@ -22,7 +22,7 @@ struct ManageView: View {
                 max: 350
             )
         } detail: {
-            EssentialView(viewModel: EssentialViewModel(selectionStore: selectionStore))
+            Workbench(viewModel: WorkbenchViewModel(selectionStore: selectionStore))
         }
         .navigationSplitViewStyle(.prominentDetail)   // 🔑 NOT balanced
         .toolbarBackground(.hidden, for: .windowToolbar)

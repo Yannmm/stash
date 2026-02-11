@@ -9,7 +9,7 @@ import Combine
 import Foundation
 import SwiftUI
 
-class EssentialViewModel: ObservableObject, CascadeJudge {
+class WorkbenchViewModel: ObservableObject, CascadeJudge {
     @Published var search = ""
     @Published var hierarchy: Hierarchy = .child
     @Published private(set) var rows: [Row] = []
@@ -138,7 +138,7 @@ class EssentialViewModel: ObservableObject, CascadeJudge {
     }
 }
 
-extension EssentialViewModel {
+extension WorkbenchViewModel {
     func indentColor(_ index: Int) -> Color {
         if index >= indentColorStorage.count {
             let colors = Array(repeating: Color.random, count: (index + 1) - indentColorStorage.count)
@@ -148,7 +148,7 @@ extension EssentialViewModel {
     }
 }
 
-extension EssentialViewModel {
+extension WorkbenchViewModel {
     struct Row: LeveledIdentifiable {
         let id: UUID
         let icon: Icon
@@ -163,7 +163,7 @@ extension EssentialViewModel {
     }
 }
 
-extension EssentialViewModel {
+extension WorkbenchViewModel {
     enum Hierarchy {
         case child
         case descendant
