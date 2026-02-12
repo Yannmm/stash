@@ -13,22 +13,22 @@ extension ManageView.Workbench {
         let title: String
         let groupCount: Int
         let bookmarkCount: Int
-
+        
         var body: some ToolbarContent {
-//            if #available(macOS 26.0, *) {
-//                ToolbarItem(placement: .navigation) {
-//                    Title(title: title, groupCount: groupCount, bookmarkCount: bookmarkCount)
-//                }
-//                .sharedBackgroundVisibility(hidden)
-//            } else {
+            if #available(macOS 26.0, *) {
                 ToolbarItem(placement: .navigation) {
                     Title(title: title, groupCount: groupCount, bookmarkCount: bookmarkCount)
                 }
-//            }
+                .sharedBackgroundVisibility(.hidden)
+            } else {
+                ToolbarItem(placement: .navigation) {
+                    Title(title: title, groupCount: groupCount, bookmarkCount: bookmarkCount)
+                }
+            }
             
             ToolbarItemGroup(placement: .primaryAction) {
                 Spacer()
-
+                
                 Picker("", selection: $hierarchy) {
                     Label("Children", systemImage: "list.bullet")
                         .tag(WorkbenchViewModel.Hierarchy.child)
@@ -39,7 +39,7 @@ extension ManageView.Workbench {
                 }
                 .pickerStyle(.segmented)
                 .frame(width: 100)
-
+                
                 Button {
                     // refresh
                 } label: {
@@ -54,7 +54,7 @@ extension ManageView.Workbench {
                 }
                 .help("Add Group")
                 
-
+                
                 Menu {
                     Button("New Folder") { }
                     Button("New Smart Folder") { }
@@ -64,9 +64,6 @@ extension ManageView.Workbench {
                     Label("More", systemImage: "ellipsis.circle")
                 }
             }
-
-            
-
         }
         
         private struct Title: View {
