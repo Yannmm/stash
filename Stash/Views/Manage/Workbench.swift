@@ -20,7 +20,9 @@ extension ManageView {
                     Toolbar(hierarchy: $viewModel.hierarchy,
                             title: viewModel.title,
                             groupCount: viewModel.groupCount,
-                            bookmarkCount: viewModel.bookmarkCount)
+                            bookmarkCount: viewModel.bookmarkCount,
+                            onAddBookmark: {},
+                            onAddGroup: {})
                 }
                 .environmentObject(viewModel)
         }
@@ -342,79 +344,6 @@ fileprivate extension ManageView.Workbench {
         }
     }
 }
-
-
-
-// MARK: - Row Drop Delegate
-
-//fileprivate extension ManageView.EssentialView.Row {
-//    struct Dropper: SwiftUI.DropDelegate {
-//        let id: UUID
-//        @Binding var dragging: EssentialViewModel.Row?
-//        @Binding var dragPosition: DragPosition?
-//        let rowHeight: CGFloat
-//        let expanded: Bool
-//        let onDrop: (UUID, UUID, DragPosition) -> Void
-//        let cascade: (UUID, UUID) -> Bool
-//
-//        // Only before/after zones - middle zone is rejected
-//        private var threshold: CGFloat { rowHeight / 3 }
-//
-//        func validateDrop(info: DropInfo) -> Bool {
-//            guard let drag = dragging else { return false }
-//            return drag.id != id
-//        }
-//
-//        func performDrop(info: DropInfo) -> Bool {
-//            guard let drag = dragging,
-//                  drag.id != id,
-//                  let position = dragPosition, position == .before || position == .after else {
-//                reset()
-//                return false
-//            }
-//
-//            onDrop(id, drag.id, position)
-//            self.dragging = nil
-//            reset()
-//            return true
-//        }
-//
-//        func dropEntered(info: DropInfo) {
-//            guard dragging?.id != id else { return }
-////            dragPosition = .over
-//        }
-//
-//        func dropExited(info: DropInfo) {
-//            reset()
-//        }
-//
-//        func dropUpdated(info: DropInfo) -> DropProposal? {
-//            guard dragging?.id != id else {
-//                return DropProposal(operation: .forbidden)
-//            }
-//
-//            let location = info.location
-//
-//            // Only allow dropping near top or bottom, reject middle
-//            if location.y < threshold {
-//                dragPosition = .before
-//                return DropProposal(operation: .move)
-//            } else if location.y > (rowHeight - threshold) {
-//                dragPosition = .after
-//                return DropProposal(operation: .move)
-//            } else {
-//                dragPosition = nil
-//                return DropProposal(operation: .forbidden)
-//            }
-//        }
-//
-//        private func reset() {
-//            dragPosition = nil
-//        }
-//    }
-//}
-
-// MARK: - Icon and Name Cell
 
 fileprivate extension ManageView.Workbench {
     private struct IconAndNameCell: View {

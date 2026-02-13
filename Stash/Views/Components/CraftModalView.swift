@@ -9,6 +9,7 @@ import SwiftUI
 
 struct CraftModalView: View {
     @Environment(\.dismiss) var dismiss
+    @Environment(\.dismissSearch) private var dismissSearch
     @StateObject private var viewModel = CraftViewModel()
     @EnvironmentObject var cabinet: OkamuraCabinet
     @Binding var anchorId: UUID?
@@ -35,6 +36,7 @@ struct CraftModalView: View {
                 HStack {
                     Button("Cancel") {
                         dismiss()
+//                        dismissSearch()
                     }
                     if viewModel.savable {
                         Button("Save") {
@@ -61,7 +63,7 @@ struct CraftModalView: View {
         }
         .fixedSize(horizontal: false, vertical: true)
         .onAppear {
-            viewModel.cabinet = cabinet
+//            viewModel.cabinet = cabinet
             viewModel.anchorId = anchorId
         }
         .alert("Error", isPresented: Binding(

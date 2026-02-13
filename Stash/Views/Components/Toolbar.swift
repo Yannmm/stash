@@ -13,6 +13,11 @@ extension ManageView.Workbench {
         let title: String
         let groupCount: Int
         let bookmarkCount: Int
+        let onAddBookmark: () -> Void
+        let onAddGroup: () -> Void
+        
+        @State private var addBookmarkPopover = false
+        @Environment(\.dismissSearch) private var dismissSearch
         
         var body: some ToolbarContent {
             if #available(macOS 26.0, *) {
@@ -38,32 +43,47 @@ extension ManageView.Workbench {
                         .help("Show All Descendants")
                 }
                 .pickerStyle(.segmented)
-                .frame(width: 100)
-                
-                Button {
-                    // refresh
-                } label: {
-                    Label("Add Bookmark", systemImage: "link.badge.plus")
-                }
-                .help("Add Bookmark")
-                
-                Button {
-                    // refresh
-                } label: {
-                    Label("Add Group", systemImage: "folder.badge.plus")
-                }
-                .help("Add Group")
-                
-                
+
                 Menu {
-                    Button("New Folder") { }
-                    Button("New Smart Folder") { }
-                    Divider()
-                    Button("Get Info") { }
+                    Button {
+                        addBookmarkPopover = true
+                        onAddBookmark()
+                    } label: {
+                        Label("Add Bookmark", systemImage: "link.badge.plus")
+                    }
+                    .help("Add Bookmark")
+                    
+                    Button {
+                        onAddGroup()
+                    } label: {
+                        Label("Add Group", systemImage: "folder.badge.plus")
+                    }
+                    .help("Add Group")
                 } label: {
-                    Label("More", systemImage: "ellipsis.circle")
+                    Label("Add", systemImage: "plus.circle")
+                }
+                .help("Add Item")
+                .popover(isPresented: $addBookmarkPopover, arrowEdge: .top) {
+                    CraftModalView(anchorId: .constant(nil))
+                        .frame(width: 400)
+                }
+                .onChange(of: addBookmarkPopover) { _, isPresented in
+                    if !isPresented {
+                        // Keep the toolbar search UI collapsed after popover closes.
+                        dismissSearch()
+                        _clearFirstResponder()
+                    }
                 }
             }
+        }
+        
+        private func _clearFirstResponder() {
+            let clear = {
+                (NSApp.keyWindow ?? NSApp.mainWindow)?.makeFirstResponder(nil)
+            }
+            clear()
+            DispatchQueue.main.async { clear() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.02, execute: { clear() })
         }
         
         private struct Title: View {
