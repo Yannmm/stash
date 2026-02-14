@@ -62,14 +62,14 @@ struct ContentView: View {
                         .frame(width: 0, height: 0)
                 }
             }
-            .sheet(isPresented: $present, onDismiss: nil) {
-                CraftModalView(anchorId: $anchorId)
-                    .background(Color(NSColor.windowBackgroundColor))
-                    .cornerRadius(8)
-                    .interactiveDismissDisabled(true)
-                    .modifier(GetHeightModifier(height: $sheetHeight))
-                    .presentationDetents([.height(sheetHeight)])
-            }
+//            .sheet(isPresented: $present, onDismiss: nil) {
+//                CraftModalView(anchorId: $anchorId)
+//                    .background(Color(NSColor.windowBackgroundColor))
+//                    .cornerRadius(8)
+//                    .interactiveDismissDisabled(true)
+//                    .modifier(GetHeightModifier(height: $sheetHeight))
+//                    .presentationDetents([.height(sheetHeight)])
+//            }
         }
         .onReceive(NotificationCenter.default.publisher(for: .onShouldPresentBookmarkForm)) { _ in
             present = true

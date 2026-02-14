@@ -64,7 +64,7 @@ extension ManageView.Workbench {
                 }
                 .help("Add Item")
                 .popover(isPresented: $addBookmarkPopover, arrowEdge: .top) {
-                    CraftModalView(anchorId: .constant(nil))
+                    EntryEditor(anchorId: .constant(nil))
                         .frame(width: 400)
                 }
                 .onChange(of: addBookmarkPopover) { _, isPresented in
