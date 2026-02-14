@@ -45,7 +45,7 @@ struct EntryEditor: View {
                             await viewModel.parse()
                         }
                     }
-                TitleInputField(title: $viewModel.title, icon: $viewModel.icon)
+                TitleField(title: $viewModel.title, icon: $viewModel.icon)
                     .onSubmit {
                         viewModel.save()
                         dismiss()

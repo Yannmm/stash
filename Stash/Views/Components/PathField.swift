@@ -25,30 +25,7 @@ struct PathField: View {
         .padding(.vertical, 4)
         .cornerRadius(6)
         .background(Color(nsColor: .controlBackgroundColor))
-        .overlay {
-            // Base border (matches standard macOS separators)
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(Color(nsColor: .separatorColor), lineWidth: 1)
-                .allowsHitTesting(false)
-            
-            // macOS-style focus ring (accent color + subtle glow)
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(
-                    Color(nsColor: .keyboardFocusIndicatorColor)
-                        .opacity(focused ? 1 : 0),
-                    lineWidth: 3
-                )
-            // Start slightly "outside", then settle to final ring.
-                .padding(focused ? -1 : -4)
-                .scaleEffect(focused ? 1.0 : 1.06)
-                .shadow(
-                    color: Color(nsColor: .keyboardFocusIndicatorColor)
-                        .opacity(focused ? 1 : 0),
-                    radius: focused ? 3 : 0
-                )
-                .allowsHitTesting(false)
-        }
-        .animation(.spring(response: 0.20, dampingFraction: 0.78, blendDuration: 0.10), value: focused)
+        .osxFocusRing(focused: focused)
         .onAppear {
             focused = true
         }

@@ -8,7 +8,7 @@
 import SwiftUI
 import Kingfisher
 
-struct TitleInputField: View {
+struct TitleField: View {
     @Environment(\.colorScheme) var colorScheme
     @FocusState private var focused: Bool
     @Environment(\.dismiss) var dismiss
