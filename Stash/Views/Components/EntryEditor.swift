@@ -39,7 +39,7 @@ struct EntryEditor: View {
                 }
             }
             VStack(spacing: 8) {
-                AddressInputField(loading: $viewModel.loading, icon: $viewModel.icon, path: $viewModel.path)
+                PathField(loading: $viewModel.loading, icon: $viewModel.icon, path: $viewModel.path)
                     .onSubmit {
                         Task {
                             await viewModel.parse()
