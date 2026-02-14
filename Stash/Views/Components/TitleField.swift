@@ -19,58 +19,17 @@ struct TitleField: View {
     var body: some View {
         VStack(spacing: 4) {
             HStack(spacing: 6) {
-                ZStack {
-                    if let i = icon {
-                        switch (i) {
-                        case .system(let name):
-                            Image(systemName: name)
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
-                                .foregroundStyle(Color.theme)
-                        case .favicon(let url):
-                            KFImage.url(url)
-                                .appendProcessor(EmptyFaviconReplacer(url: url))
-                                .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2)
-                                .cacheOriginalImage()
-                                .loadDiskFileSynchronously()
-                                .forceRefresh()
-                                .onSuccess { result in }
-                                .onFailure { error in }
-                                .onFailureImage(NSImage.drawFavicon(from: url.firstDomainLetter))
-                                .resizable()
-                                .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
-                        case .local(let url):
-                            Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
-                                .resizable()
-                                .aspectRatio(contentMode: .fit)
-                                .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
-                        }
-                    } else {
-                        Image(systemName: "questionmark.circle.dashed")
-                            .resizable()
-                            .frame(width: 16, height: 16)
-                            .foregroundColor(.secondary)
-                            .transition(.opacity)
-                    }
-                    
-                }
-                .animation(.easeInOut(duration: 0.3), value: icon)
+                iconView
                 Divider()
-                TextField("Title Will Be Here.", text: title ?? "")
+                TextField("Title can be auto generated from path", text: title ?? "")
                     .textFieldStyle(.plain)
                     .focused($focused)
             }
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Color(nsColor: .controlBackgroundColor))
             .cornerRadius(6)
-            .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(focused ? Color.theme : Color(nsColor: .separatorColor),
-                            lineWidth: 1)
-            )
-            .focusable()
+            .background(Color(nsColor: .controlBackgroundColor))
+            .osxFocusRing(focused: focused)
             .disabled(disabled)
         }
         .onChange(of: title.wrappedValue ?? "") { _, newValue in
@@ -83,5 +42,46 @@ struct TitleField: View {
                 disabled = true
             }
         }
+    }
+    
+    @ViewBuilder
+    private var iconView: some View {
+        SwiftUI.Group {
+            if let i = icon {
+                switch (i) {
+                case .system(let name):
+                    Image(systemName: name)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
+                        .foregroundStyle(Color.theme)
+                case .favicon(let url):
+                    KFImage.url(url)
+                        .appendProcessor(EmptyFaviconReplacer(url: url))
+                        .scaleFactor(NSScreen.main?.backingScaleFactor ?? 2)
+                        .cacheOriginalImage()
+                        .loadDiskFileSynchronously()
+                        .forceRefresh()
+                        .onSuccess { result in }
+                        .onFailure { error in }
+                        .onFailureImage(NSImage.drawFavicon(from: url.firstDomainLetter))
+                        .resizable()
+                        .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
+                case .local(let url):
+                    Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
+                }
+            } else {
+                Image(systemName: "questionmark.circle.dashed")
+                    .resizable()
+                    .frame(width: 16, height: 16)
+                    .foregroundColor(.secondary)
+                    .transition(.opacity)
+            }
+            
+        }
+        .animation(.easeInOut(duration: 0.3), value: icon)
     }
 }
