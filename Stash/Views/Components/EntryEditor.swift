@@ -9,7 +9,7 @@ import SwiftUI
 
 struct EntryEditor: View {
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var viewModel: CraftViewModel
+    @EnvironmentObject var viewModel: EntryEditorViewModel
     
     var body: some View {
         VStack(alignment: .leading) {

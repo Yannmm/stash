@@ -9,8 +9,7 @@ import AppKit
 import Combine
 import Kingfisher
 
-@MainActor
-class CraftViewModel: ObservableObject {
+class EntryEditorViewModel: ObservableObject {
     @Published var icon: Icon?
     @Published var error: (any Error)?
     @Published var loading = false
@@ -97,8 +96,6 @@ class CraftViewModel: ObservableObject {
             ErrorTracker.shared.add(error)
         }
     }
-    
-    
     
     private func updateImage(_ path: Path) async throws {
         switch path {

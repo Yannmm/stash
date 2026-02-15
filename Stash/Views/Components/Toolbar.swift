@@ -9,7 +9,6 @@ import SwiftUI
 
 extension ManageView.Workbench {
     struct Toolbar: ToolbarContent {
-        let selection: UUID?
         @Binding var hierarchy: WorkbenchViewModel.Hierarchy
         let title: String
         let groupCount: Int
@@ -17,7 +16,7 @@ extension ManageView.Workbench {
         let onAddBookmark: () -> Void
         let onAddGroup: () -> Void
         
-        @State private var addBookmarkPopover = false
+        @State private var presentBookmarkEditor = false
         @Environment(\.dismissSearch) private var dismissSearch
         @EnvironmentObject var dataStore: ManageSelectionStore
         
@@ -48,7 +47,7 @@ extension ManageView.Workbench {
                 
                 Menu {
                     Button {
-                        addBookmarkPopover = true
+                        presentBookmarkEditor = true
                         onAddBookmark()
                     } label: {
                         Label("Add Bookmark", systemImage: "link.badge.plus")
@@ -65,15 +64,15 @@ extension ManageView.Workbench {
                     Label("Add", systemImage: "plus.circle")
                 }
                 .help("Add Item")
-                .popover(isPresented: $addBookmarkPopover, arrowEdge: .top) {
+                .popover(isPresented: $presentBookmarkEditor, arrowEdge: .top) {
                     EntryEditor()
                         .frame(width: 400)
-                        .environmentObject(CraftViewModel(cabinet: dataStore.cabinet,
+                        .environmentObject(EntryEditorViewModel(cabinet: dataStore.cabinet,
                                                           dominator: Dominator(),
-                                                          entryId: selection,
+                                                          entryId: nil,
                                                           parentId: dataStore.collection?.id))
                 }
-                .onChange(of: addBookmarkPopover) { _, isPresented in
+                .onChange(of: presentBookmarkEditor) { _, isPresented in
                     if !isPresented {
                         // Keep the toolbar search UI collapsed after popover closes.
                         dismissSearch()

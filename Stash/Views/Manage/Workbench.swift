@@ -18,8 +18,7 @@ extension ManageView {
             Sheet(selection: $selection)
                 .searchable(text: $viewModel.search, placement: .toolbar)
                 .toolbar {
-                    Toolbar(selection: selection,
-                            hierarchy: $viewModel.hierarchy,
+                    Toolbar(hierarchy: $viewModel.hierarchy,
                             title: viewModel.title,
                             groupCount: viewModel.groupCount,
                             bookmarkCount: viewModel.bookmarkCount,
@@ -255,6 +254,8 @@ fileprivate extension ManageView.Workbench {
         private var hasIndicator: Bool { _propose(dragPosition)?.operation == .move }
         private var height: CGFloat { Constant.rowHeight }
         
+        @State private var presentEditor = false
+        
         var body: some View {
             HStack(spacing: 0) {
                 // Name column
@@ -286,6 +287,20 @@ fileprivate extension ManageView.Workbench {
             .frame(height: height)
             .frame(width: totalWidth, alignment: .leading)
             .background(backgroundColor)
+            .focusable()
+            .focusEffectDisabled()
+            .onKeyPress(.return, action: {
+                presentEditor = true
+                return .handled
+            })
+            .popover(isPresented: $presentEditor) {
+                EntryEditor()
+                    .frame(width: 400)
+                    .environmentObject(EntryEditorViewModel(cabinet: OkamuraCabinet.shared,
+                                                      dominator: Dominator(),
+                                                      entryId: row.id,
+                                                      parentId: nil))
+            }
             .onTapGesture { selection = row.id }
             .onDrag {
                 dragging = row
