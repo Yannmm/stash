@@ -12,12 +12,14 @@ import UniformTypeIdentifiers
 extension ManageView {
     struct Workbench: View {
         @StateObject var viewModel: WorkbenchViewModel
+        @State private var selection: UUID?
         
         var body: some View {
-            Sheet()
+            Sheet(selection: $selection)
                 .searchable(text: $viewModel.search, placement: .toolbar)
                 .toolbar {
-                    Toolbar(hierarchy: $viewModel.hierarchy,
+                    Toolbar(selection: selection,
+                            hierarchy: $viewModel.hierarchy,
                             title: viewModel.title,
                             groupCount: viewModel.groupCount,
                             bookmarkCount: viewModel.bookmarkCount,
@@ -25,6 +27,7 @@ extension ManageView {
                             onAddGroup: {})
                 }
                 .environmentObject(viewModel)
+                .environmentObject(viewModel.dataStore)
         }
     }
 }
@@ -42,7 +45,7 @@ fileprivate extension ManageView.Workbench {
     private struct Sheet: View {
         @EnvironmentObject var viewModel: WorkbenchViewModel
         
-        @State private var selection: UUID?
+        @Binding var selection: UUID?
         @State private var dragging: WorkbenchViewModel.Row?
         @State private var width1: CGFloat = Constant.initialWidth1
         @State private var width2: CGFloat = Constant.initialWidth2

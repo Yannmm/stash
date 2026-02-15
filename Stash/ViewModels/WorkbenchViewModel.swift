@@ -14,7 +14,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
     @Published var hierarchy: Hierarchy = .child
     @Published private(set) var rows: [Row] = []
     
-    private let dataStore: ManageSelectionStore
+    let dataStore: ManageSelectionStore
     private var _cancellables = Set<AnyCancellable>()
     fileprivate var indentColorStorage = [Color]()
     

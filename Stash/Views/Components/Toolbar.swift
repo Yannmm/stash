@@ -9,6 +9,7 @@ import SwiftUI
 
 extension ManageView.Workbench {
     struct Toolbar: ToolbarContent {
+        let selection: UUID?
         @Binding var hierarchy: WorkbenchViewModel.Hierarchy
         let title: String
         let groupCount: Int
@@ -18,6 +19,7 @@ extension ManageView.Workbench {
         
         @State private var addBookmarkPopover = false
         @Environment(\.dismissSearch) private var dismissSearch
+        @EnvironmentObject var dataStore: ManageSelectionStore
         
         var body: some ToolbarContent {
             if #available(macOS 26.0, *) {
@@ -43,7 +45,7 @@ extension ManageView.Workbench {
                         .help("Show All Descendants")
                 }
                 .pickerStyle(.segmented)
-
+                
                 Menu {
                     Button {
                         addBookmarkPopover = true
@@ -64,8 +66,12 @@ extension ManageView.Workbench {
                 }
                 .help("Add Item")
                 .popover(isPresented: $addBookmarkPopover, arrowEdge: .top) {
-                    EntryEditor(anchorId: .constant(nil))
+                    EntryEditor()
                         .frame(width: 400)
+                        .environmentObject(CraftViewModel(cabinet: dataStore.cabinet,
+                                                          dominator: Dominator(),
+                                                          entryId: selection,
+                                                          parentId: dataStore.collection?.id))
                 }
                 .onChange(of: addBookmarkPopover) { _, isPresented in
                     if !isPresented {
@@ -79,7 +85,7 @@ extension ManageView.Workbench {
         
         private func _clearFirstResponder() {
             let clear = {
-                (NSApp.keyWindow ?? NSApp.mainWindow)?.makeFirstResponder(nil)
+                let _ = (NSApp.keyWindow ?? NSApp.mainWindow)?.makeFirstResponder(nil)
             }
             clear()
             DispatchQueue.main.async { clear() }

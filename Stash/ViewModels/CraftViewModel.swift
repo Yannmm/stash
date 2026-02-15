@@ -25,23 +25,25 @@ class CraftViewModel: ObservableObject {
     }
     @Published var path: String?
     private var url: URL?
-    var anchorId: UUID?
-    
     private var cancellables = Set<AnyCancellable>()
     
-    private let dominator = Dominator()
-    
-    var cabinet: OkamuraCabinet!
-    
-    private var entry: (any Entry)?
-    
-    init(entry: (any Entry)? = nil) {
-        self.entry = entry
-        bind()
-        guard entry != nil else { return }
+    let cabinet: OkamuraCabinet
+    let dominator: Dominator
+    var entryId: UUID?
+    var parentId: UUID?
+
+    init(cabinet: OkamuraCabinet, dominator: Dominator, entryId: UUID?, parentId: UUID?) {
+        self.entryId = entryId
+        self.parentId = parentId
+        self.cabinet = cabinet
+        self.dominator = dominator
         
-        self.title = entry?.name
-        self.icon = entry?.icon
+        bind()
+        guard let id = entryId,
+              let entry = cabinet.storedEntries.filter({ $0.id == id }).first else { return }
+        
+        self.title = entry.name
+        self.icon = entry.icon
     }
     
     private func bind() {
@@ -88,7 +90,8 @@ class CraftViewModel: ObservableObject {
     func save() {
         do {
             let b = Bookmark(id: UUID(), name: title!, url: url!)
-            try cabinet.relocate(entry: b, anchorId: anchorId)
+//            try cabinet.relocate(entry: b, anchorId: anchorId)
+            try cabinet.relocate(entry: b, anchorId: nil)
         } catch {
             self.error = error
             ErrorTracker.shared.add(error)

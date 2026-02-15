@@ -9,10 +9,7 @@ import SwiftUI
 
 struct EntryEditor: View {
     @Environment(\.dismiss) var dismiss
-    @Environment(\.dismissSearch) private var dismissSearch
-    @StateObject private var viewModel = CraftViewModel()
-    @EnvironmentObject var cabinet: OkamuraCabinet
-    @Binding var anchorId: UUID?
+    @EnvironmentObject var viewModel: CraftViewModel
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -54,10 +51,6 @@ struct EntryEditor: View {
         }
         .padding()
         .background(Color(nsColor: .windowBackgroundColor))
-        .onAppear {
-            //            viewModel.cabinet = cabinet
-            viewModel.anchorId = anchorId
-        }
         .alert("Error", isPresented: Binding(
             get: { viewModel.error != nil },
             set: { if !$0 { viewModel.error = nil } }
