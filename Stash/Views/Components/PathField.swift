@@ -8,10 +8,10 @@
 import SwiftUI
 
 struct PathField: View {
-    @FocusState private var focused: Bool
     @Binding var loading: Bool
     @Binding var icon: Icon?
     @Binding var path: String?
+    @FocusState.Binding var focusedField: EntryEditor.Field?
     
     var body: some View {
         HStack(spacing: 6) {
@@ -19,16 +19,13 @@ struct PathField: View {
             Divider()
             TextField("Enter url or file path", text: $path ?? "")
                 .textFieldStyle(.plain)
-                .focused($focused)
+                .focused($focusedField, equals: .path)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
         .cornerRadius(6)
         .background(Color(nsColor: .controlBackgroundColor))
-        .osxFocusRing(focused: focused)
-        .onAppear {
-            focused = true
-        }
+        .osxFocusRing(focused: focusedField == .path)
     }
     
     @ViewBuilder

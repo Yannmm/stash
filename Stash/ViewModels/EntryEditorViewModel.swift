@@ -9,10 +9,22 @@ import AppKit
 import Combine
 import Kingfisher
 
+extension EntryEditorViewModel {
+    enum Mode {
+        case create(UUID?) // associated type - parent id if exists
+        case update(UUID) // associated type - entry id
+    }
+    
+//    enum Entry {
+//        case group
+//        case bookmark
+//    }
+}
+
+@MainActor
 class EntryEditorViewModel: ObservableObject {
+    @Published var path: String?
     @Published var icon: Icon?
-    @Published var error: (any Error)?
-    @Published var loading = false
     @Published var title: String?
     @Published var savable = false
     @Published var parsable = false {
@@ -22,36 +34,60 @@ class EntryEditorViewModel: ObservableObject {
             icon = nil
         }
     }
-    @Published var path: String?
+    @Published var loading = false
+    @Published var error: (any Error)?
+    
+    @Published var focusedField: EntryEditor.Field?
+    @Published var titleFieldDisabled: Bool!
+    
     private var url: URL?
     private var cancellables = Set<AnyCancellable>()
     
+    let mode: Mode
     let cabinet: OkamuraCabinet
     let dominator: Dominator
-    var entryId: UUID?
-    var parentId: UUID?
 
-    init(cabinet: OkamuraCabinet, dominator: Dominator, entryId: UUID?, parentId: UUID?) {
-        self.entryId = entryId
-        self.parentId = parentId
+    init(mode: Mode, cabinet: OkamuraCabinet, dominator: Dominator) {
+        self.mode = mode
         self.cabinet = cabinet
         self.dominator = dominator
         
         bind()
-        guard let id = entryId,
-              let entry = cabinet.storedEntries.filter({ $0.id == id }).first else { return }
-        
-        self.title = entry.name
-        self.icon = entry.icon
+        switch mode {
+        case .create(let pid):
+            self.focusedField = .path
+            self.titleFieldDisabled = true
+        case .update(let eid):
+            let entry = cabinet.storedEntries.filter({ $0.id == eid }).first
+            // TODO: below line need to distinguish group and bookmark
+            self.path = (entry as? Bookmark)?.url.absoluteString
+            self.title = entry?.name
+            self.icon = entry?.icon
+            self.focusedField = .title
+            self.titleFieldDisabled = false
+        }
     }
     
     private func bind() {
-        $path
-            .compactMap({ $0 })
-            .removeDuplicates()
-            .map({ $0.count > 4 })
-            .sink { [weak self] in self?.parsable = $0 }
-            .store(in: &cancellables)
+//        $path
+//            .compactMap({ $0 })
+//            .removeDuplicates()
+//            .map({ $0.count > 4 })
+//            .receive(on: RunLoop.main)
+//            .sink { [weak self] in self?.parsable = $0 }
+//            .store(in: &cancellables)
+//        
+//        $title
+//            .compactMap({ $0 })
+//            .first()
+//            .sink { [weak self] _ in self?.focusedField = .title }
+//            .store(in: &cancellables)
+//        
+//        $focusedField
+//            .compactMap({ $0 })
+//            .first(where: { $0 == .title })
+//            .sink { [weak self] _ in self?.titleFieldDisabled = false }
+//            .store(in: &cancellables)
     }
     
     func parse() async {

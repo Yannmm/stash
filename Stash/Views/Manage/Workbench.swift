@@ -296,10 +296,9 @@ fileprivate extension ManageView.Workbench {
             .popover(isPresented: $presentEditor) {
                 EntryEditor()
                     .frame(width: 400)
-                    .environmentObject(EntryEditorViewModel(cabinet: OkamuraCabinet.shared,
-                                                      dominator: Dominator(),
-                                                      entryId: row.id,
-                                                      parentId: nil))
+                    .environmentObject(EntryEditorViewModel(mode: .update(row.id),
+                                                            cabinet: OkamuraCabinet.shared,
+                                                            dominator: Dominator()))
             }
             .onTapGesture { selection = row.id }
             .onDrag {

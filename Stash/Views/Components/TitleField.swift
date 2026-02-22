@@ -9,39 +9,26 @@ import SwiftUI
 import Kingfisher
 
 struct TitleField: View {
-    @Environment(\.colorScheme) var colorScheme
-    @FocusState private var focused: Bool
-    @Environment(\.dismiss) var dismiss
-    @State private var disabled: Bool = true
-    var title: Binding<String?>
-    @Binding var icon: Icon?
+    @Binding var title: String?
+    let icon: Icon?
+    @FocusState.Binding var focusedField: EntryEditor.Field?
+    let disabled: Bool
     
     var body: some View {
-        VStack(spacing: 4) {
-            HStack(spacing: 6) {
-                iconView
-                Divider()
-                TextField("Title can be auto generated from path", text: title ?? "")
-                    .textFieldStyle(.plain)
-                    .focused($focused)
-            }
-            .padding(.horizontal, 8)
-            .padding(.vertical, 4)
-            .cornerRadius(6)
-            .background(Color(nsColor: .controlBackgroundColor))
-            .osxFocusRing(focused: focused)
-            .disabled(disabled)
+        HStack(spacing: 6) {
+            iconView
+            Divider()
+            TextField("Title can be auto generated from path", text: $title ?? "")
+                .textFieldStyle(.plain)
+                .focused($focusedField, equals: .title)
         }
-        .onChange(of: title.wrappedValue ?? "") { _, newValue in
-            if !newValue.isEmpty {
-                focused = true
-                disabled = false
-            } else {
-                guard !focused else { return }
-                focused = false
-                disabled = true
-            }
-        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .cornerRadius(6)
+        .background(Color(nsColor: .controlBackgroundColor))
+        .osxFocusRing(focused: focusedField == .title)
+        .disabled(disabled)
+        
     }
     
     @ViewBuilder

@@ -67,10 +67,9 @@ extension ManageView.Workbench {
                 .popover(isPresented: $presentBookmarkEditor, arrowEdge: .top) {
                     EntryEditor()
                         .frame(width: 400)
-                        .environmentObject(EntryEditorViewModel(cabinet: dataStore.cabinet,
-                                                          dominator: Dominator(),
-                                                          entryId: nil,
-                                                          parentId: dataStore.collection?.id))
+                        .environmentObject(EntryEditorViewModel(mode: .create(dataStore.collection?.id),
+                                                                cabinet: dataStore.cabinet,
+                                                                dominator: Dominator()))
                 }
                 .onChange(of: presentBookmarkEditor) { _, isPresented in
                     if !isPresented {
