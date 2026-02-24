@@ -8,9 +8,9 @@
 import SwiftUI
 import Combine
 
-struct HashtagTextField: NSViewRepresentable {
+struct HashtagInput: NSViewRepresentable {
     @Environment(\.colorScheme) var colorScheme
-    @EnvironmentObject var viewModel: HashtagViewModel
+    @EnvironmentObject var viewModel: HashtagInputViewModel
     @Binding var text: String
     let focused: Bool
     var font: NSFont?
@@ -63,7 +63,7 @@ struct HashtagTextField: NSViewRepresentable {
     }
     
     internal class Coordinator: NSObject, NSTextFieldDelegate {
-        private var parent: HashtagTextField
+        private var parent: HashtagInput
         
         private var panel: NSPanel!
         
@@ -71,7 +71,7 @@ struct HashtagTextField: NSViewRepresentable {
         
         private var observer: NSObjectProtocol?
         
-        init(_ parent: HashtagTextField) {
+        init(_ parent: HashtagInput) {
             self.parent = parent
         }
         
@@ -248,8 +248,8 @@ struct HashtagTextField: NSViewRepresentable {
     }
 }
 
-extension HashtagTextField {
-    func font(_ font: NSFont) -> HashtagTextField {
+extension HashtagInput {
+    func font(_ font: NSFont) -> HashtagInput {
         var copy = self
         copy.font = font
         return copy

@@ -36,7 +36,7 @@ class CellView: NSTableCellView {
         hostingView?.removeFromSuperview()
         hostingView?.prepareForReuse()
         
-        let content = NSHostingView(rootView: AnyView(CellContent(viewModel: CellViewModel(entry: entry, cabinet: cabinet), hashtagViewModel: HashtagViewModel(cabinet: cabinet))
+        let content = NSHostingView(rootView: AnyView(CellContent(viewModel: CellViewModel(entry: entry, cabinet: cabinet), hashtagViewModel: HashtagInputViewModel(cabinet: cabinet))
             .environmentObject(focusMonitor)
             .environmentObject(cabinet)))
         self.hostingView = content

@@ -25,7 +25,7 @@ struct PathField: View {
         .padding(.vertical, 4)
         .cornerRadius(6)
         .background(Color(nsColor: .controlBackgroundColor))
-        .osxFocusRing(focused: focusedField == .path)
+        .osxFocusRing(focused: focusedField == .path, disabled: false)
     }
     
     @ViewBuilder

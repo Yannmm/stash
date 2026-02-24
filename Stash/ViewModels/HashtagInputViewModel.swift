@@ -9,7 +9,7 @@ import Combine
 import CombineExt
 import AppKit
 
-class HashtagViewModel: ObservableObject {
+class HashtagInputViewModel: ObservableObject {
     let cabinet: OkamuraCabinet
     @Published var title: String?
     @Published var hashtags: [String] = []

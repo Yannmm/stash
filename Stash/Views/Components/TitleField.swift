@@ -26,9 +26,7 @@ struct TitleField: View {
         .padding(.vertical, 4)
         .cornerRadius(6)
         .background(Color(nsColor: .controlBackgroundColor))
-        .osxFocusRing(focused: focusedField == .title)
-        .disabled(disabled)
-        
+        .osxFocusRing(focused: focusedField == .title, disabled: disabled)
     }
     
     @ViewBuilder

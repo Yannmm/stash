@@ -20,6 +20,7 @@ struct EntryEditor: View {
     
     @FocusState private var focusedField: Field?
     @State private var titleDisabled: Bool = false
+    @State private var hashtagDisabled: Bool = false
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -61,7 +62,7 @@ struct EntryEditor: View {
                     viewModel.save()
                     dismiss()
                 }
-                HashtagField()
+                HashtagField(disabled: hashtagDisabled)
             }
         }
         .padding()
@@ -82,6 +83,7 @@ struct EntryEditor: View {
             case .savable(_):
                 focusedField = .title
                 titleDisabled = false
+                hashtagDisabled = false
             }
         }
         .task {
@@ -89,9 +91,11 @@ struct EntryEditor: View {
             case .create(_):
                 focusedField = .path
                 titleDisabled = true
+                hashtagDisabled = true
             case .update(_):
                 focusedField = .title
                 titleDisabled = false
+                hashtagDisabled = false
             }
         }
     }

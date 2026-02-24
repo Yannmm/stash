@@ -20,7 +20,7 @@ struct CellContent: View {
     @EnvironmentObject var cabinet: OkamuraCabinet
     @EnvironmentObject var focusMonitor: FocusMonitor
     @ObservedObject var viewModel: CellViewModel
-    @ObservedObject var hashtagViewModel: HashtagViewModel
+    @ObservedObject var hashtagViewModel: HashtagInputViewModel
     @FocusState private var focused: Bool
     @State private var expanded: Bool = false
     @State private var selected: Bool = false
