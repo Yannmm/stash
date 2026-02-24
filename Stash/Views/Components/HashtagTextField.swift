@@ -31,6 +31,7 @@ struct HashtagTextField: NSViewRepresentable {
         textField.lineBreakMode = .byTruncatingMiddle
         textField.usesSingleLineMode = true
         textField.focusRingType = .none
+        textField.placeholderString = "Typing `#` to enter hashtag, space to separate"
         textField.attributedStringValue = text.highlightHashtags()
         return textField
     }
