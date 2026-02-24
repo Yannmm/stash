@@ -191,7 +191,7 @@ class SearchViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        $keyboardAction.withLatestFrom2($index, $items)
+        $keyboardAction.withLatestFrom($index, $items, resultSelector: { ($0, $1.0, $1.1) })
             .map({ t3 in
                 guard let index = t3.1 else { return nil }
                 switch t3.0 {
@@ -209,7 +209,7 @@ class SearchViewModel: ObservableObject {
             .store(in: &cancellables)
         
         $keyboardAction.filter({ $0 == .enter })
-            .withLatestFrom2($index, $items)
+            .withLatestFrom($index, $items, resultSelector: { ($0, $1.0, $1.1) })
             .map({ $0.1 == nil ? nil : $0.2[$0.1!] })
             .compactMap({ $0 })
             .sink { [weak self] in

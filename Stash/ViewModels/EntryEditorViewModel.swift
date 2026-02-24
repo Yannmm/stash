@@ -7,12 +7,18 @@
 
 import AppKit
 import Combine
+import CombineExt
 import Kingfisher
 
 extension EntryEditorViewModel {
     enum Mode {
         case create(UUID?) // associated type - parent id if exists
         case update(UUID) // associated type - entry id
+    }
+    
+    enum Progress: Equatable {
+        case parsable(Bool)
+        case savable(Bool)
     }
 }
 
@@ -21,14 +27,8 @@ class EntryEditorViewModel: ObservableObject {
     @Published var path: String?
     @Published var icon: Icon?
     @Published var title: String?
-    @Published var savable = false
-    @Published var parsable = false {
-        didSet {
-            savable = false
-            title = nil
-            icon = nil
-        }
-    }
+    @Published private(set) var progress: Progress
+    
     @Published var loading = false
     @Published var error: (any Error)?
     
@@ -45,10 +45,9 @@ class EntryEditorViewModel: ObservableObject {
         self.cabinet = cabinet
         self.dominator = dominator
         
-        bind()
         switch mode {
-        case .create(let pid):
-            break
+        case .create:
+            self.progress = .parsable(false)
         case .update(let eid):
             let entry = cabinet.storedEntries.filter({ $0.id == eid }).first
             // TODO: below line need to distinguish group and bookmark
@@ -56,18 +55,33 @@ class EntryEditorViewModel: ObservableObject {
             self.url = (entry as? Bookmark)?.url
             self.title = entry?.name
             self.icon = entry?.icon
-            self.savable = true
+            self.progress = .savable(true)
         }
+        
+        bind()
     }
     
     private func bind() {
         $path
+            .removeDuplicates()
+            .map({ Progress.parsable(($0 ?? "").count > 4)})
+            .dropFirst()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] p in
+                self?.progress = p
+                self?.title = nil
+                self?.icon = nil
+            }
+            .store(in: &cancellables)
+        
+        $title
             .compactMap({ $0 })
             .removeDuplicates()
-            .map({ $0.count > 4 })
+            .map({ Progress.savable(!($0.isEmpty)) })
             .receive(on: RunLoop.main)
-//            .dropFirst()
-            .sink { [weak self] in self?.parsable = $0 }
+            .sink { [weak self] p in
+                self?.progress = p
+            }
             .store(in: &cancellables)
     }
     
@@ -100,7 +114,6 @@ class EntryEditorViewModel: ObservableObject {
                 let _ = try await updateTitle(path)
                 try Task.checkCancellation()
                 async let _ = try updateImage(path)
-                savable = true
             } catch is CancellationError {
                 // superseded by a newer parse call, discard silently
             } catch {
@@ -111,11 +124,12 @@ class EntryEditorViewModel: ObservableObject {
     }
     
     func save() {
-        guard savable else { return }
+//        return
+        guard let t = title, let u = url else { return }
         do {
             switch mode {
             case .create(let pid):
-                let b = Bookmark(id: UUID(), name: title!, parentId: pid, url: url!)
+                let b = Bookmark(id: UUID(), name: t, parentId: pid, url: u)
                 
                 if let pid = pid, let index = cabinet.storedEntries.firstIndex(where: { $0.id == pid }) {
                     cabinet.storedEntries.insert(b, at: index + 1)
@@ -125,11 +139,13 @@ class EntryEditorViewModel: ObservableObject {
                 try cabinet.save()
                 
             case .update(let eid):
-                let b = Bookmark(id: eid, name: title!, url: url!)
+                let old = cabinet.storedEntries.first(where: { $0.id == eid }) as? Bookmark
+                guard let o = old,
+                        o.name != t || o.url != u else { return }
+                let b = Bookmark(id: eid, name: t, url: u)
                 try cabinet.update(entry: b)
             }
         } catch {
-            
             self.error = error
             ErrorTracker.shared.add(error)
         }

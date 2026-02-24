@@ -27,38 +27,40 @@ struct EntryEditor: View {
                 Text("New Bookmark")
                     .font(.headline)
                 Spacer()
-                if viewModel.savable {
+                switch viewModel.progress {
+                case .parsable(let enabled):
+                    Button("Parse") {
+                        viewModel.parse()
+                    }
+                    .disabled(!(enabled && !viewModel.loading))
+                    .if(enabled && !viewModel.loading, content: { $0.buttonStyle(.borderedProminent) })
+                case .savable(let enabled):
                     Button("Save") {
                         viewModel.save()
                         dismiss()
                     }
-                    .foregroundColor(.accentColor)
-                    .disabled(!viewModel.savable)
-                    .if(viewModel.savable, content: { $0.buttonStyle(.borderedProminent) })
-                } else {
-                    Button("Parse") {
-                        viewModel.parse()
-                    }
-                    .disabled(!viewModel.parsable || viewModel.loading)
-                    .if(viewModel.parsable && !viewModel.loading, content: { $0.buttonStyle(.borderedProminent) })
+                    .disabled(!enabled)
+                    .if(enabled, content: { $0.buttonStyle(.borderedProminent) })
                 }
             }
             VStack(spacing: 8) {
                 PathField(loading: $viewModel.loading,
                           icon: $viewModel.icon,
                           path: $viewModel.path,
-                          focusedField: $focusedField,)
-                    .onSubmit {
-                        viewModel.parse()
-                    }
+                          focusedField: $focusedField)
+                .onSubmit {
+                    guard viewModel.progress == .parsable(true) else { return }
+                    viewModel.parse()
+                }
                 TitleField(title: $viewModel.title,
                            icon: viewModel.icon,
                            focusedField: $focusedField,
                            disabled: titleDisabled)
-                    .onSubmit {
-                        viewModel.save()
-                        dismiss()
-                    }
+                .onSubmit {
+                    guard viewModel.progress == .savable(true) else { return }
+                    viewModel.save()
+                    dismiss()
+                }
             }
         }
         .padding()
@@ -72,10 +74,14 @@ struct EntryEditor: View {
             Text(viewModel.error?.localizedDescription ?? "")
         }
         // State moifiers
-        .onChange(of: viewModel.title) { oldValue, newValue in
-            guard (oldValue ?? "").count <= 0 else { return }
-            focusedField = .title
-            titleDisabled = false
+        .onChange(of: viewModel.progress) { oldValue, newValue in
+            switch newValue {
+            case .parsable(_):
+                break
+            case .savable(_):
+                focusedField = .title
+                titleDisabled = false
+            }
         }
         .task {
             switch viewModel.mode {
