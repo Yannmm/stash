@@ -9,7 +9,6 @@ import SwiftUI
 import Combine
 
 struct HashtagInput: NSViewRepresentable {
-    @Environment(\.colorScheme) var colorScheme
     @EnvironmentObject var viewModel: HashtagInputViewModel
     @Binding var text: String
     let focused: Bool
@@ -71,8 +70,12 @@ struct HashtagInput: NSViewRepresentable {
         
         private var observer: NSObjectProtocol?
         
+        private var lastValidText: String = ""
+        private var isReverting = false
+
         init(_ parent: HashtagInput) {
             self.parent = parent
+            self.lastValidText = parent.text
         }
         
         deinit {
@@ -100,13 +103,40 @@ struct HashtagInput: NSViewRepresentable {
         }
         
         func controlTextDidChange(_ obj: Notification) {
-            guard let textField = obj.object as? NSTextField, let cursor = getCursor(textField) else { return }
-            if let _ = parent.viewModel.findCursoredRange(text: textField.stringValue, cursorLocation: cursor.0) {
+            guard !isReverting,
+                  let textField = obj.object as? NSTextField,
+                  let (cursor, textView) = getCursor(textField) else { return }
+
+            let currentText = textField.stringValue
+            let textBeforeCursor = (currentText as NSString).substring(to: cursor)
+
+            // Derive the prefix of the word currently at the cursor
+            let currentWordPrefix: String
+            if let lastSpaceRange = textBeforeCursor.range(of: " ", options: .backwards) {
+                currentWordPrefix = String(textBeforeCursor[lastSpaceRange.upperBound...])
+            } else {
+                currentWordPrefix = textBeforeCursor
+            }
+
+            // If the word at the cursor doesn't start with '#', revert to last valid text
+            if !currentWordPrefix.isEmpty && !currentWordPrefix.hasPrefix("#") {
+                isReverting = true
+                textField.attributedStringValue = lastValidText.highlightHashtags()
+                let newCursor = min(cursor, (lastValidText as NSString).length)
+                textView.selectedRange = NSRange(location: newCursor, length: 0)
+                parent.text = lastValidText
+                isReverting = false
+                return
+            }
+
+            lastValidText = currentText
+
+            if let _ = parent.viewModel.findCursoredRange(text: currentText, cursorLocation: cursor) {
                 show(textField)
             } else {
                 hide()
             }
-            parent.text = textField.stringValue
+            parent.text = currentText
         }
         
         func controlTextDidEndEditing(_ obj: Notification) {
@@ -255,5 +285,3 @@ extension HashtagInput {
         return copy
     }
 }
-
-
