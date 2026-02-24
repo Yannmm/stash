@@ -19,6 +19,7 @@ struct EntryEditor: View {
     @EnvironmentObject var viewModel: EntryEditorViewModel
     
     @FocusState private var focusedField: Field?
+    @State private var titleDisabled: Bool = false
     
     var body: some View {
         VStack(alignment: .leading) {
@@ -36,9 +37,7 @@ struct EntryEditor: View {
                     .if(viewModel.savable, content: { $0.buttonStyle(.borderedProminent) })
                 } else {
                     Button("Parse") {
-                        Task {
-                            await viewModel.parse()
-                        }
+                        viewModel.parse()
                     }
                     .disabled(!viewModel.parsable || viewModel.loading)
                     .if(viewModel.parsable && !viewModel.loading, content: { $0.buttonStyle(.borderedProminent) })
@@ -50,14 +49,12 @@ struct EntryEditor: View {
                           path: $viewModel.path,
                           focusedField: $focusedField,)
                     .onSubmit {
-                        Task {
-                            await viewModel.parse()
-                        }
+                        viewModel.parse()
                     }
                 TitleField(title: $viewModel.title,
                            icon: viewModel.icon,
                            focusedField: $focusedField,
-                           disabled: false)
+                           disabled: titleDisabled)
                     .onSubmit {
                         viewModel.save()
                         dismiss()
@@ -74,11 +71,21 @@ struct EntryEditor: View {
         } message: {
             Text(viewModel.error?.localizedDescription ?? "")
         }
-        .onChange(of: viewModel.focusedField) { _, newValue in
-            focusedField = newValue
+        // State moifiers
+        .onChange(of: viewModel.title) { oldValue, newValue in
+            guard (oldValue ?? "").count <= 0 else { return }
+            focusedField = .title
+            titleDisabled = false
         }
         .task {
-            focusedField = viewModel.focusedField
+            switch viewModel.mode {
+            case .create(_):
+                focusedField = .path
+                titleDisabled = true
+            case .update(_):
+                focusedField = .title
+                titleDisabled = false
+            }
         }
     }
 }

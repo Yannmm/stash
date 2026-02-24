@@ -14,11 +14,6 @@ extension EntryEditorViewModel {
         case create(UUID?) // associated type - parent id if exists
         case update(UUID) // associated type - entry id
     }
-    
-//    enum Entry {
-//        case group
-//        case bookmark
-//    }
 }
 
 @MainActor
@@ -37,11 +32,9 @@ class EntryEditorViewModel: ObservableObject {
     @Published var loading = false
     @Published var error: (any Error)?
     
-    @Published var focusedField: EntryEditor.Field?
-    @Published var titleFieldDisabled: Bool!
-    
     private var url: URL?
     private var cancellables = Set<AnyCancellable>()
+    private var parseTask: Task<Void, Never>?
     
     let mode: Mode
     let cabinet: OkamuraCabinet
@@ -55,79 +48,88 @@ class EntryEditorViewModel: ObservableObject {
         bind()
         switch mode {
         case .create(let pid):
-            self.focusedField = .path
-            self.titleFieldDisabled = true
+            break
         case .update(let eid):
             let entry = cabinet.storedEntries.filter({ $0.id == eid }).first
             // TODO: below line need to distinguish group and bookmark
             self.path = (entry as? Bookmark)?.url.absoluteString
+            self.url = (entry as? Bookmark)?.url
             self.title = entry?.name
             self.icon = entry?.icon
-            self.focusedField = .title
-            self.titleFieldDisabled = false
+            self.savable = true
         }
     }
     
     private func bind() {
-//        $path
-//            .compactMap({ $0 })
-//            .removeDuplicates()
-//            .map({ $0.count > 4 })
-//            .receive(on: RunLoop.main)
-//            .sink { [weak self] in self?.parsable = $0 }
-//            .store(in: &cancellables)
-//        
-//        $title
-//            .compactMap({ $0 })
-//            .first()
-//            .sink { [weak self] _ in self?.focusedField = .title }
-//            .store(in: &cancellables)
-//        
-//        $focusedField
-//            .compactMap({ $0 })
-//            .first(where: { $0 == .title })
-//            .sink { [weak self] _ in self?.titleFieldDisabled = false }
-//            .store(in: &cancellables)
+        $path
+            .compactMap({ $0 })
+            .removeDuplicates()
+            .map({ $0.count > 4 })
+            .receive(on: RunLoop.main)
+//            .dropFirst()
+            .sink { [weak self] in self?.parsable = $0 }
+            .store(in: &cancellables)
     }
     
-    func parse() async {
-        loading = true
-        defer {
-            loading = false
-        }
-        do {
-            guard let p = path, !p.isEmpty else {
-                throw CraftError.emptyPath
+    func parse() {
+        parseTask?.cancel()
+        parseTask = Task {
+            loading = true
+            defer {
+                loading = false
             }
-            
-            let path = Path(p)
-            
-            switch path {
-            case .file(let url):
-                self.url = url
-            case .web(let url):
-                self.url = url
-            case .vnc(let url):
-                self.url = url
-            case .whatever(let url):
-                self.url = url
+            do {
+                guard let p = path, !p.isEmpty else {
+                    throw CraftError.emptyPath
+                }
+
+                let path = Path(p)
+
+                switch path {
+                case .file(let url):
+                    self.url = url
+                case .web(let url):
+                    self.url = url
+                case .vnc(let url):
+                    self.url = url
+                case .whatever(let url):
+                    self.url = url
+                }
+
+                try Task.checkCancellation()
+                let _ = try await updateTitle(path)
+                try Task.checkCancellation()
+                async let _ = try updateImage(path)
+                savable = true
+            } catch is CancellationError {
+                // superseded by a newer parse call, discard silently
+            } catch {
+                self.error = error
+                ErrorTracker.shared.add(error)
             }
-            
-            let _ = try await updateTitle(path)
-            async let _ = try updateImage(path)
-            savable = true
-        } catch {
-            self.error = error
-            ErrorTracker.shared.add(error)
         }
     }
     
     func save() {
+        guard savable else { return }
         do {
-            let b = Bookmark(id: UUID(), name: title!, url: url!)
-//            try cabinet.relocate(entry: b, anchorId: anchorId)
-            try cabinet.relocate(entry: b, anchorId: nil)
+            switch mode {
+            case .create(let pid):
+                let b = Bookmark(id: UUID(), name: title!, parentId: pid, url: url!)
+                
+                if let pid = pid, let index = cabinet.storedEntries.firstIndex(where: { $0.id == pid }) {
+                    cabinet.storedEntries.insert(b, at: index + 1)
+                } else {
+                    cabinet.storedEntries.insert(b, at: 0)
+                }
+                try cabinet.save()
+                
+            case .update(let eid):
+                let b = Bookmark(id: eid, name: title!, url: url!)
+                try cabinet.update(entry: b)
+            }
         } catch {
+            
             self.error = error
             ErrorTracker.shared.add(error)
         }
