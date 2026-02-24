@@ -61,6 +61,8 @@ struct EntryEditor: View {
                     viewModel.save()
                     dismiss()
                 }
+                HashtagField()
+                    .frame(height: 40)
             }
         }
         .padding()
