@@ -173,10 +173,10 @@ struct CellContent: View {
                     .frame(width: 1, height: 20)
                     .foregroundColor(focused ? Color(NSColor.separatorColor) : Color.clear)
                     .animation(.easeInOut(duration: 0.2), value: focused)
-                HashtagTextField(text: $viewModel.title, focused: focused)
-                    .font(flag ? NSFont.systemFont(ofSize: NSFont.systemFontSize) : NSFont.systemFont(ofSize: NSFont.systemFontSize + 5))
-                    .focused($focused)
-                    .environmentObject(hashtagViewModel)
+//                HashtagTextField(text: $viewModel.title, focused: focused)
+//                    .font(flag ? NSFont.systemFont(ofSize: NSFont.systemFontSize) : NSFont.systemFont(ofSize: NSFont.systemFontSize + 5))
+//                    .focused($focused)
+//                    .environmentObject(hashtagViewModel)
             }
             .padding(.vertical, flag ? 0 : 4)
             
