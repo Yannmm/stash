@@ -10,7 +10,7 @@ import CombineExt
 import AppKit
 
 class HashtagInputViewModel: ObservableObject {
-    let cabinet: OkamuraCabinet
+    let existingHashtags: AnyPublisher<Set<String>, Never>
     @Published var title: String?
     @Published var hashtags: [String] = []
     @Published var query: String?
@@ -24,8 +24,8 @@ class HashtagInputViewModel: ObservableObject {
     
     var selected: AnyPublisher<String, Never> { _select.eraseToAnyPublisher() }
     
-    init(cabinet: OkamuraCabinet) {
-        self.cabinet = cabinet
+    init(existingHashtags: AnyPublisher<Set<String>, Never>) {
+        self.existingHashtags = existingHashtags
         bind()
     }
     
@@ -46,7 +46,7 @@ class HashtagInputViewModel: ObservableObject {
         
         let existings = _extract($title.map({ $0.map({ o in [o] }) ?? [] }))
         
-        let all =  _extract(cabinet.$storedEntries.map({ $0.map({ $0.name }) })).map({ $0.union(String.RegexConstant.predefinedHashtags) })
+        let all =  existingHashtags.map({ $0.union(String.RegexConstant.predefinedHashtags) })
         
         let rest = Publishers.CombineLatest(existings, all).map { a, b in
             b.subtracting(a)

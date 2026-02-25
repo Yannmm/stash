@@ -313,7 +313,7 @@ struct HashtagInput: NSViewRepresentable {
         private func _insert(_ hashtag: String, _ textView: NSTextView) {
             let cursor = textView.selectedRange().location
             if let result = insert(text: textView.string, hashtag: hashtag, cursorLocation: cursor) {
-                textView.textStorage?.setAttributedString(result.0.highlightHashtags())
+                textView.string = result.0
                 textView.selectedRange = result.1
                 textView.scrollRangeToVisible(result.1)
                 parent.text = result.0

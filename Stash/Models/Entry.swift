@@ -14,11 +14,14 @@ protocol Entry: Identifiable, Equatable, Hashable, Facade, Actionable {
     
     var parentId: UUID? { get set }
     
+    // TODO: can be deleted?
     var location: UUID? { get }
     
     var icon: Icon { get }
     
     var container: Bool { get }
+    
+    var hashtags: Set<String> { get set }
 }
 
 extension Entry {

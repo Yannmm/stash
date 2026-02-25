@@ -33,23 +33,23 @@ class CellView: NSTableCellView {
     private var hostingView: NSHostingView<AnyView>!
     
     private func setup(_: (any Entry)?) {
-        hostingView?.removeFromSuperview()
-        hostingView?.prepareForReuse()
-        
-        let content = NSHostingView(rootView: AnyView(CellContent(viewModel: CellViewModel(entry: entry, cabinet: cabinet), hashtagViewModel: HashtagInputViewModel(cabinet: cabinet))
-            .environmentObject(focusMonitor)
-            .environmentObject(cabinet)))
-        self.hostingView = content
-        content.sizingOptions = .minSize
-        self.addSubview(content)
-        
-        content.translatesAutoresizingMaskIntoConstraints = false
-        NSLayoutConstraint.activate([
-            content.topAnchor.constraint(equalTo: self.topAnchor),
-            content.bottomAnchor.constraint(equalTo: self.bottomAnchor),
-            content.leadingAnchor.constraint(equalTo: self.leadingAnchor),
-            content.trailingAnchor.constraint(equalTo: self.trailingAnchor)
-        ])
+//        hostingView?.removeFromSuperview()
+//        hostingView?.prepareForReuse()
+//        
+//        let content = NSHostingView(rootView: AnyView(CellContent(viewModel: CellViewModel(entry: entry, cabinet: cabinet), hashtagViewModel: HashtagInputViewModel(cabinet: cabinet))
+//            .environmentObject(focusMonitor)
+//            .environmentObject(cabinet)))
+//        self.hostingView = content
+//        content.sizingOptions = .minSize
+//        self.addSubview(content)
+//        
+//        content.translatesAutoresizingMaskIntoConstraints = false
+//        NSLayoutConstraint.activate([
+//            content.topAnchor.constraint(equalTo: self.topAnchor),
+//            content.bottomAnchor.constraint(equalTo: self.bottomAnchor),
+//            content.leadingAnchor.constraint(equalTo: self.leadingAnchor),
+//            content.trailingAnchor.constraint(equalTo: self.trailingAnchor)
+//        ])
     }
 }
 
