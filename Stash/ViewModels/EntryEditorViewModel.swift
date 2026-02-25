@@ -129,7 +129,8 @@ class EntryEditorViewModel: ObservableObject {
         do {
             switch mode {
             case .create(let pid):
-                let b = Bookmark(id: UUID(), name: t, parentId: pid, url: u)
+                // TODO: 添加 hashtags
+                let b = Bookmark(id: UUID(), name: t, parentId: pid, url: u, hashtags: [])
                 
                 if let pid = pid, let index = cabinet.storedEntries.firstIndex(where: { $0.id == pid }) {
                     cabinet.storedEntries.insert(b, at: index + 1)
@@ -142,7 +143,8 @@ class EntryEditorViewModel: ObservableObject {
                 let old = cabinet.storedEntries.first(where: { $0.id == eid }) as? Bookmark
                 guard let o = old,
                         o.name != t || o.url != u else { return }
-                let b = Bookmark(id: eid, name: t, url: u)
+                // TODO: 添加 hashtags
+                let b = Bookmark(id: eid, name: t, url: u, hashtags: [])
                 try cabinet.update(entry: b)
             }
         } catch {

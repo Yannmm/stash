@@ -11,7 +11,8 @@ struct Bookmark {
     var id: UUID
     var name: String
     var parentId: UUID?
-    let url: URL
+    var url: URL
+    var hashtags: Set<String>
 }
 
 extension Bookmark: Entry {

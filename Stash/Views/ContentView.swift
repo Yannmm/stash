@@ -22,7 +22,7 @@ struct ContentView: View {
                 Toolbar1(present: $present) {
                     do {
                         let name = cabinet.directoryDefaultName(anchorId: anchorId)
-                        let directory = Group(id: UUID(), name: name)
+                        let directory = Group(id: UUID(), name: name, hashtags: [])
                         try cabinet.relocate(entry: directory, anchorId: anchorId)
                         
                         DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.25)) {

@@ -250,7 +250,7 @@ extension OkamuraCabinet {
             let ids = Set(storedEntries.map({ $0.id }))
             
             let name = String(filePath.lastPathComponent.split(separator: ".")[0])
-            let group = Group(id: UUID(), name: name)
+            let group = Group(id: UUID(), name: name, hashtags: [])
             var entries = entries.map({ e in
                 var copy = e
                 if copy.parentId == nil {

@@ -20,41 +20,11 @@ class CsvParser {
             if let tags = row.tags?.components(separatedBy: "|"), tags.count > 0 {
                 title = title + " " + tags.map({ $0.hasPrefix("#") ? $0 : ("#" + $0) }).joined(separator: " ")
             }
-            return AnyEntry(id: UUID(), name: title, type: .bookmark, url: row.url, children: [])
+            // TODO: add tags
+            return AnyEntry(id: UUID(), name: title, type: .bookmark, url: row.url, hashtags: [], children: [])
         })
         
         return anyEntries
-        
-        
-//        let rows = csv.split(separator: "\n")
-//        guard rows.count > 0 else { return [] }
-//        let header = rows.first!.split(separator: ",", omittingEmptySubsequences: false).map({ String($0) })
-//        let entries = rows
-//            .dropFirst()
-//            .map { string in
-//                var map = [String: String]()
-//                string
-//                    .split(separator: ",", omittingEmptySubsequences: false)
-//                    .map({ String($0) })
-//                    .enumerated().forEach({ map[header[$0]] = $1 })
-//                return map
-//            }.map { (map: [String: String]) -> AnyEntry? in
-//                guard var title = map[Constant.title],
-//                      let urlString = map[Constant.url],
-//                      let url = URL(string: urlString) else {
-//                    return nil
-//                }
-//                
-//                if let tags = map[Constant.tags]?.components(separatedBy: "|"),
-//                   tags.count > 0 {
-//                    title = title + " " + tags.map({ "#" + $0 }).joined(separator: " ")
-//                }
-//                
-//                return AnyEntry(id: UUID(), name: title, type: .bookmark, url: url, children: [])
-//            }
-//            .compactMap({ $0 })
-//        
-//        return entries
     }
 }
 

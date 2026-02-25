@@ -12,6 +12,7 @@ struct Group {
     var id: UUID
     var name: String
     var parentId: UUID?
+    var hashtags: Set<String>
 }
 
 extension Group: Entry {

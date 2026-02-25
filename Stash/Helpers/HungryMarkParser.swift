@@ -72,7 +72,7 @@ extension HungrymarkParser {
         }
         
         func asAnyEntry() -> AnyEntry {
-            AnyEntry(id: nil, name: name, type: type, url: url, children: children.map({ $0.asAnyEntry() }))
+            AnyEntry(id: nil, name: name, type: type, url: url, hashtags: [], children: children.map({ $0.asAnyEntry() }))
         }
     }
 }
