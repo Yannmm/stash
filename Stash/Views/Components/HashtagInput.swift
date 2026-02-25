@@ -63,19 +63,11 @@ struct HashtagInput: NSViewRepresentable {
     
     internal class Coordinator: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         private var parent: HashtagInput
-        
         private var panel: NSPanel!
-        
-        private var cancellables = Set<AnyCancellable>()
-        
         private var observer: NSObjectProtocol?
-        
-        private var lastValidText: String = ""
-        private var isReverting = false
         
         init(_ parent: HashtagInput) {
             self.parent = parent
-            self.lastValidText = parent.text
         }
         
         deinit {
@@ -113,7 +105,7 @@ struct HashtagInput: NSViewRepresentable {
             textView.delegate = self
         }
         
-        // 🔥 Intercept edits BEFORE insertion
+        
         func textView(
             _ textView: NSTextView,
             shouldChangeTextIn range: NSRange,
@@ -121,18 +113,10 @@ struct HashtagInput: NSViewRepresentable {
         ) -> Bool {
             guard let string = string else { return true }
             
-            // Allow deletion
-            //            if string.isEmpty { return true }
-            
             let currentText = textView.string as NSString
             let newText = currentText.replacingCharacters(in: range, with: string)
             // Empty is fine
             if newText.isEmpty { return true }
-            
-            print("new text: -> \(newText)")
-            
-            // Must start with #
-//            if !newText.hasPrefix("#") { return false }
             
             let tokens = newText.split(separator: " ", omittingEmptySubsequences: false)
             
@@ -141,9 +125,10 @@ struct HashtagInput: NSViewRepresentable {
                 
                 // Every token must start with #
                 if !token.hasPrefix("#") {
-                    let fullRange = fullHashtagRange(
+                    let fullRange = forwardSearch(
+                        " ",
                         in: currentText,
-                        at: range.location
+                        start: range.location
                     )
                     
                     // Replace entire hashtag with empty string
@@ -170,51 +155,52 @@ struct HashtagInput: NSViewRepresentable {
             return true
         }
         
-        private func fullHashtagRange(
+        private func forwardSearch(
+            _ character: String,
             in text: NSString,
-            at location: Int
+            start location: Int
         ) -> NSRange {
-
-            let length = text.length
-
             let start = location
             var end = location
-
+            
             // Move forward until space or end
-            while end < length {
+            while end < text.length {
                 let char = text.substring(with: NSRange(location: end, length: 1))
-                if char == " " { break }
+                if char == character { break }
                 end += 1
             }
-
+            
             return NSRange(location: start, length: end - start)
         }
         
-        func controlTextDidChange(_ obj: Notification) {
+        
+        func textDidChange(_ notification: Notification) {
             
-            guard
-                let textField = obj.object as? NSTextField,
-                let (cursor, textView) = getCursor(textField) else { return }
+            guard let textView = notification.object as? NSTextView else { return }
             
-            let currentText = textField.stringValue
+            let updatedText = textView.string
             
-            print("current text: \(currentText)")
+            parent.text = updatedText
             
-            // scan currentText by regex, split by space, remove none hashtag strings. and assign back parent.text = newString, while preserving cursor location
-            if let _ = parent.viewModel.findCursoredRange(text: currentText, cursorLocation: cursor) {
-                show(textField)
+            // If you need cursor logic:
+            let cursorLocation = textView.selectedRange().location
+            
+            if let _ = findCursoredRange(
+                text: updatedText,
+                cursorLocation: cursorLocation
+            ) {
+                show(textView)
             } else {
                 hide()
             }
-            parent.text = currentText
         }
         
         func controlTextDidEndEditing(_ obj: Notification) {
             parent.onCommit()
         }
         
-        func control(_ control: NSControl, textView: NSTextView, doCommandBy commandSelector: Selector) -> Bool {
-            switch commandSelector {
+        func textView(_ textView: NSTextView, doCommandBy: Selector) -> Bool {
+            switch doCommandBy {
             case #selector(NSResponder.moveDown(_:)):
                 parent.viewModel.keyboardAction = .down
                 return true
@@ -225,26 +211,24 @@ struct HashtagInput: NSViewRepresentable {
                 guard panel != nil else { return false } // if panel is not shown, hit enter will quit editing.
                 guard parent.viewModel.suggestionIndex != nil else { return false }
                 parent.viewModel.keyboardAction = .enter
-                
                 return true
             default:
                 return false
             }
         }
         
-        private func show(_ textField: NSTextField) {
-            if let anchor = _whereToAnchor(textField) {
-                _makePanel(anchor, textField)
+        private func show(_ textView: NSTextView) {
+            if let anchor = _whereToAnchor(textView) {
+                _makePanel(anchor, textView)
             } else {
                 hide()
             }
         }
         
-        private func _whereToAnchor(_ textField: NSTextField) -> NSRect? {
-            guard let cursor = getCursor(textField),
-                  let range = parent.viewModel.findCursoredRange(text: textField.stringValue, cursorLocation: cursor.0) else { return nil }
+        private func _whereToAnchor(_ textView: NSTextView) -> NSRect? {
+            guard
+                let range = findCursoredRange(text: textView.string, cursorLocation: textView.selectedRange().location) else { return nil }
             
-            let textView = cursor.1
             let hashtag = (textView.string as NSString).substring(with: range)
             
             parent.viewModel.query = hashtag
@@ -262,12 +246,12 @@ struct HashtagInput: NSViewRepresentable {
             return result
         }
         
-        private func _makePanel(_ anchor: NSRect, _ textField: NSTextField) {
+        private func _makePanel(_ anchor: NSRect, _ textView: NSTextView) {
             hide()
-            _setupPanel(anchor, textField)
+            _setupPanel(anchor, textView)
         }
         
-        private func _setupPanel(_ anchor: NSRect, _ textField: NSTextField) {
+        private func _setupPanel(_ anchor: NSRect, _ textView: NSTextView) {
             guard !parent.viewModel.hashtags.isEmpty else { return }
             
             let width: CGFloat = 200
@@ -315,7 +299,7 @@ struct HashtagInput: NSViewRepresentable {
             panel.acceptsMouseMovedEvents = true
             
             panel.contentViewController = NSHostingController(rootView: HashtagSuggestionListView(onTap: { [weak self] hashtag in
-                self?._insert(hashtag, textField)
+                self?._insert(hashtag, textView)
                 self?.hide()
             }).environmentObject(parent.viewModel))
             panel.orderFront(nil)
@@ -326,14 +310,12 @@ struct HashtagInput: NSViewRepresentable {
             panel = nil
         }
         
-        private func _insert(_ hashtag: String, _ textField: NSTextField) {
-            guard let cursor = getCursor(textField)?.0 else { return }
-            if let result = parent.viewModel.insert(text: textField.stringValue, hashtag: hashtag, cursorLocation: cursor) {
-                textField.attributedStringValue = result.0.highlightHashtags()
-                if let editor = textField.currentEditor() {
-                    editor.selectedRange = result.1
-                    editor.scrollRangeToVisible(result.1)
-                }
+        private func _insert(_ hashtag: String, _ textView: NSTextView) {
+            let cursor = textView.selectedRange().location
+            if let result = insert(text: textView.string, hashtag: hashtag, cursorLocation: cursor) {
+                textView.textStorage?.setAttributedString(result.0.highlightHashtags())
+                textView.selectedRange = result.1
+                textView.scrollRangeToVisible(result.1)
                 parent.text = result.0
             }
         }
@@ -344,6 +326,30 @@ struct HashtagInput: NSViewRepresentable {
                 return nil
             }
             return (textView.selectedRange().location, textView)
+        }
+        
+        @discardableResult
+        private func findCursoredRange(text: String, cursorLocation: Int) -> NSRange? {
+            let range = NSRange(text.startIndex..<text.endIndex, in: text)
+            let matches = String.RegexConstant.regex1.matches(in: text, range: range)
+            if let cursored = matches.filter({ (cursorLocation >= $0.range.location)
+                && (cursorLocation <= $0.range.location + $0.range.length) }).first {
+                return cursored.range
+            } else {
+                return nil
+            }
+        }
+        
+        private func insert(text: String, hashtag: String, cursorLocation: Int) -> (String, NSRange)? {
+            if let cursored = findCursoredRange(text: text, cursorLocation: cursorLocation),
+               let range = Range(cursored, in: text) {
+                let updated = text.replacingCharacters(in: range, with: hashtag)
+                let cursorRange = NSRange(updated.range(of: hashtag)!, in: updated)
+                let cursorRange1 = NSRange(location: cursorRange.location + cursorRange.length, length: 0)
+                return (updated, cursorRange1)
+            } else {
+                return nil
+            }
         }
     }
 }

@@ -102,28 +102,4 @@ class HashtagInputViewModel: ObservableObject {
             }
             .store(in: &cancellables)
     }
-    
-    @discardableResult
-    func findCursoredRange(text: String, cursorLocation: Int) -> NSRange? {
-        let range = NSRange(text.startIndex..<text.endIndex, in: text)
-        let matches = String.RegexConstant.regex1.matches(in: text, range: range)
-        if let cursored = matches.filter({ (cursorLocation >= $0.range.location)
-            && (cursorLocation <= $0.range.location + $0.range.length) }).first {
-            return cursored.range
-        } else {
-            return nil
-        }
-    }
-    
-    func insert(text: String, hashtag: String, cursorLocation: Int) -> (String, NSRange)? {
-        if let cursored = findCursoredRange(text: text, cursorLocation: cursorLocation),
-           let range = Range(cursored, in: text) {
-            let updated = text.replacingCharacters(in: range, with: hashtag)
-            let cursorRange = NSRange(updated.range(of: hashtag)!, in: updated)
-            let cursorRange1 = NSRange(location: cursorRange.location + cursorRange.length, length: 0)
-            return (updated, cursorRange1)
-        } else {
-            return nil
-        }
-    }
 }
