@@ -94,11 +94,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
         }
         
-        NotificationCenter.default.addObserver(forName: .onOutlineViewRowCount, object: nil, queue: nil) { [unowned self] noti in
-            guard let height = noti.object as? CGFloat else { return }
-            editWindowContentSize(height)
-        }
-        
         NotificationCenter.default.addObserver(forName: .onDragWindow, object: nil, queue: nil) { [weak self] noti in
 //            guard let p1 = noti.object as? FloatingPanel,
 //                  let p2 = self?.searchPanel,
@@ -147,30 +142,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
     }
     
-    private func setupEditWindow() {
-        let contentView = ContentView().environmentObject(cabinet)
-        let hostingView = NSHostingView(rootView: contentView)
-        
-        editWindow = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 800, height: 400),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
-            backing: .buffered,
-            defer: false
-        )
-        editWindow?.title = "Manage"
-        editWindow?.isReleasedWhenClosed = false
-        editWindow?.center()
-        editWindow?.contentView = hostingView
-        
-        // Post notification when window closes
-        NotificationCenter.default.addObserver(
-            forName: NSWindow.willCloseNotification,
-            object: editWindow,
-            queue: .main
-        ) { [weak self] _ in
-            NotificationCenter.default.post(name: .onEditPopoverClose, object: nil)
-        }
-    }
+//    private func setupEditWindow() {
+//        let contentView = ContentView().environmentObject(cabinet)
+//        let hostingView = NSHostingView(rootView: contentView)
+//        
+//        editWindow = NSWindow(
+//            contentRect: NSRect(x: 0, y: 0, width: 800, height: 400),
+//            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+//            backing: .buffered,
+//            defer: false
+//        )
+//        editWindow?.title = "Manage"
+//        editWindow?.isReleasedWhenClosed = false
+//        editWindow?.center()
+//        editWindow?.contentView = hostingView
+//        
+//        // Post notification when window closes
+//        NotificationCenter.default.addObserver(
+//            forName: NSWindow.willCloseNotification,
+//            object: editWindow,
+//            queue: .main
+//        ) { [weak self] _ in
+//            NotificationCenter.default.post(name: .onEditPopoverClose, object: nil)
+//        }
+//    }
     
     private func setupCollectionWindow() {
         let manageView = ManageView(selectionStore: ManageSelectionStore(cabinet: self.cabinet))
@@ -232,18 +227,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func edit() {
-        if editWindow == nil {
-            setupEditWindow()
-        }
-        
-        NSApp.activate(ignoringOtherApps: true)
-        
-        DispatchQueue.main.async {
-            self.editWindow?.makeKeyAndOrderFront(nil)
-            self.editWindow?.level = .floating
-            self.editWindow?.level = .normal
-            NSApp.arrangeInFront(nil)
-        }
+//        if editWindow == nil {
+//            setupEditWindow()
+//        }
+//        
+//        NSApp.activate(ignoringOtherApps: true)
+//        
+//        DispatchQueue.main.async {
+//            self.editWindow?.makeKeyAndOrderFront(nil)
+//            self.editWindow?.level = .floating
+//            self.editWindow?.level = .normal
+//            NSApp.arrangeInFront(nil)
+//        }
     }
     
     @objc func openCollection() {
@@ -259,17 +254,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             self.collectionWindow?.level = .normal
             NSApp.arrangeInFront(nil)
         }
-    }
-    
-    private func editWindowContentSize(_ height: CGFloat?) {
-        let h = height
-        ?? outlineViewHeight
-        ?? cabinet.storedEntries
-            .filter({ $0.parentId == nil })
-            .map({ $0.height })
-            .reduce(0, { $0 + $1 })
-        outlineViewHeight = h
-        editWindow?.setContentSize(CGSize(width: 800, height: (h <= 200 ? 200 : h) + 34))
     }
 }
 

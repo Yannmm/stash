@@ -19,10 +19,6 @@ extension Group: Entry {
     var icon: Icon { .system("cube.box.fill") }
     
     var container: Bool { true }
-    
-    var shouldExpand: Bool { false }
-    
-    var height: CGFloat { CellView.Constant.groupHeight }
 }
 
 extension Group {
