@@ -48,7 +48,7 @@ struct HashtagInput: NSViewRepresentable {
             // Already focused; do nothing.
             return
         }
-
+        
         textField.attributedStringValue = text.highlightHashtags()
         
         // Move cursor to end if it just became first responder
@@ -72,7 +72,7 @@ struct HashtagInput: NSViewRepresentable {
         
         private var lastValidText: String = ""
         private var isReverting = false
-
+        
         init(_ parent: HashtagInput) {
             self.parent = parent
             self.lastValidText = parent.text
@@ -103,58 +103,99 @@ struct HashtagInput: NSViewRepresentable {
         }
         
         // 🔥 This is where you get the NSTextView
-            func controlTextDidBeginEditing(_ obj: Notification) {
-                guard
-                    let textField = obj.object as? NSTextField,
-                    let window = textField.window,
-                    let textView = window.fieldEditor(true, for: textField) as? NSTextView
-                else { return }
-
-                textView.delegate = self
-            }
-
-            // 🔥 Intercept edits BEFORE insertion
-            func textView(
-                _ textView: NSTextView,
-                shouldChangeTextIn affectedCharRange: NSRange,
-                replacementString: String?
-            ) -> Bool {
-                
-                print("shouldChangeTextIn")
-
-                guard let replacement = replacementString else {
-                    return true
-                }
-
-                // Allow deletion
-                if replacement.isEmpty {
-                    return true
-                }
-
-                let current = textView.string as NSString
-                let newText = current.replacingCharacters(
-                    in: affectedCharRange,
-                    with: replacement
-                )
-
-                return isValidPartialHashtagString(newText)
-            }
+        func controlTextDidBeginEditing(_ obj: Notification) {
+            guard
+                let textField = obj.object as? NSTextField,
+                let window = textField.window,
+                let textView = window.fieldEditor(true, for: textField) as? NSTextView
+            else { return }
+            
+            textView.delegate = self
+        }
         
-        private func isValidPartialHashtagString(_ text: String) -> Bool {
-            if text.isEmpty { return true }
+        // 🔥 Intercept edits BEFORE insertion
+        func textView(
+            _ textView: NSTextView,
+            shouldChangeTextIn range: NSRange,
+            replacementString string: String?
+        ) -> Bool {
+            guard let string = string else { return true }
+            
+            // Allow deletion
+            //            if string.isEmpty { return true }
+            
+            let currentText = textView.string as NSString
+            let newText = currentText.replacingCharacters(in: range, with: string)
+            // Empty is fine
+            if newText.isEmpty { return true }
+            
+            print("new text: -> \(newText)")
+            
+            // Must start with #
+//            if !newText.hasPrefix("#") { return false }
+            
+            let tokens = newText.split(separator: " ", omittingEmptySubsequences: false)
+            
+            for token in tokens {
+                if token.isEmpty { continue } // allow trailing space + typing
+                
+                // Every token must start with #
+                if !token.hasPrefix("#") {
+                    let fullRange = fullHashtagRange(
+                        in: currentText,
+                        at: range.location
+                    )
+                    
+                    // Replace entire hashtag with empty string
+                    textView.textStorage?.replaceCharacters(
+                        in: fullRange,
+                        with: ""
+                    )
+                    
+                    // Move cursor to original '#'
+                    textView.setSelectedRange(
+                        NSRange(location: fullRange.location, length: 0)
+                    )
+                    
+                    return false
+                }
+                
+                // Remaining chars must be alphanumeric
+                let body = token.dropFirst()
+                if !body.allSatisfy({ $0.isLetter || $0.isNumber }) {
+                    return false
+                }
+            }
+            
+            return true
+        }
+        
+        private func fullHashtagRange(
+            in text: NSString,
+            at location: Int
+        ) -> NSRange {
 
-            let pattern = #"^(#?[A-Za-z0-9]*)(\s#?[A-Za-z0-9]*)*$"#
+            let length = text.length
 
-            return text.range(of: pattern, options: .regularExpression) != nil
-//            return true
+            let start = location
+            var end = location
+
+            // Move forward until space or end
+            while end < length {
+                let char = text.substring(with: NSRange(location: end, length: 1))
+                if char == " " { break }
+                end += 1
+            }
+
+            return NSRange(location: start, length: end - start)
         }
         
         func controlTextDidChange(_ obj: Notification) {
             
             guard
-                  let textField = obj.object as? NSTextField,
-                  let (cursor, textView) = getCursor(textField) else { return }
-
+                let textField = obj.object as? NSTextField,
+                let (cursor, textView) = getCursor(textField) else { return }
+            
             let currentText = textField.stringValue
             
             print("current text: \(currentText)")
