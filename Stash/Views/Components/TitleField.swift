@@ -37,7 +37,6 @@ struct TitleField: View {
                 case .system(let name):
                     Image(systemName: name)
                         .resizable()
-                        .aspectRatio(contentMode: .fit)
                         .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
                         .foregroundStyle(Color.theme)
                 case .favicon(let url):
@@ -55,7 +54,6 @@ struct TitleField: View {
                 case .local(let url):
                     Image(nsImage: NSWorkspace.shared.icon(forFile: url.path))
                         .resizable()
-                        .aspectRatio(contentMode: .fit)
                         .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
                 }
             } else {

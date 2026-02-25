@@ -18,7 +18,7 @@ struct HashtagField: View {
         HStack(spacing: 6) {
             Image(systemName: "tag")
                 .resizable()
-                .aspectRatio(contentMode: .fit)
+                .foregroundColor(.secondary)
                 .frame(width: NSImage.Constant.side1, height: NSImage.Constant.side1)
             //                .foregroundStyle(Color.theme)
             Divider()

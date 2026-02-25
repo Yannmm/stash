@@ -61,7 +61,7 @@ struct HashtagInput: NSViewRepresentable {
         }
     }
     
-    internal class Coordinator: NSObject, NSTextFieldDelegate {
+    internal class Coordinator: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         private var parent: HashtagInput
         
         private var panel: NSPanel!
@@ -102,35 +102,64 @@ struct HashtagInput: NSViewRepresentable {
             }
         }
         
+        // 🔥 This is where you get the NSTextView
+            func controlTextDidBeginEditing(_ obj: Notification) {
+                guard
+                    let textField = obj.object as? NSTextField,
+                    let window = textField.window,
+                    let textView = window.fieldEditor(true, for: textField) as? NSTextView
+                else { return }
+
+                textView.delegate = self
+            }
+
+            // 🔥 Intercept edits BEFORE insertion
+            func textView(
+                _ textView: NSTextView,
+                shouldChangeTextIn affectedCharRange: NSRange,
+                replacementString: String?
+            ) -> Bool {
+                
+                print("shouldChangeTextIn")
+
+                guard let replacement = replacementString else {
+                    return true
+                }
+
+                // Allow deletion
+                if replacement.isEmpty {
+                    return true
+                }
+
+                let current = textView.string as NSString
+                let newText = current.replacingCharacters(
+                    in: affectedCharRange,
+                    with: replacement
+                )
+
+                return isValidPartialHashtagString(newText)
+            }
+        
+        private func isValidPartialHashtagString(_ text: String) -> Bool {
+            if text.isEmpty { return true }
+
+            let pattern = #"^(#?[A-Za-z0-9]*)(\s#?[A-Za-z0-9]*)*$"#
+
+            return text.range(of: pattern, options: .regularExpression) != nil
+//            return true
+        }
+        
         func controlTextDidChange(_ obj: Notification) {
-            guard !isReverting,
+            
+            guard
                   let textField = obj.object as? NSTextField,
                   let (cursor, textView) = getCursor(textField) else { return }
 
             let currentText = textField.stringValue
-            let textBeforeCursor = (currentText as NSString).substring(to: cursor)
-
-            // Derive the prefix of the word currently at the cursor
-            let currentWordPrefix: String
-            if let lastSpaceRange = textBeforeCursor.range(of: " ", options: .backwards) {
-                currentWordPrefix = String(textBeforeCursor[lastSpaceRange.upperBound...])
-            } else {
-                currentWordPrefix = textBeforeCursor
-            }
-
-            // If the word at the cursor doesn't start with '#', revert to last valid text
-            if !currentWordPrefix.isEmpty && !currentWordPrefix.hasPrefix("#") {
-                isReverting = true
-                textField.attributedStringValue = lastValidText.highlightHashtags()
-                let newCursor = min(cursor, (lastValidText as NSString).length)
-                textView.selectedRange = NSRange(location: newCursor, length: 0)
-                parent.text = lastValidText
-                isReverting = false
-                return
-            }
-
-            lastValidText = currentText
-
+            
+            print("current text: \(currentText)")
+            
+            // scan currentText by regex, split by space, remove none hashtag strings. and assign back parent.text = newString, while preserving cursor location
             if let _ = parent.viewModel.findCursoredRange(text: currentText, cursorLocation: cursor) {
                 show(textField)
             } else {
