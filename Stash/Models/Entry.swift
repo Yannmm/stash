@@ -21,7 +21,7 @@ protocol Entry: Identifiable, Equatable, Hashable, Actionable {
     
     var container: Bool { get }
     
-    var hashtags: Set<String> { get set }
+    var hashtags: Set<String>? { get set }
 }
 
 extension Entry {

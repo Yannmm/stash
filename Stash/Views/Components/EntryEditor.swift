@@ -63,11 +63,11 @@ struct EntryEditor: View {
                     dismiss()
                 }
                 HashtagField(
-                    viewModel: HashtagInputViewModel(
-                        existingHashtags: viewModel.cabinet.$storedEntries
-                            .map({
-                                Set($0.map({ $0.hashtags }).flatMap({ $0 }))
-                            }).eraseToAnyPublisher()),
+                    existentials: viewModel.cabinet.$storedEntries
+                        .map({
+                            Set($0.map({ $0.hashtags ?? [] }).flatMap({ $0 }))
+                        }).eraseToAnyPublisher(),
+                    hashtags: $viewModel.hashtags,
                     disabled: hashtagDisabled
                 )
             }

@@ -17,5 +17,79 @@
             </Locations>
          </BreakpointContent>
       </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "8242D4FF-073C-4E2A-A835-A060F5BBE9FF"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Stash/ViewModels/EntryEditorViewModel.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "136"
+            endingLineNumber = "136"
+            landmarkName = "save()"
+            landmarkType = "7">
+            <Locations>
+               <Location
+                  uuid = "8242D4FF-073C-4E2A-A835-A060F5BBE9FF - f462c10b67e8a357"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Stashy.EntryEditorViewModel.save() -&gt; ()"
+                  moduleName = "Stashy.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/CHIPFANCIER/Stash/Stash/ViewModels/EntryEditorViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "136"
+                  endingLineNumber = "136">
+               </Location>
+               <Location
+                  uuid = "8242D4FF-073C-4E2A-A835-A060F5BBE9FF - f462c10b67e8a357"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Stashy.EntryEditorViewModel.save() -&gt; ()"
+                  moduleName = "Stashy.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/CHIPFANCIER/Stash/Stash/ViewModels/EntryEditorViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "136"
+                  endingLineNumber = "136">
+               </Location>
+               <Location
+                  uuid = "8242D4FF-073C-4E2A-A835-A060F5BBE9FF - f462c10b67e8a357"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "Stashy.EntryEditorViewModel.save() -&gt; ()"
+                  moduleName = "Stashy.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/CHIPFANCIER/Stash/Stash/ViewModels/EntryEditorViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "136"
+                  endingLineNumber = "136">
+               </Location>
+               <Location
+                  uuid = "8242D4FF-073C-4E2A-A835-A060F5BBE9FF - b9d1e5122567f205"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "closure #1 (Stashy.Entry) -&gt; Swift.Bool in Stashy.EntryEditorViewModel.save() -&gt; ()"
+                  moduleName = "Stashy.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/CHIPFANCIER/Stash/Stash/ViewModels/EntryEditorViewModel.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "136"
+                  endingLineNumber = "136">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
    </Breakpoints>
 </Bucket>

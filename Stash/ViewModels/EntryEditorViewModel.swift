@@ -28,6 +28,7 @@ class EntryEditorViewModel: ObservableObject {
     @Published var icon: Icon?
     @Published var title: String?
     @Published private(set) var progress: Progress
+    @Published var hashtags: Set<String>?
     
     @Published var loading = false
     @Published var error: (any Error)?
@@ -56,6 +57,7 @@ class EntryEditorViewModel: ObservableObject {
             self.title = entry?.name
             self.icon = entry?.icon
             self.progress = .savable(true)
+            self.hashtags = entry?.hashtags
         }
         
         bind()
@@ -129,8 +131,7 @@ class EntryEditorViewModel: ObservableObject {
         do {
             switch mode {
             case .create(let pid):
-                // TODO: 添加 hashtags
-                let b = Bookmark(id: UUID(), name: t, parentId: pid, url: u, hashtags: [])
+                let b = Bookmark(id: UUID(), name: t, parentId: pid, url: u, hashtags: hashtags)
                 
                 if let pid = pid, let index = cabinet.storedEntries.firstIndex(where: { $0.id == pid }) {
                     cabinet.storedEntries.insert(b, at: index + 1)
@@ -143,8 +144,7 @@ class EntryEditorViewModel: ObservableObject {
                 let old = cabinet.storedEntries.first(where: { $0.id == eid }) as? Bookmark
                 guard let o = old,
                         o.name != t || o.url != u else { return }
-                // TODO: 添加 hashtags
-                let b = Bookmark(id: eid, name: t, url: u, hashtags: [])
+                let b = Bookmark(id: eid, name: t, url: u, hashtags: hashtags)
                 try cabinet.update(entry: b)
             }
         } catch {

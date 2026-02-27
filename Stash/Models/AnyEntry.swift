@@ -18,7 +18,7 @@ struct AnyEntry: Codable {
     let name: String
     let type: EntryType
     let url: URL?
-    let hashtags: Set<String>
+    let hashtags: Set<String>?
     var children: [AnyEntry]
     
     // TODO: parse hashtags from title
@@ -60,7 +60,7 @@ struct AnyEntry: Codable {
         name = try container.decode(String.self, forKey: .name)
         type = try container.decode(EntryType.self, forKey: .type)
         url = try container.decodeIfPresent(URL.self, forKey: .url)
-        hashtags = try container.decodeIfPresent(Set<String>.self, forKey: .hashtags) ?? []
+        hashtags = try container.decodeIfPresent(Set<String>.self, forKey: .hashtags)
         children = try container.decodeIfPresent([AnyEntry].self, forKey: .children) ?? []
     }
     
@@ -70,7 +70,7 @@ struct AnyEntry: Codable {
         try container.encode(self.name, forKey: .name)
         try container.encode(self.type, forKey: .type)
         try container.encodeIfPresent(self.url, forKey: .url)
-        if self.hashtags.count > 0 {
+        if !(self.hashtags?.isEmpty ?? true) {
             try container.encode(self.hashtags, forKey: .hashtags)
         }
         if self.children.count > 0 {

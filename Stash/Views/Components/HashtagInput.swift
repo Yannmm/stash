@@ -9,9 +9,10 @@ import SwiftUI
 import Combine
 
 struct HashtagInput: NSViewRepresentable {
-    @EnvironmentObject var viewModel: HashtagInputViewModel
-    @Binding var text: String
+    let viewModel: HashtagInputViewModel
     let focused: Bool
+    @Binding var hashtags: Set<String>?
+    
     var font: NSFont?
     var onCommit: () -> Void = {}
     
@@ -31,13 +32,13 @@ struct HashtagInput: NSViewRepresentable {
         textField.usesSingleLineMode = true
         textField.focusRingType = .none
         textField.placeholderString = "Typing `#` to enter hashtag, space to separate"
-        textField.attributedStringValue = text.highlightHashtags()
+        textField.attributedStringValue = context.coordinator.text.highlightHashtags()
         return textField
     }
     
     func updateNSView(_ textField: NSTextField, context: Context) {
         textField.font = font
-        
+        context.coordinator.parent = self
         context.coordinator.monitorCursor(focused, textField)
         
         if let coordinator = textField.delegate as? Coordinator, !focused {
@@ -49,25 +50,27 @@ struct HashtagInput: NSViewRepresentable {
             return
         }
         
-        textField.attributedStringValue = text.highlightHashtags()
-        
-        // Move cursor to end if it just became first responder
-        DispatchQueue.main.async {
-            if let editor = textField.currentEditor() {
-                let range = NSRange(location: (editor.string as NSString).length, length: 0)
-                editor.selectedRange = range
-                editor.scrollRangeToVisible(range)
-            }
-        }
+        textField.attributedStringValue = context.coordinator.text.highlightHashtags()
     }
     
     internal class Coordinator: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
-        private var parent: HashtagInput
+        var parent: HashtagInput {
+            didSet {
+                self.text = (parent.hashtags ?? []).map({ $0 }).joined(separator: " ")
+            }
+        }
+        var text: String
+        
+        private func produce(_ text: String) {
+            parent.hashtags = Set(text.components(separatedBy: " ").filter({ $0.count > 1 && $0.hasPrefix("#") }))
+        }
+        
         private var panel: NSPanel!
         private var observer: NSObjectProtocol?
         
         init(_ parent: HashtagInput) {
             self.parent = parent
+            self.text = (parent.hashtags ?? []).map({ $0 }).joined(separator: " ")
         }
         
         deinit {
@@ -78,6 +81,11 @@ struct HashtagInput: NSViewRepresentable {
         }
         
         func monitorCursor(_ focused: Bool, _ textField: NSTextField) {
+            if let o = observer {
+                NotificationCenter.default.removeObserver(o)
+                observer = nil
+            }
+            
             if focused, let editor = textField.currentEditor() as? NSTextView {
                 observer = NotificationCenter.default.addObserver(
                     forName: NSTextView.didChangeSelectionNotification,
@@ -103,6 +111,7 @@ struct HashtagInput: NSViewRepresentable {
             else { return }
             
             textView.delegate = self
+            textView.isAutomaticTextReplacementEnabled = false
         }
         
         
@@ -118,7 +127,7 @@ struct HashtagInput: NSViewRepresentable {
             // Empty is fine
             if newText.isEmpty { return true }
             
-            let tokens = newText.split(separator: " ", omittingEmptySubsequences: false)
+            let tokens = newText.split(separator: " ", omittingEmptySubsequences: true)
             
             for token in tokens {
                 if token.isEmpty { continue } // allow trailing space + typing
@@ -141,7 +150,8 @@ struct HashtagInput: NSViewRepresentable {
                     textView.setSelectedRange(
                         NSRange(location: fullRange.location, length: 0)
                     )
-                    
+                    text = textView.string
+                    produce(text)
                     return false
                 }
                 
@@ -177,17 +187,12 @@ struct HashtagInput: NSViewRepresentable {
         func textDidChange(_ notification: Notification) {
             
             guard let textView = notification.object as? NSTextView else { return }
-            
-            let updatedText = textView.string
-            
-            parent.text = updatedText
-            
-            // If you need cursor logic:
-            let cursorLocation = textView.selectedRange().location
+            text = textView.string
+            produce(text)
             
             if let _ = findCursoredRange(
-                text: updatedText,
-                cursorLocation: cursorLocation
+                text: text,
+                cursorLocation: textView.selectedRange().location
             ) {
                 show(textView)
             } else {
@@ -316,7 +321,8 @@ struct HashtagInput: NSViewRepresentable {
                 textView.string = result.0
                 textView.selectedRange = result.1
                 textView.scrollRangeToVisible(result.1)
-                parent.text = result.0
+                text = result.0
+                produce(text)
             }
         }
         

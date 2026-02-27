@@ -12,7 +12,7 @@ struct Bookmark {
     var name: String
     var parentId: UUID?
     var url: URL
-    var hashtags: Set<String>
+    var hashtags: Set<String>?
 }
 
 extension Bookmark: Entry {
