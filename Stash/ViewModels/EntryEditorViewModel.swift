@@ -9,6 +9,7 @@ import AppKit
 import Combine
 import CombineExt
 import Kingfisher
+import OrderedCollections
 
 extension EntryEditorViewModel {
     enum Mode {
@@ -28,7 +29,7 @@ class EntryEditorViewModel: ObservableObject {
     @Published var icon: Icon?
     @Published var title: String?
     @Published private(set) var progress: Progress
-    @Published var hashtags: Set<String>?
+    @Published var hashtags: OrderedSet<String>?
     
     @Published var loading = false
     @Published var error: (any Error)?

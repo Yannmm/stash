@@ -7,17 +7,18 @@
 
 import SwiftUI
 import Combine
+import OrderedCollections
 
 struct HashtagField: View {
     @StateObject private var viewModel: HashtagInputViewModel
-    @Binding var hashtags: Set<String>?
+    @Binding var hashtags: OrderedSet<String>?
     let disabled: Bool
     
     @FocusState private var focused: Bool
     
     init(
-         existentials: AnyPublisher<Set<String>, Never>,
-         hashtags: Binding<Set<String>?>,
+         existentials: AnyPublisher<OrderedSet<String>, Never>,
+         hashtags: Binding<OrderedSet<String>?>,
          disabled: Bool
      ) {
          _viewModel = StateObject(

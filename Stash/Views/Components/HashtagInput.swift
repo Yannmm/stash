@@ -7,11 +7,13 @@
 
 import SwiftUI
 import Combine
+import OrderedCollections
+import AppKit
 
 struct HashtagInput: NSViewRepresentable {
     let viewModel: HashtagInputViewModel
     let focused: Bool
-    @Binding var hashtags: Set<String>?
+    @Binding var hashtags: OrderedSet<String>?
     
     var font: NSFont?
     var onCommit: () -> Void = {}
@@ -62,7 +64,7 @@ struct HashtagInput: NSViewRepresentable {
         var text: String
         
         private func produce(_ text: String) {
-            parent.hashtags = Set(text.components(separatedBy: " ").filter({ $0.count > 1 && $0.hasPrefix("#") }))
+            parent.hashtags = OrderedSet(text.components(separatedBy: " ").filter({ $0.count > 1 && $0.hasPrefix("#") }))
         }
         
         private var panel: NSPanel!
@@ -115,78 +117,97 @@ struct HashtagInput: NSViewRepresentable {
         }
         
         
-        func textView(
-            _ textView: NSTextView,
-            shouldChangeTextIn range: NSRange,
-            replacementString string: String?
-        ) -> Bool {
-            guard let string = string else { return true }
-            
-            let currentText = textView.string as NSString
-            let newText = currentText.replacingCharacters(in: range, with: string)
-            // Empty is fine
-            if newText.isEmpty { return true }
-            
-            let tokens = newText.split(separator: " ", omittingEmptySubsequences: true)
-            
-            for token in tokens {
-                if token.isEmpty { continue } // allow trailing space + typing
-                
-                // Every token must start with #
-                if !token.hasPrefix("#") {
-                    let fullRange = forwardSearch(
-                        " ",
-                        in: currentText,
-                        start: range.location
-                    )
-                    
-                    // Replace entire hashtag with empty string
-                    textView.textStorage?.replaceCharacters(
-                        in: fullRange,
-                        with: ""
-                    )
-                    
-                    // Move cursor to original '#'
-                    textView.setSelectedRange(
-                        NSRange(location: fullRange.location, length: 0)
-                    )
-                    text = textView.string
-                    produce(text)
-                    return false
-                }
-                
-                // Remaining chars must be alphanumeric
-                let body = token.dropFirst()
-                if !body.allSatisfy({ $0.isLetter || $0.isNumber }) {
-                    return false
-                }
-            }
-            
-            return true
-        }
+        //        func textView(
+        //            _ textView: NSTextView,
+        //            shouldChangeTextIn range: NSRange,
+        //            replacementString string: String?
+        //        ) -> Bool {
+        //            // Allow IME composition updates (e.g. Pinyin "ni hao") without
+        //            // applying hashtag validation until the text is committed.
+        //            guard !textView.hasMarkedText() else { return true }
+        //
+        //            guard let string = string else { return true }
+        //
+        //            let currentText = textView.string as NSString
+        //            let newText = currentText.replacingCharacters(in: range, with: string)
+        //
+        //            // Empty is fine
+        //            if newText.isEmpty { return true }
+        //
+        //            let tokens = newText.split(separator: " ", omittingEmptySubsequences: true)
+        //
+        //            for token in tokens {
+        //                if token.isEmpty { continue } // allow trailing space + typing
+        //
+        //                // Every token must start with #
+        //                if !token.hasPrefix("#") {
+        //                    let fullRange = forwardSearch(
+        //                        " ",
+        //                        in: currentText,
+        //                        start: range.location
+        //                    )
+        //
+        //                    // Replace entire hashtag with empty string
+        //                    textView.textStorage?.replaceCharacters(
+        //                        in: fullRange,
+        //                        with: ""
+        //                    )
+        //
+        //                    // Move cursor to original '#'
+        //                    textView.setSelectedRange(
+        //                        NSRange(location: fullRange.location, length: 0)
+        //                    )
+        //                    text = textView.string
+        //                    produce(text)
+        //                    return false
+        //                }
+        //            }
+        //
+        //            return true
+        //        }
         
-        private func forwardSearch(
-            _ character: String,
-            in text: NSString,
-            start location: Int
-        ) -> NSRange {
-            let start = location
-            var end = location
-            
-            // Move forward until space or end
-            while end < text.length {
-                let char = text.substring(with: NSRange(location: end, length: 1))
-                if char == character { break }
-                end += 1
-            }
-            
-            return NSRange(location: start, length: end - start)
-        }
-        
+        //        func textDidChange(_ notification: Notification) {
+        //            guard let textView = notification.object as? NSTextView else { return }
+        //
+        //            text = textView.string
+        //            produce(text)
+        //
+        //            if let _ = findCursoredRange(
+        //                text: text,
+        //                cursorLocation: textView.selectedRange().location
+        //            ) {
+        //                show(textView)
+        //            } else {
+        //                hide()
+        //            }
+        //        }
         
         func textDidChange(_ notification: Notification) {
-            
             guard let textView = notification.object as? NSTextView else { return }
+            
+            // 🔒 Never touch during IME composition
+            guard !textView.hasMarkedText() else { return }
+            
+            let originalText = textView.string
+            let cursorLocation = textView.selectedRange().location
+            
+            let (normalizedText, newCursor) = _normalize(
+                text: originalText,
+                cursorLocation: cursorLocation
+            )
+            
+            if normalizedText != originalText {
+                
+                textView.textStorage?.beginEditing()
+                textView.textStorage?.replaceCharacters(
+                    in: NSRange(location: 0, length: (originalText as NSString).length),
+                    with: normalizedText
+                )
+                textView.textStorage?.endEditing()
+                
+                textView.setSelectedRange(NSRange(location: newCursor, length: 0))
+            }
+            
             text = textView.string
             produce(text)
             
@@ -198,6 +219,70 @@ struct HashtagInput: NSViewRepresentable {
             } else {
                 hide()
             }
+        }
+        
+        private func _normalize(
+            text: String,
+            cursorLocation: Int
+        ) -> (String, Int) {
+
+            let nsText = text as NSString
+            let length = nsText.length
+
+            var result = ""
+            var newCursor = cursorLocation
+            var index = 0
+
+            while index < length {
+
+                if nsText.character(at: index) == 32 {
+                    result.append(" ")
+                    index += 1
+                    continue
+                }
+
+                let tokenStart = index
+                var tokenEnd = index
+
+                while tokenEnd < length,
+                      nsText.character(at: tokenEnd) != 32 {
+                    tokenEnd += 1
+                }
+
+                let tokenRange = NSRange(
+                    location: tokenStart,
+                    length: tokenEnd - tokenStart
+                )
+
+                let token = nsText.substring(with: tokenRange)
+
+                let isValid =
+                    token.hasPrefix("#") &&
+                    !token.dropFirst().contains("#")
+
+                if isValid {
+                    result.append(token)
+                } else {
+
+                    let removedLength = tokenRange.length
+
+                    if cursorLocation > tokenStart &&
+                       cursorLocation <= tokenEnd {
+                        newCursor = (result as NSString).length
+                    }
+
+                    if cursorLocation > tokenEnd {
+                        newCursor -= removedLength
+                    }
+                }
+
+                index = tokenEnd
+            }
+
+            let utf16Length = (result as NSString).length
+            newCursor = max(0, min(newCursor, utf16Length))
+
+            return (result, newCursor)
         }
         
         func controlTextDidEndEditing(_ obj: Notification) {
@@ -220,6 +305,24 @@ struct HashtagInput: NSViewRepresentable {
             default:
                 return false
             }
+        }
+        
+        private func forwardSearch(
+            _ character: String,
+            in text: NSString,
+            start location: Int
+        ) -> NSRange {
+            let start = location
+            var end = location
+            
+            // Move forward until space or end
+            while end < text.length {
+                let char = text.substring(with: NSRange(location: end, length: 1))
+                if char == character { break }
+                end += 1
+            }
+            
+            return NSRange(location: start, length: end - start)
         }
         
         private func show(_ textView: NSTextView) {

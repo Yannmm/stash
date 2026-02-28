@@ -12,6 +12,7 @@
 		720642CA2D8DBA0600F62043 /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = 720642C92D8DBA0600F62043 /* HotKey */; };
 		7245871D2E1913FB00804B21 /* CodableCSV in Frameworks */ = {isa = PBXBuildFile; productRef = 7245871C2E1913FB00804B21 /* CodableCSV */; };
 		726B64F82D6DCEA1000AA419 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 726B64F72D6DCEA1000AA419 /* SwiftSoup */; };
+		7276CF1E2F530F4B00B25FA5 /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 7276CF1D2F530F4B00B25FA5 /* OrderedCollections */; };
 		72B6462E2E9A6668009DE023 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 72B646272E9A6668009DE023 /* README.md */; };
 		72D8AE7C2E635B6900D6DACB /* CombineExt in Frameworks */ = {isa = PBXBuildFile; productRef = 72D8AE7B2E635B6900D6DACB /* CombineExt */; };
 /* End PBXBuildFile section */
@@ -68,6 +69,7 @@
 				6DCEC8752DAC9A9B00089699 /* Glur in Frameworks */,
 				726B64F82D6DCEA1000AA419 /* SwiftSoup in Frameworks */,
 				72D8AE7C2E635B6900D6DACB /* CombineExt in Frameworks */,
+				7276CF1E2F530F4B00B25FA5 /* OrderedCollections in Frameworks */,
 				7245871D2E1913FB00804B21 /* CodableCSV in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -144,6 +146,7 @@
 				6DCEC8742DAC9A9B00089699 /* Glur */,
 				7245871C2E1913FB00804B21 /* CodableCSV */,
 				72D8AE7B2E635B6900D6DACB /* CombineExt */,
+				7276CF1D2F530F4B00B25FA5 /* OrderedCollections */,
 			);
 			productName = Stash;
 			productReference = 7222C1C02D491BEC00096255 /* Stashy.app */;
@@ -234,6 +237,7 @@
 				6DCEC8732DAC9A9200089699 /* XCRemoteSwiftPackageReference "Glur" */,
 				7245868F2E19136300804B21 /* XCRemoteSwiftPackageReference "CodableCSV" */,
 				72D8ADD82E635A3100D6DACB /* XCRemoteSwiftPackageReference "CombineExt" */,
+				7276CE682F530D5300B25FA5 /* XCRemoteSwiftPackageReference "swift-collections" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7222C1C12D491BEC00096255 /* Products */;
@@ -644,6 +648,14 @@
 				minimumVersion = 2.8.0;
 			};
 		};
+		7276CE682F530D5300B25FA5 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-collections.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.0;
+			};
+		};
 		72D8ADD82E635A3100D6DACB /* XCRemoteSwiftPackageReference "CombineExt" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/CombineCommunity/CombineExt.git";
@@ -679,6 +691,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 726B64F32D6DCE32000AA419 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
 			productName = SwiftSoup;
+		};
+		7276CF1D2F530F4B00B25FA5 /* OrderedCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7276CE682F530D5300B25FA5 /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = OrderedCollections;
 		};
 		72D8AE7B2E635B6900D6DACB /* CombineExt */ = {
 			isa = XCSwiftPackageProductDependency;

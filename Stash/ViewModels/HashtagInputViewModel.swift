@@ -8,9 +8,10 @@
 import Combine
 import CombineExt
 import AppKit
+import OrderedCollections
 
 class HashtagInputViewModel: ObservableObject {
-    let existentials: AnyPublisher<Set<String>, Never>
+    let existentials: AnyPublisher<OrderedSet<String>, Never>
     @Published var title: String?
     @Published var hashtags: [String] = []
     @Published var query: String?
@@ -24,13 +25,13 @@ class HashtagInputViewModel: ObservableObject {
     
     var selected: AnyPublisher<String, Never> { _select.eraseToAnyPublisher() }
     
-    init(existentials: AnyPublisher<Set<String>, Never>) {
+    init(existentials: AnyPublisher<OrderedSet<String>, Never>) {
         self.existentials = existentials
         bind()
     }
     
     private func bind() {
-        func _extract(_ source: some Publisher<[String], Never>) -> some Publisher<Set<String>, Never> {
+        func _extract(_ source: some Publisher<[String], Never>) -> some Publisher<OrderedSet<String>, Never> {
             source
                 .map {
                     $0
@@ -41,7 +42,7 @@ class HashtagInputViewModel: ObservableObject {
                         })
                         .flatMap({ $0 })
                 }
-                .map({ Set($0) })
+                .map({ OrderedSet($0) })
         }
         
         let existings = _extract($title.map({ $0.map({ o in [o] }) ?? [] }))

@@ -6,13 +6,14 @@
 //
 
 import Cocoa
+import OrderedCollections
 
 struct Bookmark {
     var id: UUID
     var name: String
     var parentId: UUID?
     var url: URL
-    var hashtags: Set<String>?
+    var hashtags: OrderedSet<String>?
 }
 
 extension Bookmark: Entry {

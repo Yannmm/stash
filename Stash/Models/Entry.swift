@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OrderedCollections
 
 protocol Entry: Identifiable, Equatable, Hashable, Actionable {
     var id: UUID { set get }
@@ -21,7 +22,7 @@ protocol Entry: Identifiable, Equatable, Hashable, Actionable {
     
     var container: Bool { get }
     
-    var hashtags: Set<String>? { get set }
+    var hashtags: OrderedSet<String>? { get set }
 }
 
 extension Entry {

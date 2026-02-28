@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OrderedCollections
 
 enum EntryType: String, Codable {
     case bookmark
@@ -18,11 +19,12 @@ struct AnyEntry: Codable {
     let name: String
     let type: EntryType
     let url: URL?
-    let hashtags: Set<String>?
+    let hashtags: Array<String>?
     var children: [AnyEntry]
     
     // TODO: parse hashtags from title
-    init(id: UUID?, name: String, type: EntryType, url: URL?, hashtags: Set<String>, children: [AnyEntry]) {
+//    xxxxx
+    init(id: UUID?, name: String, type: EntryType, url: URL?, hashtags: Array<String>, children: [AnyEntry]) {
         self.id = id ?? UUID()
         self.name = name
         self.type = type
@@ -35,7 +37,7 @@ struct AnyEntry: Codable {
     init(_ entry: any Entry) {
         self.id = entry.id
         self.name = entry.name
-        self.hashtags = entry.hashtags
+        self.hashtags = entry.hashtags.flatMap({ Array($0) })
         self.children = []
         
         switch entry {
@@ -60,7 +62,7 @@ struct AnyEntry: Codable {
         name = try container.decode(String.self, forKey: .name)
         type = try container.decode(EntryType.self, forKey: .type)
         url = try container.decodeIfPresent(URL.self, forKey: .url)
-        hashtags = try container.decodeIfPresent(Set<String>.self, forKey: .hashtags)
+        hashtags = try container.decodeIfPresent(Array<String>.self, forKey: .hashtags)
         children = try container.decodeIfPresent([AnyEntry].self, forKey: .children) ?? []
     }
     
@@ -83,9 +85,9 @@ extension AnyEntry {
     func asEntry(with parentId: UUID?) -> any Entry {
         switch self.type {
         case .bookmark:
-            return Bookmark(id: id, name: name, parentId: parentId, url: url!, hashtags: hashtags)
+            return Bookmark(id: id, name: name, parentId: parentId, url: url!, hashtags: hashtags.flatMap({ OrderedSet($0) }))
         case .directory:
-            return Group(id: id, name: name, parentId: parentId, hashtags: hashtags)
+            return Group(id: id, name: name, parentId: parentId, hashtags: hashtags.flatMap({ OrderedSet($0) }))
         }
     }
 }

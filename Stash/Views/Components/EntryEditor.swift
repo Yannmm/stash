@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import OrderedCollections
 
 extension EntryEditor {
     enum Field: Hashable {
@@ -65,7 +66,7 @@ struct EntryEditor: View {
                 HashtagField(
                     existentials: viewModel.cabinet.$storedEntries
                         .map({
-                            Set($0.map({ $0.hashtags ?? [] }).flatMap({ $0 }))
+                            OrderedSet($0.map({ $0.hashtags ?? [] }).flatMap({ $0 }))
                         }).eraseToAnyPublisher(),
                     hashtags: $viewModel.hashtags,
                     disabled: hashtagDisabled

@@ -6,13 +6,14 @@
 //
 
 import Foundation
+import OrderedCollections
 
 /// Logical group
 struct Group {
     var id: UUID
     var name: String
     var parentId: UUID?
-    var hashtags: Set<String>?
+    var hashtags: OrderedSet<String>?
 }
 
 extension Group: Entry {
