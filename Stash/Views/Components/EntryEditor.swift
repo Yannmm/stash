@@ -89,9 +89,11 @@ struct EntryEditor: View {
             case .parsable(_):
                 break
             case .savable(_):
-                focusedField = .title
-                titleDisabled = false
-                hashtagDisabled = false
+                if focusedField == .path {
+                    focusedField = .title
+                    titleDisabled = false
+                    hashtagDisabled = false
+                }
             }
         }
         .task {

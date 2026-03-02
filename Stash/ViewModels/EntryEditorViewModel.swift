@@ -41,7 +41,7 @@ class EntryEditorViewModel: ObservableObject {
     let mode: Mode
     let cabinet: OkamuraCabinet
     let dominator: Dominator
-
+    
     init(mode: Mode, cabinet: OkamuraCabinet, dominator: Dominator) {
         self.mode = mode
         self.cabinet = cabinet
@@ -57,7 +57,7 @@ class EntryEditorViewModel: ObservableObject {
             self.url = (entry as? Bookmark)?.url
             self.title = entry?.name
             self.icon = entry?.icon
-            self.progress = .savable(true)
+            self.progress = .savable(false)
             self.hashtags = entry?.hashtags
         }
         
@@ -67,25 +67,32 @@ class EntryEditorViewModel: ObservableObject {
     private func bind() {
         $path
             .removeDuplicates()
-            .map({ Progress.parsable(($0 ?? "").count > 4)})
             .dropFirst()
+            .map({ Progress.parsable(($0 ?? "").count > 4)})
             .receive(on: RunLoop.main)
             .sink { [weak self] p in
                 self?.progress = p
                 self?.title = nil
                 self?.icon = nil
+                self?.hashtags = nil
             }
             .store(in: &cancellables)
         
-        $title
-            .compactMap({ $0 })
-            .removeDuplicates()
-            .map({ Progress.savable(!($0.isEmpty)) })
-            .receive(on: RunLoop.main)
-            .sink { [weak self] p in
-                self?.progress = p
-            }
-            .store(in: &cancellables)
+        Publishers.CombineLatest(
+            $title
+                .removeDuplicates(),
+            $hashtags
+                .map({ $0 ?? [] })
+                .removeDuplicates()
+        )
+        .dropFirst()
+        .filter({ a, b in a != nil })
+        .map({ Progress.savable(!($0.0!.isEmpty)) })
+        .receive(on: RunLoop.main)
+        .sink { [weak self] p in
+            self?.progress = p
+        }
+        .store(in: &cancellables)
     }
     
     func parse() {
@@ -99,9 +106,9 @@ class EntryEditorViewModel: ObservableObject {
                 guard let p = path, !p.isEmpty else {
                     throw CraftError.emptyPath
                 }
-
+                
                 let path = Path(p)
-
+                
                 switch path {
                 case .file(let url):
                     self.url = url
@@ -112,7 +119,7 @@ class EntryEditorViewModel: ObservableObject {
                 case .whatever(let url):
                     self.url = url
                 }
-
+                
                 try Task.checkCancellation()
                 let _ = try await updateTitle(path)
                 try Task.checkCancellation()
@@ -127,7 +134,7 @@ class EntryEditorViewModel: ObservableObject {
     }
     
     func save() {
-//        return
+        //        return
         guard let t = title, let u = url else { return }
         do {
             switch mode {
@@ -142,9 +149,8 @@ class EntryEditorViewModel: ObservableObject {
                 try cabinet.save()
                 
             case .update(let eid):
-                let old = cabinet.storedEntries.first(where: { $0.id == eid }) as? Bookmark
-                guard let o = old,
-                        o.name != t || o.url != u else { return }
+                //                let old = cabinet.storedEntries.first(where: { $0.id == eid }) as? Bookmark
+                //                guard let o = old else { return }
                 let b = Bookmark(id: eid, name: t, url: u, hashtags: hashtags)
                 try cabinet.update(entry: b)
             }
