@@ -34,7 +34,6 @@ struct HashtagInput: NSViewRepresentable {
         textField.usesSingleLineMode = true
         textField.focusRingType = .none
         textField.placeholderString = "Typing `#` to enter hashtag, space to separate"
-        textField.attributedStringValue = context.coordinator.text.highlightHashtags()
         return textField
     }
     
@@ -47,7 +46,7 @@ struct HashtagInput: NSViewRepresentable {
             coordinator.hide()
         }
         
-        guard textField.window?.firstResponder != textField.currentEditor() else {
+        if let a = textField.window?.firstResponder, let b = textField.currentEditor(), a === b {
             // Already focused; do nothing.
             return
         }
@@ -115,72 +114,6 @@ struct HashtagInput: NSViewRepresentable {
             textView.delegate = self
             textView.isAutomaticTextReplacementEnabled = false
         }
-        
-        
-        //        func textView(
-        //            _ textView: NSTextView,
-        //            shouldChangeTextIn range: NSRange,
-        //            replacementString string: String?
-        //        ) -> Bool {
-        //            // Allow IME composition updates (e.g. Pinyin "ni hao") without
-        //            // applying hashtag validation until the text is committed.
-        //            guard !textView.hasMarkedText() else { return true }
-        //
-        //            guard let string = string else { return true }
-        //
-        //            let currentText = textView.string as NSString
-        //            let newText = currentText.replacingCharacters(in: range, with: string)
-        //
-        //            // Empty is fine
-        //            if newText.isEmpty { return true }
-        //
-        //            let tokens = newText.split(separator: " ", omittingEmptySubsequences: true)
-        //
-        //            for token in tokens {
-        //                if token.isEmpty { continue } // allow trailing space + typing
-        //
-        //                // Every token must start with #
-        //                if !token.hasPrefix("#") {
-        //                    let fullRange = forwardSearch(
-        //                        " ",
-        //                        in: currentText,
-        //                        start: range.location
-        //                    )
-        //
-        //                    // Replace entire hashtag with empty string
-        //                    textView.textStorage?.replaceCharacters(
-        //                        in: fullRange,
-        //                        with: ""
-        //                    )
-        //
-        //                    // Move cursor to original '#'
-        //                    textView.setSelectedRange(
-        //                        NSRange(location: fullRange.location, length: 0)
-        //                    )
-        //                    text = textView.string
-        //                    produce(text)
-        //                    return false
-        //                }
-        //            }
-        //
-        //            return true
-        //        }
-        
-        //        func textDidChange(_ notification: Notification) {
-        //            guard let textView = notification.object as? NSTextView else { return }
-        //
-        //            text = textView.string
-        //            produce(text)
-        //
-        //            if let _ = findCursoredRange(
-        //                text: text,
-        //                cursorLocation: textView.selectedRange().location
-        //            ) {
-        //                show(textView)
-        //            } else {
-        //                hide()
-        //            }
-        //        }
         
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
