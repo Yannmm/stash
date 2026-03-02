@@ -42,24 +42,21 @@ struct HashtagInput: NSViewRepresentable {
         context.coordinator.parent = self
         context.coordinator.monitorCursor(focused, textField)
         
-        if let coordinator = textField.delegate as? Coordinator, !focused {
-            coordinator.hide()
-        }
+//        if parent.hashtags?.joined(separator: " ") != text {
+//            text = parent.hashtags?.joined(separator: " ") ?? ""
+//        }
         
-        if let a = textField.window?.firstResponder, let b = textField.currentEditor(), a === b {
-            // Already focused; do nothing.
-            return
-        }
-        
-        textField.attributedStringValue = context.coordinator.text.highlightHashtags()
+//        if let coordinator = textField.delegate as? Coordinator, !focused {
+//            coordinator.hide()
+//        }
+//        
+//        if !focused {
+//            textField.attributedStringValue = context.coordinator.text.highlightHashtags()
+//        }
     }
     
     internal class Coordinator: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
-        var parent: HashtagInput {
-            didSet {
-                self.text = (parent.hashtags ?? []).map({ $0 }).joined(separator: " ")
-            }
-        }
+        var parent: HashtagInput
         var text: String
         
         private func produce(_ text: String) {
@@ -117,9 +114,9 @@ struct HashtagInput: NSViewRepresentable {
         
         func textDidChange(_ notification: Notification) {
             guard let textView = notification.object as? NSTextView else { return }
-            
-            // 🔒 Never touch during IME composition
             guard !textView.hasMarkedText() else { return }
+            
+            guard let textStorage = textView.textStorage else { return }
             
             let originalText = textView.string
             let cursorLocation = textView.selectedRange().location
@@ -129,15 +126,19 @@ struct HashtagInput: NSViewRepresentable {
                 cursorLocation: cursorLocation
             )
             
+            textStorage.beginEditing()
+            
             if normalizedText != originalText {
-                
-                textView.textStorage?.beginEditing()
-                textView.textStorage?.replaceCharacters(
-                    in: NSRange(location: 0, length: (originalText as NSString).length),
+                textStorage.replaceCharacters(
+                    in: NSRange(location: 0,
+                                length: (originalText as NSString).length),
                     with: normalizedText
                 )
-                textView.textStorage?.endEditing()
-                
+            }
+            
+            textStorage.endEditing()
+            
+            if normalizedText != originalText {
                 textView.setSelectedRange(NSRange(location: newCursor, length: 0))
             }
             
@@ -158,67 +159,74 @@ struct HashtagInput: NSViewRepresentable {
             text: String,
             cursorLocation: Int
         ) -> (String, Int) {
-
+            
             let nsText = text as NSString
             let length = nsText.length
-
+            
             var result = ""
             var newCursor = cursorLocation
             var index = 0
-
+            
             while index < length {
-
+                
                 if nsText.character(at: index) == 32 {
                     result.append(" ")
                     index += 1
                     continue
                 }
-
+                
                 let tokenStart = index
                 var tokenEnd = index
-
+                
                 while tokenEnd < length,
                       nsText.character(at: tokenEnd) != 32 {
                     tokenEnd += 1
                 }
-
+                
                 let tokenRange = NSRange(
                     location: tokenStart,
                     length: tokenEnd - tokenStart
                 )
-
+                
                 let token = nsText.substring(with: tokenRange)
-
+                
                 let isValid =
-                    token.hasPrefix("#") &&
-                    !token.dropFirst().contains("#")
-
+                token.hasPrefix("#") &&
+                !token.dropFirst().contains("#")
+                
                 if isValid {
                     result.append(token)
                 } else {
-
+                    
                     let removedLength = tokenRange.length
-
+                    
                     if cursorLocation > tokenStart &&
-                       cursorLocation <= tokenEnd {
+                        cursorLocation <= tokenEnd {
                         newCursor = (result as NSString).length
                     }
-
+                    
                     if cursorLocation > tokenEnd {
                         newCursor -= removedLength
                     }
                 }
-
+                
                 index = tokenEnd
             }
-
+            
             let utf16Length = (result as NSString).length
             newCursor = max(0, min(newCursor, utf16Length))
-
+            
             return (result, newCursor)
         }
         
+//        func controlTextDidEndEditing(_ obj: Notification) {
+//            parent.onCommit()
+//        }
+        
         func controlTextDidEndEditing(_ obj: Notification) {
+            guard let textField = obj.object as? NSTextField else { return }
+
+            textField.attributedStringValue = text.highlightHashtags()
             parent.onCommit()
         }
         
@@ -238,24 +246,6 @@ struct HashtagInput: NSViewRepresentable {
             default:
                 return false
             }
-        }
-        
-        private func forwardSearch(
-            _ character: String,
-            in text: NSString,
-            start location: Int
-        ) -> NSRange {
-            let start = location
-            var end = location
-            
-            // Move forward until space or end
-            while end < text.length {
-                let char = text.substring(with: NSRange(location: end, length: 1))
-                if char == character { break }
-                end += 1
-            }
-            
-            return NSRange(location: start, length: end - start)
         }
         
         private func show(_ textView: NSTextView) {
