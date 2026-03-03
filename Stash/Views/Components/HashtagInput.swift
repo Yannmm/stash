@@ -21,7 +21,6 @@ struct HashtagInput: NSViewRepresentable {
     }
     
     func makeNSView(context: Context) -> NSTextField {
-        print("makeNSView")
         let textField = NSTextField()
         textField.delegate = context.coordinator
         textField.isEditable = true
@@ -32,44 +31,36 @@ struct HashtagInput: NSViewRepresentable {
         textField.usesSingleLineMode = true
         textField.focusRingType = .none
         textField.placeholderString = "Typing `#` to enter hashtag, space to separate"
+        textField.attributedStringValue = (hashtags ?? []).map({ $0 }).joined(separator: " ").highlightHashtags()
         return textField
     }
     
     func updateNSView(_ textField: NSTextField, context: Context) {
-        print("makeNSView")
+        context.coordinator.monitorCursor(focused, textField)
         textField.font = font
         context.coordinator.parent = self
-        context.coordinator.monitorCursor(focused, textField)
-        
-//        if parent.hashtags?.joined(separator: " ") != text {
-//            text = parent.hashtags?.joined(separator: " ") ?? ""
-//        }
-        
-//        if let coordinator = textField.delegate as? Coordinator, !focused {
-//            coordinator.hide()
-//        }
-//        
-//        if !focused {
-//            textField.attributedStringValue = context.coordinator.text.highlightHashtags()
-//        }
+        let text = (hashtags ?? []).map({ $0 }).joined(separator: " ")
+        if !focused {
+            textField.attributedStringValue = text.highlightHashtags()
+            if let xx = textField.currentEditor() as? NSTextView {
+                print("111111111")
+                xx.textStorage?.setAttributedString(text.highlightHashtags())
+            }
+        }
+    }
+    
+    static func dismantleNSView(_ textField: NSTextField, coordinator: Coordinator) {
+        coordinator.monitorCursor(false, textField)
     }
     
     internal class Coordinator: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
         var parent: HashtagInput
-        var text: String
-        
-        private func produce(_ text: String) {
-            parent.hashtags = OrderedSet(text.components(separatedBy: " ").filter({ $0.count > 1 && $0.hasPrefix("#") }))
-        }
-        
+        private weak var textField: NSTextField?
         private var panel: NSPanel!
         private var observer: NSObjectProtocol?
         
         init(_ parent: HashtagInput) {
             self.parent = parent
-            self.text = (parent.hashtags ?? []).map({ $0 }).joined(separator: " ")
-            
-            print("text -> \(self.text)")
         }
         
         deinit {
@@ -77,6 +68,10 @@ struct HashtagInput: NSViewRepresentable {
                 NotificationCenter.default.removeObserver(o)
                 observer = nil
             }
+        }
+        
+        private func produce(_ text: String) {
+            parent.hashtags = OrderedSet(text.components(separatedBy: " ").filter({ $0.count > 1 && $0.hasPrefix("#") }))
         }
         
         func monitorCursor(_ focused: Bool, _ textField: NSTextField) {
@@ -93,11 +88,6 @@ struct HashtagInput: NSViewRepresentable {
                 ) { [weak self] notification in
                     self?.hide()
                 }
-            } else {
-                if let o = observer {
-                    NotificationCenter.default.removeObserver(o)
-                    observer = nil
-                }
             }
         }
         
@@ -108,9 +98,10 @@ struct HashtagInput: NSViewRepresentable {
                 let window = textField.window,
                 let textView = window.fieldEditor(true, for: textField) as? NSTextView
             else { return }
-            
             textView.delegate = self
             textView.isAutomaticTextReplacementEnabled = false
+            
+            self.textField = textField
         }
         
         func textDidChange(_ notification: Notification) {
@@ -143,8 +134,10 @@ struct HashtagInput: NSViewRepresentable {
                 textView.setSelectedRange(NSRange(location: newCursor, length: 0))
             }
             
-            text = textView.string
+            let text = textView.string
             produce(text)
+            
+            textField?.stringValue = text
             
             if let _ = findCursoredRange(
                 text: text,
@@ -153,6 +146,34 @@ struct HashtagInput: NSViewRepresentable {
                 show(textView)
             } else {
                 hide()
+            }
+        }
+                
+        func textDidEndEditing(_ obj: Notification) {
+            guard let textView = obj.object as? NSTextView else { return }
+            
+            let text = textView.string
+            // Apply highlighting
+            textView.textStorage?.setAttributedString(text.highlightHashtags())
+            // Ensure backing value is correct
+            textField?.stringValue = text
+        }
+        
+        func textView(_ textView: NSTextView, doCommandBy: Selector) -> Bool {
+            switch doCommandBy {
+            case #selector(NSResponder.moveDown(_:)):
+                parent.viewModel.keyboardAction = .down
+                return true
+            case #selector(NSResponder.moveUp(_:)):
+                parent.viewModel.keyboardAction = .up
+                return true
+            case #selector(NSResponder.insertNewline(_:)):
+                guard panel != nil else { return false } // if panel is not shown, hit enter will quit editing.
+                guard parent.viewModel.suggestionIndex != nil else { return false }
+                parent.viewModel.keyboardAction = .enter
+                return true
+            default:
+                return false
             }
         }
         
@@ -218,29 +239,6 @@ struct HashtagInput: NSViewRepresentable {
             newCursor = max(0, min(newCursor, utf16Length))
             
             return (result, newCursor)
-        }
-                
-        func textDidEndEditing(_ obj: Notification) {
-            guard let textView = obj.object as? NSTextView else { return }
-            textView.textStorage?.setAttributedString(text.highlightHashtags())
-        }
-        
-        func textView(_ textView: NSTextView, doCommandBy: Selector) -> Bool {
-            switch doCommandBy {
-            case #selector(NSResponder.moveDown(_:)):
-                parent.viewModel.keyboardAction = .down
-                return true
-            case #selector(NSResponder.moveUp(_:)):
-                parent.viewModel.keyboardAction = .up
-                return true
-            case #selector(NSResponder.insertNewline(_:)):
-                guard panel != nil else { return false } // if panel is not shown, hit enter will quit editing.
-                guard parent.viewModel.suggestionIndex != nil else { return false }
-                parent.viewModel.keyboardAction = .enter
-                return true
-            default:
-                return false
-            }
         }
         
         private func show(_ textView: NSTextView) {
@@ -342,7 +340,7 @@ struct HashtagInput: NSViewRepresentable {
                 textView.string = result.0
                 textView.selectedRange = result.1
                 textView.scrollRangeToVisible(result.1)
-                text = result.0
+                let text = result.0
                 produce(text)
             }
         }

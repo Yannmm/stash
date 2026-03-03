@@ -32,7 +32,7 @@ extension String {
     }
     
     func highlightHashtags() -> NSAttributedString {
-        let attributed = NSMutableAttributedString(string: self)
+        let attributed = NSMutableAttributedString(string: self, attributes: [.font: NSFont.systemFont(ofSize: NSFont.systemFontSize)])
         
         let attributes: [NSAttributedString.Key: Any] = [
             .font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
