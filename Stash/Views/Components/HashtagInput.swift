@@ -42,10 +42,10 @@ struct HashtagInput: NSViewRepresentable {
         let text = (hashtags ?? []).map({ $0 }).joined(separator: " ")
         if !focused {
             textField.attributedStringValue = text.highlightHashtags()
-            if let xx = textField.currentEditor() as? NSTextView {
-                print("111111111")
-                xx.textStorage?.setAttributedString(text.highlightHashtags())
-            }
+            //            if let xx = textField.currentEditor() as? NSTextView {
+            //                print("111111111")
+            //                xx.textStorage?.setAttributedString(text.highlightHashtags())
+            //            }
         }
     }
     
@@ -53,9 +53,9 @@ struct HashtagInput: NSViewRepresentable {
         coordinator.monitorCursor(false, textField)
     }
     
-    internal class Coordinator: NSObject, NSTextFieldDelegate, NSTextViewDelegate {
+    internal class Coordinator: NSObject, NSTextFieldDelegate {
         var parent: HashtagInput
-        private weak var textField: NSTextField?
+        //        private weak var textField: NSTextField?
         private var panel: NSPanel!
         private var observer: NSObjectProtocol?
         
@@ -92,20 +92,22 @@ struct HashtagInput: NSViewRepresentable {
         }
         
         // 🔥 This is where you get the NSTextView
-        func controlTextDidBeginEditing(_ obj: Notification) {
-            guard
-                let textField = obj.object as? NSTextField,
-                let window = textField.window,
-                let textView = window.fieldEditor(true, for: textField) as? NSTextView
-            else { return }
-            textView.delegate = self
-            textView.isAutomaticTextReplacementEnabled = false
-            
-            self.textField = textField
-        }
+        //        func controlTextDidBeginEditing(_ obj: Notification) {
+        //            guard
+        //                let textField = obj.object as? NSTextField,
+        //                let window = textField.window,
+        //                let textView = window.fieldEditor(true, for: textField) as? NSTextView
+        //            else { return }
+        //            textView.delegate = self
+        //            textView.isAutomaticTextReplacementEnabled = false
+        //
+        //            self.textField = textField
+        //        }
         
-        func textDidChange(_ notification: Notification) {
-            guard let textView = notification.object as? NSTextView else { return }
+        func controlTextDidChange(_ notification: Notification) {
+            guard let textField = notification.object as? NSTextField,
+                  let textView = textField.currentEditor() as? NSTextView
+            else { return }
             guard !textView.hasMarkedText() else { return }
             
             guard let textStorage = textView.textStorage else { return }
@@ -137,8 +139,6 @@ struct HashtagInput: NSViewRepresentable {
             let text = textView.string
             produce(text)
             
-            textField?.stringValue = text
-            
             if let _ = findCursoredRange(
                 text: text,
                 cursorLocation: textView.selectedRange().location
@@ -148,19 +148,25 @@ struct HashtagInput: NSViewRepresentable {
                 hide()
             }
         }
-                
-        func textDidEndEditing(_ obj: Notification) {
-            guard let textView = obj.object as? NSTextView else { return }
+        
+        func controlTextDidEndEditing(_ obj: Notification) {
+            guard let textField = obj.object as? NSTextField,
+                  let textView = textField.currentEditor() as? NSTextView
+            else { return }
             
-            let text = textView.string
+//            let text = textView.string
             // Apply highlighting
-            textView.textStorage?.setAttributedString(text.highlightHashtags())
+//            textView.textStorage?.setAttributedString(text.highlightHashtags())
             // Ensure backing value is correct
-            textField?.stringValue = text
+            textField.attributedStringValue = textField.stringValue.highlightHashtags()
         }
         
-        func textView(_ textView: NSTextView, doCommandBy: Selector) -> Bool {
-            switch doCommandBy {
+        func control(
+            _ control: NSControl,
+            textView: NSTextView,
+            doCommandBy commandSelector: Selector
+        ) -> Bool {
+            switch commandSelector {
             case #selector(NSResponder.moveDown(_:)):
                 parent.viewModel.keyboardAction = .down
                 return true
