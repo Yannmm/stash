@@ -14,17 +14,15 @@ struct HashtagInput: NSViewRepresentable {
     let viewModel: HashtagInputViewModel
     let focused: Bool
     @Binding var hashtags: OrderedSet<String>?
-    
     var font: NSFont?
-    var onCommit: () -> Void = {}
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
     }
     
     func makeNSView(context: Context) -> NSTextField {
+        print("makeNSView")
         let textField = NSTextField()
-        
         textField.delegate = context.coordinator
         textField.isEditable = true
         textField.isBordered = false
@@ -38,6 +36,7 @@ struct HashtagInput: NSViewRepresentable {
     }
     
     func updateNSView(_ textField: NSTextField, context: Context) {
+        print("makeNSView")
         textField.font = font
         context.coordinator.parent = self
         context.coordinator.monitorCursor(focused, textField)
@@ -69,6 +68,8 @@ struct HashtagInput: NSViewRepresentable {
         init(_ parent: HashtagInput) {
             self.parent = parent
             self.text = (parent.hashtags ?? []).map({ $0 }).joined(separator: " ")
+            
+            print("text -> \(self.text)")
         }
         
         deinit {
@@ -218,16 +219,10 @@ struct HashtagInput: NSViewRepresentable {
             
             return (result, newCursor)
         }
-        
-//        func controlTextDidEndEditing(_ obj: Notification) {
-//            parent.onCommit()
-//        }
-        
-        func controlTextDidEndEditing(_ obj: Notification) {
-            guard let textField = obj.object as? NSTextField else { return }
-
-            textField.attributedStringValue = text.highlightHashtags()
-            parent.onCommit()
+                
+        func textDidEndEditing(_ obj: Notification) {
+            guard let textView = obj.object as? NSTextView else { return }
+            textView.textStorage?.setAttributedString(text.highlightHashtags())
         }
         
         func textView(_ textView: NSTextView, doCommandBy: Selector) -> Bool {

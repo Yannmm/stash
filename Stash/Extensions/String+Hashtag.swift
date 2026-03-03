@@ -35,6 +35,7 @@ extension String {
         let attributed = NSMutableAttributedString(string: self)
         
         let attributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
             .foregroundColor: NSColor(.theme),
         ]
         for match in self.hashtagMatches {
