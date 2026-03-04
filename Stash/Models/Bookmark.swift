@@ -36,9 +36,7 @@ extension Bookmark: Entry {
 
 extension Bookmark {
     func open() {
-        let browser = name.hashtags
-            .map({ $0.split(separator: "#").last })
-            .compactMap({ $0 })
+        let browser = (hashtags ?? [])
             .map({ String.Browser(rawValue: String($0)) })
             .compactMap({ $0 })
             .last

@@ -15,6 +15,7 @@ struct HashtagInput: NSViewRepresentable {
     let focused: Bool
     @Binding var hashtags: OrderedSet<String>?
     var font: NSFont?
+    var onSubmit: (() -> Void)?
     
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -42,11 +43,13 @@ struct HashtagInput: NSViewRepresentable {
         let text = (hashtags ?? []).map({ $0 }).joined(separator: " ")
         if !focused {
             textField.attributedStringValue = text.highlightHashtags()
+            context.coordinator.hide()
         }
     }
     
     static func dismantleNSView(_ textField: NSTextField, coordinator: Coordinator) {
         coordinator.monitorCursor(false, textField)
+        coordinator.hide()
     }
     
     internal class Coordinator: NSObject, NSTextFieldDelegate {
@@ -150,9 +153,12 @@ struct HashtagInput: NSViewRepresentable {
                 parent.viewModel.keyboardAction = .up
                 return true
             case #selector(NSResponder.insertNewline(_:)):
-                guard panel != nil else { return false } // if panel is not shown, hit enter will quit editing.
-                guard parent.viewModel.suggestionIndex != nil else { return false }
-                parent.viewModel.keyboardAction = .enter
+                if panel != nil, parent.viewModel.suggestionIndex != nil {
+                    parent.viewModel.keyboardAction = .enter
+                    return true
+                }
+                // No suggestion panel: propagate submit to SwiftUI (NSTextField doesn't trigger onSubmit)
+                parent.onSubmit?()
                 return true
             default:
                 return false
@@ -308,8 +314,6 @@ struct HashtagInput: NSViewRepresentable {
                 self?._insert(hashtag, textView)
                 self?.hide()
             }).environmentObject(parent.viewModel))
-//            hostingController.view.wantsLayer = true
-//            hostingController.view.layer?.backgroundColor = .clear
             panel.contentViewController = hostingController
             panel.orderFront(nil)
         }

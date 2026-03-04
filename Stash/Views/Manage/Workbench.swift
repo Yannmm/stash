@@ -277,7 +277,7 @@ fileprivate extension ManageView.Workbench {
                     .frame(width: Constant.resizerWidth)
                 
                 // Tags column
-                Text(row.tags.joined(separator: ", "))
+                Text((row.tags ?? []).joined(separator: ", "))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundStyle(.secondary)
                     .lineLimit(1)

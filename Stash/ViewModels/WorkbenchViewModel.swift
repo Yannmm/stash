@@ -40,7 +40,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                                title: $0.name,
                                description: info.0,
                                trail: trail($0, b, a?.id) ,
-                               tags: $0.name.hashtags,
+                               tags: $0.hashtags.flatMap({ Array($0) }),
                                expanded: info.1,
                                expandable: $0.container)
                 }
@@ -155,7 +155,7 @@ extension WorkbenchViewModel {
         let title: String
         let description: String
         let trail: [Group]
-        let tags: [String]
+        let tags: [String]?
         let expanded: Bool
         let expandable: Bool
         

@@ -13,19 +13,22 @@ struct HashtagField: View {
     @StateObject private var viewModel: HashtagInputViewModel
     @Binding var hashtags: OrderedSet<String>?
     let disabled: Bool
+    var onSubmit: (() -> Void)?
     
     @FocusState private var focused: Bool
     
     init(
          existentials: AnyPublisher<OrderedSet<String>, Never>,
          hashtags: Binding<OrderedSet<String>?>,
-         disabled: Bool
+         disabled: Bool,
+         onSubmit: (() -> Void)? = nil
      ) {
          _viewModel = StateObject(
              wrappedValue: HashtagInputViewModel(existentials: existentials)
          )
          _hashtags = hashtags
          self.disabled = disabled
+         self.onSubmit = onSubmit
      }
     
     var body: some View {
@@ -37,9 +40,10 @@ struct HashtagField: View {
             //                .foregroundStyle(Color.theme)
             Divider()
             HashtagInput(
-                viewModel: viewModel ,
+                viewModel: viewModel,
                 focused: focused,
-                hashtags: $hashtags
+                hashtags: $hashtags,
+                onSubmit: onSubmit
             )
             .font(NSFont.systemFont(ofSize: NSFont.systemFontSize))
             .focused($focused)

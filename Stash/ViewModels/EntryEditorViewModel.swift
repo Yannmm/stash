@@ -134,7 +134,6 @@ class EntryEditorViewModel: ObservableObject {
     }
     
     func save() {
-        //        return
         guard let t = title, let u = url else { return }
         do {
             switch mode {

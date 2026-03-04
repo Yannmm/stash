@@ -69,8 +69,14 @@ struct EntryEditor: View {
                             OrderedSet($0.map({ $0.hashtags ?? [] }).flatMap({ $0 }))
                         }).eraseToAnyPublisher(),
                     hashtags: $viewModel.hashtags,
-                    disabled: hashtagDisabled
+                    disabled: hashtagDisabled,
+                    onSubmit: {
+                        guard viewModel.progress == .savable(true) else { return }
+                        viewModel.save()
+                        dismiss()
+                    }
                 )
+                
             }
         }
         .padding()
