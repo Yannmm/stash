@@ -20,6 +20,10 @@ extension ManageView.Workbench {
         @Environment(\.dismissSearch) private var dismissSearch
         @EnvironmentObject var dataStore: ManageSelectionStore
         
+        @State private var selectedOption: String?
+
+        let options = ["Option A", "Option B", "Option C"]
+        
         var body: some ToolbarContent {
             if #available(macOS 26.0, *) {
                 ToolbarItem(placement: .navigation) {
@@ -82,6 +86,40 @@ extension ManageView.Workbench {
                         dismissSearch()
                         _clearFirstResponder()
                     }
+                }
+                
+                Menu {
+                    // 1. The "None" Option
+                    Button {
+                        selectedOption = nil
+                    } label: {
+                        HStack {
+                            Text("None")
+                            if selectedOption == nil {
+                                Image(systemName: "checkmark") // Manual checkmark
+                            }
+                        }
+                    }
+
+                    Divider()
+
+                    // 2. The Options
+                    ForEach(options, id: \.self) { option in
+                        Button {
+                            selectedOption = option
+                        } label: {
+                            HStack {
+                                Label(option, systemImage: "tag")
+                                if selectedOption == option {
+                                    Image(systemName: "checkmark") // Manual checkmark
+                                }
+                            }
+                        }
+                    }
+                } label: {
+                    // The Toolbar Label
+                    Label(selectedOption ?? "None", systemImage: selectedOption == nil ? "tag.slash" : "tag")
+                        .labelStyle(.titleAndIcon)
                 }
             }
         }
