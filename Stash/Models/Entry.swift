@@ -61,8 +61,9 @@ extension Entry {
         result.append(contentsOf: directChildren)
         
         // Recursively get descendants of each child
-        for (index, child) in directChildren.enumerated() {
-            result.insert(contentsOf: child.descendants(among: entries), at: index + 1)
+        for child in directChildren {
+            let index = result.firstIndex(where: { $0.id == child.id })
+            result.insert(contentsOf: child.descendants(among: entries), at: index! + 1)
         }
         
         if included {
