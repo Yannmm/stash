@@ -35,7 +35,12 @@ extension ManageView.Workbench {
             ToolbarItemGroup(placement: .primaryAction) {
                 Spacer()
                 
-                Picker("", selection: $hierarchy) {
+                Picker("", selection: Binding(
+                    get: { hierarchy },
+                    set: { newValue in
+                        Task { @MainActor in hierarchy = newValue }
+                    }
+                )) {
                     Label("Children", systemImage: "list.bullet")
                         .tag(WorkbenchViewModel.Hierarchy.child)
                         .help("Show Direct Children")
