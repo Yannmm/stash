@@ -12,12 +12,11 @@ struct HashtagSuggestionListView: View {
     @Environment(\.colorScheme) var colorScheme
     let onTap: (String) -> Void
     @State private var visibleRange: Range<Int> = 0..<0
-    @State private var hoveredIndex: Int?
     
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView(.vertical, showsIndicators: false) {
-                VStack(spacing: 1) {
+                VStack(spacing: 0) {
                     ForEach(Array(viewModel.hashtags.enumerated()), id: \.offset) { idx, hashtag in
                         HStack(spacing: 0) {
                             Text(hashtag)
@@ -27,13 +26,12 @@ struct HashtagSuggestionListView: View {
                             Spacer()
                         }
                         .padding(.horizontal, 10)
-                        .padding(.vertical, 5)
+                        .frame(height: 30)
                         .background(
                             RoundedRectangle(cornerRadius: 5, style: .continuous)
                                 .fill(backgroundColor(for: idx))
                         )
                         .padding(.horizontal, 5)
-                        .id(idx)
                         .contentShape(Rectangle())
                         .overlay(
                             GeometryReader { geo in
@@ -44,9 +42,7 @@ struct HashtagSuggestionListView: View {
                                     )
                             }
                         )
-                        .onHover { isHovered in
-                            hoveredIndex = isHovered ? idx : nil
-                        }
+                        .id(idx)
                         .onTapGesture {
                             viewModel.select(hashtag)
                         }
@@ -56,7 +52,7 @@ struct HashtagSuggestionListView: View {
             }
             .coordinateSpace(name: "scroll")
             .frame(width: Constant.width, height: Constant.height)
-            .background(.ultraThinMaterial)
+            .background(Color(nsColor: .controlBackgroundColor))
             .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
             .overlay(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
@@ -87,8 +83,6 @@ struct HashtagSuggestionListView: View {
     private func backgroundColor(for index: Int) -> Color {
         if viewModel.suggestionIndex == index {
             return Color.accentColor.opacity(0.3)
-        } else if hoveredIndex == index {
-            return Color.primary.opacity(0.08)
         }
         return Color.clear
     }
@@ -96,7 +90,7 @@ struct HashtagSuggestionListView: View {
 
 extension HashtagSuggestionListView {
     enum Constant {
-        static let height = 150.0
+        static let height = 120.0 + 10.0
         static let width = 200.0
     }
 }
