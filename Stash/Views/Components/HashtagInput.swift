@@ -160,6 +160,9 @@ struct HashtagInput: NSViewRepresentable {
                 // No suggestion panel: propagate submit to SwiftUI (NSTextField doesn't trigger onSubmit)
                 parent.onSubmit?()
                 return true
+            case #selector(NSResponder.cancelOperation(_:)):
+                hide()
+                return true
             default:
                 return false
             }
@@ -231,6 +234,7 @@ struct HashtagInput: NSViewRepresentable {
         
         private func show(_ textView: NSTextView) {
             if let anchor = _whereToAnchor(textView) {
+                parent.viewModel.takens = parent.hashtags
                 _makePanel(anchor, textView)
             } else {
                 hide()

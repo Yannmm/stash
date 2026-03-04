@@ -12,9 +12,11 @@ import OrderedCollections
 
 class HashtagInputViewModel: ObservableObject {
     let existentials: AnyPublisher<OrderedSet<String>, Never>
-    @Published var title: String?
-    @Published var hashtags: [String] = []
+    
+    @Published var takens: OrderedSet<String>?
     @Published var query: String?
+    
+    @Published var hashtags: [String] = []
     @Published var keyboardAction: KeyboardAction?
     @Published var suggestionIndex: Int?
     private var cancellables = Set<AnyCancellable>()
@@ -31,25 +33,9 @@ class HashtagInputViewModel: ObservableObject {
     }
     
     private func bind() {
-        func _extract(_ source: some Publisher<[String], Never>) -> some Publisher<OrderedSet<String>, Never> {
-            source
-                .map {
-                    $0
-                        .map({ text in
-                            let nsrange = NSRange(text.startIndex..<text.endIndex, in: text)
-                            let matches = String.RegexConstant.regex2.matches(in: text, range: nsrange)
-                            return matches.map { String(text[Range($0.range, in: text)!]) }
-                        })
-                        .flatMap({ $0 })
-                }
-                .map({ OrderedSet($0) })
-        }
-        
-        let existings = _extract($title.map({ $0.map({ o in [o] }) ?? [] }))
-        
         let all =  existentials.map({ $0.union(String.RegexConstant.predefinedHashtags) })
         
-        let rest = Publishers.CombineLatest(existings, all).map { a, b in
+        let rest = Publishers.CombineLatest($takens.map({ $0 ?? [] }), all).map { a, b in
             b.subtracting(a)
         }
         .map({ Array($0).sorted(by: { $0 < $1 }) })
