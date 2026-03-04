@@ -42,10 +42,6 @@ struct HashtagInput: NSViewRepresentable {
         let text = (hashtags ?? []).map({ $0 }).joined(separator: " ")
         if !focused {
             textField.attributedStringValue = text.highlightHashtags()
-            //            if let xx = textField.currentEditor() as? NSTextView {
-            //                print("111111111")
-            //                xx.textStorage?.setAttributedString(text.highlightHashtags())
-            //            }
         }
     }
     
@@ -90,19 +86,6 @@ struct HashtagInput: NSViewRepresentable {
                 }
             }
         }
-        
-        // 🔥 This is where you get the NSTextView
-        //        func controlTextDidBeginEditing(_ obj: Notification) {
-        //            guard
-        //                let textField = obj.object as? NSTextField,
-        //                let window = textField.window,
-        //                let textView = window.fieldEditor(true, for: textField) as? NSTextView
-        //            else { return }
-        //            textView.delegate = self
-        //            textView.isAutomaticTextReplacementEnabled = false
-        //
-        //            self.textField = textField
-        //        }
         
         func controlTextDidChange(_ notification: Notification) {
             guard let textField = notification.object as? NSTextField,
@@ -150,14 +133,7 @@ struct HashtagInput: NSViewRepresentable {
         }
         
         func controlTextDidEndEditing(_ obj: Notification) {
-            guard let textField = obj.object as? NSTextField,
-                  let textView = textField.currentEditor() as? NSTextView
-            else { return }
-            
-//            let text = textView.string
-            // Apply highlighting
-//            textView.textStorage?.setAttributedString(text.highlightHashtags())
-            // Ensure backing value is correct
+            guard let textField = obj.object as? NSTextField else { return }
             textField.attributedStringValue = textField.stringValue.highlightHashtags()
         }
         
@@ -321,17 +297,20 @@ struct HashtagInput: NSViewRepresentable {
             )
             
             panel.level = .statusBar
-            panel.isOpaque = true
-            panel.backgroundColor = NSColor.clear
+            panel.isOpaque = false
+            panel.backgroundColor = .clear
             panel.hasShadow = true
             panel.worksWhenModal = true
             panel.becomesKeyOnlyIfNeeded = false
             panel.acceptsMouseMovedEvents = true
             
-            panel.contentViewController = NSHostingController(rootView: HashtagSuggestionListView(onTap: { [weak self] hashtag in
+            let hostingController = NSHostingController(rootView: HashtagSuggestionListView(onTap: { [weak self] hashtag in
                 self?._insert(hashtag, textView)
                 self?.hide()
             }).environmentObject(parent.viewModel))
+//            hostingController.view.wantsLayer = true
+//            hostingController.view.layer?.backgroundColor = .clear
+            panel.contentViewController = hostingController
             panel.orderFront(nil)
         }
         

@@ -12,40 +12,56 @@ struct HashtagSuggestionListView: View {
     @Environment(\.colorScheme) var colorScheme
     let onTap: (String) -> Void
     @State private var visibleRange: Range<Int> = 0..<0
+    @State private var hoveredIndex: Int?
     
     var body: some View {
         ScrollViewReader { proxy in
-            List(Array(viewModel.hashtags.enumerated()), id: \.offset) { idx, hashtag in
-                HStack {
-                    Text(hashtag)
-                        .lineLimit(1)
-                        .truncationMode(.middle)
-                        .font(.system(size: 18, weight: .thin))
-                        .padding(EdgeInsets(top: 8, leading: 10, bottom: 8, trailing: 10))
-                    Spacer() // Fill remaining space
-                }
-                .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
-                .listRowSeparator(.hidden)
-                .listRowBackground(viewModel.suggestionIndex == idx ? Color.theme.opacity(0.3) : Color.clear)
-                .frame(maxWidth: .infinity)
-                .overlay(
-                    GeometryReader { geo in
-                        Color.clear
-                            .preference(
-                                key: VisibleRangeSignal.self,
-                                value: [idx: geo.frame(in: .named("scroll")).minY...geo.frame(in: .named("scroll")).maxY]
-                            )
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(spacing: 1) {
+                    ForEach(Array(viewModel.hashtags.enumerated()), id: \.offset) { idx, hashtag in
+                        HStack(spacing: 0) {
+                            Text(hashtag)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                                .font(.system(size: 13))
+                            Spacer()
+                        }
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(
+                            RoundedRectangle(cornerRadius: 5, style: .continuous)
+                                .fill(backgroundColor(for: idx))
+                        )
+                        .padding(.horizontal, 5)
+                        .id(idx)
+                        .contentShape(Rectangle())
+                        .overlay(
+                            GeometryReader { geo in
+                                Color.clear
+                                    .preference(
+                                        key: VisibleRangeSignal.self,
+                                        value: [idx: geo.frame(in: .named("scroll")).minY...geo.frame(in: .named("scroll")).maxY]
+                                    )
+                            }
+                        )
+                        .onHover { isHovered in
+                            hoveredIndex = isHovered ? idx : nil
+                        }
+                        .onTapGesture {
+                            viewModel.select(hashtag)
+                        }
                     }
-                )
-                .onTapGesture {
-                    viewModel.select(hashtag)
                 }
+                .padding(.vertical, 5)
             }
-            .listStyle(.plain)
-            .padding(0)
+            .coordinateSpace(name: "scroll")
             .frame(width: Constant.width, height: Constant.height)
-            .background(Color(nsColor: .controlBackgroundColor))
-            .cornerRadius(6)
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.1), lineWidth: 0.5)
+            )
             .onPreferenceChange(VisibleRangeSignal.self) { values in
                 visibleRange = VisibleRangeSignal.computeVisibleRange(from: values, containerHeight: Constant.height)
             }
@@ -66,6 +82,15 @@ struct HashtagSuggestionListView: View {
                 onTap(value)
             }
         }
+    }
+    
+    private func backgroundColor(for index: Int) -> Color {
+        if viewModel.suggestionIndex == index {
+            return Color.accentColor.opacity(0.3)
+        } else if hoveredIndex == index {
+            return Color.primary.opacity(0.08)
+        }
+        return Color.clear
     }
 }
 
