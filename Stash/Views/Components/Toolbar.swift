@@ -13,16 +13,14 @@ extension ManageView.Workbench {
         let title: String
         let groupCount: Int
         let bookmarkCount: Int
+        let hashtags: [String]
+        @Binding var hashtagFilter: String?
         let onAddBookmark: () -> Void
         let onAddGroup: () -> Void
         
         @State private var presentBookmarkEditor = false
         @Environment(\.dismissSearch) private var dismissSearch
         @EnvironmentObject var dataStore: ManageSelectionStore
-        
-        @State private var selectedOption: String?
-
-        let options = ["Option A", "Option B", "Option Csdfds sfsfsdf sdfsdfsdf"]
         
         var body: some ToolbarContent {
             if #available(macOS 26.0, *) {
@@ -55,34 +53,55 @@ extension ManageView.Workbench {
                 .pickerStyle(.segmented)
                 
                 
-                // 2. The new ControlGroup to merge the two Menus
-                    ControlGroup {
-                        // --- ADD MENU ---
-                        Menu {
-                            Button { /* onAddBookmark */ } label: { Label("Add Bookmark", systemImage: "link.badge.plus") }
-                            Button { /* onAddGroup */ } label: { Label("Add Group", systemImage: "folder.badge.plus") }
-                        } label: {
-                            Label("Add", systemImage: "plus.circle")
-                        }
-                        .help("Add Item")
-
-                        // --- TAG FILTER MENU ---
-                        Menu {
-                            Picker("Tag Filter", selection: $selectedOption) {
-                                Text("None")
-                                    .tag(String?.none) // Matches the 'nil' state
-                                Divider()
-                                ForEach(options, id: \.self) { option in
-                                    Text(option)
-                                        .tag(String?.some(option))
-                                }
-                            }
-                            .pickerStyle(.inline) // This is crucial: it removes the Picker's own label and shows items directly
-                        } label: {
-                            Label(selectedOption ?? "", systemImage: selectedOption == nil ? "tag.slash" : "tag")
-                                .labelStyle(.titleAndIcon)
+                Menu {
+                    Button {
+                        presentBookmarkEditor = true
+                        onAddBookmark()
+                    } label: {
+                        Label("Add Bookmark", systemImage: "link.badge.plus")
+                    }
+                    .help("Add Bookmark")
+                    
+                    Button {
+                        onAddGroup()
+                    } label: {
+                        Label("Add Group", systemImage: "folder.badge.plus")
+                    }
+                    .help("Add Group")
+                } label: {
+                    Label("Add", systemImage: "plus.rectangle.on.rectangle")
+                }
+                .help("Add Item")
+                .popover(isPresented: $presentBookmarkEditor, arrowEdge: .top) {
+                    EntryEditor()
+                        .frame(width: 400)
+                        .environmentObject(EntryEditorViewModel(mode: .create(dataStore.collection?.id),
+                                                                cabinet: dataStore.cabinet,
+                                                                dominator: Dominator()))
+                }
+                .onChange(of: presentBookmarkEditor) { _, isPresented in
+                    if !isPresented {
+                        // Keep the toolbar search UI collapsed after popover closes.
+                        dismissSearch()
+                        _clearFirstResponder()
+                    }
+                }
+                
+                Menu {
+                    Picker("Tag Filter", selection: $hashtagFilter) {
+                        Text("None")
+                            .tag(String?.none) // Matches the 'nil' state
+                        Divider()
+                        ForEach(hashtags, id: \.self) { hashtag in
+                            Text(hashtag)
+                                .tag(String?.some(hashtag))
                         }
                     }
+                    .pickerStyle(.inline) // This is crucial: it removes the Picker's own label and shows items directly
+                } label: {
+                    Label(hashtagFilter ?? "", systemImage: hashtagFilter == nil ? "tag.slash" : "tag")
+                        .labelStyle(.titleAndIcon)
+                }
             }
         }
         
@@ -126,7 +145,7 @@ extension ManageView.Workbench {
 struct MyImage: View {
     let name: String
     var targetSize: CGFloat = 18
-
+    
     var body: some View {
         let size = CGSize(width: targetSize, height: targetSize)
         let image = Image(name)

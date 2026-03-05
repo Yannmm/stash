@@ -22,6 +22,8 @@ extension ManageView {
                             title: viewModel.title,
                             groupCount: viewModel.groupCount,
                             bookmarkCount: viewModel.bookmarkCount,
+                            hashtags: viewModel.hashtags,
+                            hashtagFilter: $viewModel.hashtagFilter,
                             onAddBookmark: {},
                             onAddGroup: {})
                 }

@@ -13,6 +13,14 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
     @Published var search = ""
     @Published var hierarchy: Hierarchy = .child
     @Published private(set) var rows: [Row] = []
+    @Published var hashtagFilter: String?
+    var hashtags: [String] {
+        let set = Set(dataStore.cabinet.storedEntries
+            .map({ $0.hashtags })
+            .compactMap({ $0 })
+            .flatMap({ $0 }))
+        return Array(set)
+    }
     
     let dataStore: ManageSelectionStore
     private var _cancellables = Set<AnyCancellable>()
@@ -31,24 +39,38 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
     }
     
     private func _bind() {
-        Publishers.CombineLatest4(dataStore.$collection, dataStore.cabinet.$storedEntries, $hierarchy, $search)
-            .map { [unowned self] a, b, c, d in
-                let result = self.heirs(b, a, c).map {
+        Publishers.CombineLatest4(
+            dataStore.$collection,
+            dataStore.cabinet.$storedEntries,
+            $hierarchy,
+            Publishers.CombineLatest($search, $hashtagFilter)
+        )
+        .map { [unowned self] a, b, c, d in
+            let result = self.heirs(b, a, c)
+                .map {
+                    let tags = $0.hashtags ?? []
+                    if let htf = d.1,
+                       htf.count > 0,
+                       !tags.contains(htf) {
+                        return Optional<Row>.none
+                    }
+                    // TODO: search not implemented
                     let info = _info($0, b, c)
                     return Row(id: $0.id,
                                icon: $0.icon,
                                title: $0.name,
                                description: info.0,
-                               trail: trail($0, b, a?.id) ,
-                               tags: $0.hashtags.flatMap({ Array($0) }),
+                               trail: trail($0, b, a?.id),
+                               tags: Array(tags),
                                expanded: info.1,
                                expandable: $0.container)
                 }
-                return result
-            }
-            .receive(on: DispatchQueue.main)
-            .sink(receiveValue: { [weak self] in self?.rows = $0 })
-            .store(in: &_cancellables)
+                .compactMap({ $0 })
+            return result
+        }
+        .receive(on: DispatchQueue.main)
+        .sink(receiveValue: { [weak self] in self?.rows = $0 })
+        .store(in: &_cancellables)
         
         $hierarchy
             .map { _ in [] }
