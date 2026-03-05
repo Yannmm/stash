@@ -330,8 +330,11 @@ fileprivate extension ManageView.Workbench {
                 propose: _propose
             ))
             .onChange(of: dragPosition) { _, newValue in
-                guard let position = newValue else { return }
-                indicating = hasIndicator ? (index, position, row.id) : nil
+                if let position = newValue, hasIndicator {
+                    indicating = (index, position, row.id)
+                } else {
+                    indicating = nil
+                }
             }
         }
         

@@ -107,7 +107,7 @@ struct SettingsView: View {
                         }
                         Text("""
                             Learn how to export bookmarks from [Chrome](Chrome), [Edge](Edge), [Firefox](Firefox) or [Safari](Safari).
-                            Or import from [Pocket](Pocket) and [Hungrymark](Hungrymark).
+                            Or import from [Pocket](Pocket) and [Hungrymarks](Hungrymark).
                             """)
                         .foregroundColor(.secondary)
                         .environment(\.openURL, OpenURLAction { url in

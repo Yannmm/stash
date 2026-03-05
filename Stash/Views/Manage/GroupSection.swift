@@ -155,7 +155,6 @@ extension ManageView.Sidebar.GroupSection {
             .onChange(of: dragPosition) { oldValue, newValue in
                 handleDragPositionChange(newValue)
             }
-            
         }
         
         /// Handles auto-expand when hovering over an expandable item during drag
