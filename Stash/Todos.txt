@@ -75,3 +75,6 @@
 // 69. when defocus the manage view, seeems selection of the row is lost, type `enter` not work
 // 70. in workbench, when drag an item, first item hover correct, but for next adjacent item, when move above 1/3, the indicator does not display ✅
 // 71. in workbench, after drag and drop. order does not change after restart app ✅
+// 72. edit a boogkmark, enter tag, use tab to switch focus to path field, type enter, nothing happen ,should save ✅
+// 73. unify drag & drop between workbench and sidebar
+// 74. some title with #xx does not consider as hashtags

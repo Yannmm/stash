@@ -51,8 +51,17 @@ struct EntryEditor: View {
                           path: $viewModel.path,
                           focusedField: $focusedField)
                 .onSubmit {
-                    guard viewModel.progress == .parsable(true) else { return }
-                    viewModel.parse()
+                    switch viewModel.progress {
+                    case .parsable(let flag):
+                        if flag {
+                            viewModel.parse()
+                        }
+                    case .savable(let flag):
+                        if flag {
+                            viewModel.save()
+                            dismiss()
+                        }
+                    }
                 }
                 TitleField(title: $viewModel.title,
                            icon: viewModel.icon,
