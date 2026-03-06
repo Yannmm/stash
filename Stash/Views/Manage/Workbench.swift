@@ -331,7 +331,7 @@ fileprivate extension ManageView.Workbench {
             .onChange(of: dragPosition) { _, newValue in
                 if let position = newValue, hasIndicator {
                     indicating = (index, position, row.id)
-                } else {
+                } else if row.id == indicating?.2 {
                     indicating = nil
                 }
             }

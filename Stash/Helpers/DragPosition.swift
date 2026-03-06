@@ -51,8 +51,8 @@ struct Dropper<T: Identifiable>: DropDelegate {
     }
     
     func dropExited(info: DropInfo) {
-        NSCursor.arrow.set()
         reset()
+        NSCursor.arrow.set()
     }
     
     func dropUpdated(info: DropInfo) -> DropProposal? {
