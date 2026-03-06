@@ -13,15 +13,21 @@ class SidebarViewModel: ObservableObject, CascadeJudge {
     @Published var hashtags: [Hashtag] = []
     @Published private(set) var rows: [Row] = []
     @Published private(set) var rootRow: Row!
+    @Published var error: Error?
     
-    var entries: [any Entry] { selectionStore.cabinet.storedEntries }
+    var entries: [any Entry] { dataStore.cabinet.storedEntries }
     
-    func updateEntries(_ entries: [any Entry]) {
-        selectionStore.cabinet.storedEntries = entries
+    func update(_ entries: [any Entry]) {
+        dataStore.cabinet.storedEntries = entries
+        do {
+            try dataStore.cabinet.save()
+        } catch {
+            self.error = error
+        }
     }
     
     private var allEntries: [any Entry] {
-        selectionStore.cabinet.storedEntries
+        dataStore.cabinet.storedEntries
     }
     
     func toggleExpansion(_ id: UUID) {
@@ -33,28 +39,28 @@ class SidebarViewModel: ObservableObject, CascadeJudge {
     }
     
     func setSelection(_ id: UUID?) {
-        selectionStore.collection = id == nil ? nil : (allEntries.filter { $0.id == id }.first as? Group)
+        dataStore.collection = id == nil ? nil : (allEntries.filter { $0.id == id }.first as? Group)
     }
     
-    let selectionStore: ManageSelectionStore
+    let dataStore: ManageSelectionStore
     private var _cancellables = Set<AnyCancellable>()
     
     
     init(selectionStore: ManageSelectionStore) {
-        self.selectionStore = selectionStore
+        self.dataStore = selectionStore
         
         _bind()
     }
     
     private func _bind() {
-        Publishers.CombineLatest3(selectionStore.cabinet.$storedEntries, $expansions, selectionStore.$collection)
+        Publishers.CombineLatest3(dataStore.cabinet.$storedEntries, $expansions, dataStore.$collection)
             .map { [unowned self] a, b, c in
                 self.visibleGroups(a, b, c?.id)
             }
             .sink(receiveValue: { [weak self] in self?.rows = $0 })
             .store(in: &_cancellables)
         
-        Publishers.CombineLatest(selectionStore.cabinet.$storedEntries, selectionStore.$collection.map { $0?.id })
+        Publishers.CombineLatest(dataStore.cabinet.$storedEntries, dataStore.$collection.map { $0?.id })
             .map { a, b in
                 Row(
                     id: UUID(),

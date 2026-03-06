@@ -21,6 +21,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
             .flatMap({ $0 }))
         return Array(set)
     }
+    @Published var error: Error?
     
     let dataStore: ManageSelectionStore
     private var _cancellables = Set<AnyCancellable>()
@@ -28,8 +29,13 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
     
     var entries: [any Entry] { dataStore.cabinet.storedEntries }
     
-    func updateEntries(_ entries: [any Entry]) {
+    func update(_ entries: [any Entry]) {
         dataStore.cabinet.storedEntries = entries
+        do {
+            try dataStore.cabinet.save()
+        } catch {
+            self.error = error
+        }
     }
     
     init(selectionStore: ManageSelectionStore) {

@@ -35,6 +35,14 @@ extension ManageView {
                 .padding(.horizontal, 16)
             }
             .environmentObject(viewModel)
+            .alert("Error", isPresented: Binding(
+                get: { viewModel.error != nil },
+                set: { if !$0 { viewModel.error = nil } }
+            )) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(viewModel.error?.localizedDescription ?? "")
+            }
         }
     }
 }

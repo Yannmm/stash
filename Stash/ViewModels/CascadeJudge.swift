@@ -20,7 +20,7 @@ protocol CascadeJudge {
     
     var entries: [any Entry] { get }
     
-    func updateEntries(_ entries: [any Entry])
+    func update(_ entries: [any Entry])
 }
 
 extension CascadeJudge {
@@ -98,6 +98,6 @@ extension CascadeJudge {
         // Insert at new position
         copies.insert(subject, at: newIndex)
         
-        updateEntries(copies)
+        update(copies)
     }
 }
