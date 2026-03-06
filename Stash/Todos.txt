@@ -71,5 +71,5 @@
 // 65. in manage view, enter -> edit, space -> preview, double click -> open
 // 66. whe swith hierarchy, some group won't expand, but it has bookmarks. ✅
 // 67. Publishing changes from within view updates is not allowed, this will cause undefined behavior. ✅
-// 68. whne drag a group, hover self, it indicator will still show
+// 68. whne drag a group, hover self, it indicator will still show ✅
 // 69. when defocus the manage view, seeems selection of the row is lost, type `enter` not work

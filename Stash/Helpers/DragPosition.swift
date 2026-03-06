@@ -51,22 +51,30 @@ struct Dropper<T: Identifiable>: DropDelegate {
     }
     
     func dropExited(info: DropInfo) {
+        NSCursor.arrow.set()
         reset()
     }
     
     func dropUpdated(info: DropInfo) -> DropProposal? {
         guard dragging?.id != id else {
+            NSCursor.operationNotAllowed.set()
             return DropProposal(operation: .forbidden)
         }
         
         _updatePosition(info)
-        
-        return propose(dragPosition)
+        let proposal = propose(dragPosition)
+        if proposal?.operation == .forbidden {
+            NSCursor.operationNotAllowed.set()
+        } else {
+            NSCursor.arrow.set()
+        }
+        return proposal
     }
     
     private func reset() {
         dragPosition = nil
     }
+    
     
     private func _updatePosition(_ info: DropInfo) {
         guard let drag = dragging else { return }

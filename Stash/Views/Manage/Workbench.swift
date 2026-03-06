@@ -179,8 +179,7 @@ fileprivate extension ManageView.Workbench {
         
         private func _indicator2(childCount: Int) -> some View {
             Rectangle()
-                .fill(Color.clear)
-                .stroke(Color.accentColor, lineWidth: Constant.dragIndicatorHeight)
+                .fill(Color.accentColor.opacity(0.3))
                 .frame(height: (Double(childCount) + 1) * Constant.rowHeight)
                 .allowsHitTesting(false)
         }
@@ -315,7 +314,7 @@ fileprivate extension ManageView.Workbench {
                 }
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(Color(NSColor.controlBackgroundColor).opacity(0.95))
+                .background(Color.accentColor)
                 .cornerRadius(6)
                 .shadow(color: .black.opacity(0.2), radius: 4, x: 0, y: 2)
             }
@@ -339,6 +338,11 @@ fileprivate extension ManageView.Workbench {
         }
         
         private func _propose(_ position: DragPosition?) -> DropProposal? {
+            guard let drag = dragging else { return nil }
+            if cascade(row.id, drag.id) {
+                return DropProposal(operation: .forbidden)
+            }
+            
             guard let p = position else {
                 return nil
             }
@@ -355,11 +359,11 @@ fileprivate extension ManageView.Workbench {
         }
         
         private var backgroundColor: Color {
-            if hasIndicator {
-                return Color.accentColor.opacity(0.3)
-            }
             if selection == row.id {
-                return Color.accentColor.opacity(0.8)
+                if indicating != nil {
+                    return Color(nsColor: .unemphasizedSelectedContentBackgroundColor).opacity(0.8)
+                }
+                return Color(nsColor: .selectedContentBackgroundColor).opacity(0.8)
             }
             let colors = NSColor.alternatingContentBackgroundColors
             return Color(colors[index % colors.count])
