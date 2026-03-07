@@ -62,7 +62,6 @@ extension AppDelegate {
         menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: "t"))
         menu.addItem(NSMenuItem(title: "Search", action: #selector(search), keyEquivalent: "s"))
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: ""))
-        
     }
     
     private func addEntries(_ menu: NSMenu, _ entries: [any Entry]) {
@@ -72,7 +71,10 @@ extension AppDelegate {
     private func g(menu: NSMenu, entries: [any Entry], parentId: UUID?, keyEquivalents: [String]) {
         for (index, entry) in entries.filter({ $0.parentId == parentId }).enumerated() {
             let item = CustomMenuItem(title: entry.name, action: #selector(action(_:)), keyEquivalent: "", with: entry)
-            item.attributedTitle = entry.name.highlightHashtags()
+            
+            let title = NSMutableAttributedString(string: entry.name, attributes: [.font: NSFont.systemFont(ofSize: NSFont.systemFontSize)])
+            title.append((" " + (entry.hashtags ?? []).joined(separator: " ")).highlightHashtags())
+            item.attributedTitle = title
             
             item.keyEquivalentModifierMask = []
             if index <= keyEquivalents.count - 1 {

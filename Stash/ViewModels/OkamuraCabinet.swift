@@ -9,6 +9,7 @@ import Foundation
 import AppKit
 import UniformTypeIdentifiers
 import Combine
+import OrderedCollections
 
 class OkamuraCabinet: ObservableObject {
     
@@ -112,9 +113,13 @@ class OkamuraCabinet: ObservableObject {
         try saveToDisk(data: data1, filePath: urls.0, sidecarPath: urls.1)
         
         // In case for import
-        let copy = recentEntries
-        let ids = storedEntries.map({ $0.id })
-        let recents = copy.filter({ ids.contains($0.0.id) })
+        let recents = storedEntries.map({ e in
+            if let r = recentEntries.first(where: { $0.0.id == e.id }), let b = e as? Bookmark {
+                return (b, r.1)
+            } else {
+                return Optional<(Bookmark, String)>.none
+            }
+        }).compactMap({ $0 })
         
         let data2 = try JSONEncoder().encode(recents.map({ $0.0 }).asAnyEntries)
         pieceSaver.save(for: .recentEntries, value: data2)
@@ -144,10 +149,7 @@ class OkamuraCabinet: ObservableObject {
         
         let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
         
-        // Move UI updates to main thread
-        DispatchQueue.main.async { [weak self] in
-            self?.storedEntries = anyEntries.asEntries
-        }
+        self.storedEntries = anyEntries.asEntries
         
         if let data: Data = pieceSaver.value(for: .recentEntries),
            let keys: [String] = pieceSaver.value(for: .recentKeys) {
@@ -158,11 +160,10 @@ class OkamuraCabinet: ObservableObject {
                     collector.append((bookmark, keys[index]))
                 }
             }
-            // Move UI updates to main thread
-            DispatchQueue.main.async { [weak self] in
-                self?.recentEntries = collector
-            }
+            self.recentEntries = collector
         }
+        
+        try migrate3_0()
     }
     
     func directoryDefaultName(anchorId: UUID?) -> String {
@@ -349,7 +350,37 @@ fileprivate extension OkamuraCabinet {
         }
         return (documents.appendingPathComponent(Constant.stashFileName), documents.appendingPathComponent(Constant.sidecarFileName))
     }
+}
+
+extension OkamuraCabinet {
+    private func migrate3_0() throws {
+        // 1. read from user default to check whether migration has been done
+        let flag: Bool = (pieceSaver.value(for: .migration3_0) ?? false)
+        guard !flag else { return }
+        // 2. if not, update storedEntries .hashtags accordign to title
+        let result = self.storedEntries.map({ e in
+            var copy = e
+            copy.hashtags = parseHashtagsFrom(name: copy.name, existings: copy.hashtags)
+            return copy
+        })
+        // 3. save
+        self.storedEntries = result
+        try save()
+        // 4. update flag from user defaults
+        pieceSaver.save(for: .migration3_0, value: true)
+    }
     
+    private func parseHashtagsFrom(name text: String, existings: OrderedSet<String>?) -> OrderedSet<String>? {
+        let nsrange = NSRange(text.startIndex..<text.endIndex, in: text)
+        let matches = String.RegexConstant.regex3.matches(in: text, range: nsrange)
+        let result = matches.map {
+            String(text[Range($0.range, in: text)!])
+        }
+        
+        let whole = (existings ?? []) + result
+        
+        return whole.count > 0 ? OrderedSet(whole) : nil
+    }
 }
 
 extension OkamuraCabinet {

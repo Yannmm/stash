@@ -77,4 +77,4 @@
 // 71. in workbench, after drag and drop. order does not change after restart app ✅
 // 72. edit a boogkmark, enter tag, use tab to switch focus to path field, type enter, nothing happen ,should save ✅
 // 73. unify drag & drop between workbench and sidebar
-// 74. some title with #xx does not consider as hashtags
+// 74. some title with #xx does not consider as hashtags ✅

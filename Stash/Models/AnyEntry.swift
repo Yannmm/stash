@@ -22,8 +22,6 @@ struct AnyEntry: Codable {
     let hashtags: Array<String>?
     var children: [AnyEntry]
     
-    // TODO: parse hashtags from title
-//    xxxxx
     init(id: UUID?, name: String, type: EntryType, url: URL?, hashtags: Array<String>, children: [AnyEntry]) {
         self.id = id ?? UUID()
         self.name = name
@@ -33,7 +31,6 @@ struct AnyEntry: Codable {
         self.children = children
     }
     
-    // TODO: parse hashtags from title
     init(_ entry: any Entry) {
         self.id = entry.id
         self.name = entry.name

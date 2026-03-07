@@ -20,6 +20,8 @@ class PieceSaver {
         case recentEntries
         case recentKeys
         case appIdentifier
+        
+        case migration3_0
     }
 
     func save(for key: Key, value: Any?) {
