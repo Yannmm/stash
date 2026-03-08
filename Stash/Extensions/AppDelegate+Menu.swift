@@ -45,8 +45,6 @@ extension AppDelegate {
     private func addGuide(_ menu: NSMenu, _ entries: [any Entry]) {
         var items = [
             NSMenuItem(title: "Welcom to Stashy 🎉", action: nil, keyEquivalent: ""),
-            NSMenuItem(title: "Create New Bookmark", action: #selector(createBookmark), keyEquivalent: "c"),
-            NSMenuItem(title: "Import from File", action: #selector(importFromBrowsers), keyEquivalent: "i")
         ] as [NSMenuItem]
         
         if entries.count > 0 {
@@ -57,10 +55,9 @@ extension AppDelegate {
     }
     
     private func addActions(_ menu: NSMenu) {
-        menu.addItem(NSMenuItem(title: "Manage", action: #selector(edit), keyEquivalent: "m"))
-        menu.addItem(NSMenuItem(title: "Collection", action: #selector(openCollection), keyEquivalent: "l"))
-        menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: "t"))
+        menu.addItem(NSMenuItem(title: "Manage", action: #selector(manage), keyEquivalent: "m"))
         menu.addItem(NSMenuItem(title: "Search", action: #selector(search), keyEquivalent: "s"))
+        menu.addItem(NSMenuItem(title: "Settings", action: #selector(settings), keyEquivalent: "t"))
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: ""))
     }
     
@@ -155,20 +152,6 @@ extension AppDelegate {
             
         }
         entry.open()
-    }
-    
-    @objc private func createBookmark() {
-        edit()
-        DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.25)) {
-            NotificationCenter.default.post(name: .onShouldPresentBookmarkForm, object: nil)
-        }
-    }
-    
-    @objc private func importFromBrowsers() {
-        openSettings()
-        DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.25)) {
-            NotificationCenter.default.post(name: .onShouldOpenImportPanel, object: nil)
-        }
     }
 }
 

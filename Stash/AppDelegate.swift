@@ -204,7 +204,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         collectionWindow?.toolbar = toolbar
     }
     
-    @objc func openSettings() {
+    @objc func settings() {
         if settingsWindow == nil {
             setupSettingsWindow()
         }
@@ -226,22 +226,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         NSApp.terminate(nil)
     }
     
-    @objc func edit() {
-//        if editWindow == nil {
-//            setupEditWindow()
-//        }
-//        
-//        NSApp.activate(ignoringOtherApps: true)
-//        
-//        DispatchQueue.main.async {
-//            self.editWindow?.makeKeyAndOrderFront(nil)
-//            self.editWindow?.level = .floating
-//            self.editWindow?.level = .normal
-//            NSApp.arrangeInFront(nil)
-//        }
-    }
-    
-    @objc func openCollection() {
+    @objc func manage() {
         if collectionWindow == nil {
             setupCollectionWindow()
         }
