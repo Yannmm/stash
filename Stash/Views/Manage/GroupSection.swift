@@ -30,7 +30,9 @@ extension ManageView.Sidebar {
                             drag: $drag,
                             dragTarget: $dragTarget,
                             onToggleExpansion: {
-                                viewModel.toggleExpansion(row.id)
+                                withAnimation(.easeInOut(duration: 0.2)) {
+                                    viewModel.toggleExpansion(row.id)
+                                }
                             },
                             onTap: {
                                 viewModel.setSelection(row.id)
@@ -80,7 +82,7 @@ extension ManageView.Sidebar.GroupSection {
                     .frame(width: 16, height: 16, alignment: .center)
                     .foregroundStyle(.secondary)
                     .onTapGesture {
-                        onTap()
+//                        onTap()
                         guard row.groupCount > 0 else { return }
                         onToggleExpansion()
                     }
@@ -193,7 +195,9 @@ extension ManageView.Sidebar.GroupSection {
                     // Check if still valid after delay
                     if !Task.isCancelled {
                         await MainActor.run {
-                            onToggleExpansion()
+                            withAnimation(.easeInOut(duration: 0.2)) {
+                                onToggleExpansion()
+                            }
                         }
                     }
                 } catch {
