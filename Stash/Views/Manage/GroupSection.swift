@@ -77,12 +77,11 @@ extension ManageView.Sidebar.GroupSection {
         var body: some View {
             HStack(alignment: .center, spacing: 0) {
                 _leadingGap(row.level)
-                Image(systemName: icon ?? (row.expanded ? "cube.fill" : (row.groupCount > 0 ? "cube.box.fill" : "cube.box")))
+                Image(systemName: image)
                     .font(.system(size: 16))
                     .frame(width: 16, height: 16, alignment: .center)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(imageColor)
                     .onTapGesture {
-//                        onTap()
                         guard row.groupCount > 0 else { return }
                         onToggleExpansion()
                     }
@@ -132,10 +131,10 @@ extension ManageView.Sidebar.GroupSection {
                 // Drag preview
                 HStack(spacing: 8) {
                     // TODO: reuse Image
-                    Image(systemName: row.expanded ? "hexagon.fill" : (row.groupCount > 0 ? "cube.box.fill" : "cube.box"))
+                    Image(systemName: image)
                         .font(.system(size: 16))
                         .frame(width: 16, height: 16, alignment: .center)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(imageColor)
                     Text(row.name)
                         .font(.system(size: 14))
                         .foregroundStyle(.primary)
@@ -158,6 +157,22 @@ extension ManageView.Sidebar.GroupSection {
             ))
             .onChange(of: dragPosition) { oldValue, newValue in
                 handleDragPositionChange(newValue)
+            }
+        }
+        
+        private var image: String {
+            icon ?? (row.expanded ? "cube.box" : (row.groupCount > 0 ? "cube.box.fill" : "cube.box"))
+        }
+        
+        private var imageColor: Color {
+            if icon != nil {
+                return .secondary
+            } else {
+                if row.expanded || row.groupCount > 0 {
+                    return Color.theme
+                } else {
+                    return .secondary
+                }
             }
         }
         
