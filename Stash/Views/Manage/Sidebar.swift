@@ -18,7 +18,8 @@ extension ManageView {
                     GroupSection.Row(
                         row: viewModel.rootRow,
                         icon: "infinity",
-                        dragging: .constant(nil),
+                        drag: .constant(nil),
+                        dragTarget: .constant(nil),
                         onToggleExpansion: {},
                         onTap: {
                             viewModel.setSelection(nil)

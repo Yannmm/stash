@@ -11,12 +11,14 @@ import UniformTypeIdentifiers
 extension ManageView.Sidebar {
     struct GroupSection: View {
         @EnvironmentObject var viewModel: SidebarViewModel
-        @State private var dragging: SidebarViewModel.Row?
+        @State private var drag: SidebarViewModel.Row?
         
         // macOS 26 SwiftUI List reuse bug:
         // Row @State leaks after drag reorder.
         // Remove _version hack once fixed.
         @State private var _version = 0
+        
+        @State private var dragTarget: UUID?
         
         var body: some View {
             if viewModel.rows.count > 0 {
@@ -25,7 +27,8 @@ extension ManageView.Sidebar {
                         Row(
                             row: row,
                             icon: nil,
-                            dragging: $dragging,
+                            drag: $drag,
+                            dragTarget: $dragTarget,
                             onToggleExpansion: {
                                 viewModel.toggleExpansion(row.id)
                             },
@@ -35,6 +38,7 @@ extension ManageView.Sidebar {
                             onDrop: { id, subjectId, position in
                                 viewModel.move(subjectId, relativeTo: id, position: position)
                                 _version += 1
+                                dragTarget = nil
                             },
                             cascade: { id, subjectId in
                                 viewModel.cascade(from: subjectId, to: id)
@@ -54,7 +58,8 @@ extension ManageView.Sidebar.GroupSection {
     struct Row: View {
         let row: SidebarViewModel.Row
         let icon: String?
-        @Binding var dragging: SidebarViewModel.Row?
+        @Binding var drag: SidebarViewModel.Row?
+        @Binding var dragTarget: UUID?
         let onToggleExpansion: () -> Void
         let onTap: () -> Void
         let onDrop: (UUID, UUID, DragPosition) -> Void
@@ -122,7 +127,7 @@ extension ManageView.Sidebar.GroupSection {
                 onTap()
             }
             .onDrag {
-                dragging = row
+                drag = row
                 return NSItemProvider(object: row.id.uuidString as NSString)
             } preview: {
                 // Drag preview
@@ -144,7 +149,7 @@ extension ManageView.Sidebar.GroupSection {
             }
             .onDrop(of: [UTType.plainText], delegate: Dropper(
                 id: row.id,
-                dragging: $dragging,
+                drag: $drag,
                 dragPosition: $dragPosition,
                 rowHeight: height,
                 expanded: row.expanded,
@@ -159,9 +164,15 @@ extension ManageView.Sidebar.GroupSection {
         
         /// Handles auto-expand when hovering over an expandable item during drag
         private func handleDragPositionChange(_ position: DragPosition?) {
+            if let p = position, hasIndicator {
+                dragTarget = row.id
+            } else if row.id == dragTarget {
+                dragTarget = nil
+            }
+            // TODO: maybe need to change?
+            
             expandTask?.cancel()
             expandTask = nil
-            
             guard !row.expanded else { return }
             
             // Only start expand timer if:
@@ -171,7 +182,7 @@ extension ManageView.Sidebar.GroupSection {
             // 4. We're actually dragging something (not self)
             guard position == .in,
                   row.groupCount > 0,
-                  let drag = dragging,
+                  let drag = drag,
                   drag.id != row.id else {
                 return
             }
@@ -202,10 +213,13 @@ extension ManageView.Sidebar.GroupSection {
         }
         
         private var backgroundColor: Color {
-            if hasIndicator {
-                return Color.accentColor.opacity(0.1)
+            if row.selected {
+                if dragTarget != nil {
+                    return Color(nsColor: .unemphasizedSelectedContentBackgroundColor).opacity(0.8)
+                }
+                return Color(nsColor: .selectedContentBackgroundColor).opacity(0.8)
             }
-            return row.selected ? Color.accentColor.opacity(0.6) : Color.clear
+            return Color.clear
         }
         
         private func _indicator1() -> some View {

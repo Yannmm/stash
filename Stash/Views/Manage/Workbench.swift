@@ -55,12 +55,12 @@ fileprivate extension ManageView.Workbench {
         @EnvironmentObject var viewModel: WorkbenchViewModel
         
         @Binding var selection: UUID?
-        @State private var dragging: WorkbenchViewModel.Row?
+        @State private var drag: WorkbenchViewModel.Row?
         @State private var width1: CGFloat = Constant.initialWidth1
         @State private var width2: CGFloat = Constant.initialWidth2
         @State private var width3: CGFloat = Constant.initialWidth3
         
-        @State private var indicating: (Int, DragPosition, UUID)?
+        @State private var dragTarget: (Int, DragPosition, UUID)?
         
         var body: some View {
             ZStack {
@@ -83,7 +83,7 @@ fileprivate extension ManageView.Workbench {
                                             index: index,
                                             row: row,
                                             selection: $selection,
-                                            dragging: $dragging,
+                                            drag: $drag,
                                             width1: width1,
                                             width2: width2,
                                             totalWidth: max(totalWidth, proxy.size.width),
@@ -92,7 +92,7 @@ fileprivate extension ManageView.Workbench {
                                                 
                                                 Task { @MainActor in
                                                     try? await Task.sleep(for: .milliseconds(250))
-                                                    indicating = nil
+                                                    dragTarget = nil
                                                 }
                                             },
                                             cascade: { id, subjectId in
@@ -101,7 +101,7 @@ fileprivate extension ManageView.Workbench {
                                             indentColor: { index in
                                                 viewModel.indentColor(index)
                                             },
-                                            indicating: $indicating
+                                            dragTarget: $dragTarget
                                         )
                                         .id(row.id)
                                         .anchorPreference(
@@ -129,9 +129,9 @@ fileprivate extension ManageView.Workbench {
                 }
                 .overlayPreferenceValue(RowFrameKey.self) { anchors in
                     GeometryReader { proxy in
-                        if let index = indicating?.0,
-                           let position = indicating?.1,
-                           let id = indicating?.2,
+                        if let index = dragTarget?.0,
+                           let position = dragTarget?.1,
+                           let id = dragTarget?.2,
                            let anchor = anchors[index] {
                             let frame = proxy[anchor]
                             switch position {
@@ -251,14 +251,14 @@ fileprivate extension ManageView.Workbench {
         let index: Int
         let row: WorkbenchViewModel.Row
         @Binding var selection: UUID?
-        @Binding var dragging: WorkbenchViewModel.Row?
+        @Binding var drag: WorkbenchViewModel.Row?
         let width1: CGFloat
         let width2: CGFloat
         let totalWidth: CGFloat
         let onDrop: (UUID, UUID, DragPosition) -> Void
         let cascade: (UUID, UUID) -> Bool
         let indentColor: (Int) -> Color
-        @Binding var indicating: (Int, DragPosition, UUID)?
+        @Binding var dragTarget: (Int, DragPosition, UUID)?
         @State private var dragPosition: DragPosition? = nil
         private var hasIndicator: Bool { _propose(dragPosition)?.operation == .move }
         private var height: CGFloat { Constant.rowHeight }
@@ -311,7 +311,7 @@ fileprivate extension ManageView.Workbench {
             }
             .onTapGesture { selection = row.id }
             .onDrag {
-                dragging = row
+                drag = row
                 return NSItemProvider(object: row.id.uuidString as NSString)
             } preview: {
                 HStack(spacing: 8) {
@@ -328,7 +328,7 @@ fileprivate extension ManageView.Workbench {
             }
             .onDrop(of: [UTType.plainText], delegate: Dropper(
                 id: row.id,
-                dragging: $dragging,
+                drag: $drag,
                 dragPosition: $dragPosition,
                 rowHeight: height,
                 expanded: row.expanded,
@@ -338,15 +338,15 @@ fileprivate extension ManageView.Workbench {
             ))
             .onChange(of: dragPosition) { _, newValue in
                 if let position = newValue, hasIndicator {
-                    indicating = (index, position, row.id)
-                } else if row.id == indicating?.2 {
-                    indicating = nil
+                    dragTarget = (index, position, row.id)
+                } else if row.id == dragTarget?.2 {
+                    dragTarget = nil
                 }
             }
         }
         
         private func _propose(_ position: DragPosition?) -> DropProposal? {
-            guard let drag = dragging else { return nil }
+            guard let drag = drag else { return nil }
             if cascade(row.id, drag.id) {
                 return DropProposal(operation: .forbidden)
             }
@@ -368,7 +368,7 @@ fileprivate extension ManageView.Workbench {
         
         private var backgroundColor: Color {
             if selection == row.id {
-                if indicating != nil {
+                if dragTarget != nil {
                     return Color(nsColor: .unemphasizedSelectedContentBackgroundColor).opacity(0.8)
                 }
                 return Color(nsColor: .selectedContentBackgroundColor).opacity(0.8)

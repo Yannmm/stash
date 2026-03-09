@@ -15,7 +15,7 @@ enum DragPosition {
 
 struct Dropper<T: Identifiable>: DropDelegate {
     let id: T.ID
-    @Binding var dragging: T?
+    @Binding var drag: T?
     @Binding var dragPosition: DragPosition?
     let rowHeight: CGFloat
     let expanded: Bool
@@ -25,14 +25,11 @@ struct Dropper<T: Identifiable>: DropDelegate {
     
     // Only before/after zones - middle zone is rejected
     private var threshold: CGFloat { rowHeight / 3 }
-    
-    func validateDrop(info: DropInfo) -> Bool {
-        guard let drag = dragging else { return false }
-        return drag.id != id
-    }
-    
+
     func performDrop(info: DropInfo) -> Bool {
-        guard let drag = dragging,
+        defer { drag = nil }
+        
+        guard let drag = drag,
               drag.id != id,
               let position = dragPosition else {
             reset()
@@ -40,13 +37,12 @@ struct Dropper<T: Identifiable>: DropDelegate {
         }
         
         onDrop(id, drag.id, position)
-        self.dragging = nil
         reset()
         return true
     }
     
     func dropEntered(info: DropInfo) {
-        guard dragging?.id != id else { return }
+        guard drag?.id != id else { return }
         _updatePosition(info)
     }
     
@@ -56,7 +52,7 @@ struct Dropper<T: Identifiable>: DropDelegate {
     }
     
     func dropUpdated(info: DropInfo) -> DropProposal? {
-        guard dragging?.id != id else {
+        guard drag?.id != id else {
             NSCursor.operationNotAllowed.set()
             return DropProposal(operation: .forbidden)
         }
@@ -77,7 +73,7 @@ struct Dropper<T: Identifiable>: DropDelegate {
     
     
     private func _updatePosition(_ info: DropInfo) {
-        guard let drag = dragging else { return }
+        guard let drag = drag else { return }
         guard !cascade(id, drag.id) else { return }
         
         let location = info.location
