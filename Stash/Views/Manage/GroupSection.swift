@@ -110,14 +110,11 @@ extension ManageView.Sidebar.GroupSection {
                     case .before:
                         _indicator1()
                             .offset(y: -(Constant.dragIndicatorHeight * 0.5))
-                            .allowsHitTesting(false)
                     case .in:
                         _indicator2(childCount: viewModel.strideCount(row.id))
-                            .allowsHitTesting(false)
                     case .after:
                         _indicator1()
                             .offset(y: height - Constant.dragIndicatorHeight * 0.5)
-                            .allowsHitTesting(false)
                         
                     }
                 }
@@ -187,7 +184,7 @@ extension ManageView.Sidebar.GroupSection {
                 return
             }
             
-            let delay: UInt64 = 2_000_000_000 // 0.7 seconds in nanoseconds
+            let delay: UInt64 = 1_000_000_000 // 0.7 seconds in nanoseconds
             
             // Start a delayed task to expand
             expandTask = Task {
@@ -223,17 +220,17 @@ extension ManageView.Sidebar.GroupSection {
         }
         
         private func _indicator1() -> some View {
-                Rectangle()
-                    .fill(Color.accentColor)
+            Rectangle()
+                .fill(Color.accentColor)
                 .frame(height: Constant.dragIndicatorHeight)
-            
+                .allowsHitTesting(false)
         }
         
         private func _indicator2(childCount: Int) -> some View {
             RoundedRectangle(cornerRadius: Constant.cornerRadius)
-                .fill(Color.clear)
-                .stroke(Color.accentColor, lineWidth: Constant.dragIndicatorHeight)
+                .fill(Color.accentColor.opacity(0.3))
                 .frame(height: (Double(childCount) + 1) * height)
+                .allowsHitTesting(false)
         }
         
         private func _leadingGap(_ count: Int) -> some View {
