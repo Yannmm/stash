@@ -7,6 +7,7 @@
 
 import SwiftUI
 import AppKit
+import Combine
 import UniformTypeIdentifiers
 
 extension ManageView {
@@ -264,6 +265,7 @@ fileprivate extension ManageView.Workbench {
         private var height: CGFloat { Constant.rowHeight }
         
         @State private var presentEditor = false
+        @FocusState private var focused: Bool
         
         var body: some View {
             HStack(spacing: 0) {
@@ -297,6 +299,7 @@ fileprivate extension ManageView.Workbench {
             .frame(width: totalWidth, alignment: .leading)
             .background(backgroundColor)
             .focusable()
+            .focused($focused)
             .focusEffectDisabled()
             .onKeyPress(.return, action: {
                 presentEditor = true
@@ -309,7 +312,10 @@ fileprivate extension ManageView.Workbench {
                                                             cabinet: OkamuraCabinet.shared,
                                                             dominator: Dominator()))
             }
-            .onTapGesture { selection = row.id }
+            .onTapGesture {
+                selection = row.id
+                focused = true
+            }
             .onDrag {
                 drag = row
                 return NSItemProvider(object: row.id.uuidString as NSString)
@@ -341,6 +347,12 @@ fileprivate extension ManageView.Workbench {
                     dragTarget = (index, position, row.id)
                 } else if row.id == dragTarget?.2 {
                     dragTarget = nil
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+                if selection == row.id {
+                    focused = false
+                    DispatchQueue.main.async { focused = true }
                 }
             }
         }
