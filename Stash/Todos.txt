@@ -78,4 +78,4 @@
 // 72. edit a boogkmark, enter tag, use tab to switch focus to path field, type enter, nothing happen ,should save ✅
 // 73. unify drag & drop between workbench and sidebar
 // 74. some title with #xx does not consider as hashtags ✅
-// 75. in group section, expand a group that only has 1 group. drag it outside, the icon is not right for original parent.
+// 75. in group section, expand a group that only has 1 group. drag it outside, the icon is not right for original parent. ✅

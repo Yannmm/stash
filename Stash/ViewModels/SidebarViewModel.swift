@@ -19,11 +19,11 @@ class SidebarViewModel: ObservableObject, CascadeJudge {
     
     func update(_ entries: [any Entry]) {
         dataStore.cabinet.storedEntries = entries
-        do {
-            try dataStore.cabinet.save()
-        } catch {
-            self.error = error
-        }
+//        do {
+//            try dataStore.cabinet.save()
+//        } catch {
+//            self.error = error
+//        }
     }
     
     private var allEntries: [any Entry] {
@@ -80,10 +80,10 @@ class SidebarViewModel: ObservableObject, CascadeJudge {
         let allGroups = entries.compactMap { $0 as? Group }
         var result = [Row]()
         func flatten(_ group: Group, level: Int) {
-            let expanded = expansions.contains(group.id)
             let children = group.children(among: entries)
             let gcount = children.compactMap { $0 as? Group }.count
             let bcount = children.compactMap { $0 as? Bookmark }.count
+            let expanded = expansions.contains(group.id) && gcount > 0
             result.append(
                 Row(id: group.id,
                     name: group.name,
