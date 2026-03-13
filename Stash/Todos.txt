@@ -79,6 +79,6 @@
 // 73. unify drag & drop between workbench and sidebar
 // 74. some title with #xx does not consider as hashtags ✅
 // 75. in group section, expand a group that only has 1 group. drag it outside, the icon is not right for original parent. ✅
-// 76. keyboard control workbench
-// 77, workbench, type downward, first row get focused.
+// 76. keyboard control workbench ✅
+// 77, workbench, type downward, first row get focused. ✅
 // 78. when change hierarchy, clear selection

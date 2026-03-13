@@ -54,73 +54,122 @@ struct RowFrameKey: PreferenceKey {
 fileprivate extension ManageView.Workbench {
     private struct Sheet: View {
         @EnvironmentObject var viewModel: WorkbenchViewModel
-        
         @Binding var selection: UUID?
         @State private var drag: WorkbenchViewModel.Row?
         @State private var width1: CGFloat = Constant.initialWidth1
         @State private var width2: CGFloat = Constant.initialWidth2
         @State private var width3: CGFloat = Constant.initialWidth3
-        
         @State private var dragTarget: (Int, DragPosition, UUID)?
+        
+        @FocusState private var focusedRow: UUID?
+        @FocusState private var focused: Bool
+        
+        private enum ScrollTarget {
+            static let headerId = "workbench.header"
+        }
         
         var body: some View {
             ZStack {
-                GeometryReader { proxy in
-                    ScrollView([.vertical, .horizontal]) {
-                        VStack(spacing: 0) {
-                            LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
-                                Section(
-                                    header: Header(
-                                        width1: $width1,
-                                        width2: $width2,
-                                        min1: Constant.minWidth1,
-                                        min2: Constant.minWidth2,
-                                        total: max(totalWidth, proxy.size.width)
-                                    )
-                                )
-                                {
-                                    ForEach(Array(viewModel.rows.enumerated()), id: \.element.id) { index, row in
-                                        Row(
-                                            index: index,
-                                            row: row,
-                                            selection: $selection,
-                                            drag: $drag,
-                                            width1: width1,
-                                            width2: width2,
-                                            totalWidth: max(totalWidth, proxy.size.width),
-                                            onDrop: { id, subjectId, position in
-                                                viewModel.move(subjectId, relativeTo: id, position: position)
-                                                
-                                                Task { @MainActor in
-                                                    try? await Task.sleep(for: .milliseconds(250))
-                                                    dragTarget = nil
-                                                }
-                                            },
-                                            cascade: { id, subjectId in
-                                                viewModel.cascade(from: subjectId, to: id)
-                                            },
-                                            indentColor: { index in
-                                                viewModel.indentColor(index)
-                                            },
-                                            dragTarget: $dragTarget
+                GeometryReader { gproxy in
+                    ScrollViewReader { sproxy in
+                        ScrollView([.vertical, .horizontal]) {
+                            VStack(spacing: 0) {
+                                LazyVStack(spacing: 0, pinnedViews: [.sectionHeaders]) {
+                                    Section(
+                                        header: Header(
+                                            width1: $width1,
+                                            width2: $width2,
+                                            min1: Constant.minWidth1,
+                                            min2: Constant.minWidth2,
+                                            total: max(totalWidth, gproxy.size.width)
                                         )
-                                        .id(row.id)
-                                        .anchorPreference(
-                                            key: RowFrameKey.self,
-                                            value: .bounds
-                                        ) {
-                                            [index: $0]
+                                        .id(ScrollTarget.headerId)
+                                    )
+                                    {
+                                        ForEach(Array(viewModel.rows.enumerated()), id: \.element.id) { index, row in
+                                            Row(
+                                                index: index,
+                                                row: row,
+                                                selection: $selection,
+                                                drag: $drag,
+                                                focused: $focusedRow,
+                                                width1: width1,
+                                                width2: width2,
+                                                totalWidth: max(totalWidth, gproxy.size.width),
+                                                onKeyboardNavigate: { direction in
+                                                    navigate(direction)
+                                                },
+                                                onDrop: { id, subjectId, position in
+                                                    viewModel.move(subjectId, relativeTo: id, position: position)
+                                                    
+                                                    Task { @MainActor in
+                                                        try? await Task.sleep(for: .milliseconds(250))
+                                                        dragTarget = nil
+                                                    }
+                                                },
+                                                cascade: { id, subjectId in
+                                                    viewModel.cascade(from: subjectId, to: id)
+                                                },
+                                                indentColor: { index in
+                                                    viewModel.indentColor(index)
+                                                },
+                                                dragTarget: $dragTarget
+                                            )
+                                            .id(row.id)
+                                            .anchorPreference(
+                                                key: RowFrameKey.self,
+                                                value: .bounds
+                                            ) {
+                                                [index: $0]
+                                            }
                                         }
                                     }
                                 }
+                                // Animate reorder even when `rows` is updated asynchronously via Combine.
+                                .animation(.easeInOut(duration: 0.25), value: viewModel.rows.map(\.id))
+                                Spacer(minLength: 0)
                             }
-                            // Animate reorder even when `rows` is updated asynchronously via Combine.
-                            .animation(.easeInOut(duration: 0.25), value: viewModel.rows.map(\.id))
-                            Spacer(minLength: 0)
+                            .frame(minHeight: gproxy.size.height)
                         }
-                        .frame(minHeight: proxy.size.height)
+                        .focusable()
+                        .focused($focused)
+                        .focusEffectDisabled()
+                        .onKeyPress(.downArrow, action: {
+                            navigate(.down)
+                            return .handled
+                        })
+                        .onKeyPress(.upArrow, action: {
+                            navigate(.up)
+                            return .handled
+                        })
+                        .onAppear {
+                            if selection == nil {
+                                focused = true
+                            }
+                        }
+                        .onChange(of: selection) { _, newValue in
+                            guard let id = newValue else {
+                                focusedRow = nil
+                                focused = true
+                                return
+                            }
+                            focusedRow = id
+                            focused = false
+                            DispatchQueue.main.async {
+                                withAnimation(.easeInOut(duration: 0.12)) {
+                                    let ids = viewModel.rows.map(\.id)
+                                    if id == ids.first {
+                                        sproxy.scrollTo(ScrollTarget.headerId, anchor: .top)
+                                    } else if id == ids.last {
+                                        sproxy.scrollTo(id, anchor: .bottom)
+                                    } else {
+                                        sproxy.scrollTo(id)
+                                    }
+                                }
+                            }
+                        }
                     }
-                    .onChange(of: proxy.size.width) { _, newWidth in
+                    .onChange(of: gproxy.size.width) { _, newWidth in
                         let delta = newWidth - totalWidth
                         if delta != 0 {
                             let proposed = width1 + delta
@@ -196,6 +245,38 @@ fileprivate extension ManageView.Workbench {
         private var totalWidth: CGFloat {
             width1 + width2 + width3 + Constant.resizerWidth * 2
         }
+        
+        private func navigate(_ direction: MoveCommandDirection) {
+            let ids = viewModel.rows.map(\.id)
+            guard !ids.isEmpty else { return }
+            
+            let currentIndex = selection.flatMap { id in
+                ids.firstIndex(of: id)
+            }
+            
+            let newIndex: Int
+            switch direction {
+            case .down:
+                if let i = currentIndex {
+                    newIndex = (i + 1) % ids.count
+                } else {
+                    newIndex = 0
+                }
+            case .up:
+                if let i = currentIndex {
+                    newIndex = (i - 1 + ids.count) % ids.count
+                } else {
+                    newIndex = ids.count - 1
+                }
+            default:
+                return
+            }
+            
+            let id = ids[newIndex]
+            selection = id
+            focusedRow = id
+            focused = false
+        }
     }
 }
 
@@ -253,9 +334,11 @@ fileprivate extension ManageView.Workbench {
         let row: WorkbenchViewModel.Row
         @Binding var selection: UUID?
         @Binding var drag: WorkbenchViewModel.Row?
+        let focused: FocusState<UUID?>.Binding
         let width1: CGFloat
         let width2: CGFloat
         let totalWidth: CGFloat
+        let onKeyboardNavigate: (MoveCommandDirection) -> Void
         let onDrop: (UUID, UUID, DragPosition) -> Void
         let cascade: (UUID, UUID) -> Bool
         let indentColor: (Int) -> Color
@@ -265,7 +348,6 @@ fileprivate extension ManageView.Workbench {
         private var height: CGFloat { Constant.rowHeight }
         
         @State private var presentEditor = false
-        @FocusState private var focused: Bool
         
         var body: some View {
             HStack(spacing: 0) {
@@ -299,10 +381,18 @@ fileprivate extension ManageView.Workbench {
             .frame(width: totalWidth, alignment: .leading)
             .background(backgroundColor)
             .focusable()
-            .focused($focused)
+            .focused(focused, equals: row.id)
             .focusEffectDisabled()
             .onKeyPress(.return, action: {
                 presentEditor = true
+                return .handled
+            })
+            .onKeyPress(.downArrow, action: {
+                onKeyboardNavigate(.down)
+                return .handled
+            })
+            .onKeyPress(.upArrow, action: {
+                onKeyboardNavigate(.up)
                 return .handled
             })
             .popover(isPresented: $presentEditor) {
@@ -311,10 +401,6 @@ fileprivate extension ManageView.Workbench {
                     .environmentObject(EntryEditorViewModel(mode: .update(row.id),
                                                             cabinet: OkamuraCabinet.shared,
                                                             dominator: Dominator()))
-            }
-            .onTapGesture {
-                selection = row.id
-                focused = true
             }
             .onDrag {
                 drag = row
@@ -342,6 +428,19 @@ fileprivate extension ManageView.Workbench {
                 cascade: cascade,
                 propose: _propose
             ))
+            .onTapGesture {
+                selection = row.id
+                focused.wrappedValue = row.id
+            }
+            .onChange(of: presentEditor) { _, isPresented in
+                guard !isPresented, selection == row.id else { return }
+                // When the popover is dismissed (e.g. Esc), restore keyboard focus
+                // so arrow-key navigation continues to work.
+                focused.wrappedValue = nil
+                DispatchQueue.main.async {
+                    focused.wrappedValue = row.id
+                }
+            }
             .onChange(of: dragPosition) { _, newValue in
                 if let position = newValue, hasIndicator {
                     dragTarget = (index, position, row.id)
@@ -351,8 +450,10 @@ fileprivate extension ManageView.Workbench {
             }
             .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
                 if selection == row.id {
-                    focused = false
-                    DispatchQueue.main.async { focused = true }
+                    focused.wrappedValue = nil
+                    DispatchQueue.main.async {
+                        focused.wrappedValue = row.id
+                    }
                 }
             }
         }
