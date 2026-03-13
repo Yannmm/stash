@@ -81,4 +81,4 @@
 // 75. in group section, expand a group that only has 1 group. drag it outside, the icon is not right for original parent. ✅
 // 76. keyboard control workbench ✅
 // 77, workbench, type downward, first row get focused. ✅
-// 78. when change hierarchy, clear selection
+// 78. when change collection, clear selection ✅

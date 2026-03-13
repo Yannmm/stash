@@ -38,6 +38,12 @@ extension ManageView {
                 } message: {
                     Text(viewModel.error?.localizedDescription ?? "")
                 }
+                .onChange(of: viewModel.dataStore.collection?.id) { _, _ in
+                    selection = nil
+                }
+                .onChange(of: viewModel.hierarchy) { _, _ in
+                    selection = nil
+                }
         }
     }
 }

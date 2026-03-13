@@ -9,7 +9,7 @@ import Foundation
 
 class ManageSelectionStore: ObservableObject {
     let cabinet: OkamuraCabinet
-    @Published var collection: Collectible?
+    @Published var collection: (any Collectible)?
     
     init(cabinet: OkamuraCabinet) {
         self.cabinet = cabinet

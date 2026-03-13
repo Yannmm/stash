@@ -8,7 +8,7 @@
 import Foundation
 
 // A collection can be a group or hashtag
-protocol Collectible {
+protocol Collectible: Equatable {
     var title: String { get }
     var id: UUID { get }
     
