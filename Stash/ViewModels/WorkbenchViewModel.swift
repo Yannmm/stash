@@ -11,14 +11,21 @@ import SwiftUI
 
 class WorkbenchViewModel: ObservableObject, CascadeJudge {
     @Published var search = ""
-    @Published var hierarchy: Hierarchy = .child
+    @Published var hierarchy: Hierarchy = .descendant
     @Published private(set) var rows: [Row] = []
-    @Published var hashtagFilter: String?
+    @Published var hashtagFilter: String? {
+        didSet {
+            if let f = hashtagFilter, f.count > 0 {
+                hierarchy = .descendant
+            }
+        }
+    }
     var hashtags: [String] {
         let set = Set(dataStore.cabinet.storedEntries
             .map({ $0.hashtags })
             .compactMap({ $0 })
             .flatMap({ $0 }))
+            .sorted()
         return Array(set)
     }
     @Published var error: Error?
@@ -48,14 +55,16 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         Publishers.CombineLatest4(
             dataStore.$collection,
             dataStore.cabinet.$storedEntries,
-            $hierarchy,
+            $hierarchy.removeDuplicates(),
             Publishers.CombineLatest($search, $hashtagFilter)
         )
         .map { [unowned self] a, b, c, d in
+            let hashtag = d.1
+            let query = d.0
             let result = self.heirs(b, a, c)
                 .map {
                     let tags = $0.hashtags ?? []
-                    if let htf = d.1,
+                    if let htf = hashtag,
                        htf.count > 0,
                        !tags.contains(htf) {
                         return Optional<Row>.none
@@ -79,6 +88,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         .store(in: &_cancellables)
         
         $hierarchy
+            .removeDuplicates()
             .map { _ in [] }
             .sink(receiveValue: { [weak self] in self?.indentColorStorage = $0 })
             .store(in: &_cancellables)
@@ -106,7 +116,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
     
     
     
-    private func heirs(_ entries: [any Entry], _ selection: Collectible?, _ hierarchy: Hierarchy) -> [any Entry] {
+    private func heirs(_ entries: [any Entry], _ selection: (any Collectible)?, _ hierarchy: Hierarchy) -> [any Entry] {
         switch hierarchy {
         case .child:
             // TODO: selection maybe hashtag as well

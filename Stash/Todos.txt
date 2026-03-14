@@ -82,3 +82,5 @@
 // 76. keyboard control workbench ✅
 // 77, workbench, type downward, first row get focused. ✅
 // 78. when change collection, clear selection ✅
+// 79. wrong hashtag options ✅
+// 80. search not implemented, hightlight words?

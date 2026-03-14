@@ -43,12 +43,12 @@ extension ManageView.Workbench {
                         Task { @MainActor in hierarchy = newValue }
                     }
                 )) {
-                    Label("Children", systemImage: "list.bullet")
-                        .tag(WorkbenchViewModel.Hierarchy.child)
-                        .help("Show Direct Children")
                     Label("Descedants", systemImage: "list.bullet.indent")
                         .tag(WorkbenchViewModel.Hierarchy.descendant)
                         .help("Show All Descendants")
+                    Label("Children", systemImage: "list.bullet")
+                        .tag(WorkbenchViewModel.Hierarchy.child)
+                        .help("Show Direct Children")
                 }
                 .pickerStyle(.segmented)
                 
