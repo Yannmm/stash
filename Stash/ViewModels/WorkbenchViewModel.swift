@@ -56,7 +56,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
             dataStore.$collection,
             dataStore.cabinet.$storedEntries,
             $hierarchy.removeDuplicates(),
-            Publishers.CombineLatest($search, $hashtagFilter)
+            Publishers.CombineLatest($search.map({ $0.trim() }).removeDuplicates(), $hashtagFilter)
         )
         .map { [unowned self] a, b, c, d in
             let hashtag = d.1
@@ -69,8 +69,15 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                        !tags.contains(htf) {
                         return Optional<Row>.none
                     }
-                    // TODO: search not implemented
-                    let info = _info($0, b, c)
+                    if query.count > 0 {
+                        guard $0.name.range(of: query, options: .caseInsensitive) != nil ||
+                                ($0.hashtags ?? []).contains(where: { $0.range(of: query, options: .caseInsensitive) != nil }) else {
+                            return Optional<Row>.none
+                        }
+                    }
+                    guard let info = _queryInfo(query, $0, b, c) else {
+                        return Optional<Row>.none
+                    }
                     return Row(id: $0.id,
                                icon: $0.icon,
                                title: $0.name,
@@ -151,10 +158,15 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         return trail
     }
     
-    private func _info(_ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, Bool) {
+    private func _queryInfo(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, Bool)? {
         switch entry {
         case let b as Bookmark:
-            return (b.url.host() ?? b.url.absoluteString, false)
+            let path = b.url.host() ?? b.url.absoluteString
+            if query.count > 0, path.range(of: query, options: .caseInsensitive) != nil {
+                return (path, false)
+            } else {
+                return nil
+            }
         case let g as Group:
             let children = g.children(among: entries)
             let gcount = _groupCount(children)
@@ -169,9 +181,8 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
             case .descendant:
                 return (result, children.count > 0)
             }
-            
         default:
-            return ("", false)
+            return nil
         }
     }
 }

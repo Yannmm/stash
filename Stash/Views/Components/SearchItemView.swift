@@ -49,7 +49,7 @@ struct _SearchItemView: View {
     
     @ViewBuilder
     private func title() -> some View {
-        Text(emphasize(item.title) { attr in
+        Text(item.title.emphasize(searchText) { attr in
             attr.foregroundColor = highlight ? .white : .primary
             attr.font = .system(size: 15, weight: .light)
         } highlightStyle: { attr, range in
@@ -63,7 +63,7 @@ struct _SearchItemView: View {
     
     @ViewBuilder
     private func detail() -> some View {
-        Text(emphasize(item.detail) { attr in
+        Text(item.detail.emphasize(searchText) { attr in
             attr.foregroundColor = highlight ? .white : .secondary
             attr.font = .system(size: 12, weight: .light)
         } highlightStyle: { attr, range in
@@ -72,20 +72,5 @@ struct _SearchItemView: View {
         })
         .lineLimit(nil)
         .fixedSize(horizontal: false, vertical: true)
-    }
-    
-    private func emphasize(_ base: String, baseStyle: (inout AttributedString) -> Void, highlightStyle: (inout AttributedString, Range<AttributedString.Index>) -> Void) -> AttributedString {
-        var attr = AttributedString(base)
-        baseStyle(&attr)
-        
-        let ranges = base.lowercased().ranges(of: searchText.lowercased())
-        guard ranges.count > 0 else { return attr }
-        ranges.forEach { r in
-            let rr = NSRange(r, in: base)
-            if let range = Range(rr, in: attr) {
-                highlightStyle(&attr, range)
-            }
-        }
-        return attr
     }
 }
