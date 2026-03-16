@@ -600,8 +600,8 @@ fileprivate extension ManageView.Workbench {
         static let rowHeight: CGFloat = 36
         static let resizerWidth: CGFloat = 12
         static let initialWidth1: CGFloat = 280
-        static let initialWidth2: CGFloat = 220
-        static let initialWidth3: CGFloat = 100
+        static let initialWidth2: CGFloat = 260
+        static let initialWidth3: CGFloat = 120
         static let minWidth1: CGFloat = 180
         static let minWidth2: CGFloat = 120
         

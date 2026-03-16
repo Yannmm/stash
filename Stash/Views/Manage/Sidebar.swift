@@ -31,7 +31,7 @@ extension ManageView {
                         return false
                     })
                     GroupSection()
-                    TagSection(hashtags: .constant([]))
+//                    TagSection(hashtags: .constant([]))
                 }
                 .padding(.horizontal, 16)
             }
