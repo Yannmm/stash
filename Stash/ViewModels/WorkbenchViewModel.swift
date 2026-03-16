@@ -69,16 +69,17 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                        !tags.contains(htf) {
                         return Optional<Row>.none
                     }
+                    let info = _queryInfo(query, $0, b, c)
                     if query.count > 0 {
                         guard
-//                            $0.name.range(of: query, options: .caseInsensitive) != nil ||
-                                ($0.hashtags ?? []).contains(where: { $0.range(of: query, options: .caseInsensitive) != nil }) else {
+                            $0.name.range(of: query, options: .caseInsensitive) != nil ||
+                                ($0.hashtags ?? []).contains(where: { $0.range(of: query, options: .caseInsensitive) != nil }) ||
+                                info.2
+                        else {
                             return Optional<Row>.none
                         }
                     }
-                    guard let info = _queryInfo(query, $0, b, c) else {
-                        return Optional<Row>.none
-                    }
+                    
                     return Row(id: $0.id,
                                icon: $0.icon,
                                title: $0.name,
@@ -89,7 +90,6 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                                expandable: $0.container)
                 }
                 .compactMap({ $0 })
-            print("\(query) -> \(result.count)")
             return result
         }
         .receive(on: DispatchQueue.main)
@@ -160,16 +160,11 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         return trail
     }
     
-    private func _queryInfo(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, Bool)? {
+    private func _queryInfo(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, Bool, Bool) {
         switch entry {
         case let b as Bookmark:
-            let path = b.url.host() ?? b.url.absoluteString
-            if query.count > 0, path.range(of: query, options: .caseInsensitive) == nil {
-                xxxxx
-                return nil
-            } else {
-                return (path, false)
-            }
+            let path = query.count > 0 ? b.url.absoluteString.condense(matching: query) : (b.url.host() ?? b.url.absoluteString)
+            return (path, false, path.range(of: query, options: .caseInsensitive) != nil)
         case let g as Group:
             let children = g.children(among: entries)
             let gcount = _groupCount(children)
@@ -180,12 +175,12 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
             }
             switch hierarchy {
             case .child:
-                return (result, false)
+                return (result, false, false)
             case .descendant:
-                return (result, children.count > 0)
+                return (result, children.count > 0, false)
             }
         default:
-            return nil
+            fatalError("Impossible case")
         }
     }
 }

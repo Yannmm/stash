@@ -46,3 +46,69 @@ extension String {
         return attr
     }
 }
+
+extension String {
+    
+    func condense(
+        matching search: String,
+        leading: Int = 20,
+        trailing: Int = 10,
+        context: Int = 5
+    ) -> String {
+        
+        guard !search.isEmpty else { return self }
+        
+        var segments: [Range<String.Index>] = []
+        
+        // Leading segment
+        let leadEnd = index(startIndex, offsetBy: min(leading, count))
+        segments.append(startIndex..<leadEnd)
+        
+        // Find matches
+        var start = startIndex
+        
+        while let r = range(
+            of: search,
+            options: [.caseInsensitive],
+            range: start..<endIndex
+        ) {
+            let lower = index(r.lowerBound, offsetBy: -context, limitedBy: startIndex) ?? startIndex
+            let upper = index(r.upperBound, offsetBy: context, limitedBy: endIndex) ?? endIndex
+            
+            segments.append(lower..<upper)
+            
+            start = r.upperBound
+        }
+        
+        // Trailing segment
+        let trailStart = index(endIndex, offsetBy: -min(trailing, count), limitedBy: startIndex) ?? startIndex
+        segments.append(trailStart..<endIndex)
+        
+        // Sort segments
+        segments.sort { $0.lowerBound < $1.lowerBound }
+        
+        // Merge overlaps
+        var merged: [Range<String.Index>] = []
+        
+        for seg in segments {
+            if let last = merged.last, last.upperBound >= seg.lowerBound {
+                merged[merged.count - 1] =
+                    last.lowerBound..<max(last.upperBound, seg.upperBound)
+            } else {
+                merged.append(seg)
+            }
+        }
+        
+        // Build result
+        var result = ""
+        
+        for (i, seg) in merged.enumerated() {
+            if i > 0 {
+                result += "..."
+            }
+            result += self[seg]
+        }
+        
+        return result
+    }
+}
