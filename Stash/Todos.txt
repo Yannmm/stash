@@ -89,3 +89,4 @@
 // 92. right click menu (edit, delete, detail info)
 // 91. group editor
 // 92. drag from workbench to sidebar
+// 93. after search, allow user to use keyboard down to go to workbench
