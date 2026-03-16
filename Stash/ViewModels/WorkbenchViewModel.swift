@@ -10,7 +10,13 @@ import Foundation
 import SwiftUI
 
 class WorkbenchViewModel: ObservableObject, CascadeJudge {
-    @Published var search = ""
+    @Published var search = "" {
+        didSet {
+            if search.count > 0 {
+                hierarchy = .descendant
+            }
+        }
+    }
     @Published var hierarchy: Hierarchy = .descendant
     @Published private(set) var rows: [Row] = []
     @Published var hashtagFilter: String? {
@@ -69,7 +75,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                        !tags.contains(htf) {
                         return Optional<Row>.none
                     }
-                    let info = _queryInfo(query, $0, b, c)
+                    let info = _info(query, $0, b, c)
                     if query.count > 0 {
                         guard
                             $0.name.range(of: query, options: .caseInsensitive) != nil ||
@@ -84,7 +90,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                                icon: $0.icon,
                                title: $0.name,
                                description: info.0,
-                               trail: trail($0, b, a?.id),
+                               trail: trail(query, $0, b, a?.id),
                                tags: Array(tags),
                                expanded: info.1,
                                expandable: $0.container)
@@ -144,8 +150,11 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         entries.compactMap({ $0 as? Bookmark }).count
     }
     
-    private func trail(_ target: any Entry, _ entries: [any Entry], _ selectionId: UUID?) -> [Group] {
+    private func trail(_ query: String, _ target: any Entry, _ entries: [any Entry], _ selectionId: UUID?) -> [Group] {
         var trail = [Group]()
+        guard query.count <= 0 else {
+            return trail
+        }
         var pid = target.parentId
         while pid != nil {
             let group = entries.filter({ $0.id == pid }).compactMap({ $0 as? Group }).first
@@ -160,7 +169,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         return trail
     }
     
-    private func _queryInfo(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, Bool, Bool) {
+    private func _info(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, Bool, Bool) {
         switch entry {
         case let b as Bookmark:
             let path = query.count > 0 ? b.url.absoluteString.condense(matching: query) : (b.url.host() ?? b.url.absoluteString)
