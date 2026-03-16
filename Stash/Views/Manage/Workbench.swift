@@ -102,6 +102,7 @@ fileprivate extension ManageView.Workbench {
                                                 width1: width1,
                                                 width2: width2,
                                                 totalWidth: max(totalWidth, gproxy.size.width),
+                                                search: viewModel.search,
                                                 onKeyboardNavigate: { direction in
                                                     navigate(direction)
                                                 },
@@ -344,6 +345,7 @@ fileprivate extension ManageView.Workbench {
         let width1: CGFloat
         let width2: CGFloat
         let totalWidth: CGFloat
+        let search: String
         let onKeyboardNavigate: (MoveCommandDirection) -> Void
         let onDrop: (UUID, UUID, DragPosition) -> Void
         let cascade: (UUID, UUID) -> Bool
@@ -358,30 +360,43 @@ fileprivate extension ManageView.Workbench {
         var body: some View {
             HStack(spacing: 0) {
                 // Name column
-                IconAndNameCell(row: row, indentColor: indentColor)
+                IconAndNameCell(row: row, search: search, indentColor: indentColor)
                     .frame(width: width1, alignment: .leading)
                 
                 Spacer()
                     .frame(width: Constant.resizerWidth)
                 
                 // Description column
-                Text(row.description)
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .frame(width: width2, alignment: .leading)
+                Text(row.description.emphasize(search) { attr in
+                    attr.foregroundColor = .secondary
+                    attr.font = .system(size: 14, weight: .medium)
+                } highlightStyle: { attr, range in
+                    attr[range].foregroundColor = .theme
+                    attr[range].font = .system(size: 14, weight: .bold)
+                })
+                //                    .font(.system(size: 14, weight: .medium))
+                //                    .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(width: width2, alignment: .leading)
                 
                 Spacer()
                     .frame(width: Constant.resizerWidth)
                 
+                Text((row.tags ?? []).joined(separator: ", ").emphasize(search) { attr in
+                    attr.foregroundColor = .secondary
+                    attr.font = .system(size: 14, weight: .medium)
+                } highlightStyle: { attr, range in
+                    attr[range].foregroundColor = .theme
+                    attr[range].font = .system(size: 14, weight: .bold)
+                })
+                
                 // Tags column
-                Text((row.tags ?? []).joined(separator: ", "))
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                //                    .font(.system(size: 14, weight: .medium))
+                //                    .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .truncationMode(.tail)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .frame(height: height)
             .frame(width: totalWidth, alignment: .leading)
@@ -501,6 +516,7 @@ fileprivate extension ManageView.Workbench {
 fileprivate extension ManageView.Workbench {
     private struct IconAndNameCell: View {
         let row: WorkbenchViewModel.Row
+        let search: String
         let indentColor: (Int) -> Color
         
         var body: some View {
@@ -514,11 +530,17 @@ fileprivate extension ManageView.Workbench {
                 }
                 HStack(spacing: Constant.gap1) {
                     ViewHelper.icon(row.icon, side: Constant.iconWidth)
-                    Text(row.title)
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.primary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
+                    Text(row.title.emphasize(search) { attr in
+                        attr.foregroundColor = .primary
+                        attr.font = .system(size: 14, weight: .medium)
+                    } highlightStyle: { attr, range in
+                        attr[range].foregroundColor = .theme
+                        attr[range].font = .system(size: 14, weight: .bold)
+                    })
+                    //                        .font(.system(size: 14, weight: .medium))
+                    //                        .foregroundStyle(.primary)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }

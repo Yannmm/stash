@@ -84,3 +84,4 @@
 // 78. when change collection, clear selection ✅
 // 79. wrong hashtag options ✅
 // 80. search not implemented, hightlight words?
+// 90. tooltip, full url

@@ -70,7 +70,8 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                         return Optional<Row>.none
                     }
                     if query.count > 0 {
-                        guard $0.name.range(of: query, options: .caseInsensitive) != nil ||
+                        guard
+//                            $0.name.range(of: query, options: .caseInsensitive) != nil ||
                                 ($0.hashtags ?? []).contains(where: { $0.range(of: query, options: .caseInsensitive) != nil }) else {
                             return Optional<Row>.none
                         }
@@ -88,6 +89,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                                expandable: $0.container)
                 }
                 .compactMap({ $0 })
+            print("\(query) -> \(result.count)")
             return result
         }
         .receive(on: DispatchQueue.main)
@@ -162,10 +164,11 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         switch entry {
         case let b as Bookmark:
             let path = b.url.host() ?? b.url.absoluteString
-            if query.count > 0, path.range(of: query, options: .caseInsensitive) != nil {
-                return (path, false)
-            } else {
+            if query.count > 0, path.range(of: query, options: .caseInsensitive) == nil {
+                xxxxx
                 return nil
+            } else {
+                return (path, false)
             }
         case let g as Group:
             let children = g.children(among: entries)
