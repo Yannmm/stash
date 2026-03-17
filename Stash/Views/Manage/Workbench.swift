@@ -404,6 +404,7 @@ fileprivate extension ManageView.Workbench {
             .focusable()
             .focused(focused, equals: row.id)
             .focusEffectDisabled()
+            .help(row.extra)
             .onKeyPress(.return, action: {
                 presentEditor = true
                 return .handled

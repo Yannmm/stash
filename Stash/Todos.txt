@@ -84,9 +84,9 @@
 // 78. when change collection, clear selection ✅
 // 79. wrong hashtag options ✅
 // 80. search not implemented, hightlight words? ✅
-// 90. tooltip, full url
+// 90. tooltip, full url ✅
 // 91. space to open
-// 92. right click menu (edit, delete, detail info)
+// 92. right click menu (open, edit, delete, detail info)
 // 91. group editor
 // 92. drag from workbench to sidebar
 // 93. after search, allow user to use keyboard down to go to workbench

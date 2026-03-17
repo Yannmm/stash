@@ -80,7 +80,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                         guard
                             $0.name.range(of: query, options: .caseInsensitive) != nil ||
                                 ($0.hashtags ?? []).contains(where: { $0.range(of: query, options: .caseInsensitive) != nil }) ||
-                                info.2
+                                info.3
                         else {
                             return Optional<Row>.none
                         }
@@ -92,8 +92,9 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                                description: info.0,
                                trail: trail(query, $0, b, a?.id),
                                tags: Array(tags),
-                               expanded: info.1,
-                               expandable: $0.container)
+                               expanded: info.2,
+                               expandable: $0.container,
+                               extra: info.1)
                 }
                 .compactMap({ $0 })
             return result
@@ -115,17 +116,17 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
     
     var bookmarkCount: Int {
         if let c = dataStore.collection {
-            return _bookmarkCount(c.relatedEntries(dataStore.cabinet.storedEntries))
+            return _bookmarks(c.relatedEntries(dataStore.cabinet.storedEntries)).count
         } else {
-            return _bookmarkCount(dataStore.cabinet.storedEntries)
+            return _bookmarks(dataStore.cabinet.storedEntries).count
         }
     }
     
     var groupCount: Int {
         if let c = dataStore.collection {
-            return _groupCount(c.relatedEntries(dataStore.cabinet.storedEntries))
+            return _groups(c.relatedEntries(dataStore.cabinet.storedEntries)).count
         } else {
-            return _groupCount(dataStore.cabinet.storedEntries)
+            return _groups(dataStore.cabinet.storedEntries).count
         }
     }
     
@@ -142,12 +143,12 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         }
     }
     
-    private func _groupCount(_ entries: [any Entry]) -> Int {
-        entries.compactMap({ $0 as? Group }).count
+    private func _groups(_ entries: [any Entry]) -> [Group] {
+        entries.compactMap({ $0 as? Group })
     }
     
-    private func _bookmarkCount(_ entries: [any Entry]) -> Int {
-        entries.compactMap({ $0 as? Bookmark }).count
+    private func _bookmarks(_ entries: [any Entry]) -> [Bookmark] {
+        entries.compactMap({ $0 as? Bookmark })
     }
     
     private func trail(_ query: String, _ target: any Entry, _ entries: [any Entry], _ selectionId: UUID?) -> [Group] {
@@ -169,24 +170,24 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         return trail
     }
     
-    private func _info(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, Bool, Bool) {
+    private func _info(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, String, Bool, Bool) {
         switch entry {
         case let b as Bookmark:
             let path = query.count > 0 ? b.url.absoluteString.condense(matching: query) : (b.url.host() ?? b.url.absoluteString)
-            return (path, false, path.range(of: query, options: .caseInsensitive) != nil)
+            return (path, b.url.absoluteString, false, path.range(of: query, options: .caseInsensitive) != nil)
         case let g as Group:
             let children = g.children(among: entries)
-            let gcount = _groupCount(children)
-            let bcount = _bookmarkCount(children)
-            var result = "\(bcount) bookmarks"
+            let gcount = _groups(children).count
+            let bookmarks = _bookmarks(children)
+            var result = "\(bookmarks.count) bookmarks"
             if gcount > 0 {
                 result += " / \(gcount) groups"
             }
             switch hierarchy {
             case .child:
-                return (result, false, false)
+                return (result, "", false, false)
             case .descendant:
-                return (result, children.count > 0, false)
+                return (result, "", children.count > 0, false)
             }
         default:
             fatalError("Impossible case")
@@ -214,6 +215,7 @@ extension WorkbenchViewModel {
         let tags: [String]?
         let expanded: Bool
         let expandable: Bool
+        let extra: String
         
         var level: Int { trail.count }
     }
