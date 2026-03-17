@@ -337,6 +337,7 @@ fileprivate extension ManageView.Workbench {
 
 fileprivate extension ManageView.Workbench {
     struct Row: View {
+        @EnvironmentObject var viewModel: WorkbenchViewModel
         let index: Int
         let row: WorkbenchViewModel.Row
         @Binding var selection: UUID?
@@ -356,6 +357,7 @@ fileprivate extension ManageView.Workbench {
         private var height: CGFloat { Constant.rowHeight }
         
         @State private var presentEditor = false
+        @State private var presentContextMenu = false
         
         var body: some View {
             HStack(spacing: 0) {
@@ -401,6 +403,24 @@ fileprivate extension ManageView.Workbench {
             .frame(height: height)
             .frame(width: totalWidth, alignment: .leading)
             .background(backgroundColor)
+            .overlay(
+                // Outer border (white)
+                Rectangle()
+                    .strokeBorder(Color.clear, lineWidth: 1)
+                    .opacity(presentContextMenu ? 1 : 0)
+            )
+            .overlay(
+                // Inner border (red, inset)
+                Rectangle()
+                    .inset(by: 1) // 👈 match outer lineWidth
+                    .strokeBorder(contextBorderColor2, lineWidth: 2)
+                    .opacity(presentContextMenu ? 1 : 0)
+            )
+            .background(
+                RightClickMonitorView {
+                    presentContextMenu = true
+                }
+            )
             .focusable()
             .focused(focused, equals: row.id)
             .focusEffectDisabled()
@@ -453,6 +473,23 @@ fileprivate extension ManageView.Workbench {
             .onTapGesture {
                 selection = row.id
                 focused.wrappedValue = row.id
+            }
+            .contextMenu {
+                Button("Open") {
+                    open()
+                }
+                Button("Edit") {
+                    selection = row.id
+                    focused.wrappedValue = row.id
+                    presentEditor = true
+                }
+                Divider()
+                Button("Delete", role: .destructive) {
+                    remove()
+                }
+            }
+            .onReceive(NotificationCenter.default.publisher(for: NSMenu.didEndTrackingNotification)) { _ in
+                presentContextMenu = false
             }
             .onChange(of: presentEditor) { _, isPresented in
                 guard !isPresented, selection == row.id else { return }
@@ -510,6 +547,45 @@ fileprivate extension ManageView.Workbench {
             }
             let colors = NSColor.alternatingContentBackgroundColors
             return Color(colors[index % colors.count])
+        }
+        
+        private var contextBorderColor1: Color {
+            if selection == row.id {
+                return Color.clear
+            }
+            return Color.accentColor
+        }
+        
+        private var contextBorderColor2: Color {
+            if selection == row.id {
+                return Color.white
+            }
+            return Color.accentColor
+        }
+        
+        private func open() {
+            guard let entry = viewModel.entries.findBy(id: row.id) else { return }
+            selection = row.id
+            focused.wrappedValue = row.id
+            if let bookmark = entry as? Bookmark {
+                do {
+                    try viewModel.dataStore.cabinet.asRecent(bookmark)
+                } catch {
+                    viewModel.error = error
+                }
+            }
+            entry.open()
+        }
+        
+        private func remove() {
+            guard let entry = viewModel.entries.findBy(id: row.id) else { return }
+            let deleteIds = Set(entry.descendants(among: viewModel.entries, parent: true).map(\.id))
+            let result = viewModel.entries.filter { !deleteIds.contains($0.id) }
+            viewModel.update(result)
+            if selection == row.id {
+                selection = nil
+                focused.wrappedValue = nil
+            }
         }
     }
 }
