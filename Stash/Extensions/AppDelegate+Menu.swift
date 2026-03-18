@@ -146,12 +146,12 @@ extension AppDelegate {
         if let b = entry as? Bookmark {
             do {
                 try cabinet.asRecent(b)
+                b.open()
             } catch {
                 ErrorTracker.shared.add(error)
             }
             
         }
-        entry.open()
     }
 }
 

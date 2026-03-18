@@ -475,6 +475,9 @@ fileprivate extension ManageView.Workbench {
                 focused.wrappedValue = row.id
             }
             .contextMenu {
+                Text(row.title)
+                Text(row.extra)
+                Divider()
                 Button("Open") {
                     open()
                 }
@@ -565,14 +568,14 @@ fileprivate extension ManageView.Workbench {
         
         private func open() {
             guard let entry = viewModel.entries.findBy(id: row.id) else { return }
-            selection = row.id
-            focused.wrappedValue = row.id
+//            selection = row.id
+//            focused.wrappedValue = row.id
             if let bookmark = entry as? Bookmark {
                 do {
                     try viewModel.dataStore.cabinet.asRecent(bookmark)
                 } catch {
                     viewModel.error = error
-                }
+                } ????? 这里如何处理
             }
             entry.open()
         }

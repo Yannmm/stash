@@ -34,7 +34,7 @@ extension Bookmark: Entry {
     var container: Bool { false }
 }
 
-extension Bookmark {
+extension Bookmark: Actionable {
     func open() {
         let browser = (hashtags ?? [])
             .map({ String.Browser(rawValue: String($0)) })

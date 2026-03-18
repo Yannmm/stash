@@ -8,7 +8,7 @@
 import Foundation
 import OrderedCollections
 
-protocol Entry: Identifiable, Equatable, Hashable, Actionable {
+protocol Entry: Identifiable, Equatable, Hashable {
     var id: UUID { set get }
     
     var name: String { get set }
