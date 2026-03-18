@@ -94,7 +94,8 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                                tags: Array(tags),
                                expanded: info.2,
                                expandable: $0.container,
-                               extra: info.1)
+                               extra: info.1,
+                               actionable: $0 is Actionable)
                 }
                 .compactMap({ $0 })
             return result
@@ -130,7 +131,24 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         }
     }
     
+    func open(_ id: UUID) {
+        guard let b = entries.findBy(id: id) as? Bookmark else { return }
+        do {
+            b.open()
+            try dataStore.cabinet.asRecent(b)
+        } catch {
+            self.error = error
+        }
+    }
     
+    func delete(_ id: UUID) {
+        guard let entry = entries.findBy(id: id) else { return }
+        do {
+            try dataStore.cabinet.delete(entry: entry)
+        } catch {
+            self.error = error
+        }
+    }
     
     private func heirs(_ entries: [any Entry], _ selection: (any Collectible)?, _ hierarchy: Hierarchy) -> [any Entry] {
         switch hierarchy {
@@ -216,7 +234,7 @@ extension WorkbenchViewModel {
         let expanded: Bool
         let expandable: Bool
         let extra: String
-        
+        let actionable: Bool
         var level: Int { trail.count }
     }
 }

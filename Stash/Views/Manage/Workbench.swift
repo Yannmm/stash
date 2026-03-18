@@ -29,7 +29,6 @@ extension ManageView {
                             onAddGroup: {})
                 }
                 .environmentObject(viewModel)
-                .environmentObject(viewModel.dataStore)
                 .alert("Error", isPresented: Binding(
                     get: { viewModel.error != nil },
                     set: { if !$0 { viewModel.error = nil } }
@@ -120,7 +119,9 @@ fileprivate extension ManageView.Workbench {
                                                 indentColor: { index in
                                                     viewModel.indentColor(index)
                                                 },
-                                                dragTarget: $dragTarget
+                                                dragTarget: $dragTarget,
+                                                onOpen: { viewModel.open($0) },
+                                                onDelete: { viewModel.delete($0) },
                                             )
                                             .id(row.id)
                                             .anchorPreference(
@@ -337,7 +338,6 @@ fileprivate extension ManageView.Workbench {
 
 fileprivate extension ManageView.Workbench {
     struct Row: View {
-        @EnvironmentObject var viewModel: WorkbenchViewModel
         let index: Int
         let row: WorkbenchViewModel.Row
         @Binding var selection: UUID?
@@ -352,12 +352,15 @@ fileprivate extension ManageView.Workbench {
         let cascade: (UUID, UUID) -> Bool
         let indentColor: (Int) -> Color
         @Binding var dragTarget: (Int, DragPosition, UUID)?
+        let onOpen: (UUID) -> Void
+        let onDelete: (UUID) -> Void
         @State private var dragPosition: DragPosition? = nil
         private var hasIndicator: Bool { _propose(dragPosition)?.operation == .move }
         private var height: CGFloat { Constant.rowHeight }
         
         @State private var presentEditor = false
         @State private var presentContextMenu = false
+        @State private var presentDeletionAlert: Bool = false
         
         var body: some View {
             HStack(spacing: 0) {
@@ -478,17 +481,20 @@ fileprivate extension ManageView.Workbench {
                 Text(row.title)
                 Text(row.extra)
                 Divider()
-                Button("Open") {
-                    open()
+                if row.actionable {
+                    Button("Open") {
+                        onOpen(row.id)
+                    }
                 }
                 Button("Edit") {
-                    selection = row.id
-                    focused.wrappedValue = row.id
-                    presentEditor = true
+//                    selection = row.id
+//                    focused.wrappedValue = row.id
+//                    presentEditor = true
                 }
                 Divider()
                 Button("Delete", role: .destructive) {
-                    remove()
+//                    onDelete(row.id)
+                    presentDeletionAlert = true
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: NSMenu.didEndTrackingNotification)) { _ in
@@ -518,6 +524,13 @@ fileprivate extension ManageView.Workbench {
                     }
                 }
             }
+            .alert("Sure to delete \"\(row.title)\" ?", isPresented: $presentDeletionAlert, actions: {
+                Button("Remove", role: .destructive) {
+                    onDelete(row.id)
+                }
+            }, message: {
+                Text("This action cannot be undone.")
+            })
         }
         
         private func _propose(_ position: DragPosition?) -> DropProposal? {
@@ -564,31 +577,6 @@ fileprivate extension ManageView.Workbench {
                 return Color.white
             }
             return Color.accentColor
-        }
-        
-        private func open() {
-            guard let entry = viewModel.entries.findBy(id: row.id) else { return }
-//            selection = row.id
-//            focused.wrappedValue = row.id
-            if let bookmark = entry as? Bookmark {
-                do {
-                    try viewModel.dataStore.cabinet.asRecent(bookmark)
-                } catch {
-                    viewModel.error = error
-                } ????? 这里如何处理
-            }
-            entry.open()
-        }
-        
-        private func remove() {
-            guard let entry = viewModel.entries.findBy(id: row.id) else { return }
-            let deleteIds = Set(entry.descendants(among: viewModel.entries, parent: true).map(\.id))
-            let result = viewModel.entries.filter { !deleteIds.contains($0.id) }
-            viewModel.update(result)
-            if selection == row.id {
-                selection = nil
-                focused.wrappedValue = nil
-            }
         }
     }
 }
