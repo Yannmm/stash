@@ -75,7 +75,7 @@ extension ManageView.Workbench {
                 .popover(isPresented: $presentBookmarkEditor, arrowEdge: .top) {
                     BookmarkEditor()
                         .frame(width: 400)
-                        .environmentObject(EntryEditorViewModel(mode: .create(dataStore.collection?.id),
+                        .environmentObject(BookmarkEditorViewModel(mode: .create(dataStore.collection?.id),
                                                                 cabinet: dataStore.cabinet,
                                                                 dominator: Dominator()))
                 }

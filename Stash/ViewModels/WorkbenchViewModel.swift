@@ -95,7 +95,8 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                                expanded: info.2,
                                expandable: $0.container,
                                extra: info.1,
-                               actionable: $0 is Actionable)
+                               actionable: $0 is Actionable,
+                               entryType: info.4)
                 }
                 .compactMap({ $0 })
             return result
@@ -188,11 +189,11 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         return trail
     }
     
-    private func _info(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, String, Bool, Bool) {
+    private func _info(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, String, Bool, Bool, EntryType) {
         switch entry {
         case let b as Bookmark:
             let path = query.count > 0 ? b.url.absoluteString.condense(matching: query) : (b.url.host() ?? b.url.absoluteString)
-            return (path, b.url.absoluteString, false, path.range(of: query, options: .caseInsensitive) != nil)
+            return (path, b.url.absoluteString, false, path.range(of: query, options: .caseInsensitive) != nil, .bookmark)
         case let g as Group:
             let children = g.children(among: entries)
             let gcount = _groups(children).count
@@ -203,9 +204,9 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
             }
             switch hierarchy {
             case .child:
-                return (result, "", false, false)
+                return (result, "", false, false, .directory)
             case .descendant:
-                return (result, "", children.count > 0, false)
+                return (result, "", children.count > 0, false, .directory)
             }
         default:
             fatalError("Impossible case")
@@ -235,6 +236,8 @@ extension WorkbenchViewModel {
         let expandable: Bool
         let extra: String
         let actionable: Bool
+        let entryType: EntryType
+        
         var level: Int { trail.count }
     }
 }

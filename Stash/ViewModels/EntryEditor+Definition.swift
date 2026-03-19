@@ -18,6 +18,13 @@ enum EntryEditor {
         case title
         case hashtag
     }
+    
+    enum CraftError: Error {
+        case emptyPath
+        case invalidUrl(String)
+        case unsupportedUrl(String)
+        case entryNotFound(UUID)
+    }
 }
 
 

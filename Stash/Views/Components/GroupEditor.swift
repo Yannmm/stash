@@ -10,7 +10,7 @@ import OrderedCollections
 
 struct GroupEditor: View {
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var viewModel: EntryEditorViewModel
+    @EnvironmentObject var viewModel: GroupEditorViewModel
     
     @FocusState private var focusedField: EntryEditor.Field?
     @State private var titleDisabled: Bool = false
@@ -31,21 +31,12 @@ struct GroupEditor: View {
                 Text(title)
                     .font(.headline)
                 Spacer()
-                switch viewModel.progress {
-                case .parsable(let enabled):
-                    Button("Parse") {
-                        viewModel.parse()
-                    }
-                    .disabled(!(enabled && !viewModel.loading))
-                    .if(enabled && !viewModel.loading, content: { $0.buttonStyle(.borderedProminent) })
-                case .savable(let enabled):
-                    Button("Save") {
-                        viewModel.save()
-                        dismiss()
-                    }
-                    .disabled(!enabled)
-                    .if(enabled, content: { $0.buttonStyle(.borderedProminent) })
+                Button("Save") {
+                    viewModel.save()
+                    dismiss()
                 }
+                .disabled(!viewModel.savable)
+                .if(!viewModel.savable, content: { $0.buttonStyle(.borderedProminent) })
             }
             VStack(spacing: 8) {
                 TitleField(title: $viewModel.title,
@@ -53,7 +44,7 @@ struct GroupEditor: View {
                            focusedField: $focusedField,
                            disabled: titleDisabled)
                 .onSubmit {
-                    guard viewModel.progress == .savable(true) else { return }
+                    guard viewModel.savable else { return }
                     viewModel.save()
                     dismiss()
                 }
@@ -65,7 +56,7 @@ struct GroupEditor: View {
                     hashtags: $viewModel.hashtags,
                     disabled: hashtagDisabled,
                     onSubmit: {
-                        guard viewModel.progress == .savable(true) else { return }
+                        guard viewModel.savable else { return }
                         viewModel.save()
                         dismiss()
                     }
@@ -82,19 +73,6 @@ struct GroupEditor: View {
             Button("OK", role: .cancel) {}
         } message: {
             Text(viewModel.error?.localizedDescription ?? "")
-        }
-        // State moifiers
-        .onChange(of: viewModel.progress) { oldValue, newValue in
-            switch newValue {
-            case .parsable(_):
-                break
-            case .savable(_):
-                if focusedField == .path {
-                    focusedField = .title
-                    titleDisabled = false
-                    hashtagDisabled = false
-                }
-            }
         }
         .task {
             switch viewModel.mode {

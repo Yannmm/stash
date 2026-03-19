@@ -16,6 +16,9 @@ class GroupEditorViewModel: ObservableObject {
     @Published var hashtags: OrderedSet<String>?
     @Published var title: String?
     @Published var icon: Icon?
+    @Published var error: (any Error)?
+    
+    private var cancellables = Set<AnyCancellable>()
     
     let mode: EntryEditor.Mode
     let cabinet: OkamuraCabinet
@@ -39,6 +42,47 @@ class GroupEditorViewModel: ObservableObject {
     }
     
     private func bind() {
-        
+        Publishers.CombineLatest(
+            $title
+                .removeDuplicates(),
+            $hashtags
+                .map({ $0 ?? [] })
+                .removeDuplicates()
+        )
+        .dropFirst()
+        .filter({ a, b in a != nil })
+        .map({ !($0.0!.isEmpty) })
+        .receive(on: RunLoop.main)
+        .sink { [weak self] p in
+            self?.savable = p
+        }
+        .store(in: &cancellables)
+    }
+    
+    func save() {
+        guard let t = title else { return }
+        do {
+            switch mode {
+            case .create(let pid):
+                let g = Group(id: UUID(), name: t, parentId: pid, hashtags: hashtags)
+                if let pid = pid, let index = cabinet.storedEntries.firstIndex(where: { $0.id == pid }) {
+                    cabinet.storedEntries.insert(g, at: index + 1)
+                } else {
+                    cabinet.storedEntries.insert(g, at: 0)
+                }
+                try cabinet.save()
+                
+            case .update(let eid):
+                guard var old = cabinet.storedEntries.first(where: { $0.id == eid }) as? Group else {
+                    throw EntryEditor.CraftError.entryNotFound(eid)
+                }
+                old.name = t
+                old.hashtags = hashtags
+                try cabinet.update(entry: old)
+            }
+        } catch {
+            self.error = error
+            ErrorTracker.shared.add(error)
+        }
     }
 }

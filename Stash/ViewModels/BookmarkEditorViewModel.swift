@@ -11,7 +11,7 @@ import CombineExt
 import Kingfisher
 import OrderedCollections
 
-extension EntryEditorViewModel {
+extension BookmarkEditorViewModel {
     enum Progress: Equatable {
         case parsable(Bool)
         case savable(Bool)
@@ -19,7 +19,7 @@ extension EntryEditorViewModel {
 }
 
 @MainActor
-class EntryEditorViewModel: ObservableObject {
+class BookmarkEditorViewModel: ObservableObject {
     @Published var path: String?
     @Published var icon: Icon?
     @Published var title: String?
@@ -99,7 +99,7 @@ class EntryEditorViewModel: ObservableObject {
             }
             do {
                 guard let p = path, !p.isEmpty else {
-                    throw CraftError.emptyPath
+                    throw EntryEditor.CraftError.emptyPath
                 }
                 
                 let path = Path(p)
@@ -143,10 +143,13 @@ class EntryEditorViewModel: ObservableObject {
                 try cabinet.save()
                 
             case .update(let eid):
-                //                let old = cabinet.storedEntries.first(where: { $0.id == eid }) as? Bookmark
-                //                guard let o = old else { return }
-                let b = Bookmark(id: eid, name: t, url: u, hashtags: hashtags)
-                try cabinet.update(entry: b)
+                guard var old = cabinet.storedEntries.first(where: { $0.id == eid }) as? Bookmark else {
+                    throw EntryEditor.CraftError.entryNotFound(eid)
+                }
+                old.name = t
+                old.url = u
+                old.hashtags = hashtags
+                try cabinet.update(entry: old)
             }
         } catch {
             self.error = error
@@ -189,12 +192,6 @@ class EntryEditorViewModel: ObservableObject {
         case .whatever(let url):
             title = url.absoluteString
         }
-    }
-    
-    enum CraftError: Error {
-        case emptyPath
-        case invalidUrl(String)
-        case unsupportedUrl(String)
     }
 }
 

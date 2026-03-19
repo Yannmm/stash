@@ -445,11 +445,18 @@ fileprivate extension ManageView.Workbench {
                 return .handled
             })
             .popover(isPresented: $presentEditor) {
-                BookmarkEditor()
-                    .frame(width: 400)
-                    .environmentObject(EntryEditorViewModel(mode: .update(row.id),
-                                                            cabinet: OkamuraCabinet.shared,
-                                                            dominator: Dominator()))
+                SwiftUI.Group {
+                    switch row.entryType {
+                    case .bookmark:
+                        BookmarkEditor()
+                    case .directory:
+                        GroupEditor()
+                    }
+                }
+                .frame(width: 400)
+                .environmentObject(BookmarkEditorViewModel(mode: .update(row.id),
+                                                           cabinet: OkamuraCabinet.shared,
+                                                           dominator: Dominator()))
             }
             .onDrag {
                 drag = row
