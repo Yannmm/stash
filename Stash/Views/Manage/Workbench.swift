@@ -445,7 +445,7 @@ fileprivate extension ManageView.Workbench {
                 return .handled
             })
             .popover(isPresented: $presentEditor) {
-                EntryEditor()
+                BookmarkEditor()
                     .frame(width: 400)
                     .environmentObject(EntryEditorViewModel(mode: .update(row.id),
                                                             cabinet: OkamuraCabinet.shared,

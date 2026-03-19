@@ -12,11 +12,6 @@ import Kingfisher
 import OrderedCollections
 
 extension EntryEditorViewModel {
-    enum Mode {
-        case create(UUID?) // associated type - parent id if exists
-        case update(UUID) // associated type - entry id
-    }
-    
     enum Progress: Equatable {
         case parsable(Bool)
         case savable(Bool)
@@ -38,11 +33,11 @@ class EntryEditorViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     private var parseTask: Task<Void, Never>?
     
-    let mode: Mode
+    let mode: EntryEditor.Mode
     let cabinet: OkamuraCabinet
     let dominator: Dominator
     
-    init(mode: Mode, cabinet: OkamuraCabinet, dominator: Dominator) {
+    init(mode: EntryEditor.Mode, cabinet: OkamuraCabinet, dominator: Dominator) {
         self.mode = mode
         self.cabinet = cabinet
         self.dominator = dominator

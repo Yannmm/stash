@@ -73,7 +73,7 @@ extension ManageView.Workbench {
                 }
                 .help("Add Item")
                 .popover(isPresented: $presentBookmarkEditor, arrowEdge: .top) {
-                    EntryEditor()
+                    BookmarkEditor()
                         .frame(width: 400)
                         .environmentObject(EntryEditorViewModel(mode: .create(dataStore.collection?.id),
                                                                 cabinet: dataStore.cabinet,

@@ -90,3 +90,4 @@
 // 91. group editor
 // 92. drag from workbench to sidebar
 // 93. after search, allow user to use keyboard down to go to workbench
+// 94. update search ui according osx26

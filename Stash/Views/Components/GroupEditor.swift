@@ -1,32 +1,34 @@
 //
-//  CraftModalView.swift
+//  GroupEditor.swift
 //  Stash
 //
-//  Created by Yan Meng on 2025/2/25.
+//  Created by Rayman on 2026/3/19.
 //
 
 import SwiftUI
 import OrderedCollections
 
-extension EntryEditor {
-    enum Field: Hashable {
-        case path
-        case title
-    }
-}
-
-struct EntryEditor: View {
+struct GroupEditor: View {
     @Environment(\.dismiss) var dismiss
     @EnvironmentObject var viewModel: EntryEditorViewModel
     
-    @FocusState private var focusedField: Field?
+    @FocusState private var focusedField: EntryEditor.Field?
     @State private var titleDisabled: Bool = false
     @State private var hashtagDisabled: Bool = false
+    
+    private var title: String {
+        switch viewModel.mode {
+        case .create(_):
+            return "New Group"
+        case .update(_):
+            return "Edit Group"
+        }
+    }
     
     var body: some View {
         VStack(alignment: .leading) {
             HStack {
-                Text("New Bookmark")
+                Text(title)
                     .font(.headline)
                 Spacer()
                 switch viewModel.progress {
@@ -46,23 +48,6 @@ struct EntryEditor: View {
                 }
             }
             VStack(spacing: 8) {
-                PathField(loading: $viewModel.loading,
-                          icon: $viewModel.icon,
-                          path: $viewModel.path,
-                          focusedField: $focusedField)
-                .onSubmit {
-                    switch viewModel.progress {
-                    case .parsable(let flag):
-                        if flag {
-                            viewModel.parse()
-                        }
-                    case .savable(let flag):
-                        if flag {
-                            viewModel.save()
-                            dismiss()
-                        }
-                    }
-                }
                 TitleField(title: $viewModel.title,
                            icon: viewModel.icon,
                            focusedField: $focusedField,
