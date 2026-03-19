@@ -432,6 +432,10 @@ fileprivate extension ManageView.Workbench {
                 presentEditor = true
                 return .handled
             })
+            .onKeyPress(.space, action: {
+                onOpen(row.id)
+                return .handled
+            })
             .onKeyPress(.downArrow, action: {
                 onKeyboardNavigate(.down)
                 return .handled
@@ -487,13 +491,11 @@ fileprivate extension ManageView.Workbench {
                     }
                 }
                 Button("Edit") {
-//                    selection = row.id
-//                    focused.wrappedValue = row.id
-//                    presentEditor = true
+                    selection = row.id
+                    presentEditor = true
                 }
                 Divider()
                 Button("Delete", role: .destructive) {
-//                    onDelete(row.id)
                     presentDeletionAlert = true
                 }
             }
