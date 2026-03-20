@@ -10,7 +10,7 @@ import OrderedCollections
 
 struct GroupEditor: View {
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var viewModel: GroupEditorViewModel
+    @StateObject var viewModel: GroupEditorViewModel
     
     @FocusState private var focusedField: EntryEditor.Field?
     @State private var titleDisabled: Bool = false
@@ -36,7 +36,7 @@ struct GroupEditor: View {
                     dismiss()
                 }
                 .disabled(!viewModel.savable)
-                .if(!viewModel.savable, content: { $0.buttonStyle(.borderedProminent) })
+                .if(viewModel.savable, content: { $0.buttonStyle(.borderedProminent) })
             }
             VStack(spacing: 8) {
                 TitleField(title: $viewModel.title,
@@ -74,6 +74,9 @@ struct GroupEditor: View {
         } message: {
             Text(viewModel.error?.localizedDescription ?? "")
         }
+        .onChange(of: viewModel.savable, { oldValue, newValue in
+            hashtagDisabled = !newValue
+        })
         .task {
             switch viewModel.mode {
             case .create(_):

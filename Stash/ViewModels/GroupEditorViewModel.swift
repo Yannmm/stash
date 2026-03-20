@@ -54,6 +54,7 @@ class GroupEditorViewModel: ObservableObject {
         .map({ !($0.0!.isEmpty) })
         .receive(on: RunLoop.main)
         .sink { [weak self] p in
+            self?.icon = p ? .system("cube.box") : nil
             self?.savable = p
         }
         .store(in: &cancellables)

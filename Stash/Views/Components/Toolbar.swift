@@ -76,17 +76,15 @@ extension ManageView.Workbench {
                 }
                 .help("Add Item")
                 .popover(isPresented: $presentBookmarkEditor, arrowEdge: .top) {
-                    BookmarkEditor()
-                        .frame(width: 400)
-                        .environmentObject(BookmarkEditorViewModel(mode: .create(parentId),
-                                                                cabinet: cabinet,
-                                                                dominator: Dominator()))
+                    BookmarkEditor(viewModel: BookmarkEditorViewModel(mode: .create(parentId),
+                                                                      cabinet: cabinet,
+                                                                      dominator: Dominator()))
+                    .frame(width: 400)
                 }
                 .popover(isPresented: $presentGroupEditor, arrowEdge: .top) {
-                    GroupEditor()
-                        .frame(width: 400)
-                        .environmentObject(GroupEditorViewModel(mode: .create(parentId),
+                    GroupEditor(viewModel: GroupEditorViewModel(mode: .create(parentId),
                                                                 cabinet: cabinet))
+                    .frame(width: 400)
                 }
                 .onChange(of: presentBookmarkEditor) { _, isPresented in
                     if !isPresented {

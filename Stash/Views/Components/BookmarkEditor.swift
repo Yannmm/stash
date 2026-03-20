@@ -10,7 +10,7 @@ import OrderedCollections
 
 struct BookmarkEditor: View {
     @Environment(\.dismiss) var dismiss
-    @EnvironmentObject var viewModel: BookmarkEditorViewModel
+    @StateObject var viewModel: BookmarkEditorViewModel
     
     @FocusState private var focusedField: EntryEditor.Field?
     @State private var titleDisabled: Bool = false

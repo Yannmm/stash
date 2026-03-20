@@ -364,6 +364,8 @@ fileprivate extension ManageView.Workbench {
         @State private var presentContextMenu = false
         @State private var presentDeletionAlert: Bool = false
         
+        @EnvironmentObject var cabinet: OkamuraCabinet
+        
         var body: some View {
             HStack(spacing: 0) {
                 // Name column
@@ -450,15 +452,14 @@ fileprivate extension ManageView.Workbench {
                 SwiftUI.Group {
                     switch row.entryType {
                     case .bookmark:
-                        BookmarkEditor()
+                        BookmarkEditor(viewModel: BookmarkEditorViewModel(mode: .update(row.id),
+                                                               cabinet: cabinet,
+                                                               dominator: Dominator()))
                     case .directory:
-                        GroupEditor()
+                        GroupEditor(viewModel: GroupEditorViewModel(mode: .update(row.id), cabinet: cabinet))
                     }
                 }
                 .frame(width: 400)
-                .environmentObject(BookmarkEditorViewModel(mode: .update(row.id),
-                                                           cabinet: OkamuraCabinet.shared,
-                                                           dominator: Dominator()))
             }
             .onDrag {
                 drag = row
