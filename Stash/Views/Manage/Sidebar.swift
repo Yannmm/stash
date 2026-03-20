@@ -22,7 +22,7 @@ extension ManageView {
                         dragTarget: .constant(nil),
                         onToggleExpansion: {},
                         onTap: {
-                            viewModel.setSelection(nil)
+                            viewModel.wrapper.selection = nil
                         },
                         onDrop: { _, __, ___ in
                             

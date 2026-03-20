@@ -15,10 +15,10 @@ class SidebarViewModel: ObservableObject, CascadeJudge {
     @Published private(set) var rootRow: Row!
     @Published var error: Error?
     
-    var entries: [any Entry] { dataStore.cabinet.storedEntries }
+    var entries: [any Entry] { cabinet.storedEntries }
     
     func update(_ entries: [any Entry]) {
-        dataStore.cabinet.storedEntries = entries
+        cabinet.storedEntries = entries
 //        do {
 //            try dataStore.cabinet.save()
 //        } catch {
@@ -27,7 +27,7 @@ class SidebarViewModel: ObservableObject, CascadeJudge {
     }
     
     private var allEntries: [any Entry] {
-        dataStore.cabinet.storedEntries
+        cabinet.storedEntries
     }
     
     func toggleExpansion(_ id: UUID) {
@@ -38,29 +38,25 @@ class SidebarViewModel: ObservableObject, CascadeJudge {
         }
     }
     
-    func setSelection(_ id: UUID?) {
-        dataStore.collection = id == nil ? nil : (allEntries.filter { $0.id == id }.first as? Group)
-    }
-    
-    let dataStore: ManageSelectionStore
     private var _cancellables = Set<AnyCancellable>()
+    let cabinet: OkamuraCabinet
+    let wrapper: GroupSelectionWrapper
     
-    
-    init(selectionStore: ManageSelectionStore) {
-        self.dataStore = selectionStore
-        
+    init(cabinet: OkamuraCabinet, wrapper: GroupSelectionWrapper) {
+        self.wrapper = wrapper
+        self.cabinet = cabinet
         _bind()
     }
     
     private func _bind() {
-        Publishers.CombineLatest3(dataStore.cabinet.$storedEntries, $expansions, dataStore.$collection)
+        Publishers.CombineLatest3(cabinet.$storedEntries, $expansions, wrapper.$selection)
             .map { [unowned self] a, b, c in
-                self.visibleGroups(a, b, c?.id)
+                self.visibleGroups(a, b, c)
             }
             .sink(receiveValue: { [weak self] in self?.rows = $0 })
             .store(in: &_cancellables)
         
-        Publishers.CombineLatest(dataStore.cabinet.$storedEntries, dataStore.$collection.map { $0?.id })
+        Publishers.CombineLatest(cabinet.$storedEntries, wrapper.$selection)
             .map { a, b in
                 Row(
                     id: UUID(),

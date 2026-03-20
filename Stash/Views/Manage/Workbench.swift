@@ -25,10 +25,12 @@ extension ManageView {
                             bookmarkCount: viewModel.bookmarkCount,
                             hashtags: viewModel.hashtags,
                             hashtagFilter: $viewModel.hashtagFilter,
+                            parentId: viewModel.wrapper.selection,
                             onAddBookmark: {},
                             onAddGroup: {})
                 }
                 .environmentObject(viewModel)
+                .environmentObject(viewModel.cabinet)
                 .alert("Error", isPresented: Binding(
                     get: { viewModel.error != nil },
                     set: { if !$0 { viewModel.error = nil } }
@@ -37,7 +39,7 @@ extension ManageView {
                 } message: {
                     Text(viewModel.error?.localizedDescription ?? "")
                 }
-                .onChange(of: viewModel.dataStore.collection?.id) { _, _ in
+                .onChange(of: viewModel.wrapper.selection) { _, _ in
                     selection = nil
                 }
                 .onChange(of: viewModel.hierarchy) { _, _ in

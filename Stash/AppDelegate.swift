@@ -95,9 +95,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         
         NotificationCenter.default.addObserver(forName: .onDragWindow, object: nil, queue: nil) { [weak self] noti in
-//            guard let p1 = noti.object as? FloatingPanel,
-//                  let p2 = self?.searchPanel,
-//                  p1 === p2 else { return }
+            //            guard let p1 = noti.object as? FloatingPanel,
+            //                  let p2 = self?.searchPanel,
+            //                  p1 === p2 else { return }
             guard let panel = noti.object as? NSPanel else { return }
             self?.searchPanelPosition = CGPoint(x: panel.frame.origin.x + panel.frame.width, y: panel.frame.origin.y + panel.frame.height)
         }
@@ -142,33 +142,34 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
     }
     
-//    private func setupEditWindow() {
-//        let contentView = ContentView().environmentObject(cabinet)
-//        let hostingView = NSHostingView(rootView: contentView)
-//        
-//        editWindow = NSWindow(
-//            contentRect: NSRect(x: 0, y: 0, width: 800, height: 400),
-//            styleMask: [.titled, .closable, .miniaturizable, .resizable],
-//            backing: .buffered,
-//            defer: false
-//        )
-//        editWindow?.title = "Manage"
-//        editWindow?.isReleasedWhenClosed = false
-//        editWindow?.center()
-//        editWindow?.contentView = hostingView
-//        
-//        // Post notification when window closes
-//        NotificationCenter.default.addObserver(
-//            forName: NSWindow.willCloseNotification,
-//            object: editWindow,
-//            queue: .main
-//        ) { [weak self] _ in
-//            NotificationCenter.default.post(name: .onEditPopoverClose, object: nil)
-//        }
-//    }
+    //    private func setupEditWindow() {
+    //        let contentView = ContentView().environmentObject(cabinet)
+    //        let hostingView = NSHostingView(rootView: contentView)
+    //
+    //        editWindow = NSWindow(
+    //            contentRect: NSRect(x: 0, y: 0, width: 800, height: 400),
+    //            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+    //            backing: .buffered,
+    //            defer: false
+    //        )
+    //        editWindow?.title = "Manage"
+    //        editWindow?.isReleasedWhenClosed = false
+    //        editWindow?.center()
+    //        editWindow?.contentView = hostingView
+    //
+    //        // Post notification when window closes
+    //        NotificationCenter.default.addObserver(
+    //            forName: NSWindow.willCloseNotification,
+    //            object: editWindow,
+    //            queue: .main
+    //        ) { [weak self] _ in
+    //            NotificationCenter.default.post(name: .onEditPopoverClose, object: nil)
+    //        }
+    //    }
     
     private func setupCollectionWindow() {
-        let manageView = ManageView(selectionStore: ManageSelectionStore(cabinet: self.cabinet))
+        let manageView = ManageView(wrapper: GroupSelectionWrapper())
+            .environmentObject(cabinet)
         let hostingView = NSHostingView(rootView: manageView)
         
         collectionWindow = NSWindow(
@@ -183,7 +184,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             backing: .buffered,
             defer: false
         )
-
+        
         collectionWindow?.title = ""
         collectionWindow?.titleVisibility = .hidden
         collectionWindow?.titlebarAppearsTransparent = true
@@ -191,16 +192,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         collectionWindow?.center()
         collectionWindow?.contentView = hostingView
         collectionWindow?.minSize = NSSize(width: 900, height: 600)
-
+        
         // 🔑 IMPORTANT
         collectionWindow?.toolbarStyle = .unified   // ← not unifiedCompact
-
+        
         let toolbar = NSToolbar(identifier: "CollectionToolbar")
         toolbar.displayMode = .iconOnly
         toolbar.showsBaselineSeparator = false
         toolbar.allowsUserCustomization = false
         toolbar.isVisible = true
-
+        
         collectionWindow?.toolbar = toolbar
     }
     

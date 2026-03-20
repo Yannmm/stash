@@ -10,11 +10,12 @@ import AppKit
 import Combine
 
 struct ManageView: View {
-    @StateObject var selectionStore: ManageSelectionStore
+    @StateObject var wrapper: GroupSelectionWrapper
+    @EnvironmentObject var cabinet: OkamuraCabinet
     
     var body: some View {
         NavigationSplitView(columnVisibility: .constant(.all)) {
-            Sidebar(viewModel: SidebarViewModel(selectionStore: selectionStore))
+            Sidebar(viewModel: SidebarViewModel(cabinet: cabinet, wrapper: wrapper))
             .toolbar(removing: .sidebarToggle)      // 🔑 works now
             .navigationSplitViewColumnWidth(
                 min: 180,
@@ -22,7 +23,7 @@ struct ManageView: View {
                 max: 350
             )
         } detail: {
-            Workbench(viewModel: WorkbenchViewModel(selectionStore: selectionStore))
+            Workbench(viewModel: WorkbenchViewModel(cabinet: cabinet, wrapper: wrapper))
         }
         .navigationSplitViewStyle(.prominentDetail)   // 🔑 NOT balanced
         .toolbarBackground(.hidden, for: .windowToolbar)
@@ -31,6 +32,5 @@ struct ManageView: View {
             minHeight: 400
         )
         .background(.windowBackground)
-        
     }
 }

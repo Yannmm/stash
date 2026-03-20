@@ -15,12 +15,14 @@ extension ManageView.Workbench {
         let bookmarkCount: Int
         let hashtags: [String]
         @Binding var hashtagFilter: String?
+        let parentId: UUID?
         let onAddBookmark: () -> Void
         let onAddGroup: () -> Void
         
         @State private var presentBookmarkEditor = false
+        @State private var presentGroupEditor = false
         @Environment(\.dismissSearch) private var dismissSearch
-        @EnvironmentObject var dataStore: ManageSelectionStore
+        @EnvironmentObject var cabinet: OkamuraCabinet
         
         var body: some ToolbarContent {
             if #available(macOS 26.0, *) {
@@ -63,6 +65,7 @@ extension ManageView.Workbench {
                     .help("Add Bookmark")
                     
                     Button {
+                        presentGroupEditor = true
                         onAddGroup()
                     } label: {
                         Label("Add Group", systemImage: "folder.badge.plus")
@@ -75,11 +78,24 @@ extension ManageView.Workbench {
                 .popover(isPresented: $presentBookmarkEditor, arrowEdge: .top) {
                     BookmarkEditor()
                         .frame(width: 400)
-                        .environmentObject(BookmarkEditorViewModel(mode: .create(dataStore.collection?.id),
-                                                                cabinet: dataStore.cabinet,
+                        .environmentObject(BookmarkEditorViewModel(mode: .create(parentId),
+                                                                cabinet: cabinet,
                                                                 dominator: Dominator()))
                 }
+                .popover(isPresented: $presentGroupEditor, arrowEdge: .top) {
+                    GroupEditor()
+                        .frame(width: 400)
+                        .environmentObject(GroupEditorViewModel(mode: .create(parentId),
+                                                                cabinet: cabinet))
+                }
                 .onChange(of: presentBookmarkEditor) { _, isPresented in
+                    if !isPresented {
+                        // Keep the toolbar search UI collapsed after popover closes.
+                        dismissSearch()
+                        _clearFirstResponder()
+                    }
+                }
+                .onChange(of: presentGroupEditor) { _, isPresented in
                     if !isPresented {
                         // Keep the toolbar search UI collapsed after popover closes.
                         dismissSearch()

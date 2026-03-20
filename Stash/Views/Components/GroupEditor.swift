@@ -77,8 +77,8 @@ struct GroupEditor: View {
         .task {
             switch viewModel.mode {
             case .create(_):
-                focusedField = .path
-                titleDisabled = true
+                focusedField = .title
+                titleDisabled = false
                 hashtagDisabled = true
             case .update(_):
                 focusedField = .title

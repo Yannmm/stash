@@ -35,7 +35,7 @@ extension ManageView.Sidebar {
                                 }
                             },
                             onTap: {
-                                viewModel.setSelection(row.id)
+                                viewModel.wrapper.selection = row.id
                             },
                             onDrop: { id, subjectId, position in
                                 viewModel.move(subjectId, relativeTo: id, position: position)

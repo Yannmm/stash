@@ -27,7 +27,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         }
     }
     var hashtags: [String] {
-        let set = Set(dataStore.cabinet.storedEntries
+        let set = Set(cabinet.storedEntries
             .map({ $0.hashtags })
             .compactMap({ $0 })
             .flatMap({ $0 }))
@@ -35,32 +35,41 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         return Array(set)
     }
     @Published var error: Error?
+    @Published private(set) var selectedGroup: Group?
     
-    let dataStore: ManageSelectionStore
     private var _cancellables = Set<AnyCancellable>()
     fileprivate var indentColorStorage = [Color]()
     
-    var entries: [any Entry] { dataStore.cabinet.storedEntries }
+    var entries: [any Entry] { cabinet.storedEntries }
     
     func update(_ entries: [any Entry]) {
-        dataStore.cabinet.storedEntries = entries
+        cabinet.storedEntries = entries
         do {
-            try dataStore.cabinet.save()
+            try cabinet.save()
         } catch {
             self.error = error
         }
     }
     
-    init(selectionStore: ManageSelectionStore) {
-        self.dataStore = selectionStore
-        
+    let cabinet: OkamuraCabinet
+    let wrapper: GroupSelectionWrapper
+    
+    init(cabinet: OkamuraCabinet, wrapper: GroupSelectionWrapper) {
+        self.wrapper = wrapper
+        self.cabinet = cabinet
         _bind()
     }
     
     private func _bind() {
+        wrapper.$selection
+            .map({ id in self.cabinet.storedEntries.first(where: { $0.id == id }) as? Group })
+            .receive(on: DispatchQueue.main)
+            .sink(receiveValue: { [weak self] in self?.selectedGroup = $0 })
+            .store(in: &_cancellables)
+        
         Publishers.CombineLatest4(
-            dataStore.$collection,
-            dataStore.cabinet.$storedEntries,
+            wrapper.$selection,
+            cabinet.$storedEntries,
             $hierarchy.removeDuplicates(),
             Publishers.CombineLatest($search.map({ $0.trim() }).removeDuplicates(), $hashtagFilter)
         )
@@ -90,7 +99,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                                icon: $0.icon,
                                title: $0.name,
                                description: info.0,
-                               trail: trail(query, $0, b, a?.id),
+                               trail: trail(query, $0, b, a),
                                tags: Array(tags),
                                expanded: info.2,
                                expandable: $0.container,
@@ -113,22 +122,22 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
     }
     
     var title: String {
-        dataStore.collection?.title ?? "All Bookmarks"
+        selectedGroup?.title ?? "All Bookmarks"
     }
     
     var bookmarkCount: Int {
-        if let c = dataStore.collection {
-            return _bookmarks(c.relatedEntries(dataStore.cabinet.storedEntries)).count
+        if let c = selectedGroup {
+            return _bookmarks(c.relatedEntries(cabinet.storedEntries)).count
         } else {
-            return _bookmarks(dataStore.cabinet.storedEntries).count
+            return _bookmarks(cabinet.storedEntries).count
         }
     }
     
     var groupCount: Int {
-        if let c = dataStore.collection {
-            return _groups(c.relatedEntries(dataStore.cabinet.storedEntries)).count
+        if let c = selectedGroup {
+            return _groups(c.relatedEntries(cabinet.storedEntries)).count
         } else {
-            return _groups(dataStore.cabinet.storedEntries).count
+            return _groups(cabinet.storedEntries).count
         }
     }
     
@@ -136,7 +145,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         guard let b = entries.findBy(id: id) as? Bookmark else { return }
         do {
             b.open()
-            try dataStore.cabinet.asRecent(b)
+            try cabinet.asRecent(b)
         } catch {
             self.error = error
         }
@@ -145,20 +154,20 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
     func delete(_ id: UUID) {
         guard let entry = entries.findBy(id: id) else { return }
         do {
-            try dataStore.cabinet.delete(entry: entry)
+            try cabinet.delete(entry: entry)
         } catch {
             self.error = error
         }
     }
     
-    private func heirs(_ entries: [any Entry], _ selection: (any Collectible)?, _ hierarchy: Hierarchy) -> [any Entry] {
+    private func heirs(_ entries: [any Entry], _ selection: UUID?, _ hierarchy: Hierarchy) -> [any Entry] {
+        let group = cabinet.storedEntries.first(where: { $0.id == selection }) as? Group
         switch hierarchy {
         case .child:
             // TODO: selection maybe hashtag as well
-            return (selection as? Group).children(among: entries)
+            return group.children(among: entries)
         case .descendant:
-            // TODO: selection maybe hashtag as well
-            return (selection as? Group).descendants(among: entries)
+            return group.descendants(among: entries)
         }
     }
     
