@@ -13,7 +13,12 @@ struct _SearchItemView: View {
     let onTap: (SearchItem) -> Void
     // Not used
     @State private var frame = CGRect.zero
-    @Binding var searchText: String
+    let query: String
+    
+    private var usesGlassStyle: Bool {
+        if #available(macOS 26, *) { return true }
+        return false
+    }
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -27,10 +32,10 @@ struct _SearchItemView: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
         .background(
-            Rectangle()
-                .fill(highlight ? Color(NSColor.controlAccentColor) : .clear)
+            RoundedRectangle(cornerRadius: 8)
+                .fill(highlight ? (usesGlassStyle ? Color.accentColor.opacity(0.15) : Color(NSColor.controlAccentColor)) : .clear)
         )
-        .cornerRadius(6)
+        .cornerRadius(8)
         .onTapGesture {
             onTap(item)
         }
@@ -49,11 +54,11 @@ struct _SearchItemView: View {
     
     @ViewBuilder
     private func title() -> some View {
-        Text(item.title.emphasize(searchText) { attr in
-            attr.foregroundColor = highlight ? .white : .primary
+        Text(item.title.condense(matching: query).emphasize(query) { attr in
+            attr.foregroundColor = (highlight && !usesGlassStyle) ? .white : .primary
             attr.font = .system(size: 15, weight: .light)
         } highlightStyle: { attr, range in
-            attr[range].foregroundColor = highlight ? .white : .theme
+            attr[range].foregroundColor = (highlight && !usesGlassStyle) ? .white : .theme
             attr[range].font = .system(size: 15, weight: .bold)
         })
         .lineLimit(nil)
@@ -63,11 +68,11 @@ struct _SearchItemView: View {
     
     @ViewBuilder
     private func detail() -> some View {
-        Text(item.detail.emphasize(searchText) { attr in
-            attr.foregroundColor = highlight ? .white : .secondary
+        Text(item.detail.condense(matching: query, leading: 30, trailing: 30, context: 10).emphasize(query) { attr in
+            attr.foregroundColor = (highlight && !usesGlassStyle) ? .white : .secondary
             attr.font = .system(size: 12, weight: .light)
         } highlightStyle: { attr, range in
-            attr[range].foregroundColor = highlight ? .white : .theme
+            attr[range].foregroundColor = (highlight && !usesGlassStyle) ? .white : .theme
             attr[range].font = .system(size: 12, weight: .bold)
         })
         .lineLimit(nil)
