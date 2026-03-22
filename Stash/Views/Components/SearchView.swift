@@ -104,9 +104,9 @@ struct SearchView: View {
                 get: {
                     switch viewModel.depth {
                     case .root:
-                        return "Search by Title or Address"
+                        return "Search for bookmarks or groups"
                     case .group(let name):
-                        return "Search in Group \"\(name)\""
+                        return "Search in \"\(name)\""
                     }
                 },
                 set: { _ in }

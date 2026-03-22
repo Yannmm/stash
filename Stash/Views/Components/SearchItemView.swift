@@ -61,8 +61,9 @@ struct _SearchItemView: View {
             attr[range].foregroundColor = (highlight && !usesGlassStyle) ? .white : .theme
             attr[range].font = .system(size: 15, weight: .bold)
         })
-        .lineLimit(nil)
-        .fixedSize(horizontal: false, vertical: true)
+        .lineLimit(1)
+//        .fixedSize(horizontal: false, vertical: true)
+        .truncationMode(.middle)
         .padding(.top, -2)
     }
     
@@ -75,7 +76,8 @@ struct _SearchItemView: View {
             attr[range].foregroundColor = (highlight && !usesGlassStyle) ? .white : .theme
             attr[range].font = .system(size: 12, weight: .bold)
         })
-        .lineLimit(nil)
-        .fixedSize(horizontal: false, vertical: true)
+        .lineLimit(1)
+//        .fixedSize(horizontal: false, vertical: true)
+        .truncationMode(.middle)
     }
 }
