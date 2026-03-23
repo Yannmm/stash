@@ -4,16 +4,16 @@
 <dict>
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
-    <key>CFBundleDisplayName</key>
-    <string>Stashy</string>
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>stashyyy</string>
-            </array>
-        </dict>
-    </array>
+	<key>CFBundleDisplayName</key>
+	<string>Nustash</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>nustash</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

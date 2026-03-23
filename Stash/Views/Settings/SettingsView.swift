@@ -219,7 +219,7 @@ struct SettingsView: View {
                     //                                NSCursor.pop()
                     //                            }
                     //                        }
-                    Text("[Stashy](stash) is a open-source project. To provide feedback, you may [log issues](repo) or [write email](email) to \(Constant.email).")
+                    Text("[Nustash](stash) is a open-source project. To provide feedback, you may [log issues](repo) or [write email](email) to \(Constant.email).")
                         .foregroundColor(.secondary)
                         .environment(\.openURL, OpenURLAction { url in
                             let browser = url.absoluteString
@@ -242,7 +242,7 @@ struct SettingsView: View {
                     .multilineTextAlignment(.center)
             }
         }
-        .navigationTitle("Stashy Settings")
+        .navigationTitle("Nustash Settings")
         .scrollIndicators(.hidden)
         .formStyle(.grouped)
         .padding()
@@ -316,9 +316,9 @@ struct SettingsView: View {
     
     private func email() {
         let email = Constant.email
-        let subject = "Feedback for Stashy App"
+        let subject = "Feedback for Nustash App"
         let body = """
-        Hi Stashy Team,
+        Hi Nustash Team,
         
         I'd like to share some feedback about the app:
         
@@ -336,7 +336,7 @@ struct SettingsView: View {
         - macOS Version: macOS xx.x
         - Device Model: 
         
-        Thanks for making Stashy!
+        Thanks for making Nustash!
         
         Best regards,
         """
@@ -415,7 +415,7 @@ extension SettingsView {
             case .`import`(let ft, _, _, _, _):
                 switch ft {
                 case .netscape:
-                    Text("Export from another Stashy or browsers first.")
+                    Text("Export from another Nustash or browsers first.")
                 case .hungrymarks:
                     Text("Go to Settings > Bookmark Files (iCloud/Default > Reveal in Finder, locate the txt file and save it.)")
                 case .pocket:

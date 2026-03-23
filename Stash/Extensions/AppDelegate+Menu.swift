@@ -44,7 +44,7 @@ extension AppDelegate {
     
     private func addGuide(_ menu: NSMenu, _ entries: [any Entry]) {
         var items = [
-            NSMenuItem(title: "Welcom to Stashy 🎉", action: nil, keyEquivalent: ""),
+            NSMenuItem(title: "Welcom to Nustash! 🐿️", action: nil, keyEquivalent: ""),
         ] as [NSMenuItem]
         
         if entries.count > 0 {

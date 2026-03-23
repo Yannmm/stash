@@ -2,11 +2,11 @@
   <img src="https://i.postimg.cc/0yPQNrLs/256-mac.webp" alt="xxxx" width="256">
 </p>
 
-> Stashy - Centralized Bookmark Manager on OSX
+> Nustash - Centralized Bookmark Manager on OSX
 
 ---
-## What is Stashy?
-Stashy is an OSX app that manages bookmarks in a centralized way, so to keep everything within easy reach.
+## What is Nustash?
+Nustash is an OSX app that manages bookmarks in a centralized way, so to keep everything within easy reach.
 
 ## Features
 - Save bookmarks for websites, local files, or VNC connections
