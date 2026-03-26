@@ -43,12 +43,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private var outlineViewHeight: CGFloat?
     
-    private var settingsWindow: NSWindow?
+    private var window1: NSWindow?
     
-    private var collectionWindow: NSWindow?
+    private var window2: NSWindow?
     
     func applicationWillFinishLaunching(_ notification: Notification) {
-        //        NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
+//                NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
+        NSApp.setActivationPolicy(.accessory)
         
         // TODO: remove this line
         //        ImageCache.default.diskStorage.config.expiration = .days(1)
@@ -128,52 +129,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
-    private func setupSettingsWindow() {
+    private func setupWindow1() {
         let hostingView = NSHostingView(rootView: SettingsView(viewModel: self.settingsViewModel))
         
-        settingsWindow = NSWindow(
+        window1 = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: hostingView.fittingSize.width, height: hostingView.fittingSize.height),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
-        settingsWindow?.isReleasedWhenClosed = false
-        settingsWindow?.center()
-        settingsWindow?.contentView = hostingView
+        window1?.isReleasedWhenClosed = false
+        window1?.center()
+        window1?.contentView = hostingView
         
     }
     
-    //    private func setupEditWindow() {
-    //        let contentView = ContentView().environmentObject(cabinet)
-    //        let hostingView = NSHostingView(rootView: contentView)
-    //
-    //        editWindow = NSWindow(
-    //            contentRect: NSRect(x: 0, y: 0, width: 800, height: 400),
-    //            styleMask: [.titled, .closable, .miniaturizable, .resizable],
-    //            backing: .buffered,
-    //            defer: false
-    //        )
-    //        editWindow?.title = "Manage"
-    //        editWindow?.isReleasedWhenClosed = false
-    //        editWindow?.center()
-    //        editWindow?.contentView = hostingView
-    //
-    //        // Post notification when window closes
-    //        NotificationCenter.default.addObserver(
-    //            forName: NSWindow.willCloseNotification,
-    //            object: editWindow,
-    //            queue: .main
-    //        ) { [weak self] _ in
-    //            NotificationCenter.default.post(name: .onEditPopoverClose, object: nil)
-    //        }
-    //    }
-    
-    private func setupCollectionWindow() {
+    private func setupWindow2() {
         let manageView = ManageView(wrapper: GroupSelectionWrapper())
             .environmentObject(cabinet)
         let hostingView = NSHostingView(rootView: manageView)
         
-        collectionWindow = NSWindow(
+        window2 = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 1000, height: 700),
             styleMask: [
                 .titled,
@@ -186,16 +162,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             defer: false
         )
         
-        collectionWindow?.title = ""
-        collectionWindow?.titleVisibility = .hidden
-        collectionWindow?.titlebarAppearsTransparent = true
-        collectionWindow?.isReleasedWhenClosed = false
-        collectionWindow?.center()
-        collectionWindow?.contentView = hostingView
-        collectionWindow?.minSize = NSSize(width: 900, height: 600)
+        window2?.title = ""
+        window2?.titleVisibility = .hidden
+        window2?.titlebarAppearsTransparent = true
+        window2?.isReleasedWhenClosed = false
+        window2?.center()
+        window2?.contentView = hostingView
+        window2?.minSize = NSSize(width: 900, height: 600)
         
         // 🔑 IMPORTANT
-        collectionWindow?.toolbarStyle = .unified   // ← not unifiedCompact
+        window2?.toolbarStyle = .unified   // ← not unifiedCompact
         
         let toolbar = NSToolbar(identifier: "CollectionToolbar")
         toolbar.displayMode = .iconOnly
@@ -203,23 +179,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         toolbar.allowsUserCustomization = false
         toolbar.isVisible = true
         
-        collectionWindow?.toolbar = toolbar
+        window2?.toolbar = toolbar
     }
     
     @objc func settings() {
-        if settingsWindow == nil {
-            setupSettingsWindow()
+        if window1 == nil {
+            setupWindow1()
+            observeWindowClose(window1)
         }
+        
+        // Show dock icon
+        NSApp.setActivationPolicy(.regular)
         
         // Ensure proper activation and window focusing
         NSApp.activate(ignoringOtherApps: true)
         
         // Use a small delay to ensure app activation completes
         DispatchQueue.main.async {
-            self.settingsWindow?.makeKeyAndOrderFront(nil)
-            // Force the window to become key window
-            self.settingsWindow?.level = .floating
-            self.settingsWindow?.level = .normal
+            self.window1?.makeKeyAndOrderFront(nil)
+            self.window1?.level = .floating
+            self.window1?.level = .normal
             NSApp.arrangeInFront(nil)
         }
     }
@@ -229,17 +208,43 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc func manage() {
-        if collectionWindow == nil {
-            setupCollectionWindow()
+        if window2 == nil {
+            setupWindow2()
+            observeWindowClose(window2)
         }
+        
+        // Show dock icon
+        NSApp.setActivationPolicy(.regular)
         
         NSApp.activate(ignoringOtherApps: true)
         
         DispatchQueue.main.async {
-            self.collectionWindow?.makeKeyAndOrderFront(nil)
-            self.collectionWindow?.level = .floating
-            self.collectionWindow?.level = .normal
+            self.window2?.makeKeyAndOrderFront(nil)
+            self.window2?.level = .floating
+            self.window2?.level = .normal
             NSApp.arrangeInFront(nil)
+        }
+    }
+    
+    private func observeWindowClose(_ window: NSWindow?) {
+        guard let window = window else { return }
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification,
+            object: window,
+            queue: .main
+        ) { [weak self] notification in
+            guard let closingWindow = notification.object as? NSWindow else { return }
+            self?.updateDockIconVisibility(excluding: closingWindow)
+        }
+    }
+    
+    private func updateDockIconVisibility(excluding closingWindow: NSWindow) {
+        // Check visibility excluding the window that's closing
+        let settingsVisible = (window1 != nil && window1 !== closingWindow && window1!.isVisible)
+        let collectionVisible = (window2 != nil && window2 !== closingWindow && window2!.isVisible)
+        
+        if !settingsVisible && !collectionVisible {
+            NSApp.setActivationPolicy(.accessory)
         }
     }
 }
