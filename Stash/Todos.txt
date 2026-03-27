@@ -92,3 +92,5 @@
 // 93. after search, allow user to use keyboard down to go to workbench ❌ not easy to do. forget
 // 94. update search ui according osx26 ✅
 // 95. update stashy icon and menu bar icon ✅
+// 96. app bundle display name
+
