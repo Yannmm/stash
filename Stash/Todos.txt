@@ -92,5 +92,7 @@
 // 93. after search, allow user to use keyboard down to go to workbench ❌ not easy to do. forget
 // 94. update search ui according osx26 ✅
 // 95. update stashy icon and menu bar icon ✅
-// 96. app bundle display name
+// 96. app bundle display name ✅
+// 97. workbench 展开的时候，如果第一个是一个文件夹， 拖动其他中的child到文件夹的上方，无法放下 ✅
+// 98. it's not smooth when stay at the edge of the workbench, the list won't scroll smoothy.
 

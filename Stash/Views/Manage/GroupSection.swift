@@ -42,9 +42,9 @@ extension ManageView.Sidebar {
                                 _version += 1
                                 dragTarget = nil
                             },
-                            cascade: { id, subjectId in
-                                viewModel.cascade(from: subjectId, to: id)
-                            }
+//                            cascade: { id, subjectId in
+//                                viewModel.cascade(from: subjectId, to: id)
+//                            }
                         )
                         .id("\(row.id)-\(_version)")
                     }
@@ -65,7 +65,7 @@ extension ManageView.Sidebar.GroupSection {
         let onToggleExpansion: () -> Void
         let onTap: () -> Void
         let onDrop: (UUID, UUID, DragPosition) -> Void
-        let cascade: (UUID, UUID) -> Bool
+//        let cascade: (UUID, UUID) -> Bool
         private var height: CGFloat { Constant.rowHeight }
         
         @State private var dragPosition: DragPosition? = nil
@@ -152,7 +152,7 @@ extension ManageView.Sidebar.GroupSection {
                 rowHeight: height,
                 expanded: row.expanded,
                 onDrop: onDrop,
-                cascade: cascade,
+//                cascade: cascade,
                 propose: _propose
             ))
             .onChange(of: dragPosition) { oldValue, newValue in

@@ -351,7 +351,7 @@ fileprivate extension ManageView.Workbench {
         let search: String
         let onKeyboardNavigate: (MoveCommandDirection) -> Void
         let onDrop: (UUID, UUID, DragPosition) -> Void
-        let cascade: (UUID, UUID) -> Bool
+        let cascade: (UUID, UUID) -> CascadeOrder
         let indentColor: (Int) -> Color
         @Binding var dragTarget: (Int, DragPosition, UUID)?
         let onOpen: (UUID) -> Void
@@ -484,7 +484,7 @@ fileprivate extension ManageView.Workbench {
                 rowHeight: height,
                 expanded: row.expanded,
                 onDrop: onDrop,
-                cascade: cascade,
+//                cascade: cascade,
                 propose: _propose
             ))
             .onTapGesture {
@@ -546,21 +546,29 @@ fileprivate extension ManageView.Workbench {
         }
         
         private func _propose(_ position: DragPosition?) -> DropProposal? {
-            guard let drag = drag else { return nil }
-            if cascade(row.id, drag.id) {
-                return DropProposal(operation: .forbidden)
-            }
+            guard let position = position, let drag = drag else { return nil }
             
-            guard let p = position else {
-                return nil
-            }
-            if row.expandable {
-                return DropProposal(operation: .move)
-            } else {
-                switch p {
-                case .before, .after:
+            switch cascade(row.id, drag.id) {
+            case .none:
+                if row.expandable {
+                    return DropProposal(operation: .move)
+                } else {
+                    switch position {
+                    case .before, .after:
+                        return DropProposal(operation: .move)
+                    case .in:
+                        return DropProposal(operation: .forbidden)
+                    }
+                }
+            case .up:
+                return DropProposal(operation: .forbidden)
+            case .down:
+                switch(position) {
+                case .before:
                     return DropProposal(operation: .move)
                 case .in:
+                    fallthrough
+                case .after:
                     return DropProposal(operation: .forbidden)
                 }
             }

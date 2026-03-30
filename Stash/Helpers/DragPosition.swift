@@ -20,7 +20,6 @@ struct Dropper<T: Identifiable>: DropDelegate {
     let rowHeight: CGFloat
     let expanded: Bool
     let onDrop: (T.ID, T.ID, DragPosition) -> Void
-    let cascade: (T.ID, T.ID) -> Bool
     let propose: (DragPosition?) -> DropProposal?
     
     // Only before/after zones - middle zone is rejected
@@ -74,8 +73,7 @@ struct Dropper<T: Identifiable>: DropDelegate {
     
     private func _updatePosition(_ info: DropInfo) {
         guard let drag = drag else { return }
-        guard !cascade(id, drag.id) else { return }
-        
+
         let location = info.location
         
         if location.y < threshold {

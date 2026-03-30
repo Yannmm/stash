@@ -23,29 +23,40 @@ protocol CascadeJudge {
     func update(_ entries: [any Entry])
 }
 
+enum CascadeOrder {
+    case up
+    case down
+    case none
+}
+
 extension CascadeJudge {
-    func cascade(from subjectId: UUID, to anchorId: UUID) -> Bool {
+    func cascade(from subjectId: UUID, to anchorId: UUID) -> CascadeOrder {
         guard let hostIndex = rows.firstIndex(where: { $0.id == anchorId }),
               let guestIndex = rows.firstIndex(where: { $0.id == subjectId }),
               hostIndex != guestIndex,
               rows[hostIndex].level != rows[guestIndex].level else {
-            return false
+            return .none
         }
         
         if hostIndex < guestIndex {
             for row in rows[(hostIndex + 1)...guestIndex].reversed() {
                 if row.level <= rows[hostIndex].level {
-                    return false
+                    return .none
                 }
             }
         } else {
             for row in rows[(guestIndex + 1)...hostIndex].reversed() {
                 if row.level <= rows[guestIndex].level {
-                    return false
+                    return .none
                 }
             }
         }
-        return true
+        
+        if (guestIndex > hostIndex) {
+            return .down
+        } else {
+            return .up
+        }
     }
     
     func strideCount(_ id: UUID) -> Int {
