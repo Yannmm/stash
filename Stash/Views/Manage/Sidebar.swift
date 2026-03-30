@@ -26,8 +26,9 @@ extension ManageView {
                         },
                         onDrop: { _, __, ___ in
                             
+                        }) { _, __ in
+                            return .none
                         }
-                    )
                     GroupSection()
 //                    TagSection(hashtags: .constant([]))
                 }

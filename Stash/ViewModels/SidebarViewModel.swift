@@ -19,11 +19,11 @@ class SidebarViewModel: ObservableObject, CascadeJudge {
     
     func update(_ entries: [any Entry]) {
         cabinet.storedEntries = entries
-//        do {
-//            try dataStore.cabinet.save()
-//        } catch {
-//            self.error = error
-//        }
+        do {
+            try cabinet.save()
+        } catch {
+            self.error = error
+        }
     }
     
     private var allEntries: [any Entry] {

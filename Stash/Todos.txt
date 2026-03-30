@@ -94,5 +94,8 @@
 // 95. update stashy icon and menu bar icon ✅
 // 96. app bundle display name ✅
 // 97. workbench 展开的时候，如果第一个是一个文件夹， 拖动其他中的child到文件夹的上方，无法放下 ✅
-// 98. it's not smooth when stay at the edge of the workbench, the list won't scroll smoothy.
+// 98. it's not smooth when stay at the edge of the workbench, the list won't scroll smoothy. ❌
+// 99. group section lacks validate on child drag to parent ✅
+// 100. reorder groups won't save next time launch ✅
+// 101. drag indicator indent for both group section and workbench
 
