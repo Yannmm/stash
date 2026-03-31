@@ -104,7 +104,7 @@ struct SearchView: View {
                 get: {
                     switch viewModel.depth {
                     case .root:
-                        return "Search for bookmarks or groups"
+                        return "Search for bookmarks or groups in Nustash"
                     case .group(let name):
                         return "Search in \"\(name)\""
                     }

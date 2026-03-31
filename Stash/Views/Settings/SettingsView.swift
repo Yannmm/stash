@@ -238,7 +238,7 @@ struct SettingsView: View {
             }
             
             Section {
-                Text("Copyright © 2025 RAP Studio. All rights reserved.")
+                Text("Copyright © 2026 RAP Studio. All rights reserved.")
                     .multilineTextAlignment(.center)
             }
         }
