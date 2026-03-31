@@ -98,5 +98,5 @@
 // 99. group section lacks validate on child drag to parent ✅
 // 100. reorder groups won't save next time launch ✅
 // 101. drag indicator indent for both group section and workbench ❌
-// 102. up or down in workbench to repeast by pressing keyboard
+// 102. up or down in workbench to repeast by pressing keyboard ✅
 

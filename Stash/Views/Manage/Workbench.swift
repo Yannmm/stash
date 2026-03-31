@@ -144,12 +144,16 @@ fileprivate extension ManageView.Workbench {
                         .focusable()
                         .focused($focused)
                         .focusEffectDisabled()
-                        .onKeyPress(.downArrow, action: {
-                            navigate(.down)
+                        .onKeyPress(.downArrow, phases: [.down, .repeat], action: { result in
+                            DispatchQueue.main.async {
+                                navigate(.down)
+                            }
                             return .handled
                         })
-                        .onKeyPress(.upArrow, action: {
-                            navigate(.up)
+                        .onKeyPress(.upArrow, phases: [.down, .repeat], action: { result in
+                            DispatchQueue.main.async {
+                                navigate(.up)
+                            }
                             return .handled
                         })
                         .onAppear {
@@ -282,10 +286,10 @@ fileprivate extension ManageView.Workbench {
                 return
             }
             
-            let id = ids[newIndex]
-            selection = id
-            focusedRow = id
-            focused = false
+            let newId = ids[newIndex]
+            if selection != newId {
+                selection = newId
+            }
         }
     }
 }
