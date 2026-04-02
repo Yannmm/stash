@@ -16,7 +16,7 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "7222C1BF2D491BEC00096255"
-               BuildableName = "Stashy.app"
+               BuildableName = "Nustash.app"
                BlueprintName = "Stash"
                ReferencedContainer = "container:Stash.xcodeproj">
             </BuildableReference>
@@ -69,7 +69,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "7222C1BF2D491BEC00096255"
-            BuildableName = "Stashy.app"
+            BuildableName = "Nustash.app"
             BlueprintName = "Stash"
             ReferencedContainer = "container:Stash.xcodeproj">
          </BuildableReference>
@@ -86,7 +86,7 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "7222C1BF2D491BEC00096255"
-            BuildableName = "Stashy.app"
+            BuildableName = "Nustash.app"
             BlueprintName = "Stash"
             ReferencedContainer = "container:Stash.xcodeproj">
          </BuildableReference>

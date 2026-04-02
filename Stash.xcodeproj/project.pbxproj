@@ -35,7 +35,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		7222C1C02D491BEC00096255 /* Stashy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stashy.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		7222C1C02D491BEC00096255 /* Nustash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nustash.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7222C1D32D491BEF00096255 /* StashTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StashTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7222C1DD2D491BEF00096255 /* StashUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StashUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		72B646272E9A6668009DE023 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
@@ -113,7 +113,7 @@
 		7222C1C12D491BEC00096255 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				7222C1C02D491BEC00096255 /* Stashy.app */,
+				7222C1C02D491BEC00096255 /* Nustash.app */,
 				7222C1D32D491BEF00096255 /* StashTests.xctest */,
 				7222C1DD2D491BEF00096255 /* StashUITests.xctest */,
 			);
@@ -149,7 +149,7 @@
 				7276CF1D2F530F4B00B25FA5 /* OrderedCollections */,
 			);
 			productName = Stash;
-			productReference = 7222C1C02D491BEC00096255 /* Stashy.app */;
+			productReference = 7222C1C02D491BEC00096255 /* Nustash.app */;
 			productType = "com.apple.product-type.application";
 		};
 		7222C1D22D491BEF00096255 /* StashTests */ = {
@@ -441,7 +441,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 34;
+				CURRENT_PROJECT_VERSION = 36;
 				DEVELOPMENT_ASSET_PATHS = "\"Stash/Preview Content\"";
 				DEVELOPMENT_TEAM = QX885U799E;
 				ENABLE_HARDENED_RUNTIME = NO;
@@ -459,7 +459,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rendezvousauoaradis.stash;
-				PRODUCT_NAME = Stashy;
+				PRODUCT_NAME = Nustash;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -474,7 +474,7 @@
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 34;
+				CURRENT_PROJECT_VERSION = 36;
 				DEVELOPMENT_ASSET_PATHS = "\"Stash/Preview Content\"";
 				DEVELOPMENT_TEAM = QX885U799E;
 				ENABLE_HARDENED_RUNTIME = NO;
@@ -492,7 +492,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 15.0;
 				MARKETING_VERSION = 3.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rendezvousauoaradis.stash;
-				PRODUCT_NAME = Stashy;
+				PRODUCT_NAME = Nustash;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
