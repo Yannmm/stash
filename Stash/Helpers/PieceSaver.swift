@@ -20,6 +20,13 @@ class PieceSaver {
         case recentEntries
         case recentKeys
         case appIdentifier
+        case syncMethod
+        case syncCheckpoint
+        case syncLastDate
+        case baiduClientID
+        case baiduRedirectURI
+        case baiduRemoteDirectory
+        case baiduOAuthState
         
         case migration3_0
     }
@@ -30,5 +37,19 @@ class PieceSaver {
     
     func value<T>(for key: Key) -> T? {
         UserDefaults.standard.value(forKey: key.rawValue) as? T
+    }
+
+    func saveCodable<T: Encodable>(_ value: T?, for key: Key) throws {
+        if let value {
+            let data = try JSONEncoder().encode(value)
+            save(for: key, value: data)
+        } else {
+            save(for: key, value: nil)
+        }
+    }
+
+    func codableValue<T: Decodable>(for key: Key, as type: T.Type) -> T? {
+        guard let data: Data = value(for: key) else { return nil }
+        return try? JSONDecoder().decode(T.self, from: data)
     }
 }

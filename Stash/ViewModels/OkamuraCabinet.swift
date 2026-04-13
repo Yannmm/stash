@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import AppKit
 import UniformTypeIdentifiers
 import Combine
 import OrderedCollections
@@ -18,18 +17,22 @@ class OkamuraCabinet: ObservableObject {
     @Published private(set) var recentEntries: [(Bookmark, String)] = []
     
     private let pieceSaver = PieceSaver()
-    
-    private var icloudMonitor: IcloudFileMonitor?
-    
-    private var icloudMonitorSubscription: AnyCancellable?
+    private let store = StashPayloadStore()
+    let syncCoordinator: SyncCoordinator
     
     static let shared = OkamuraCabinet()
-    
-    private var cancellables = Set<AnyCancellable>()
-    
+
     init() {
+        let identifier: String? = pieceSaver.value(for: .appIdentifier)
+        if identifier == nil {
+            pieceSaver.save(for: .appIdentifier, value: UUID().uuidString)
+        }
+        self.syncCoordinator = SyncCoordinator(pieceSaver: pieceSaver, store: store)
+        self.syncCoordinator.attachRemoteApplyHandler { [weak self] in
+            self?.asyncLoad()
+        }
         asyncLoad()
-        monitorIcloud()
+        syncCoordinator.requestSync(reason: .startup)
     }
     
     private func asyncLoad() {
@@ -43,28 +46,7 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func monitorIcloud() {
-        icloudMonitorSubscription?.cancel()
-        icloudMonitor = nil
-        if icloudSync {
-            icloudMonitor = IcloudFileMonitor(filename: Constant.sidecarFileName)
-            icloudMonitorSubscription = icloudMonitor?.$onChange
-                .compactMap({ $0 })
-                .combineLatest(Just(icloudSync).filter({ $0 }))
-                .tryMap({ try String(contentsOf: $0.0, encoding: .utf8) })
-                .catch { error -> AnyPublisher<String, Never> in
-                    ErrorTracker.shared.add(error)
-                    return Empty().eraseToAnyPublisher()
-                }
-                .map({ UUID(uuidString: $0) })
-                .combineLatest(Just<String?>(pieceSaver.value(for: .appIdentifier))
-                    .compactMap({ $0 })
-                    .map({ UUID(uuidString: $0) }))
-                .filter({ $0.0 != $0.1 })
-                .delay(for: .seconds(2), scheduler: RunLoop.main)
-                .sink(receiveValue: { [weak self] _ in
-                    self?.asyncLoad()
-                })
-        }
+        syncCoordinator.requestSync(reason: .providerSwitch)
     }
     
     func update(entry: any Entry) throws {
@@ -108,11 +90,11 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func save() throws {
-        let data1 = try JSONEncoder().encode(storedEntries.asAnyEntries)
-        let urls = try whereItIs()
-        try saveToDisk(data: data1, filePath: urls.0, sidecarPath: urls.1)
+        let payload = try store.serialize(entries: storedEntries)
+        try store.writePayload(payload, to: try store.localPayloadURL())
+        try persistLocalMetadata(for: payload)
         
-        // In case for import
+        // Persist the recent list separately because it contains per-device shortcut state.
         let recents = storedEntries.map({ e in
             if let r = recentEntries.first(where: { $0.0.id == e.id }), let b = e as? Bookmark {
                 return (b, r.1)
@@ -121,13 +103,12 @@ class OkamuraCabinet: ObservableObject {
             }
         }).compactMap({ $0 })
         
-        let data2 = try JSONEncoder().encode(recents.map({ $0.0 }).asAnyEntries)
-        pieceSaver.save(for: .recentEntries, value: data2)
-        pieceSaver.save(for: .recentKeys, value: recents.map({ $0.1 }))
+        try persistRecents(recents)
         
         DispatchQueue.main.async { [weak self] in
             self?.recentEntries = recents
         }
+        syncCoordinator.requestSync(reason: .localChange)
     }
     
     func delete(entry: any Entry) throws {
@@ -141,27 +122,14 @@ class OkamuraCabinet: ObservableObject {
     }
     
     func load() throws {
-        let urls = try whereItIs()
-        
-        let htmlString = try String(contentsOf: urls.0, encoding: .utf8)
-        let dominator = Dominator()
-        let data = try dominator.decompose(htmlString)
-        
-        let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
-        
-        self.storedEntries = anyEntries.asEntries
-        
-        if let data: Data = pieceSaver.value(for: .recentEntries),
-           let keys: [String] = pieceSaver.value(for: .recentKeys) {
-            let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
-            var collector = [(Bookmark, String)]()
-            for (index, entry) in anyEntries.asEntries.enumerated() {
-                if let bookmark = entry as? Bookmark, index <= keys.count - 1 {
-                    collector.append((bookmark, keys[index]))
-                }
-            }
-            self.recentEntries = collector
+        let localURL = try store.localPayloadURL()
+        if try store.ensurePayloadExists(at: localURL, entries: storedEntries) {
+            self.storedEntries = []
+        } else {
+            self.storedEntries = try store.readEntries(at: localURL)
         }
+        
+        self.recentEntries = restoreRecents()
         
         try migrate3_0()
     }
@@ -288,68 +256,47 @@ extension OkamuraCabinet {
     
     @discardableResult
     func export(to directoryPath: URL, suffix: String? = nil) throws -> URL {
-        let data = try JSONEncoder().encode(storedEntries.asAnyEntries)
+        let data = try store.serialize(entries: storedEntries)
         let filePath = directoryPath.appendingPathComponent("nustash\(suffix ?? "").html")
-        try saveToDisk(data: data, filePath: filePath)
+        try store.writePayload(data, to: filePath)
         return filePath
     }
 }
 
 fileprivate extension OkamuraCabinet {
-    func saveToDisk(data: Data, filePath: URL, sidecarPath: URL? = nil) throws {
-        let json = try JSONSerialization.jsonObject(with: data)
-        let d = Dominator()
-        let string = try d.compose(json)
-        try string.write(to: filePath, atomically: true, encoding: .utf8)
-        if let path = sidecarPath, let appId: String = pieceSaver.value(for: .appIdentifier) {
-            DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 2) {
-                do {
-                    try appId.write(to: path, atomically: true, encoding: .utf8)
-                } catch {
-                    ErrorTracker.shared.add(error)
-                }
+    func persistRecents(_ recents: [(Bookmark, String)]) throws {
+        let data = try JSONEncoder().encode(recents.map({ $0.0 }).asAnyEntries)
+        pieceSaver.save(for: .recentEntries, value: data)
+        pieceSaver.save(for: .recentKeys, value: recents.map({ $0.1 }))
+    }
+    
+    func restoreRecents() -> [(Bookmark, String)] {
+        guard let data: Data = pieceSaver.value(for: .recentEntries),
+              let keys: [String] = pieceSaver.value(for: .recentKeys),
+              let anyEntries = try? JSONDecoder().decode([AnyEntry].self, from: data) else {
+            return []
+        }
+
+        var collector = [(Bookmark, String)]()
+        for (index, entry) in anyEntries.asEntries.enumerated() {
+            if let bookmark = entry as? Bookmark, index <= keys.count - 1 {
+                collector.append((bookmark, keys[index]))
             }
         }
+        return collector
     }
     
-    var icloudSync: Bool { pieceSaver.value(for: .icloudSync) ?? true }
-    
-    // (stash.html path, icloud sidecar path?)
-    func whereItIs() throws -> (URL, URL?) {
-        do {
-            if icloudSync {
-                return try icloudPath()
-            } else {
-                return (try localPath(), nil)
-            }
-        } catch {
-            defer { ErrorTracker.shared.add(error) }
-            return (try localPath(), nil)
-        }
+    func persistLocalMetadata(for payload: Data) throws {
+        guard let deviceID: String = pieceSaver.value(for: .appIdentifier) else { return }
+        let metadata = SyncMetadata(
+            deviceId: deviceID,
+            contentHash: store.contentHash(for: payload),
+            revision: UUID().uuidString,
+            updatedAt: Date()
+        )
+        try? store.writeMetadata(metadata, to: store.localMetadataURL())
     }
     
-    private func localPath() throws -> URL {
-        let fileManager = FileManager.default
-        guard let support = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { throw SomeError.Save.missingApplicationSupportDirectory}
-        let direcotry = support.appendingPathComponent("Stash", isDirectory: true)
-        if !fileManager.fileExists(atPath: direcotry.path) {
-            try fileManager.createDirectory(at: direcotry, withIntermediateDirectories: true, attributes: nil)
-        }
-        return direcotry.appendingPathComponent(Constant.stashFileName)
-    }
-    
-    private func icloudPath() throws -> (URL, URL) {
-        let fileManager = FileManager.default
-        
-        guard let container = fileManager.url(forUbiquityContainerIdentifier: nil) else { throw SomeError.Save.icloudContainerUnavailable  }
-        
-        let documents = container.appendingPathComponent("Documents")
-        
-        if !fileManager.fileExists(atPath: documents.path) {
-            try fileManager.createDirectory(at: documents, withIntermediateDirectories: true, attributes: nil)
-        }
-        return (documents.appendingPathComponent(Constant.stashFileName), documents.appendingPathComponent(Constant.sidecarFileName))
-    }
 }
 
 extension OkamuraCabinet {
@@ -385,13 +332,6 @@ extension OkamuraCabinet {
 
 extension OkamuraCabinet {
     struct SomeError {
-        enum Save: Error {
-            case missingFilePath
-            case invalidJSON
-            case missingApplicationSupportDirectory
-            case icloudContainerUnavailable
-        }
-        
         enum Parse: Error, LocalizedError {
             case unsupportedFileType
             
@@ -407,14 +347,7 @@ extension OkamuraCabinet {
 
 extension OkamuraCabinet {
     enum Constant {
-        static let stashFileName = "default.html"
-        static let sidecarFileName = "default.html.sidecar"
+        static let stashFileName = StashPayloadStore.Constant.dataFileName
+        static let sidecarFileName = StashPayloadStore.Constant.metadataFileName
     }
 }
-
-// 1. 启动时存入一个uuid
-// 2. 每当 save 时，创建一个文件，并写入上面的 uuid （如果 enable icloud sync）
-// 3. 开启 icloud sync 时，执行一遍 2
-// 3. 启动时，开始监听上述文件，（如果 enable icloud sync）
-// 4. 如果上述文件有变化，则读取内容，比较uuid
-// 5. 一致，忽略，不一致，reload stash.html

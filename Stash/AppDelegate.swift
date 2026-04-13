@@ -10,7 +10,9 @@ import SwiftUI
 import Combine
 import HotKey
 import Kingfisher
+import Carbon
 
+@MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
     
     internal var statusItem: NSStatusItem?
@@ -50,6 +52,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
 //                NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
         NSApp.setActivationPolicy(.accessory)
+        NSAppleEventManager.shared().setEventHandler(
+            self,
+            andSelector: #selector(handleGetURLEvent(_:withReplyEvent:)),
+            forEventClass: AEEventClass(kInternetEventClass),
+            andEventID: AEEventID(kAEGetURL)
+        )
         
         // TODO: remove this line
         //        ImageCache.default.diskStorage.config.expiration = .days(1)
@@ -66,6 +74,19 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         bind()
         
         setupUpdateCheckTimer()
+        cabinet.syncCoordinator.startBackgroundRefresh()
+    }
+
+    @objc
+    private func handleGetURLEvent(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {
+        guard let urlString = event.paramDescriptor(forKeyword: AEKeyword(keyDirectObject))?.stringValue,
+              let url = URL(string: urlString) else {
+            return
+        }
+
+        NSApp.setActivationPolicy(.regular)
+        NSApp.activate(ignoringOtherApps: true)
+        cabinet.syncCoordinator.handleOAuthCallback(url)
     }
     
     private func bind() {
@@ -101,6 +122,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             //                  p1 === p2 else { return }
             guard let panel = noti.object as? NSPanel else { return }
             self?.searchPanelPosition = CGPoint(x: panel.frame.origin.x + panel.frame.width, y: panel.frame.origin.y + panel.frame.height)
+        }
+
+        NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: nil) { [weak self] _ in
+            self?.cabinet.syncCoordinator.handleDidBecomeActive()
         }
     }
     

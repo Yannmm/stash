@@ -13,7 +13,7 @@ import SwiftUI
 
 class SettingsViewModel: ObservableObject {
     @Published var collapseHistory: Bool
-    @Published var icloudSync: Bool
+    @Published var syncMethod: SyncMethod
     @Published var launchOnLogin: Bool
     @Published var showDockIcon: Bool
     @Published var importFromFile: URL?
@@ -26,12 +26,22 @@ class SettingsViewModel: ObservableObject {
     @Published var checkedVersionDescription: String = ""
     @Published var newReleaseNotes: String?
     @Published var error: Error?
+    @Published var baiduClientID: String
+    @Published var baiduClientSecret: String = ""
+    @Published var baiduRedirectURI: String
+    @Published var baiduRemoteDirectory: String
+    @Published private(set) var syncStatus: SyncStatusSummary
+    @Published private(set) var syncAuthState: SyncProviderAuthState
+    @Published private(set) var syncConflict: SyncConflictState?
+    @Published private(set) var syncLastDate: Date?
+    @Published private(set) var syncIsBusy: Bool = false
     
     private var cancellables = Set<AnyCancellable>()
     private let pieceSaver = PieceSaver()
     private let appHotKeyManager = HotKeyManager(action: .menu)
     private let searchHotKeyManager = HotKeyManager(action: .search)
     private let cabinet: OkamuraCabinet
+    private let syncCoordinator: SyncCoordinator
     @ObservedObject var updateChcker: UpdateChecker
     
     var empty: Bool { cabinet.storedEntries.isEmpty }
@@ -66,11 +76,19 @@ class SettingsViewModel: ObservableObject {
     
     init(cabinet: OkamuraCabinet, updateChecker: UpdateChecker) {
         self.cabinet = cabinet
+        self.syncCoordinator = cabinet.syncCoordinator
         self.updateChcker = updateChecker
         collapseHistory = pieceSaver.value(for: .collapseHistory) ?? false
-        icloudSync = pieceSaver.value(for: .icloudSync) ?? true
+        syncMethod = syncCoordinator.selectedMethod
         launchOnLogin = RocketLauncher.shared.enabled
         showDockIcon = pieceSaver.value(for: .showDockIcon) ?? false
+        baiduClientID = syncCoordinator.baiduClientID
+        baiduRedirectURI = syncCoordinator.baiduRedirectURI
+        baiduRemoteDirectory = syncCoordinator.baiduRemoteDirectory
+        syncStatus = syncCoordinator.status
+        syncAuthState = syncCoordinator.authState
+        syncConflict = syncCoordinator.conflict
+        syncLastDate = syncCoordinator.lastSyncAt
         
         if let code: UInt32 = pieceSaver.value(for: .appShortcut),
            let key = Key(carbonKeyCode: code),
@@ -84,8 +102,6 @@ class SettingsViewModel: ObservableObject {
             searchShortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
         }
         
-        self.setAppIdentifier()
-        
         bind()
     }
     
@@ -96,16 +112,10 @@ class SettingsViewModel: ObservableObject {
                 self?.pieceSaver.save(for: .collapseHistory, value: $0)
             }
             .store(in: &cancellables)
-        $icloudSync
+        $syncMethod
             .dropFirst()
             .sink { [weak self] in
-                self?.pieceSaver.save(for: .icloudSync, value: $0)
-                do {
-                    try self?.cabinet.save()
-                    self?.cabinet.monitorIcloud()
-                } catch {
-                    self?.error = error
-                }
+                self?.syncCoordinator.setSelectedMethod($0)
             }
             .store(in: &cancellables)
         
@@ -194,6 +204,26 @@ class SettingsViewModel: ObservableObject {
             .compactMap({ $0 })
             .sink { ErrorTracker.shared.add($0)}
             .store(in: &cancellables)
+
+        syncCoordinator.$status
+            .sink { [weak self] in self?.syncStatus = $0 }
+            .store(in: &cancellables)
+
+        syncCoordinator.$authState
+            .sink { [weak self] in self?.syncAuthState = $0 }
+            .store(in: &cancellables)
+
+        syncCoordinator.$conflict
+            .sink { [weak self] in self?.syncConflict = $0 }
+            .store(in: &cancellables)
+
+        syncCoordinator.$lastSyncAt
+            .sink { [weak self] in self?.syncLastDate = $0 }
+            .store(in: &cancellables)
+
+        syncCoordinator.$isSyncing
+            .sink { [weak self] in self?.syncIsBusy = $0 }
+            .store(in: &cancellables)
         
 //        Task {
 //            do {
@@ -217,9 +247,50 @@ class SettingsViewModel: ObservableObject {
         return result + ")"
     }
     
-    private func setAppIdentifier() {
-        guard let id: UUID? = pieceSaver.value(for: .appIdentifier), id == nil else { return }
-        pieceSaver.save(for: .appIdentifier, value: UUID().uuidString)
+    var syncStatusDescription: String {
+        [syncStatus.title, syncStatus.detail].compactMap { $0 }.joined(separator: " ")
+    }
+
+    var syncAuthDescription: String {
+        switch syncAuthState {
+        case .notRequired:
+            return "No sign-in required."
+        case .signedOut:
+            return "Signed out."
+        case .signedIn(let detail):
+            return detail ?? "Signed in."
+        case .needsConfiguration(let message):
+            return message
+        case .comingSoon(let message):
+            return message
+        }
+    }
+
+    var lastSyncDescription: String? {
+        guard let syncLastDate else { return nil }
+        return DateFormatter.localizedString(from: syncLastDate, dateStyle: .medium, timeStyle: .short)
+    }
+
+    func syncNow() {
+        syncCoordinator.requestSync(reason: .manual)
+    }
+
+    func disconnectSyncProvider() {
+        syncCoordinator.disconnectSelectedProvider()
+    }
+
+    func startBaiduAuthorization() throws {
+        try syncCoordinator.configureBaidu(
+            clientID: baiduClientID,
+            clientSecret: baiduClientSecret,
+            redirectURI: baiduRedirectURI,
+            remoteDirectory: baiduRemoteDirectory
+        )
+        try syncCoordinator.startBaiduAuthorization()
+    }
+
+    func resolveConflict(useRemote: Bool) {
+        syncCoordinator.resolveConflict(useRemote ? .useRemote : .keepLocal)
     }
 }
 

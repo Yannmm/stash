@@ -54,7 +54,6 @@ struct SettingsView: View {
             // General Section
             Section("General") {
                 Toggle("Launch on Login", isOn: $viewModel.launchOnLogin)
-                Toggle("iCloud Sync", isOn: $viewModel.icloudSync)
                 HStack {
                     Text("App Global Shortcut")
                     Spacer()
@@ -80,6 +79,92 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.leading)
                         Spacer()
+                    }
+                }
+            }
+
+            Section("Sync") {
+                Picker("Sync Method", selection: $viewModel.syncMethod) {
+                    ForEach(SyncMethod.allCases) { method in
+                        Text(method.displayName).tag(method)
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(viewModel.syncStatusDescription)
+                        .foregroundColor(.secondary)
+                    Text("Auth: \(viewModel.syncAuthDescription)")
+                        .foregroundColor(.secondary)
+                    if let lastSync = viewModel.lastSyncDescription {
+                        Text("Last Sync: \(lastSync)")
+                            .foregroundColor(.secondary)
+                    }
+                }
+
+                HStack {
+                    Button("Sync Now") {
+                        viewModel.syncNow()
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(viewModel.syncMethod == .dropbox)
+
+                    Spacer()
+
+                    if viewModel.syncMethod != .local {
+                        Button("Disconnect") {
+                            viewModel.disconnectSyncProvider()
+                        }
+                        .buttonStyle(.bordered)
+                    }
+                }
+
+                if viewModel.syncMethod == .baiduDisk {
+                    VStack(alignment: .leading, spacing: 8) {
+                        TextField("Baidu Client ID", text: $viewModel.baiduClientID)
+                        SecureField("Baidu Client Secret", text: $viewModel.baiduClientSecret)
+                        TextField("Baidu Redirect URI", text: $viewModel.baiduRedirectURI)
+                        TextField("Baidu Remote Directory", text: $viewModel.baiduRemoteDirectory)
+
+                        HStack {
+                            Button("Start Sign In") {
+                                do {
+                                    try viewModel.startBaiduAuthorization()
+                                } catch {
+                                    viewModel.error = error
+                                }
+                            }
+                            .buttonStyle(.bordered)
+                        }
+
+                        Text("After you approve access in the browser, Baidu will redirect back to `nustash://oauth/baidu` and the app will continue automatically.")
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.leading)
+                        Text("Baidu sync uses the small `default.html` bookmark file plus a metadata sidecar, so chunk splitting is not used.")
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.leading)
+                    }
+                } else if viewModel.syncMethod == .dropbox {
+                    Text("Dropbox is scaffolded behind the sync abstraction and can be enabled in a later pass.")
+                        .foregroundColor(.secondary)
+                        .multilineTextAlignment(.leading)
+                }
+
+                if let conflict = viewModel.syncConflict {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Conflict detected for \(conflict.method.displayName).")
+                        Text("Choose whether to keep the local bookmark file or replace it with the latest remote copy.")
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.leading)
+                        HStack {
+                            Button("Keep Local") {
+                                viewModel.resolveConflict(useRemote: false)
+                            }
+                            .buttonStyle(.bordered)
+                            Button("Use Remote") {
+                                viewModel.resolveConflict(useRemote: true)
+                            }
+                            .buttonStyle(.borderedProminent)
+                        }
                     }
                 }
             }
