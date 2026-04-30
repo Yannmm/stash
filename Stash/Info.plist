@@ -14,6 +14,14 @@
 				<string>nustash</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string></string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>db-y6ijm2p3vqr7kt8</string>
+			</array>
+		</dict>
 	</array>
 </dict>
 </plist>

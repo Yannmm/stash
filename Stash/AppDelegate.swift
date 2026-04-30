@@ -11,6 +11,7 @@ import Combine
 import HotKey
 import Kingfisher
 import Carbon
+import SwiftyDropbox
 
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate {
@@ -75,6 +76,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         
         setupUpdateCheckTimer()
         cabinet.syncCoordinator.startBackgroundRefresh()
+        
+        DropboxClientsManager.setupWithAppKeyDesktop("y6ijm2p3vqr7kt8")
+    }
+    
+    func application(_ application: NSApplication, open urls: [URL]) {
+        for url in urls {
+            handleIncomingURL(url)
+        }
     }
 
     @objc
@@ -86,6 +95,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         NSApp.setActivationPolicy(.regular)
         NSApp.activate(ignoringOtherApps: true)
+        handleIncomingURL(url)
+    }
+
+    private func handleIncomingURL(_ url: URL) {
+        if (url.scheme ?? "").hasPrefix("db-") {
+            DropboxClientsManager.handleRedirectURL(
+                url,
+                backgroundSessionIdentifier: ""
+            ) { result in
+                guard let result = result else { return }
+                switch result {
+                case .success:
+                    print("✅ Logged into Dropbox")
+                case .cancel:
+                    print("❌ User cancelled")
+                case .error(_, let description):
+                    print("⚠️ Error: \(description)")
+                }
+            }
+            return
+        }
+
         cabinet.syncCoordinator.handleOAuthCallback(url)
     }
     

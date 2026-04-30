@@ -1,6 +1,7 @@
 import SwiftUI
 import UniformTypeIdentifiers
 import HotKey
+import SwiftyDropbox
 
 struct SettingsView: View {
     @StateObject var viewModel: SettingsViewModel
@@ -100,13 +101,27 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                     }
                 }
-
                 HStack {
                     Button("Sync Now") {
-                        viewModel.syncNow()
+//                        viewModel.syncNow()
+                        
+                        DropboxClientsManager.authorizeFromControllerV2(
+                                sharedApplication: NSApplication.shared,
+                                controller: nil, // Correct for macOS
+                                loadingStatusDelegate: nil,
+                                openURL: { url in
+                                    // Use this to ensure it runs on the main thread
+                                    DispatchQueue.main.async {
+                                        NSWorkspace.shared.open(url)
+                                    }
+                                },
+                                scopeRequest: ScopeRequest(scopeType: .user, scopes: ["files.content.read", "files.content.write"], includeGrantedScopes: false)
+                            )
+                        
                     }
                     .buttonStyle(.bordered)
-                    .disabled(viewModel.syncMethod == .dropbox)
+//                    .disabled(viewModel.syncMethod == .dropbox)
+                    .disabled(false)
 
                     Spacer()
 

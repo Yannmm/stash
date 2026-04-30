@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6D2112332FA30AD600ADF116 /* SwiftyDropbox in Frameworks */ = {isa = PBXBuildFile; productRef = 6D2112322FA30AD600ADF116 /* SwiftyDropbox */; };
+		6D2112352FA30AD600ADF116 /* SwiftyDropboxObjC in Frameworks */ = {isa = PBXBuildFile; productRef = 6D2112342FA30AD600ADF116 /* SwiftyDropboxObjC */; };
 		6D6718472D672CDC0063FE57 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 6D6718462D672CDC0063FE57 /* Kingfisher */; };
 		6DCEC8752DAC9A9B00089699 /* Glur in Frameworks */ = {isa = PBXBuildFile; productRef = 6DCEC8742DAC9A9B00089699 /* Glur */; };
 		720642CA2D8DBA0600F62043 /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = 720642C92D8DBA0600F62043 /* HotKey */; };
@@ -65,12 +67,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				720642CA2D8DBA0600F62043 /* HotKey in Frameworks */,
+				6D2112332FA30AD600ADF116 /* SwiftyDropbox in Frameworks */,
 				6D6718472D672CDC0063FE57 /* Kingfisher in Frameworks */,
 				6DCEC8752DAC9A9B00089699 /* Glur in Frameworks */,
 				726B64F82D6DCEA1000AA419 /* SwiftSoup in Frameworks */,
 				72D8AE7C2E635B6900D6DACB /* CombineExt in Frameworks */,
 				7276CF1E2F530F4B00B25FA5 /* OrderedCollections in Frameworks */,
 				7245871D2E1913FB00804B21 /* CodableCSV in Frameworks */,
+				6D2112352FA30AD600ADF116 /* SwiftyDropboxObjC in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -147,6 +151,8 @@
 				7245871C2E1913FB00804B21 /* CodableCSV */,
 				72D8AE7B2E635B6900D6DACB /* CombineExt */,
 				7276CF1D2F530F4B00B25FA5 /* OrderedCollections */,
+				6D2112322FA30AD600ADF116 /* SwiftyDropbox */,
+				6D2112342FA30AD600ADF116 /* SwiftyDropboxObjC */,
 			);
 			productName = Stash;
 			productReference = 7222C1C02D491BEC00096255 /* Nustash.app */;
@@ -238,6 +244,7 @@
 				7245868F2E19136300804B21 /* XCRemoteSwiftPackageReference "CodableCSV" */,
 				72D8ADD82E635A3100D6DACB /* XCRemoteSwiftPackageReference "CombineExt" */,
 				7276CE682F530D5300B25FA5 /* XCRemoteSwiftPackageReference "swift-collections" */,
+				6D2112312FA30AC700ADF116 /* XCRemoteSwiftPackageReference "SwiftyDropbox" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7222C1C12D491BEC00096255 /* Products */;
@@ -608,6 +615,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		6D2112312FA30AC700ADF116 /* XCRemoteSwiftPackageReference "SwiftyDropbox" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/dropbox/SwiftyDropbox";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.2.4;
+			};
+		};
 		6D6718442D66C30C0063FE57 /* XCRemoteSwiftPackageReference "Kingfisher" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/onevcat/Kingfisher.git";
@@ -667,6 +682,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		6D2112322FA30AD600ADF116 /* SwiftyDropbox */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6D2112312FA30AC700ADF116 /* XCRemoteSwiftPackageReference "SwiftyDropbox" */;
+			productName = SwiftyDropbox;
+		};
+		6D2112342FA30AD600ADF116 /* SwiftyDropboxObjC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 6D2112312FA30AC700ADF116 /* XCRemoteSwiftPackageReference "SwiftyDropbox" */;
+			productName = SwiftyDropboxObjC;
+		};
 		6D6718462D672CDC0063FE57 /* Kingfisher */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 6D6718442D66C30C0063FE57 /* XCRemoteSwiftPackageReference "Kingfisher" */;
