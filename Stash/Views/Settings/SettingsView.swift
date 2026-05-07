@@ -111,11 +111,13 @@ struct SettingsView: View {
                                 loadingStatusDelegate: nil,
                                 openURL: { url in
                                     // Use this to ensure it runs on the main thread
-                                    DispatchQueue.main.async {
-                                        NSWorkspace.shared.open(url)
-                                    }
+//                                    DispatchQueue.main.async {
+//                                        
+//                                    }
+                                    
+                                    NSWorkspace.shared.open(url)
                                 },
-                                scopeRequest: ScopeRequest(scopeType: .user, scopes: ["files.content.read", "files.content.write"], includeGrantedScopes: false)
+                                scopeRequest: ScopeRequest(scopeType: .user, scopes: ["account_info.read"], includeGrantedScopes: false)
                             )
                         
                     }

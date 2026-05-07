@@ -51,14 +51,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var window2: NSWindow?
     
     func applicationWillFinishLaunching(_ notification: Notification) {
-//                NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
+        //                NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
         NSApp.setActivationPolicy(.accessory)
-        NSAppleEventManager.shared().setEventHandler(
-            self,
-            andSelector: #selector(handleGetURLEvent(_:withReplyEvent:)),
-            forEventClass: AEEventClass(kInternetEventClass),
-            andEventID: AEEventID(kAEGetURL)
-        )
+        //        NSAppleEventManager.shared().setEventHandler(
+        //            self,
+        //            andSelector: #selector(handleGetURLEvent(_:withReplyEvent:)),
+        //            forEventClass: AEEventClass(kInternetEventClass),
+        //            andEventID: AEEventID(kAEGetURL)
+        //        )
         
         // TODO: remove this line
         //        ImageCache.default.diskStorage.config.expiration = .days(1)
@@ -78,26 +78,36 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         cabinet.syncCoordinator.startBackgroundRefresh()
         
         DropboxClientsManager.setupWithAppKeyDesktop("y6ijm2p3vqr7kt8")
+        
+        NSAppleEventManager.shared().setEventHandler(self,
+                                                     andSelector: #selector(handleGetURLEvent1),
+                                                     forEventClass: AEEventClass(kInternetEventClass),
+                                                     andEventID: AEEventID(kAEGetURL))
     }
     
-    func application(_ application: NSApplication, open urls: [URL]) {
-        for url in urls {
-            handleIncomingURL(url)
+    @objc func handleGetURLEvent1(_ event: NSAppleEventDescriptor?, replyEvent: NSAppleEventDescriptor?) {
+        if let aeEventDescriptor = event?.paramDescriptor(forKeyword: AEKeyword(keyDirectObject)) {
+            if let urlStr = aeEventDescriptor.stringValue {
+                let url = URL(string: urlStr)!
+                let oauthCompletion: DropboxOAuthCompletion = {
+                    if let authResult = $0 {
+                        switch authResult {
+                        case .success:
+                            print("Success! User is logged into Dropbox.")
+                        case .cancel:
+                            print("Authorization flow was manually canceled by user!")
+                        case .error(_, let description):
+                            print("Error: \(String(describing: description))")
+                        }
+                    }
+                }
+                DropboxClientsManager.handleRedirectURL(url, includeBackgroundClient: false, completion: oauthCompletion)
+                // this brings your application back the foreground on redirect
+                NSApp.activate(ignoringOtherApps: true)
+            }
         }
     }
-
-    @objc
-    private func handleGetURLEvent(_ event: NSAppleEventDescriptor, withReplyEvent replyEvent: NSAppleEventDescriptor) {
-        guard let urlString = event.paramDescriptor(forKeyword: AEKeyword(keyDirectObject))?.stringValue,
-              let url = URL(string: urlString) else {
-            return
-        }
-
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
-        handleIncomingURL(url)
-    }
-
+    
     private func handleIncomingURL(_ url: URL) {
         if (url.scheme ?? "").hasPrefix("db-") {
             DropboxClientsManager.handleRedirectURL(
@@ -116,7 +126,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
             return
         }
-
+        
         cabinet.syncCoordinator.handleOAuthCallback(url)
     }
     
@@ -125,38 +135,46 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                                   cabinet.$recentEntries,
                                   settingsViewModel.$collapseHistory,
                                   NSApp.publisher(for: \.effectiveAppearance))
-        .sink { [weak self] tuple5 in
-            Task { @MainActor in
+        .sink {  tuple5 in
+            Task { @MainActor [weak self] in
                 self?.statusItem?.menu = self?.generateMenu(from: tuple5.0, history: tuple5.1, collapseHistory: tuple5.2)
             }
         }
         .store(in: &cancellables)
         
-        
         // Notifications
-        NotificationCenter.default.addObserver(forName: .onShortcutKeyDown, object: nil, queue: nil) { [weak self] noti in
+        NotificationCenter.default.addObserver(
+            forName: .onShortcutKeyDown,
+            object: nil,
+            queue: nil
+        ) { [weak self] noti in
             guard let action = noti.object as? HotKeyManager.Action else { return }
-            switch action {
-            case .menu:
-                if let button = self?.statusItem?.button {
-                    button.performClick(nil)
+            
+            Task { @MainActor [weak self] in
+                switch action {
+                case .menu:
+                    if let button = self?.statusItem?.button {
+                        button.performClick(nil)
+                    }
+                    
+                case .search:
+                    self?.search()
                 }
-            case .search:
-                self?.search()
+            }
+        }
+        
+        NotificationCenter.default.addObserver(forName: .onDragWindow, object: nil, queue: nil) { noti in
+            guard let panel = noti.object as? NSPanel else { return }
+            Task { @MainActor [weak self] in
+                self?.searchPanelPosition = CGPoint(x: panel.frame.origin.x + panel.frame.width, y: panel.frame.origin.y + panel.frame.height)
+            }
+        }
+        
+        NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: nil) { _ in
+            Task { @MainActor [weak self] in
+                self?.cabinet.syncCoordinator.handleDidBecomeActive()
             }
             
-        }
-        
-        NotificationCenter.default.addObserver(forName: .onDragWindow, object: nil, queue: nil) { [weak self] noti in
-            //            guard let p1 = noti.object as? FloatingPanel,
-            //                  let p2 = self?.searchPanel,
-            //                  p1 === p2 else { return }
-            guard let panel = noti.object as? NSPanel else { return }
-            self?.searchPanelPosition = CGPoint(x: panel.frame.origin.x + panel.frame.width, y: panel.frame.origin.y + panel.frame.height)
-        }
-
-        NotificationCenter.default.addObserver(forName: NSApplication.didBecomeActiveNotification, object: nil, queue: nil) { [weak self] _ in
-            self?.cabinet.syncCoordinator.handleDidBecomeActive()
         }
     }
     
@@ -180,7 +198,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         if let button = statusItem?.button {
-//            button.image = NSImage(systemSymbolName: "square.stack.3d.up.fill", accessibilityDescription: nil)
             button.image = NSImage(named: "forest")
         }
     }
@@ -288,9 +305,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             forName: NSWindow.willCloseNotification,
             object: window,
             queue: .main
-        ) { [weak self] notification in
+        ) {  notification in
             guard let closingWindow = notification.object as? NSWindow else { return }
-            self?.updateDockIconVisibility(excluding: closingWindow)
+            Task { @MainActor [weak self] in
+                self?.updateDockIconVisibility(excluding: closingWindow)
+            }
         }
     }
     
