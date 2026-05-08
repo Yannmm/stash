@@ -86,7 +86,7 @@ struct SettingsView: View {
 
             Section("Sync") {
                 Picker("Sync Method", selection: $viewModel.syncMethod) {
-                    ForEach(SyncMethod.allCases) { method in
+                    ForEach(Synchronizer.Method.allCases) { method in
                         Text(method.displayName).tag(method)
                     }
                 }

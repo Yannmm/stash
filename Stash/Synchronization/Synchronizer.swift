@@ -9,25 +9,25 @@ import Foundation
 import Combine
 import AppKit
 
-final class SyncCoordinator: ObservableObject {
-    @Published var selectedMethod: SyncMethod
-    @Published private(set) var authState: SyncProviderAuthState
+final class Synchronizer: ObservableObject {
+    @Published var selectedMethod: Method
+    @Published private(set) var authState: AuthState
     @Published private(set) var status = SyncStatusSummary.idleLocal
     @Published private(set) var lastSyncAt: Date?
-    @Published private(set) var conflict: SyncConflictState?
+    @Published private(set) var conflict: ConflictState?
     @Published private(set) var isSyncing = false
 
     private let pieceSaver: PieceSaver
     private let store: StashPayloadStore
     private let localProvider: LocalSyncProvider
-    private let iCloudProvider: ICloudSyncProvider
+    private let iCloudProvider: IcloudProvider
     private let baiduProvider: BaiduDiskSyncProvider
     private let dropboxProvider: DropboxSyncProvider
     private let deviceID: String
 
     private var providerObserver: AnyCancellable?
-    private var pendingReasons = Set<SyncRequestReason>()
-    private var pendingRemoteSnapshot: SyncRemoteSnapshot?
+    private var pendingReasons = Set<Timing>()
+    private var pendingRemoteSnapshot: RemoteSnapshot?
     private var remoteApplyHandler: (() -> Void)?
     private var backgroundScheduler: NSBackgroundActivityScheduler?
 
@@ -35,7 +35,7 @@ final class SyncCoordinator: ObservableObject {
         self.pieceSaver = pieceSaver
         self.store = store
         self.localProvider = LocalSyncProvider()
-        self.iCloudProvider = ICloudSyncProvider(store: store)
+        self.iCloudProvider = IcloudProvider(store: store)
         self.baiduProvider = BaiduDiskSyncProvider(
             client: BaiduDiskClient(),
             pieceSaver: pieceSaver,
@@ -45,7 +45,7 @@ final class SyncCoordinator: ObservableObject {
         self.dropboxProvider = DropboxSyncProvider()
 
         let legacyICloud: Bool = pieceSaver.value(for: .icloudSync) ?? true
-        self.selectedMethod = pieceSaver.value(for: .syncMethod).flatMap(SyncMethod.init(rawValue:)) ?? (legacyICloud ? .icloud : .local)
+        self.selectedMethod = pieceSaver.value(for: .syncMethod).flatMap(Method.init(rawValue:)) ?? (legacyICloud ? .icloud : .local)
         self.deviceID = pieceSaver.value(for: .appIdentifier) ?? UUID().uuidString
         self.authState = .notRequired
         self.lastSyncAt = pieceSaver.value(for: .syncLastDate)
@@ -66,7 +66,7 @@ final class SyncCoordinator: ObservableObject {
         self.remoteApplyHandler = handler
     }
 
-    func setSelectedMethod(_ method: SyncMethod) {
+    func setSelectedMethod(_ method: Method) {
         selectedMethod = method
         pieceSaver.save(for: .syncMethod, value: method.rawValue)
         pieceSaver.save(for: .icloudSync, value: method == .icloud)
@@ -77,7 +77,7 @@ final class SyncCoordinator: ObservableObject {
         requestSync(reason: .providerSwitch)
     }
 
-    func requestSync(reason: SyncRequestReason) {
+    func requestSync(reason: Timing) {
         pendingReasons.insert(reason)
         Task { @MainActor in
             await drainQueueIfNeeded()
@@ -159,7 +159,7 @@ final class SyncCoordinator: ObservableObject {
         }
     }
 
-    func resolveConflict(_ resolution: SyncConflictResolution) {
+    func resolveConflict(_ resolution: ConflictResolution) {
         Task {
             do {
                 switch resolution {
@@ -198,7 +198,7 @@ final class SyncCoordinator: ObservableObject {
             }
     }
 
-    private func provider(for method: SyncMethod) -> SyncProvider {
+    private func provider(for method: Method) -> SyncProvider {
         switch method {
         case .local:
             return localProvider
@@ -224,7 +224,7 @@ final class SyncCoordinator: ObservableObject {
         isSyncing = false
     }
 
-    private func syncNow(reasons: Set<SyncRequestReason>) async {
+    private func syncNow(reasons: Set<Timing>) async {
         let provider = activeProvider
         authState = provider.authState()
 
@@ -260,7 +260,7 @@ final class SyncCoordinator: ObservableObject {
             let checkpoint = currentCheckpoint()
             let remote = try await provider.fetchRemoteSnapshot()
 
-            let decision = SyncPlanner.decide(
+            let decision = Planner.decide(
                 .init(
                     localHash: localHash,
                     localIsEmpty: localEntries.isEmpty,
@@ -273,7 +273,7 @@ final class SyncCoordinator: ObservableObject {
             switch decision {
             case .noop:
                 if let remote {
-                    persist(checkpoint: SyncCheckpoint(
+                    persist(checkpoint: Checkpoint(
                         method: selectedMethod,
                         contentHash: remote.metadata.contentHash,
                         revision: remote.providerRevision ?? remote.metadata.revision,
@@ -289,7 +289,7 @@ final class SyncCoordinator: ObservableObject {
             case .conflict:
                 guard let remote else { return }
                 pendingRemoteSnapshot = remote
-                conflict = SyncConflictState(
+                conflict = ConflictState(
                     method: selectedMethod,
                     detectedAt: Date(),
                     localHash: localHash,
@@ -301,7 +301,7 @@ final class SyncCoordinator: ObservableObject {
         } catch SyncProviderError.conflictDetected {
             if let remote = try? await provider.fetchRemoteSnapshot() {
                 pendingRemoteSnapshot = remote
-                conflict = SyncConflictState(
+                conflict = ConflictState(
                     method: selectedMethod,
                     detectedAt: Date(),
                     localHash: "",
@@ -317,7 +317,7 @@ final class SyncCoordinator: ObservableObject {
 
     private func forceUploadCurrentPayload(expectedRevision: String?) async throws {
         let payload = try store.readPayload(at: store.localPayloadURL())
-        let metadata = SyncMetadata(
+        let metadata = Metadata(
             deviceId: deviceID,
             contentHash: store.contentHash(for: payload),
             revision: UUID().uuidString,
@@ -329,7 +329,7 @@ final class SyncCoordinator: ObservableObject {
             metadata: metadata,
             previousRevision: expectedRevision
         )
-        persist(checkpoint: SyncCheckpoint(
+        persist(checkpoint: Checkpoint(
             method: selectedMethod,
             contentHash: response.metadata.contentHash,
             revision: response.providerRevision ?? response.metadata.revision,
@@ -343,10 +343,10 @@ final class SyncCoordinator: ObservableObject {
         try applyRemoteSnapshot(snapshot)
     }
 
-    private func applyRemoteSnapshot(_ snapshot: SyncRemoteSnapshot) throws {
+    private func applyRemoteSnapshot(_ snapshot: RemoteSnapshot) throws {
         try store.writePayload(snapshot.payloadData, to: store.localPayloadURL())
         try? store.writeMetadata(snapshot.metadata, to: store.localMetadataURL())
-        persist(checkpoint: SyncCheckpoint(
+        persist(checkpoint: Checkpoint(
             method: selectedMethod,
             contentHash: snapshot.metadata.contentHash,
             revision: snapshot.providerRevision ?? snapshot.metadata.revision,
@@ -356,15 +356,15 @@ final class SyncCoordinator: ObservableObject {
         status = SyncStatusSummary(level: .success, title: "Downloaded latest from \(selectedMethod.displayName)", detail: nil)
     }
 
-    private func currentCheckpoint() -> SyncCheckpoint? {
-        guard let checkpoint = pieceSaver.codableValue(for: .syncCheckpoint, as: SyncCheckpoint.self),
+    private func currentCheckpoint() -> Checkpoint? {
+        guard let checkpoint = pieceSaver.codableValue(for: .syncCheckpoint, as: Checkpoint.self),
               checkpoint.method == selectedMethod else {
             return nil
         }
         return checkpoint
     }
 
-    private func persist(checkpoint: SyncCheckpoint) {
+    private func persist(checkpoint: Checkpoint) {
         do {
             try pieceSaver.saveCodable(checkpoint, for: .syncCheckpoint)
         } catch {

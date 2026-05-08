@@ -13,7 +13,7 @@ import SwiftUI
 
 class SettingsViewModel: ObservableObject {
     @Published var collapseHistory: Bool
-    @Published var syncMethod: SyncMethod
+    @Published var syncMethod: Synchronizer.Method
     @Published var launchOnLogin: Bool
     @Published var showDockIcon: Bool
     @Published var importFromFile: URL?
@@ -30,9 +30,9 @@ class SettingsViewModel: ObservableObject {
     @Published var baiduClientSecret: String = ""
     @Published var baiduRedirectURI: String
     @Published var baiduRemoteDirectory: String
-    @Published private(set) var syncStatus: SyncStatusSummary
-    @Published private(set) var syncAuthState: SyncProviderAuthState
-    @Published private(set) var syncConflict: SyncConflictState?
+    @Published private(set) var syncStatus: Synchronizer.SyncStatusSummary
+    @Published private(set) var syncAuthState: Synchronizer.AuthState
+    @Published private(set) var syncConflict: Synchronizer.ConflictState?
     @Published private(set) var syncLastDate: Date?
     @Published private(set) var syncIsBusy: Bool = false
     
@@ -41,7 +41,7 @@ class SettingsViewModel: ObservableObject {
     private let appHotKeyManager = HotKeyManager(action: .menu)
     private let searchHotKeyManager = HotKeyManager(action: .search)
     private let cabinet: OkamuraCabinet
-    private let syncCoordinator: SyncCoordinator
+    private let syncCoordinator: Synchronizer
     @ObservedObject var updateChcker: UpdateChecker
     
     var empty: Bool { cabinet.storedEntries.isEmpty }

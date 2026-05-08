@@ -17,8 +17,8 @@ class OkamuraCabinet: ObservableObject {
     @Published private(set) var recentEntries: [(Bookmark, String)] = []
     
     private let pieceSaver = PieceSaver()
-    private let store = StashPayloadStore()
-    let syncCoordinator: SyncCoordinator
+    private let store = Synchronizer.StashPayloadStore()
+    let syncCoordinator: Synchronizer
     
     static let shared = OkamuraCabinet()
 
@@ -27,7 +27,7 @@ class OkamuraCabinet: ObservableObject {
         if identifier == nil {
             pieceSaver.save(for: .appIdentifier, value: UUID().uuidString)
         }
-        self.syncCoordinator = SyncCoordinator(pieceSaver: pieceSaver, store: store)
+        self.syncCoordinator = Synchronizer(pieceSaver: pieceSaver, store: store)
         self.syncCoordinator.attachRemoteApplyHandler { [weak self] in
             self?.asyncLoad()
         }
@@ -288,7 +288,7 @@ fileprivate extension OkamuraCabinet {
     
     func persistLocalMetadata(for payload: Data) throws {
         guard let deviceID: String = pieceSaver.value(for: .appIdentifier) else { return }
-        let metadata = SyncMetadata(
+        let metadata = Synchronizer.Metadata(
             deviceId: deviceID,
             contentHash: store.contentHash(for: payload),
             revision: UUID().uuidString,
@@ -347,7 +347,7 @@ extension OkamuraCabinet {
 
 extension OkamuraCabinet {
     enum Constant {
-        static let stashFileName = StashPayloadStore.Constant.dataFileName
-        static let sidecarFileName = StashPayloadStore.Constant.metadataFileName
+        static let stashFileName = Synchronizer.StashPayloadStore.Constant.dataFileName
+        static let sidecarFileName = Synchronizer.StashPayloadStore.Constant.metadataFileName
     }
 }
