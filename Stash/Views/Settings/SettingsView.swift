@@ -83,14 +83,14 @@ struct SettingsView: View {
                     }
                 }
             }
-
+            
             Section("Sync") {
                 Picker("Sync Method", selection: $viewModel.syncMethod) {
                     ForEach(Synchronizer.Method.allCases) { method in
                         Text(method.displayName).tag(method)
                     }
                 }
-
+                
                 VStack(alignment: .leading, spacing: 8) {
                     Text(viewModel.syncStatusDescription)
                         .foregroundColor(.secondary)
@@ -103,30 +103,16 @@ struct SettingsView: View {
                 }
                 HStack {
                     Button("Sync Now") {
-//                        viewModel.syncNow()
+                        //                        viewModel.syncNow()
                         
-                        DropboxClientsManager.authorizeFromControllerV2(
-                                sharedApplication: NSApplication.shared,
-                                controller: nil, // Correct for macOS
-                                loadingStatusDelegate: nil,
-                                openURL: { url in
-                                    // Use this to ensure it runs on the main thread
-//                                    DispatchQueue.main.async {
-//                                        
-//                                    }
-                                    
-                                    NSWorkspace.shared.open(url)
-                                },
-                                scopeRequest: ScopeRequest(scopeType: .user, scopes: ["account_info.read"], includeGrantedScopes: false)
-                            )
-                        
+                        OkamuraCabinet.shared.dropboxProvider.authenticate()
                     }
                     .buttonStyle(.bordered)
-//                    .disabled(viewModel.syncMethod == .dropbox)
+                    //                    .disabled(viewModel.syncMethod == .dropbox)
                     .disabled(false)
-
+                    
                     Spacer()
-
+                    
                     if viewModel.syncMethod != .local {
                         Button("Disconnect") {
                             viewModel.disconnectSyncProvider()
@@ -134,14 +120,14 @@ struct SettingsView: View {
                         .buttonStyle(.bordered)
                     }
                 }
-
+                
                 if viewModel.syncMethod == .baiduDisk {
                     VStack(alignment: .leading, spacing: 8) {
                         TextField("Baidu Client ID", text: $viewModel.baiduClientID)
                         SecureField("Baidu Client Secret", text: $viewModel.baiduClientSecret)
                         TextField("Baidu Redirect URI", text: $viewModel.baiduRedirectURI)
                         TextField("Baidu Remote Directory", text: $viewModel.baiduRemoteDirectory)
-
+                        
                         HStack {
                             Button("Start Sign In") {
                                 do {
@@ -152,7 +138,7 @@ struct SettingsView: View {
                             }
                             .buttonStyle(.bordered)
                         }
-
+                        
                         Text("After you approve access in the browser, Baidu will redirect back to `nustash://oauth/baidu` and the app will continue automatically.")
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.leading)
@@ -165,7 +151,7 @@ struct SettingsView: View {
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.leading)
                 }
-
+                
                 if let conflict = viewModel.syncConflict {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("Conflict detected for \(conflict.method.displayName).")

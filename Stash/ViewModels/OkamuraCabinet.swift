@@ -17,10 +17,16 @@ class OkamuraCabinet: ObservableObject {
     @Published private(set) var recentEntries: [(Bookmark, String)] = []
     
     private let pieceSaver = PieceSaver()
+    static let shared = OkamuraCabinet()
+    
+    // Test starts
     private let store = Synchronizer.StashPayloadStore()
     let syncCoordinator: Synchronizer
     
-    static let shared = OkamuraCabinet()
+    let dropboxProvider = Synchronizer.DropboxProvider()
+    
+    // Test ends
+    
 
     init() {
         let identifier: String? = pieceSaver.value(for: .appIdentifier)

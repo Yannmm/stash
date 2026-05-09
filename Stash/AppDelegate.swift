@@ -51,15 +51,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var window2: NSWindow?
     
     func applicationWillFinishLaunching(_ notification: Notification) {
-        //                NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
         NSApp.setActivationPolicy(.accessory)
-        //        NSAppleEventManager.shared().setEventHandler(
-        //            self,
-        //            andSelector: #selector(handleGetURLEvent(_:withReplyEvent:)),
-        //            forEventClass: AEEventClass(kInternetEventClass),
-        //            andEventID: AEEventID(kAEGetURL)
-        //        )
-        
         // TODO: remove this line
         //        ImageCache.default.diskStorage.config.expiration = .days(1)
         //        ImageCache.default.clearDiskCache()
@@ -77,12 +69,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupUpdateCheckTimer()
         cabinet.syncCoordinator.startBackgroundRefresh()
         
-        DropboxClientsManager.setupWithAppKeyDesktop("y6ijm2p3vqr7kt8")
+        cabinet.dropboxProvider.prepare()
         
-        NSAppleEventManager.shared().setEventHandler(self,
-                                                     andSelector: #selector(handleGetURLEvent1),
-                                                     forEventClass: AEEventClass(kInternetEventClass),
-                                                     andEventID: AEEventID(kAEGetURL))
+        let a = cabinet.dropboxProvider.isSignedIn
+        
+        print(a)
     }
     
     @objc func handleGetURLEvent1(_ event: NSAppleEventDescriptor?, replyEvent: NSAppleEventDescriptor?) {
@@ -108,6 +99,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
+    // TODO: delete
     private func handleIncomingURL(_ url: URL) {
         if (url.scheme ?? "").hasPrefix("db-") {
             DropboxClientsManager.handleRedirectURL(
