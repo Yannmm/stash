@@ -103,9 +103,16 @@ struct SettingsView: View {
                 }
                 HStack {
                     Button("Sync Now") {
-                        //                        viewModel.syncNow()
                         
-                        OkamuraCabinet.shared.dropboxProvider.authenticate()
+                        Task {
+                            do {
+                                let client = try await OkamuraCabinet.shared.dropboxProvider.authenticate()
+                                try await OkamuraCabinet.shared.dropboxProvider.doSth()
+                            } catch {
+                                print(error)
+                                let client = try await OkamuraCabinet.shared.dropboxProvider.authenticate(forceResignIn: true)
+                            }
+                        }
                     }
                     .buttonStyle(.bordered)
                     //                    .disabled(viewModel.syncMethod == .dropbox)

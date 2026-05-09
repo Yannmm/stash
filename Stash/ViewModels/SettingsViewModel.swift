@@ -108,12 +108,14 @@ class SettingsViewModel: ObservableObject {
     private func bind() {
         $collapseHistory
             .dropFirst()
+            .receive(on: RunLoop.main)
             .sink { [weak self] in
                 self?.pieceSaver.save(for: .collapseHistory, value: $0)
             }
             .store(in: &cancellables)
         $syncMethod
             .dropFirst()
+            .receive(on: RunLoop.main)
             .sink { [weak self] in
                 self?.syncCoordinator.setSelectedMethod($0)
             }
@@ -122,6 +124,7 @@ class SettingsViewModel: ObservableObject {
         // Handle launch at login changes
         $launchOnLogin
             .dropFirst()
+            .receive(on: RunLoop.main)
             .sink { [weak self] enabled in
                 RocketLauncher.shared.enabled = enabled
                 self?.pieceSaver.save(for: .launchOnLogin, value: enabled)
@@ -129,6 +132,7 @@ class SettingsViewModel: ObservableObject {
             .store(in: &cancellables)
         $showDockIcon
             .dropFirst()
+            .receive(on: RunLoop.main)
             .sink { [weak self] in
                 //                NSApp.setActivationPolicy($0 ? .regular : .accessory)
                 self?.pieceSaver.save(for: .showDockIcon, value: $0)
@@ -136,6 +140,7 @@ class SettingsViewModel: ObservableObject {
             .store(in: &cancellables)
         
         $appShortcut
+            .receive(on: RunLoop.main)
             .sink { [weak self] tuple2 in
                 if let t2 = tuple2 {
                     self?.appHotKeyManager.register(shortcut: t2)
@@ -150,6 +155,7 @@ class SettingsViewModel: ObservableObject {
         Publishers.CombineLatest($isAppGlobalShortcutRecording, $isSearchGlobalShortcutRecording)
             .map({ $0.0 || $0.1 })
             .withLatestFrom($appShortcut, $searchShortcut, resultSelector: { ($0, $1.0, $1.1) })
+            .receive(on: RunLoop.main)
             .sink { [weak self] in
                 if !$0.0 {
                     if let x = $0.1 {
@@ -180,6 +186,7 @@ class SettingsViewModel: ObservableObject {
         $exportDestinationDirectory
             .dropFirst()
             .compactMap({ $0 })
+            .receive(on: RunLoop.main)
             .sink { [unowned self] in
                 do {
                     self.exportToFile = try self.cabinet.export(to: $0, suffix: "_\(self.timestampFormatter.string(from: Date.now))")
@@ -190,6 +197,7 @@ class SettingsViewModel: ObservableObject {
             .store(in: &cancellables)
         
         updateChcker.$new
+            .receive(on: RunLoop.main)
             .sink { [unowned self] update in
                 if let v = update {
                     self.checkedVersionDescription = "New Version Available: \(v.version)"
@@ -206,10 +214,12 @@ class SettingsViewModel: ObservableObject {
             .store(in: &cancellables)
 
         syncCoordinator.$status
+            .receive(on: RunLoop.main)
             .sink { [weak self] in self?.syncStatus = $0 }
             .store(in: &cancellables)
 
         syncCoordinator.$authState
+            .receive(on: RunLoop.main)
             .sink { [weak self] in self?.syncAuthState = $0 }
             .store(in: &cancellables)
 
@@ -222,6 +232,7 @@ class SettingsViewModel: ObservableObject {
             .store(in: &cancellables)
 
         syncCoordinator.$isSyncing
+            .receive(on: RunLoop.main)
             .sink { [weak self] in self?.syncIsBusy = $0 }
             .store(in: &cancellables)
         

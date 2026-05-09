@@ -70,10 +70,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         cabinet.syncCoordinator.startBackgroundRefresh()
         
         cabinet.dropboxProvider.prepare()
-        
-        let a = cabinet.dropboxProvider.isSignedIn
-        
-        print(a)
     }
     
     @objc func handleGetURLEvent1(_ event: NSAppleEventDescriptor?, replyEvent: NSAppleEventDescriptor?) {
