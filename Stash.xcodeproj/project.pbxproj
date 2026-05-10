@@ -10,6 +10,8 @@
 		6D6718472D672CDC0063FE57 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 6D6718462D672CDC0063FE57 /* Kingfisher */; };
 		6DCEC8752DAC9A9B00089699 /* Glur in Frameworks */ = {isa = PBXBuildFile; productRef = 6DCEC8742DAC9A9B00089699 /* Glur */; };
 		720642CA2D8DBA0600F62043 /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = 720642C92D8DBA0600F62043 /* HotKey */; };
+		7242A6DA2FB004B4007ABC1C /* SwiftyDropbox in Frameworks */ = {isa = PBXBuildFile; productRef = 7242A6D92FB004B4007ABC1C /* SwiftyDropbox */; };
+		7242A6DC2FB004B4007ABC1C /* SwiftyDropboxObjC in Frameworks */ = {isa = PBXBuildFile; productRef = 7242A6DB2FB004B4007ABC1C /* SwiftyDropboxObjC */; };
 		7245871D2E1913FB00804B21 /* CodableCSV in Frameworks */ = {isa = PBXBuildFile; productRef = 7245871C2E1913FB00804B21 /* CodableCSV */; };
 		726B64F82D6DCEA1000AA419 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 726B64F72D6DCEA1000AA419 /* SwiftSoup */; };
 		7276CF1E2F530F4B00B25FA5 /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 7276CF1D2F530F4B00B25FA5 /* OrderedCollections */; };
@@ -65,12 +67,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				720642CA2D8DBA0600F62043 /* HotKey in Frameworks */,
+				7242A6DA2FB004B4007ABC1C /* SwiftyDropbox in Frameworks */,
 				6D6718472D672CDC0063FE57 /* Kingfisher in Frameworks */,
 				6DCEC8752DAC9A9B00089699 /* Glur in Frameworks */,
 				726B64F82D6DCEA1000AA419 /* SwiftSoup in Frameworks */,
 				72D8AE7C2E635B6900D6DACB /* CombineExt in Frameworks */,
 				7276CF1E2F530F4B00B25FA5 /* OrderedCollections in Frameworks */,
 				7245871D2E1913FB00804B21 /* CodableCSV in Frameworks */,
+				7242A6DC2FB004B4007ABC1C /* SwiftyDropboxObjC in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -147,6 +151,8 @@
 				7245871C2E1913FB00804B21 /* CodableCSV */,
 				72D8AE7B2E635B6900D6DACB /* CombineExt */,
 				7276CF1D2F530F4B00B25FA5 /* OrderedCollections */,
+				7242A6D92FB004B4007ABC1C /* SwiftyDropbox */,
+				7242A6DB2FB004B4007ABC1C /* SwiftyDropboxObjC */,
 			);
 			productName = Stash;
 			productReference = 7222C1C02D491BEC00096255 /* Nustash.app */;
@@ -238,6 +244,7 @@
 				7245868F2E19136300804B21 /* XCRemoteSwiftPackageReference "CodableCSV" */,
 				72D8ADD82E635A3100D6DACB /* XCRemoteSwiftPackageReference "CombineExt" */,
 				7276CE682F530D5300B25FA5 /* XCRemoteSwiftPackageReference "swift-collections" */,
+				7242A6D82FB004A1007ABC1C /* XCRemoteSwiftPackageReference "SwiftyDropbox" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7222C1C12D491BEC00096255 /* Products */;
@@ -632,6 +639,14 @@
 				kind = branch;
 			};
 		};
+		7242A6D82FB004A1007ABC1C /* XCRemoteSwiftPackageReference "SwiftyDropbox" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/dropbox/SwiftyDropbox.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.2.4;
+			};
+		};
 		7245868F2E19136300804B21 /* XCRemoteSwiftPackageReference "CodableCSV" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/dehesa/CodableCSV";
@@ -681,6 +696,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 720642C82D8DB9D400F62043 /* XCRemoteSwiftPackageReference "HotKey" */;
 			productName = HotKey;
+		};
+		7242A6D92FB004B4007ABC1C /* SwiftyDropbox */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7242A6D82FB004A1007ABC1C /* XCRemoteSwiftPackageReference "SwiftyDropbox" */;
+			productName = SwiftyDropbox;
+		};
+		7242A6DB2FB004B4007ABC1C /* SwiftyDropboxObjC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7242A6D82FB004A1007ABC1C /* XCRemoteSwiftPackageReference "SwiftyDropbox" */;
+			productName = SwiftyDropboxObjC;
 		};
 		7245871C2E1913FB00804B21 /* CodableCSV */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -48,7 +48,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var window2: NSWindow?
     
     func applicationWillFinishLaunching(_ notification: Notification) {
-//                NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
         NSApp.setActivationPolicy(.accessory)
         
         // TODO: remove this line
@@ -124,7 +123,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         if let button = statusItem?.button {
-//            button.image = NSImage(systemSymbolName: "square.stack.3d.up.fill", accessibilityDescription: nil)
+            //            button.image = NSImage(systemSymbolName: "square.stack.3d.up.fill", accessibilityDescription: nil)
             button.image = NSImage(named: "forest")
         }
     }
@@ -187,20 +186,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             setupWindow1()
             observeWindowClose(window1)
         }
-        
-        // Show dock icon
-        NSApp.setActivationPolicy(.regular)
-        
-        // Ensure proper activation and window focusing
-        NSApp.activate(ignoringOtherApps: true)
-        
-        // Use a small delay to ensure app activation completes
-        DispatchQueue.main.async {
-            self.window1?.makeKeyAndOrderFront(nil)
-            self.window1?.level = .floating
-            self.window1?.level = .normal
-            NSApp.arrangeInFront(nil)
-        }
+        guard let window = window1 else { return }
+        _openWindow(window)
     }
     
     @objc func quit() {
@@ -212,17 +199,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             setupWindow2()
             observeWindowClose(window2)
         }
-        
-        // Show dock icon
+        guard let window = window2 else { return }
+        _openWindow(window)
+    }
+    
+    private func _openWindow(_ window: NSWindow) {
+        // Convert accessory app to foreground app
         NSApp.setActivationPolicy(.regular)
         
+        // Activate app FIRST
         NSApp.activate(ignoringOtherApps: true)
         
         DispatchQueue.main.async {
-            self.window2?.makeKeyAndOrderFront(nil)
-            self.window2?.level = .floating
-            self.window2?.level = .normal
-            NSApp.arrangeInFront(nil)
+            // Ensure window can participate in activation
+            window.collectionBehavior.remove(.transient)
+            
+            // Bring window forward
+            window.makeKeyAndOrderFront(nil)
+            
+            // Important for Stage Manager
+            window.orderFrontRegardless()
+            
+            // Make app active again after ordering
+            //            NSApp.activate(ignoringOtherApps: true)
         }
     }
     
