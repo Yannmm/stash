@@ -30,7 +30,7 @@ extension ManageView {
                             onAddGroup: {})
                 }
                 .environmentObject(viewModel)
-                .environmentObject(viewModel.cabinet)
+                .environmentObject(viewModel.housekeeper)
                 .alert("Error", isPresented: Binding(
                     get: { viewModel.error != nil },
                     set: { if !$0 { viewModel.error = nil } }
@@ -368,7 +368,7 @@ fileprivate extension ManageView.Workbench {
         @State private var presentContextMenu = false
         @State private var presentDeletionAlert: Bool = false
         
-        @EnvironmentObject var cabinet: OkamuraCabinet
+        @EnvironmentObject var housekeeper: HouseKeeper
         
         var body: some View {
             HStack(spacing: 0) {
@@ -457,10 +457,10 @@ fileprivate extension ManageView.Workbench {
                     switch row.entryType {
                     case .bookmark:
                         BookmarkEditor(viewModel: BookmarkEditorViewModel(mode: .update(row.id),
-                                                               cabinet: cabinet,
+                                                               housekeeper: housekeeper,
                                                                dominator: Dominator()))
                     case .directory:
-                        GroupEditor(viewModel: GroupEditorViewModel(mode: .update(row.id), cabinet: cabinet))
+                        GroupEditor(viewModel: GroupEditorViewModel(mode: .update(row.id), housekeeper: housekeeper))
                     }
                 }
                 .frame(width: 400)

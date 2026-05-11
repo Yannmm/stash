@@ -24,20 +24,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var editWindow: NSWindow?
     
     private lazy var settingsViewModel: SettingsViewModel = {
-        let viewModel = SettingsViewModel(cabinet: cabinet, updateChecker: updateChecker)
+        let viewModel = SettingsViewModel(housekeeper: housekeeper, updateChecker: updateChecker)
         return viewModel
     }()
     
     internal lazy var searchViewModel: SearchViewModel = {
-        let viewModel = SearchViewModel(cabinet: cabinet)
+        let viewModel = SearchViewModel(housekeeper: housekeeper)
         return viewModel
     }()
     
-    var cabinet: OkamuraCabinet { OkamuraCabinet.shared }
+    let housekeeper = Housekeeper()
     
     private var updateChecker: UpdateChecker { UpdateChecker.shared }
-    
-    private let dominator = Dominator()
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -68,8 +66,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func bind() {
-        Publishers.CombineLatest4(cabinet.$storedEntries,
-                                  cabinet.$recentEntries,
+        Publishers.CombineLatest4(housekeeper.$storedEntries,
+                                  housekeeper.$recentEntries,
                                   settingsViewModel.$collapseHistory,
                                   NSApp.publisher(for: \.effectiveAppearance))
         .sink { [weak self] tuple5 in
@@ -145,7 +143,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func setupWindow2() {
         let manageView = ManageView(wrapper: GroupSelectionWrapper())
-            .environmentObject(cabinet)
+            .environmentObject(housekeeper)
         let hostingView = NSHostingView(rootView: manageView)
         
         window2 = NSWindow(

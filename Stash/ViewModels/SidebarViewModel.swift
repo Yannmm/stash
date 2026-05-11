@@ -15,19 +15,19 @@ class SidebarViewModel: ObservableObject, CascadeJudge {
     @Published private(set) var rootRow: Row!
     @Published var error: Error?
     
-    var entries: [any Entry] { cabinet.storedEntries }
+    var entries: [any Entry] { housekeeper.storedEntries }
     
     func update(_ entries: [any Entry]) {
-        cabinet.storedEntries = entries
+        housekeeper.storedEntries = entries
         do {
-            try cabinet.save()
+            try housekeeper.save()
         } catch {
             self.error = error
         }
     }
     
     private var allEntries: [any Entry] {
-        cabinet.storedEntries
+        housekeeper.storedEntries
     }
     
     func toggleExpansion(_ id: UUID) {
@@ -39,24 +39,24 @@ class SidebarViewModel: ObservableObject, CascadeJudge {
     }
     
     private var _cancellables = Set<AnyCancellable>()
-    let cabinet: OkamuraCabinet
+    let housekeeper: Housekeeper
     let wrapper: GroupSelectionWrapper
     
-    init(cabinet: OkamuraCabinet, wrapper: GroupSelectionWrapper) {
+    init(housekeeper: Housekeeper, wrapper: GroupSelectionWrapper) {
         self.wrapper = wrapper
-        self.cabinet = cabinet
+        self.housekeeper = housekeeper
         _bind()
     }
     
     private func _bind() {
-        Publishers.CombineLatest3(cabinet.$storedEntries, $expansions, wrapper.$selection)
+        Publishers.CombineLatest3(housekeeper.$storedEntries, $expansions, wrapper.$selection)
             .map { [unowned self] a, b, c in
                 self.visibleGroups(a, b, c)
             }
             .sink(receiveValue: { [weak self] in self?.rows = $0 })
             .store(in: &_cancellables)
         
-        Publishers.CombineLatest(cabinet.$storedEntries, wrapper.$selection)
+        Publishers.CombineLatest(housekeeper.$storedEntries, wrapper.$selection)
             .map { a, b in
                 Row(
                     id: UUID(),

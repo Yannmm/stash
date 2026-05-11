@@ -11,7 +11,7 @@ import UniformTypeIdentifiers
 import Combine
 import OrderedCollections
 
-class OkamuraCabinet: ObservableObject {
+class Housekeeper: ObservableObject {
     
     @Published var storedEntries: [any Entry] = []
     
@@ -22,8 +22,6 @@ class OkamuraCabinet: ObservableObject {
     private var icloudMonitor: IcloudFileMonitor?
     
     private var icloudMonitorSubscription: AnyCancellable?
-    
-    static let shared = OkamuraCabinet()
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -91,22 +89,6 @@ class OkamuraCabinet: ObservableObject {
         try save()
     }
     
-    // Does not make any effect for a Bookmark
-    func ungroup(entry: any Entry) throws {
-        let parentId = entry.parentId
-        storedEntries = storedEntries
-            .filter({ $0.id != entry.id })
-            .map({ e in
-                var copy = e
-                if copy.parentId == entry.id {
-                    copy.parentId = parentId
-                }
-                return copy
-            })
-        
-        try save()
-    }
-    
     func save() throws {
         let data1 = try JSONEncoder().encode(storedEntries.asAnyEntries)
         let urls = try whereItIs()
@@ -166,43 +148,6 @@ class OkamuraCabinet: ObservableObject {
         try migrate3_0()
     }
     
-    func directoryDefaultName(anchorId: UUID?) -> String {
-        var name = "Group"
-        var lid: UUID?
-        if let aid = anchorId, let anchor = storedEntries.findBy(id: aid), let location = anchor.location {
-            lid = location
-        }
-        
-        var existings = [String]()
-        
-        if let id = lid, let entry = storedEntries.findBy(id: id) {
-            existings = entry
-                .children(among: storedEntries)
-                .map { $0 as? Group }
-                .compactMap { $0 }
-                .map { $0.name }
-        } else {
-            existings = storedEntries.toppings()
-                .map { $0 as? Group }
-                .compactMap { $0 }
-                .map { $0.name }
-        }
-        
-        let prefix = name
-        for i in 0..<Int.max {
-            if i == 0 {
-            } else {
-                name = "\(prefix) \(i)"
-            }
-            if existings.contains(name) {
-                continue
-            } else {
-                break
-            }
-        }
-        return name
-    }
-    
     func removeAll() throws {
         storedEntries = []
         recentEntries = []
@@ -227,7 +172,7 @@ class OkamuraCabinet: ObservableObject {
     }
 }
 
-extension OkamuraCabinet {
+extension Housekeeper {
     func `import`(from filePath: URL, fileType: String.FileType, replace: Bool) throws {
         let content = try String(contentsOf: filePath, encoding: .utf8)
         var entries = [any Entry]()
@@ -295,7 +240,7 @@ extension OkamuraCabinet {
     }
 }
 
-fileprivate extension OkamuraCabinet {
+fileprivate extension Housekeeper {
     func saveToDisk(data: Data, filePath: URL, sidecarPath: URL? = nil) throws {
         let json = try JSONSerialization.jsonObject(with: data)
         let d = Dominator()
@@ -352,7 +297,7 @@ fileprivate extension OkamuraCabinet {
     }
 }
 
-extension OkamuraCabinet {
+extension Housekeeper {
     private func migrate3_0() throws {
         // 1. read from user default to check whether migration has been done
         let flag: Bool = (pieceSaver.value(for: .migration3_0) ?? false)
@@ -383,7 +328,7 @@ extension OkamuraCabinet {
     }
 }
 
-extension OkamuraCabinet {
+extension Housekeeper {
     struct SomeError {
         enum Save: Error {
             case missingFilePath
@@ -405,7 +350,7 @@ extension OkamuraCabinet {
     }
 }
 
-extension OkamuraCabinet {
+extension Housekeeper {
     enum Constant {
         static let stashFileName = "default.html"
         static let sidecarFileName = "default.html.sidecar"

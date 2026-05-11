@@ -22,7 +22,7 @@ extension ManageView.Workbench {
         @State private var presentBookmarkEditor = false
         @State private var presentGroupEditor = false
         @Environment(\.dismissSearch) private var dismissSearch
-        @EnvironmentObject var cabinet: OkamuraCabinet
+        @EnvironmentObject var housekeeper: Housekeeper
         
         var body: some ToolbarContent {
             if #available(macOS 26.0, *) {
@@ -77,13 +77,13 @@ extension ManageView.Workbench {
                 .help("Add Item")
                 .popover(isPresented: $presentBookmarkEditor, arrowEdge: .top) {
                     BookmarkEditor(viewModel: BookmarkEditorViewModel(mode: .create(parentId),
-                                                                      cabinet: cabinet,
+                                                                      housekeeper: housekeeper,
                                                                       dominator: Dominator()))
                     .frame(width: 400)
                 }
                 .popover(isPresented: $presentGroupEditor, arrowEdge: .top) {
                     GroupEditor(viewModel: GroupEditorViewModel(mode: .create(parentId),
-                                                                cabinet: cabinet))
+                                                                housekeeper: housekeeper))
                     .frame(width: 400)
                 }
                 .onChange(of: presentBookmarkEditor) { _, isPresented in

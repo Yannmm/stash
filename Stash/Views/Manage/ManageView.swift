@@ -11,11 +11,11 @@ import Combine
 
 struct ManageView: View {
     @StateObject var wrapper: GroupSelectionWrapper
-    @EnvironmentObject var cabinet: OkamuraCabinet
+    @EnvironmentObject var housekeeper: Housekeeper
     
     var body: some View {
         NavigationSplitView(columnVisibility: .constant(.all)) {
-            Sidebar(viewModel: SidebarViewModel(cabinet: cabinet, wrapper: wrapper))
+            Sidebar(viewModel: SidebarViewModel(housekeeper: housekeeper, wrapper: wrapper))
             .toolbar(removing: .sidebarToggle)      // 🔑 works now
             .navigationSplitViewColumnWidth(
                 min: 180,
@@ -23,7 +23,7 @@ struct ManageView: View {
                 max: 350
             )
         } detail: {
-            Workbench(viewModel: WorkbenchViewModel(cabinet: cabinet, wrapper: wrapper))
+            Workbench(viewModel: WorkbenchViewModel(housekeeper: housekeeper, wrapper: wrapper))
         }
         .navigationSplitViewStyle(.prominentDetail)   // 🔑 NOT balanced
         .toolbarBackground(.hidden, for: .windowToolbar)

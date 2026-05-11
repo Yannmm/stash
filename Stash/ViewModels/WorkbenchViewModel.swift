@@ -27,7 +27,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         }
     }
     var hashtags: [String] {
-        let set = Set(cabinet.storedEntries
+        let set = Set(housekeeper.storedEntries
             .map({ $0.hashtags })
             .compactMap({ $0 })
             .flatMap({ $0 }))
@@ -40,36 +40,36 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
     private var _cancellables = Set<AnyCancellable>()
     fileprivate var indentColorStorage = [Color]()
     
-    var entries: [any Entry] { cabinet.storedEntries }
+    var entries: [any Entry] { housekeeper.storedEntries }
     
     func update(_ entries: [any Entry]) {
-        cabinet.storedEntries = entries
+        housekeeper.storedEntries = entries
         do {
-            try cabinet.save()
+            try housekeeper.save()
         } catch {
             self.error = error
         }
     }
     
-    let cabinet: OkamuraCabinet
+    let housekeeper: Housekeeper
     let wrapper: GroupSelectionWrapper
     
-    init(cabinet: OkamuraCabinet, wrapper: GroupSelectionWrapper) {
+    init(housekeeper: Housekeeper, wrapper: GroupSelectionWrapper) {
         self.wrapper = wrapper
-        self.cabinet = cabinet
+        self.housekeeper = housekeeper
         _bind()
     }
     
     private func _bind() {
         wrapper.$selection
-            .map({ id in self.cabinet.storedEntries.first(where: { $0.id == id }) as? Group })
+            .map({ id in self.housekeeper.storedEntries.first(where: { $0.id == id }) as? Group })
             .receive(on: DispatchQueue.main)
             .sink(receiveValue: { [weak self] in self?.selectedGroup = $0 })
             .store(in: &_cancellables)
         
         Publishers.CombineLatest4(
             wrapper.$selection,
-            cabinet.$storedEntries,
+            housekeeper.$storedEntries,
             $hierarchy.removeDuplicates(),
             Publishers.CombineLatest($search.map({ $0.trim() }).removeDuplicates(), $hashtagFilter)
         )
@@ -127,17 +127,17 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
     
     var bookmarkCount: Int {
         if let c = selectedGroup {
-            return _bookmarks(c.relatedEntries(cabinet.storedEntries)).count
+            return _bookmarks(c.relatedEntries(housekeeper.storedEntries)).count
         } else {
-            return _bookmarks(cabinet.storedEntries).count
+            return _bookmarks(housekeeper.storedEntries).count
         }
     }
     
     var groupCount: Int {
         if let c = selectedGroup {
-            return _groups(c.relatedEntries(cabinet.storedEntries)).count
+            return _groups(c.relatedEntries(housekeeper.storedEntries)).count
         } else {
-            return _groups(cabinet.storedEntries).count
+            return _groups(housekeeper.storedEntries).count
         }
     }
     
@@ -145,7 +145,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         guard let b = entries.findBy(id: id) as? Bookmark else { return }
         do {
             b.open()
-            try cabinet.asRecent(b)
+            try housekeeper.asRecent(b)
         } catch {
             self.error = error
         }
@@ -154,14 +154,14 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
     func delete(_ id: UUID) {
         guard let entry = entries.findBy(id: id) else { return }
         do {
-            try cabinet.delete(entry: entry)
+            try housekeeper.delete(entry: entry)
         } catch {
             self.error = error
         }
     }
     
     private func heirs(_ entries: [any Entry], _ selection: UUID?, _ hierarchy: Hierarchy) -> [any Entry] {
-        let group = cabinet.storedEntries.first(where: { $0.id == selection }) as? Group
+        let group = housekeeper.storedEntries.first(where: { $0.id == selection }) as? Group
         switch hierarchy {
         case .child:
             // TODO: selection maybe hashtag as well

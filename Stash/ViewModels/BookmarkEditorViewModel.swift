@@ -34,19 +34,19 @@ class BookmarkEditorViewModel: ObservableObject {
     private var parseTask: Task<Void, Never>?
     
     let mode: EntryEditor.Mode
-    let cabinet: OkamuraCabinet
+    let housekeeper: Housekeeper
     let dominator: Dominator
     
-    init(mode: EntryEditor.Mode, cabinet: OkamuraCabinet, dominator: Dominator) {
+    init(mode: EntryEditor.Mode, housekeeper: Housekeeper, dominator: Dominator) {
         self.mode = mode
-        self.cabinet = cabinet
+        self.housekeeper = housekeeper
         self.dominator = dominator
         
         switch mode {
         case .create:
             self.progress = .parsable(false)
         case .update(let eid):
-            let entry = cabinet.storedEntries.filter({ $0.id == eid }).first
+            let entry = housekeeper.storedEntries.filter({ $0.id == eid }).first
             // TODO: below line need to distinguish group and bookmark
             self.path = (entry as? Bookmark)?.url.absoluteString
             self.url = (entry as? Bookmark)?.url
@@ -135,21 +135,21 @@ class BookmarkEditorViewModel: ObservableObject {
             case .create(let pid):
                 let b = Bookmark(id: UUID(), name: t, parentId: pid, url: u, hashtags: hashtags)
                 
-                if let pid = pid, let index = cabinet.storedEntries.firstIndex(where: { $0.id == pid }) {
-                    cabinet.storedEntries.insert(b, at: index + 1)
+                if let pid = pid, let index = housekeeper.storedEntries.firstIndex(where: { $0.id == pid }) {
+                    housekeeper.storedEntries.insert(b, at: index + 1)
                 } else {
-                    cabinet.storedEntries.insert(b, at: 0)
+                    housekeeper.storedEntries.insert(b, at: 0)
                 }
-                try cabinet.save()
+                try housekeeper.save()
                 
             case .update(let eid):
-                guard var old = cabinet.storedEntries.first(where: { $0.id == eid }) as? Bookmark else {
+                guard var old = housekeeper.storedEntries.first(where: { $0.id == eid }) as? Bookmark else {
                     throw EntryEditor.CraftError.entryNotFound(eid)
                 }
                 old.name = t
                 old.url = u
                 old.hashtags = hashtags
-                try cabinet.update(entry: old)
+                try housekeeper.update(entry: old)
             }
         } catch {
             self.error = error

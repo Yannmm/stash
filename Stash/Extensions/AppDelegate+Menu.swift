@@ -145,7 +145,7 @@ extension AppDelegate {
     internal func act(upon entry: any Entry) {
         if let b = entry as? Bookmark {
             do {
-                try cabinet.asRecent(b)
+                try housekeeper.asRecent(b)
                 b.open()
             } catch {
                 ErrorTracker.shared.add(error)

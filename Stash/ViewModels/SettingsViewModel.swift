@@ -31,10 +31,10 @@ class SettingsViewModel: ObservableObject {
     private let pieceSaver = PieceSaver()
     private let appHotKeyManager = HotKeyManager(action: .menu)
     private let searchHotKeyManager = HotKeyManager(action: .search)
-    private let cabinet: OkamuraCabinet
+    private let housekeeper: Housekeeper
     @ObservedObject var updateChcker: UpdateChecker
     
-    var empty: Bool { cabinet.storedEntries.isEmpty }
+    var empty: Bool { housekeeper.storedEntries.isEmpty }
     
     private lazy var timestampFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -44,7 +44,7 @@ class SettingsViewModel: ObservableObject {
     }()
     
     func reset() throws {
-        try cabinet.removeAll()
+        try housekeeper.removeAll()
     }
     
     
@@ -56,7 +56,7 @@ class SettingsViewModel: ObservableObject {
     }
     
     func `import`(_ filePath: URL, fileType: String.FileType, replace: Bool) throws {
-        try cabinet.import(from: filePath, fileType: fileType, replace: replace)
+        try housekeeper.import(from: filePath, fileType: fileType, replace: replace)
         self.importFromFile = filePath
     }
     
@@ -64,8 +64,8 @@ class SettingsViewModel: ObservableObject {
         updateChcker.go()
     }
     
-    init(cabinet: OkamuraCabinet, updateChecker: UpdateChecker) {
-        self.cabinet = cabinet
+    init(housekeeper: Housekeeper, updateChecker: UpdateChecker) {
+        self.housekeeper = housekeeper
         self.updateChcker = updateChecker
         collapseHistory = pieceSaver.value(for: .collapseHistory) ?? false
         icloudSync = pieceSaver.value(for: .icloudSync) ?? true
@@ -101,8 +101,8 @@ class SettingsViewModel: ObservableObject {
             .sink { [weak self] in
                 self?.pieceSaver.save(for: .icloudSync, value: $0)
                 do {
-                    try self?.cabinet.save()
-                    self?.cabinet.monitorIcloud()
+                    try self?.housekeeper.save()
+                    self?.housekeeper.monitorIcloud()
                 } catch {
                     self?.error = error
                 }
@@ -172,7 +172,7 @@ class SettingsViewModel: ObservableObject {
             .compactMap({ $0 })
             .sink { [unowned self] in
                 do {
-                    self.exportToFile = try self.cabinet.export(to: $0, suffix: "_\(self.timestampFormatter.string(from: Date.now))")
+                    self.exportToFile = try self.housekeeper.export(to: $0, suffix: "_\(self.timestampFormatter.string(from: Date.now))")
                 } catch {
                     self.error = error
                 }
@@ -194,15 +194,6 @@ class SettingsViewModel: ObservableObject {
             .compactMap({ $0 })
             .sink { ErrorTracker.shared.add($0)}
             .store(in: &cancellables)
-        
-//        Task {
-//            do {
-//                let a = try await updateChcker.check()
-//                newVersion = a?.releaseNotes
-//            } catch {
-//                self.error = error
-//            }
-//        }
     }
     
     var currentVersionDescription: String {

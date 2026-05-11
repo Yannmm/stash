@@ -21,18 +21,18 @@ class GroupEditorViewModel: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     let mode: EntryEditor.Mode
-    let cabinet: OkamuraCabinet
+    let housekeeper: Housekeeper
     
-    init(mode: EntryEditor.Mode, cabinet: OkamuraCabinet) {
+    init(mode: EntryEditor.Mode, housekeeper: Housekeeper) {
         self.mode = mode
-        self.cabinet = cabinet
+        self.housekeeper = housekeeper
         
         switch mode {
         case .create:
             self.savable = false
         case .update(let eid):
             self.savable = false
-            let entry = cabinet.storedEntries.filter({ $0.id == eid }).first
+            let entry = housekeeper.storedEntries.filter({ $0.id == eid }).first
             self.title = entry?.name
             self.icon = entry?.icon
             self.hashtags = entry?.hashtags
@@ -66,20 +66,20 @@ class GroupEditorViewModel: ObservableObject {
             switch mode {
             case .create(let pid):
                 let g = Group(id: UUID(), name: t, parentId: pid, hashtags: hashtags)
-                if let pid = pid, let index = cabinet.storedEntries.firstIndex(where: { $0.id == pid }) {
-                    cabinet.storedEntries.insert(g, at: index + 1)
+                if let pid = pid, let index = housekeeper.storedEntries.firstIndex(where: { $0.id == pid }) {
+                    housekeeper.storedEntries.insert(g, at: index + 1)
                 } else {
-                    cabinet.storedEntries.insert(g, at: 0)
+                    housekeeper.storedEntries.insert(g, at: 0)
                 }
-                try cabinet.save()
+                try housekeeper.save()
                 
             case .update(let eid):
-                guard var old = cabinet.storedEntries.first(where: { $0.id == eid }) as? Group else {
+                guard var old = housekeeper.storedEntries.first(where: { $0.id == eid }) as? Group else {
                     throw EntryEditor.CraftError.entryNotFound(eid)
                 }
                 old.name = t
                 old.hashtags = hashtags
-                try cabinet.update(entry: old)
+                try housekeeper.update(entry: old)
             }
         } catch {
             self.error = error

@@ -49,7 +49,7 @@ struct GroupEditor: View {
                     dismiss()
                 }
                 HashtagField(
-                    existentials: viewModel.cabinet.$storedEntries
+                    existentials: viewModel.housekeeper.$storedEntries
                         .map({
                             OrderedSet($0.map({ $0.hashtags ?? [] }).flatMap({ $0 }))
                         }).eraseToAnyPublisher(),
