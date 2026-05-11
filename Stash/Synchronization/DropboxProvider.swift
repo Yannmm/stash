@@ -9,9 +9,7 @@ import AppKit
 import SwiftyDropbox
 import Carbon
 
-struct Synchronization {}
-
-extension Synchronization {
+extension Synchronizer {
     
     final class DropboxProvider {
         enum AuthError: Error {
@@ -147,7 +145,7 @@ extension Synchronization {
 
 
 
-extension Synchronization {
+extension Synchronizer {
     protocol Provider1 {
         func prepare()
         func authenticate()
