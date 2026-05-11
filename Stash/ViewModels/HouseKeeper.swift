@@ -26,20 +26,10 @@ class Housekeeper: ObservableObject {
     private var cancellables = Set<AnyCancellable>()
     
     init() {
-        asyncLoad()
+        load()
         monitorIcloud()
     }
-    
-    private func asyncLoad() {
-        Task {
-            do {
-                try load()
-            } catch {
-                ErrorTracker.shared.add(error)
-            }
-        }
-    }
-    
+        
     func monitorIcloud() {
         icloudMonitorSubscription?.cancel()
         icloudMonitor = nil
@@ -60,7 +50,7 @@ class Housekeeper: ObservableObject {
                 .filter({ $0.0 != $0.1 })
                 .delay(for: .seconds(2), scheduler: RunLoop.main)
                 .sink(receiveValue: { [weak self] _ in
-                    self?.asyncLoad()
+                    self?.load()
                 })
         }
     }
@@ -122,7 +112,18 @@ class Housekeeper: ObservableObject {
         }
     }
     
-    func load() throws {
+    private func load() {
+        // Task {} will inherit MainActor but Task.detached does not.
+        Task.detached(priority: .utility) { [weak self] in
+            do {
+                try self?._load()
+            } catch {
+                ErrorTracker.shared.add(error)
+            }
+        }
+    }
+    
+    private func _load() throws {
         let urls = try whereItIs()
         
         let htmlString = try String(contentsOf: urls.0, encoding: .utf8)
@@ -297,8 +298,8 @@ fileprivate extension Housekeeper {
     }
 }
 
-extension Housekeeper {
-    private func migrate3_0() throws {
+private extension Housekeeper {
+    func migrate3_0() throws {
         // 1. read from user default to check whether migration has been done
         let flag: Bool = (pieceSaver.value(for: .migration3_0) ?? false)
         guard !flag else { return }
@@ -315,7 +316,7 @@ extension Housekeeper {
         pieceSaver.save(for: .migration3_0, value: true)
     }
     
-    private func parseHashtagsFrom(name text: String, existings: OrderedSet<String>?) -> OrderedSet<String>? {
+    func parseHashtagsFrom(name text: String, existings: OrderedSet<String>?) -> OrderedSet<String>? {
         let nsrange = NSRange(text.startIndex..<text.endIndex, in: text)
         let matches = String.RegexConstant.regex3.matches(in: text, range: nsrange)
         let result = matches.map {

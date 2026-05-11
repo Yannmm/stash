@@ -368,7 +368,7 @@ fileprivate extension ManageView.Workbench {
         @State private var presentContextMenu = false
         @State private var presentDeletionAlert: Bool = false
         
-        @EnvironmentObject var housekeeper: HouseKeeper
+        @EnvironmentObject var housekeeper: Housekeeper
         
         var body: some View {
             HStack(spacing: 0) {

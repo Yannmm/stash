@@ -33,7 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return viewModel
     }()
     
-    let housekeeper = Housekeeper()
+    internal let housekeeper = Housekeeper()
     
     private var updateChecker: UpdateChecker { UpdateChecker.shared }
     
