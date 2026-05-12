@@ -15,7 +15,7 @@ extension Synchronizer {
     protocol Provider {
         func getPaths() throws -> Paths
         
-        func monitor() 
+        func monitor(_ start: Bool)
         
         func prepare()
     }

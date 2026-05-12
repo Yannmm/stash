@@ -9,9 +9,9 @@ import Foundation
 import Combine
 
 class IcloudFileMonitor {
-    private let filename: String
-    
     @Published var onChange: URL?
+    
+    private let filename: String
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -24,17 +24,21 @@ class IcloudFileMonitor {
     
     init(filename: String) {
         self.filename = filename
-        setup()
     }
     
-    private func setup() {
+    func start() {
         NotificationCenter.default
             .publisher(for: .NSMetadataQueryDidUpdate, object: query)
             .debounce(for: .seconds(15), scheduler: RunLoop.main)
             .sink(receiveValue: onUpdate)
             .store(in: &cancellables)
-        
         query.start()
+    }
+    
+    func stop() {
+        query.stop()
+        cancellables.forEach({ $0.cancel() })
+        cancellables.removeAll()
     }
     
     private func onUpdate(_ noti: Notification) {

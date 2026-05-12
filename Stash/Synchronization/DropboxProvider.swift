@@ -143,14 +143,3 @@ extension Synchronizer {
     }
 }
 
-
-
-extension Synchronizer {
-    protocol Provider1 {
-        func prepare()
-        func authenticate()
-        func doSth()
-        var isSignedIn: Bool { get }
-    }
-}
-

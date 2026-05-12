@@ -102,7 +102,7 @@ class SettingsViewModel: ObservableObject {
                 self?.pieceSaver.save(for: .icloudSync, value: $0)
                 do {
                     try self?.housekeeper.save()
-                    self?.housekeeper.monitorIcloud()
+                    self?.housekeeper.provider.monitor($0)
                 } catch {
                     self?.error = error
                 }

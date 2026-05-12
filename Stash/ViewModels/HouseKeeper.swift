@@ -19,40 +19,14 @@ class Housekeeper: ObservableObject {
     
     private let pieceSaver = PieceSaver()
     
-    private var icloudMonitor: IcloudFileMonitor?
-    
-    private var icloudMonitorSubscription: AnyCancellable?
+    let provider = Synchronizer.IcloudProvider()
     
     private var cancellables = Set<AnyCancellable>()
     
     init() {
         load()
-        monitorIcloud()
-    }
         
-    func monitorIcloud() {
-        icloudMonitorSubscription?.cancel()
-        icloudMonitor = nil
-        if icloudSync {
-            icloudMonitor = IcloudFileMonitor(filename: Constant.sidecarFileName)
-            icloudMonitorSubscription = icloudMonitor?.$onChange
-                .compactMap({ $0 })
-                .combineLatest(Just(icloudSync).filter({ $0 }))
-                .tryMap({ try String(contentsOf: $0.0, encoding: .utf8) })
-                .catch { error -> AnyPublisher<String, Never> in
-                    ErrorTracker.shared.add(error)
-                    return Empty().eraseToAnyPublisher()
-                }
-                .map({ UUID(uuidString: $0) })
-                .combineLatest(Just<String?>(pieceSaver.value(for: .appIdentifier))
-                    .compactMap({ $0 })
-                    .map({ UUID(uuidString: $0) }))
-                .filter({ $0.0 != $0.1 })
-                .delay(for: .seconds(2), scheduler: RunLoop.main)
-                .sink(receiveValue: { [weak self] _ in
-                    self?.load()
-                })
-        }
+        // TODO: 还没有 monito icloud
     }
     
     func update(entry: any Entry) throws {

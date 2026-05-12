@@ -9,24 +9,24 @@ import Foundation
 import Combine
 
 extension Synchronizer {
-    class IcloudProvider {
+    class IcloudProvider: Provider {
         
         private var icloudMonitorSubscription: AnyCancellable?
         
-        private var icloudMonitor: IcloudFileMonitor?
+        
+        private let icloudMonitor = IcloudFileMonitor(filename: Constant.sidecarFileName)
         
         private let pieceSaver = PieceSaver()
         
-        func monitor() {
-            icloudMonitorSubscription?.cancel()
-            icloudMonitor = nil
-            
-                icloudMonitor = IcloudFileMonitor(filename: Constant.sidecarFileName)
-                icloudMonitorSubscription = icloudMonitor?.$onChange
+        func prepare() {
+            // TODO: I should determine whether icloud is usable beofre creating monitor and even icloud provider
+        }
+        
+        func monitor(_ start: Bool) {
+            if start {
+                icloudMonitorSubscription = icloudMonitor.$onChange
                     .compactMap({ $0 })
-            这里应该控制，而非 true
-                    .combineLatest(Just(true).filter({ $0 }))
-                    .tryMap({ try String(contentsOf: $0.0, encoding: .utf8) })
+                    .tryMap({ try String(contentsOf: $0, encoding: .utf8) })
                     .catch { error -> AnyPublisher<String, Never> in
                         ErrorTracker.shared.add(error)
                         return Empty().eraseToAnyPublisher()
@@ -39,8 +39,14 @@ extension Synchronizer {
                     .delay(for: .seconds(2), scheduler: RunLoop.main)
                     .sink(receiveValue: { [weak self] _ in
 //                        self?.load()
+                        // TODO: load from the right file
                     })
-            
+
+                icloudMonitor.start()
+            } else {
+                icloudMonitor.stop()
+                icloudMonitorSubscription?.cancel()
+            }
         }
         
         func getPaths() throws -> Paths {
