@@ -17,11 +17,26 @@ extension Synchronizer {
         
         func monitor(_ start: Bool)
         
-        func prepare()
+        func initialize() async throws
+        
+        // For icloud, check availability, for others, check whether signed-in
+        func available() async -> Availability
     }
     
     struct Paths {
         let document: URL
         let sidecar: URL
+    }
+    
+    enum Approach {
+        case icloud
+        case local
+        case dropbox
+    }
+    
+    enum Availability {
+        case notSupport
+        case notSignedInYet
+        case ready
     }
 }

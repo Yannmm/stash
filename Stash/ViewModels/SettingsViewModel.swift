@@ -32,7 +32,7 @@ class SettingsViewModel: ObservableObject {
     private let appHotKeyManager = HotKeyManager(action: .menu)
     private let searchHotKeyManager = HotKeyManager(action: .search)
     private let housekeeper: Housekeeper
-    @ObservedObject var updateChcker: UpdateChecker
+    
     
     var empty: Bool { housekeeper.storedEntries.isEmpty }
     
@@ -60,13 +60,8 @@ class SettingsViewModel: ObservableObject {
         self.importFromFile = filePath
     }
     
-    func goToAppStore() {
-        updateChcker.go()
-    }
-    
-    init(housekeeper: Housekeeper, updateChecker: UpdateChecker) {
+    init(housekeeper: Housekeeper) {
         self.housekeeper = housekeeper
-        self.updateChcker = updateChecker
         collapseHistory = pieceSaver.value(for: .collapseHistory) ?? false
         icloudSync = pieceSaver.value(for: .icloudSync) ?? true
         launchOnLogin = RocketLauncher.shared.enabled
@@ -179,16 +174,16 @@ class SettingsViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        updateChcker.$new
-            .sink { [unowned self] update in
-                if let v = update {
-                    self.checkedVersionDescription = "New Version Available: \(v.version)"
-                } else {
-                    self.checkedVersionDescription = "You're Up to Date"
-                }
-                self.newReleaseNotes = update?.releaseNotes
-            }
-            .store(in: &cancellables)
+//        updateChcker.$new
+//            .sink { [unowned self] update in
+//                if let v = update {
+//                    self.checkedVersionDescription = "New Version Available: \(v.version)"
+//                } else {
+//                    self.checkedVersionDescription = "You're Up to Date"
+//                }
+//                self.newReleaseNotes = update?.releaseNotes
+//            }
+//            .store(in: &cancellables)
         
         $error
             .compactMap({ $0 })

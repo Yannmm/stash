@@ -4,6 +4,9 @@ import HotKey
 
 struct SettingsView: View {
     @StateObject var viewModel: SettingsViewModel
+    
+    @StateObject var updateChcker: UpdateChecker
+    
     @State private var importFileType: String.FileType? {
         didSet {
             guard let ft = importFileType else { return }
@@ -190,14 +193,14 @@ struct SettingsView: View {
                 
                 VStack(alignment: .leading) {
                     HStack {
-                        Text(viewModel.checkedVersionDescription)
+                        Text("\(updateChcker.new != nil ? "New Version Available: \(updateChcker.new!.version)" : "You're Up to Date")")
                         Spacer()
                         Button("Go to AppStore") {
-                            viewModel.goToAppStore()
+                            updateChcker.go()
                         }
                         .buttonStyle(.bordered)
                     }
-                    if let notes = viewModel.newReleaseNotes {
+                    if let notes = updateChcker.new?.releaseNotes {
                         HStack {
                             Text(notes)
                                 .foregroundColor(.secondary)

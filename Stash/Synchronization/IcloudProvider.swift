@@ -10,16 +10,31 @@ import Combine
 
 extension Synchronizer {
     class IcloudProvider: Provider {
-        
         private var icloudMonitorSubscription: AnyCancellable?
         
-        
-        private let icloudMonitor = IcloudFileMonitor(filename: Constant.sidecarFileName)
+        private var icloudMonitor: IcloudFileMonitor!
         
         private let pieceSaver = PieceSaver()
         
-        func prepare() {
-            // TODO: I should determine whether icloud is usable beofre creating monitor and even icloud provider
+        func initialize() async throws {
+            let ava = await available()
+            switch ava {
+            case .notSupport:
+                throw SomeError.icloudContainerUnavailable
+            default:
+                break
+            }
+            
+            icloudMonitor = IcloudFileMonitor(filename: Constant.sidecarFileName)
+        }
+        
+        func available() async -> Synchronizer.Availability {
+            await withCheckedContinuation { continuation in
+                DispatchQueue.global(qos: .utility).async {
+                    let url = FileManager.default.url(forUbiquityContainerIdentifier: nil)
+                    continuation.resume(returning: url != nil ? .ready : .notSupport)
+                }
+            }
         }
         
         func monitor(_ start: Bool) {
@@ -38,10 +53,10 @@ extension Synchronizer {
                     .filter({ $0.0 != $0.1 })
                     .delay(for: .seconds(2), scheduler: RunLoop.main)
                     .sink(receiveValue: { [weak self] _ in
-//                        self?.load()
+                        //                        self?.load()
                         // TODO: load from the right file
                     })
-
+                
                 icloudMonitor.start()
             } else {
                 icloudMonitor.stop()
@@ -65,6 +80,8 @@ extension Synchronizer {
                 sidecar: documents.appendingPathComponent(Constant.sidecarFileName)
             )
         }
+        
+        
     }
 }
 

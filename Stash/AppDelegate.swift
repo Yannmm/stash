@@ -24,7 +24,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var editWindow: NSWindow?
     
     private lazy var settingsViewModel: SettingsViewModel = {
-        let viewModel = SettingsViewModel(housekeeper: housekeeper, updateChecker: updateChecker)
+        let viewModel = SettingsViewModel(housekeeper: housekeeper)
         return viewModel
     }()
     
@@ -127,7 +127,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func setupWindow1() {
-        let hostingView = NSHostingView(rootView: SettingsView(viewModel: self.settingsViewModel))
+        let hostingView = NSHostingView(rootView: SettingsView(viewModel: self.settingsViewModel, updateChcker: self.updateChecker))
         
         window1 = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: hostingView.fittingSize.width, height: hostingView.fittingSize.height),
