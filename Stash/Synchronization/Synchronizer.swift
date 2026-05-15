@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Combine
 
 class Synchronizer {
     
@@ -13,14 +14,11 @@ class Synchronizer {
 
 extension Synchronizer {
     protocol Provider {
-        func getPaths() throws -> Paths
-        
         func monitor(_ start: Bool)
         
-        func initialize() async throws
+        static func initialize() async throws -> Self
         
-        // For icloud, check availability, for others, check whether signed-in
-        func available() async -> Availability
+        var onFileChange: AnyPublisher<Result<URL, Error>, Never> { get }
     }
     
     struct Paths {
@@ -34,9 +32,8 @@ extension Synchronizer {
         case dropbox
     }
     
-    enum Availability {
-        case notSupport
-        case notSignedInYet
-        case ready
+    enum Constant {
+        static let contentFileName = "default.html"
+        static let sidecarFileName = "default.html.sidecar"
     }
 }

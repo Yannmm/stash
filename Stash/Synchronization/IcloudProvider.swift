@@ -9,62 +9,70 @@ import Foundation
 import Combine
 
 extension Synchronizer {
-    class IcloudProvider: Provider {
-        private var icloudMonitorSubscription: AnyCancellable?
+    final class IcloudProvider: Provider {
+        private var monitorHandle: AnyCancellable?
         
-        private var icloudMonitor: IcloudFileMonitor!
+        private let monitor = IcloudContainerMonitor(filename: Constant.sidecarFileName)
         
         private let pieceSaver = PieceSaver()
         
-        func initialize() async throws {
-            let ava = await available()
-            switch ava {
-            case .notSupport:
-                throw SomeError.icloudContainerUnavailable
-            default:
-                break
-            }
+        private let _onFileChange = PassthroughSubject<Result<URL, Error>, Never>()
+        
+        var onFileChange: AnyPublisher<Result<URL, Error>, Never> { _onFileChange.eraseToAnyPublisher() }
+        
+        internal init() {
             
-            icloudMonitor = IcloudFileMonitor(filename: Constant.sidecarFileName)
         }
         
-        func available() async -> Synchronizer.Availability {
-            await withCheckedContinuation { continuation in
+        static func initialize() async throws -> Synchronizer.IcloudProvider {
+            let available = await withCheckedContinuation { continuation in
                 DispatchQueue.global(qos: .utility).async {
                     let url = FileManager.default.url(forUbiquityContainerIdentifier: nil)
-                    continuation.resume(returning: url != nil ? .ready : .notSupport)
+                    continuation.resume(returning: url != nil)
                 }
+            }
+            if available {
+                return IcloudProvider()
+            } else {
+                throw SomeError.icloudContainerUnavailable
             }
         }
         
         func monitor(_ start: Bool) {
             if start {
-                icloudMonitorSubscription = icloudMonitor.$onChange
+                monitorHandle = monitor.$onChange
                     .compactMap({ $0 })
                     .tryMap({ try String(contentsOf: $0, encoding: .utf8) })
                     .catch { error -> AnyPublisher<String, Never> in
                         ErrorTracker.shared.add(error)
                         return Empty().eraseToAnyPublisher()
                     }
-                    .map({ UUID(uuidString: $0) })
-                    .combineLatest(Just<String?>(pieceSaver.value(for: .appIdentifier))
-                        .compactMap({ $0 })
-                        .map({ UUID(uuidString: $0) }))
-                    .filter({ $0.0 != $0.1 })
+                    .filter({ incoming in
+                        if let saved: String? = self.pieceSaver.value(for: .appIdentifier) {
+                            return incoming != saved
+                        }
+                        return true
+                    })
                     .delay(for: .seconds(2), scheduler: RunLoop.main)
-                    .sink(receiveValue: { [weak self] _ in
-                        //                        self?.load()
-                        // TODO: load from the right file
+                    .sink(receiveValue: { [weak self] identifier in
+                        guard let this = self else { return }
+                        this.pieceSaver.save(for: .appIdentifier, value: identifier)
+                        do {
+                            this._onFileChange.send(.success(try this.getDocumentFilePath()))
+                        } catch {
+                            this._onFileChange.send(.failure(error))
+                        }
                     })
                 
-                icloudMonitor.start()
+                monitor.start()
             } else {
-                icloudMonitor.stop()
-                icloudMonitorSubscription?.cancel()
+                monitor.stop()
+                monitorHandle?.cancel()
+                monitorHandle = nil
             }
         }
         
-        func getPaths() throws -> Paths {
+        private func getDocumentFilePath() throws -> URL {
             let fileManager = FileManager.default
             
             guard let container = fileManager.url(forUbiquityContainerIdentifier: nil) else { throw SomeError.icloudContainerUnavailable  }
@@ -75,23 +83,13 @@ extension Synchronizer {
                 try fileManager.createDirectory(at: documents, withIntermediateDirectories: true, attributes: nil)
             }
             
-            return Paths(
-                document: documents.appendingPathComponent(Constant.stashFileName),
-                sidecar: documents.appendingPathComponent(Constant.sidecarFileName)
-            )
+            return documents.appendingPathComponent(Constant.contentFileName)
         }
-        
-        
     }
 }
 
 extension Synchronizer.IcloudProvider {
     enum SomeError: Error, LocalizedError {
         case icloudContainerUnavailable
-    }
-    
-    enum Constant {
-        static let stashFileName = "default.html"
-        static let sidecarFileName = "default.html.sidecar"
     }
 }

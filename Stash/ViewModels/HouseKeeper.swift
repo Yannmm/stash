@@ -255,7 +255,7 @@ fileprivate extension Housekeeper {
         if !fileManager.fileExists(atPath: direcotry.path) {
             try fileManager.createDirectory(at: direcotry, withIntermediateDirectories: true, attributes: nil)
         }
-        return direcotry.appendingPathComponent(Constant.stashFileName)
+        return direcotry.appendingPathComponent(Constant.contentFileName)
     }
     
     private func icloudPath() throws -> (URL, URL) {
@@ -268,7 +268,7 @@ fileprivate extension Housekeeper {
         if !fileManager.fileExists(atPath: documents.path) {
             try fileManager.createDirectory(at: documents, withIntermediateDirectories: true, attributes: nil)
         }
-        return (documents.appendingPathComponent(Constant.stashFileName), documents.appendingPathComponent(Constant.sidecarFileName))
+        return (documents.appendingPathComponent(Constant.contentFileName), documents.appendingPathComponent(Constant.sidecarFileName))
     }
 }
 
@@ -327,7 +327,7 @@ extension Housekeeper {
 
 extension Housekeeper {
     enum Constant {
-        static let stashFileName = "default.html"
+        static let contentFileName = "default.html"
         static let sidecarFileName = "default.html.sidecar"
     }
 }

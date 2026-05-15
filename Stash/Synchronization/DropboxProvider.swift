@@ -10,7 +10,7 @@ import SwiftyDropbox
 import Carbon
 
 extension Synchronizer {
-    final class DropboxProvider: Provider {
+    final class DropboxProvider {
         enum AuthError: Error {
             case cancelled
             case failed(String)
