@@ -19,14 +19,19 @@ class Housekeeper: ObservableObject {
     
     private let pieceSaver = PieceSaver()
     
-    let provider = Synchronizer.IcloudProvider()
+    private var provider: Synchronizer.IcloudProvider?
     
     private var cancellables = Set<AnyCancellable>()
     
     init() {
-        load()
-        
-        // TODO: 还没有 monito icloud
+        Task {
+            do {
+                self.provider = try await Synchronizer.IcloudProvider.initialize()
+                load()
+            } catch {
+                // TODO: handle initialize failure error. alert user or reinitailize???
+            }
+        }
     }
     
     func update(entry: any Entry) throws {
@@ -53,8 +58,44 @@ class Housekeeper: ObservableObject {
         try save()
     }
     
+    func delete(entry: any Entry) throws {
+        if let index = recentEntries.firstIndex(where: { $0.0.id == entry.id }) {
+            recentEntries.remove(at: index)
+        }
+        if let index = storedEntries.firstIndex(where: { $0.id == entry.id }) {
+            storedEntries.remove(at: index)
+            try save()
+        }
+    }
+    
+    func removeAll() throws {
+        storedEntries = []
+        recentEntries = []
+        try save()
+    }
+    
+    func asRecent(_ bookmark: Bookmark) throws {
+        var b = bookmark
+        b.parentId = nil
+        guard recentEntries.firstIndex(where: { $0.0.id == b.id }) == nil else { return }
+        var copy = recentEntries
+        if (copy.count + 1) > leftyKeystrokes.count {
+            copy = Array(copy[0...(leftyKeystrokes.count - 1)])
+        }
+        let existings = Array(copy.map({ $0.1 }))
+        let rest = leftyKeystrokes.filter { !existings.contains($0) }
+        if rest.count > 0 {
+            copy.insert((b, rest[0]), at: 0)
+        }
+        recentEntries = copy
+        try save()
+    }
+}
+
+extension Housekeeper {
     func save() throws {
         let data1 = try JSONEncoder().encode(storedEntries.asAnyEntries)
+        // TODO: move to provider????
         let urls = try whereItIs()
         try saveToDisk(data: data1, filePath: urls.0, sidecarPath: urls.1)
         
@@ -73,16 +114,6 @@ class Housekeeper: ObservableObject {
         
         DispatchQueue.main.async { [weak self] in
             self?.recentEntries = recents
-        }
-    }
-    
-    func delete(entry: any Entry) throws {
-        if let index = recentEntries.firstIndex(where: { $0.0.id == entry.id }) {
-            recentEntries.remove(at: index)
-        }
-        if let index = storedEntries.firstIndex(where: { $0.id == entry.id }) {
-            storedEntries.remove(at: index)
-            try save()
         }
     }
     
@@ -121,29 +152,6 @@ class Housekeeper: ObservableObject {
         }
         
         try migrate3_0()
-    }
-    
-    func removeAll() throws {
-        storedEntries = []
-        recentEntries = []
-        try save()
-    }
-    
-    func asRecent(_ bookmark: Bookmark) throws {
-        var b = bookmark
-        b.parentId = nil
-        guard recentEntries.firstIndex(where: { $0.0.id == b.id }) == nil else { return }
-        var copy = recentEntries
-        if (copy.count + 1) > leftyKeystrokes.count {
-            copy = Array(copy[0...(leftyKeystrokes.count - 1)])
-        }
-        let existings = Array(copy.map({ $0.1 }))
-        let rest = leftyKeystrokes.filter { !existings.contains($0) }
-        if rest.count > 0 {
-            copy.insert((b, rest[0]), at: 0)
-        }
-        recentEntries = copy
-        try save()
     }
 }
 
@@ -322,6 +330,10 @@ extension Housekeeper {
                 }
             }
         }
+    }
+    
+    enum KindError {
+        case providerUninitialized
     }
 }
 

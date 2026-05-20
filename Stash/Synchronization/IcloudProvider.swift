@@ -20,8 +20,12 @@ extension Synchronizer {
         
         var onFileChange: AnyPublisher<Result<URL, Error>, Never> { _onFileChange.eraseToAnyPublisher() }
         
-        internal init() {
-            
+        private init() {
+            monitor(true)
+        }
+        
+        deinit {
+            monitor(false)
         }
         
         static func initialize() async throws -> Synchronizer.IcloudProvider {
