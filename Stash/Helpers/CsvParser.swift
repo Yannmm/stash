@@ -16,12 +16,8 @@ class CsvParser {
         let rows = try decoder.decode([Row].self, from: csv)
         
         let anyEntries = rows.map({ row in
-            var title = row.title
-            if let tags = row.tags?.components(separatedBy: "|"), tags.count > 0 {
-                title = title + " " + tags.map({ $0.hasPrefix("#") ? $0 : ("#" + $0) }).joined(separator: " ")
-            }
-            // TODO: add tags
-            return AnyEntry(id: UUID(), name: title, type: .bookmark, url: row.url, hashtags: [], children: [])
+            let tags = row.tags?.components(separatedBy: "|") ?? []
+            return AnyEntry(id: UUID(), name: row.title, type: .bookmark, url: row.url, hashtags: tags, children: [])
         })
         
         return anyEntries

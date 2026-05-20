@@ -30,7 +30,6 @@ extension ManageView {
                             return .none
                         }
                     GroupSection()
-//                    TagSection(hashtags: .constant([]))
                 }
                 .padding(.horizontal, 16)
             }
@@ -42,28 +41,6 @@ extension ManageView {
                 Button("OK", role: .cancel) {}
             } message: {
                 Text(viewModel.error?.localizedDescription ?? "")
-            }
-        }
-    }
-}
-
-fileprivate extension ManageView.Sidebar {
-    private struct TagSection: View {
-        @Binding var hashtags: [Hashtag]
-        
-        var body: some View {
-            Section {
-                ForEach(hashtags) { tag in
-                    HashtagRow(
-                        hashtag: tag,
-                        isSelected: false,
-                        action: {
-                            // TODO: Handle tag selection
-                        }
-                    )
-                }
-            } header: {
-                SectionHeader(title: "Tags")
             }
         }
     }

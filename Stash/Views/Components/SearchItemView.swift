@@ -11,8 +11,6 @@ struct _SearchItemView: View {
     let item: SearchItem
     let highlight: Bool
     let onTap: (SearchItem) -> Void
-    // Not used
-    @State private var frame = CGRect.zero
     let query: String
     
     private var usesGlassStyle: Bool {
@@ -38,17 +36,6 @@ struct _SearchItemView: View {
         .cornerRadius(8)
         .onTapGesture {
             onTap(item)
-        }
-        .onGeometryChange(for: CGRect.self) { proxy in
-            // TODO: will the window change
-            if let frame = NSApp.windows
-                .first(where: { $0.level == .statusBar })?
-                .convertToScreen(proxy.frame(in: .global)) {
-                return frame
-            }
-            return .zero
-        } action: {
-            self.frame = $0
         }
     }
     

@@ -73,14 +73,14 @@ extension Synchronizer {
         }
         
         private func getDocumentFilePath() throws -> URL {
-            let fileManager = FileManager.default
+            let mgr = FileManager.default
             
-            guard let container = fileManager.url(forUbiquityContainerIdentifier: nil) else { throw SomeError.icloudContainerUnavailable  }
+            guard let container = mgr.url(forUbiquityContainerIdentifier: nil) else { throw SomeError.icloudContainerUnavailable  }
             
             let documents = container.appendingPathComponent("Documents")
             
-            if !fileManager.fileExists(atPath: documents.path) {
-                try fileManager.createDirectory(at: documents, withIntermediateDirectories: true, attributes: nil)
+            if !mgr.fileExists(atPath: documents.path) {
+                try mgr.createDirectory(at: documents, withIntermediateDirectories: true, attributes: nil)
             }
             
             return documents.appendingPathComponent(Constant.contentFileName)
