@@ -19,6 +19,10 @@ extension Synchronizer {
         static func initialize() async throws -> Self
         
         var onFileChange: AnyPublisher<Result<URL, Error>, Never> { get }
+        
+        func save(document html: String) async throws
+        
+        func load() throws -> String
     }
     
     struct Paths {
@@ -32,8 +36,8 @@ extension Synchronizer {
         case dropbox
     }
     
-    enum Constant {
-        static let contentFileName = "default.html"
-        static let sidecarFileName = "default.html.sidecar"
+    enum FileName {
+        static let document = "default.html"
+        static let sidecar = "default.html.sidecar"
     }
 }

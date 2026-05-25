@@ -12,7 +12,7 @@ extension Synchronizer {
     final class IcloudProvider: Provider {
         private var monitorHandle: AnyCancellable?
         
-        private let monitor = IcloudContainerMonitor(filename: Constant.sidecarFileName)
+        private let monitor = IcloudContainerMonitor(filename: FileName.sidecar)
         
         private let pieceSaver = PieceSaver()
         
@@ -62,7 +62,8 @@ extension Synchronizer {
                         guard let this = self else { return }
                         this.pieceSaver.save(for: .appIdentifier, value: identifier)
                         do {
-                            this._onFileChange.send(.success(try this.getDocumentFilePath()))
+                            let paths = try this.getDocumentFilePath()
+                            this._onFileChange.send(.success(paths.document))
                         } catch {
                             this._onFileChange.send(.failure(error))
                         }
@@ -76,7 +77,21 @@ extension Synchronizer {
             }
         }
         
-        private func getDocumentFilePath() throws -> URL {
+        func save(document html: String) async throws {
+            let paths = try getDocumentFilePath()
+            try html.write(to: paths.document, atomically: true, encoding: .utf8)
+            // TODO: do I need to rewrite to picecsave a new uuid if it does not exist??
+            if let appId: String = pieceSaver.value(for: .appIdentifier) {
+                try appId.write(to: paths.sidecar, atomically: true, encoding: .utf8)
+            }
+        }
+        
+        func load() throws -> String {
+            let paths = try getDocumentFilePath()
+            return try String(contentsOf: paths.document, encoding: .utf8)
+        }
+        
+        private func getDocumentFilePath() throws -> Paths {
             let mgr = FileManager.default
             
             guard let container = mgr.url(forUbiquityContainerIdentifier: nil) else { throw SomeError.icloudContainerUnavailable  }
@@ -87,7 +102,7 @@ extension Synchronizer {
                 try mgr.createDirectory(at: documents, withIntermediateDirectories: true, attributes: nil)
             }
             
-            return documents.appendingPathComponent(Constant.contentFileName)
+            return Paths(document: documents.appendingPathComponent(FileName.document), sidecar: documents.appendingPathComponent(FileName.sidecar))
         }
     }
 }
@@ -97,3 +112,5 @@ extension Synchronizer.IcloudProvider {
         case icloudContainerUnavailable
     }
 }
+
+

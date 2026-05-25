@@ -19,7 +19,7 @@ class Housekeeper: ObservableObject {
     
     private let pieceSaver = PieceSaver()
     
-    private var provider: Synchronizer.IcloudProvider?
+    var provider: Synchronizer.IcloudProvider!
     
     private var cancellables = Set<AnyCancellable>()
     
@@ -94,10 +94,10 @@ class Housekeeper: ObservableObject {
 
 extension Housekeeper {
     func save() throws {
-        let data1 = try JSONEncoder().encode(storedEntries.asAnyEntries)
-        // TODO: move to provider????
-        let urls = try whereItIs()
-        try saveToDisk(data: data1, filePath: urls.0, sidecarPath: urls.1)
+        let html = try toNetscapeBookmarkFile()
+        Task.detached {
+            try await self.provider.save(document: html)
+        }
         
         // In case for import
         let recents = storedEntries.map({ e in
@@ -129,9 +129,7 @@ extension Housekeeper {
     }
     
     private func _load() throws {
-        let urls = try whereItIs()
-        
-        let htmlString = try String(contentsOf: urls.0, encoding: .utf8)
+        let htmlString = try provider.load()
         let dominator = Dominator()
         let data = try dominator.decompose(htmlString)
         
@@ -216,45 +214,23 @@ extension Housekeeper {
     
     @discardableResult
     func export(to directoryPath: URL, suffix: String? = nil) throws -> URL {
-        let data = try JSONEncoder().encode(storedEntries.asAnyEntries)
+        let html = try toNetscapeBookmarkFile()
         let filePath = directoryPath.appendingPathComponent("nustash\(suffix ?? "").html")
-        try saveToDisk(data: data, filePath: filePath)
+        try html.write(to: filePath, atomically: true, encoding: .utf8)
         return filePath
     }
 }
 
 fileprivate extension Housekeeper {
-    func saveToDisk(data: Data, filePath: URL, sidecarPath: URL? = nil) throws {
+    func toNetscapeBookmarkFile() throws -> String {
+        let data = try JSONEncoder().encode(storedEntries.asAnyEntries)
         let json = try JSONSerialization.jsonObject(with: data)
         let d = Dominator()
         let string = try d.compose(json)
-        try string.write(to: filePath, atomically: true, encoding: .utf8)
-        if let path = sidecarPath, let appId: String = pieceSaver.value(for: .appIdentifier) {
-            DispatchQueue.global(qos: .background).asyncAfter(deadline: .now() + 2) {
-                do {
-                    try appId.write(to: path, atomically: true, encoding: .utf8)
-                } catch {
-                    ErrorTracker.shared.add(error)
-                }
-            }
-        }
+        return string
     }
     
     var icloudSync: Bool { pieceSaver.value(for: .icloudSync) ?? true }
-    
-    // (stash.html path, icloud sidecar path?)
-    func whereItIs() throws -> (URL, URL?) {
-        do {
-            if icloudSync {
-                return try icloudPath()
-            } else {
-                return (try localPath(), nil)
-            }
-        } catch {
-            defer { ErrorTracker.shared.add(error) }
-            return (try localPath(), nil)
-        }
-    }
     
     private func localPath() throws -> URL {
         let fileManager = FileManager.default
@@ -263,7 +239,7 @@ fileprivate extension Housekeeper {
         if !fileManager.fileExists(atPath: direcotry.path) {
             try fileManager.createDirectory(at: direcotry, withIntermediateDirectories: true, attributes: nil)
         }
-        return direcotry.appendingPathComponent(Constant.contentFileName)
+        return direcotry.appendingPathComponent(Synchronizer.FileName.document)
     }
     
     private func icloudPath() throws -> (URL, URL) {
@@ -276,7 +252,7 @@ fileprivate extension Housekeeper {
         if !fileManager.fileExists(atPath: documents.path) {
             try fileManager.createDirectory(at: documents, withIntermediateDirectories: true, attributes: nil)
         }
-        return (documents.appendingPathComponent(Constant.contentFileName), documents.appendingPathComponent(Constant.sidecarFileName))
+        return (documents.appendingPathComponent(Synchronizer.FileName.document), documents.appendingPathComponent(Synchronizer.FileName.sidecar))
     }
 }
 
@@ -334,13 +310,6 @@ extension Housekeeper {
     
     enum KindError {
         case providerUninitialized
-    }
-}
-
-extension Housekeeper {
-    enum Constant {
-        static let contentFileName = "default.html"
-        static let sidecarFileName = "default.html.sidecar"
     }
 }
 
