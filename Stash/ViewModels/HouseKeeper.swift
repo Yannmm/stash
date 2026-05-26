@@ -229,31 +229,6 @@ fileprivate extension Housekeeper {
         let string = try d.compose(json)
         return string
     }
-    
-    var icloudSync: Bool { pieceSaver.value(for: .icloudSync) ?? true }
-    
-    private func localPath() throws -> URL {
-        let fileManager = FileManager.default
-        guard let support = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { throw SomeError.Save.missingApplicationSupportDirectory}
-        let direcotry = support.appendingPathComponent("Stash", isDirectory: true)
-        if !fileManager.fileExists(atPath: direcotry.path) {
-            try fileManager.createDirectory(at: direcotry, withIntermediateDirectories: true, attributes: nil)
-        }
-        return direcotry.appendingPathComponent(Synchronizer.FileName.document)
-    }
-    
-    private func icloudPath() throws -> (URL, URL) {
-        let fileManager = FileManager.default
-        
-        guard let container = fileManager.url(forUbiquityContainerIdentifier: nil) else { throw SomeError.Save.icloudContainerUnavailable  }
-        
-        let documents = container.appendingPathComponent("Documents")
-        
-        if !fileManager.fileExists(atPath: documents.path) {
-            try fileManager.createDirectory(at: documents, withIntermediateDirectories: true, attributes: nil)
-        }
-        return (documents.appendingPathComponent(Synchronizer.FileName.document), documents.appendingPathComponent(Synchronizer.FileName.sidecar))
-    }
 }
 
 private extension Housekeeper {

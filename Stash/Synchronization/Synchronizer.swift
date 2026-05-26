@@ -14,8 +14,6 @@ class Synchronizer {
 
 extension Synchronizer {
     protocol Provider {
-        func monitor(_ start: Bool)
-        
         static func initialize() async throws -> Self
         
         var onFileChange: AnyPublisher<Result<URL, Error>, Never> { get }

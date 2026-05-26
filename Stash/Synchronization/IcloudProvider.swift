@@ -62,7 +62,7 @@ extension Synchronizer {
                         guard let this = self else { return }
                         this.pieceSaver.save(for: .appIdentifier, value: identifier)
                         do {
-                            let paths = try this.getDocumentFilePath()
+                            let paths = try this.getPaths()
                             this._onFileChange.send(.success(paths.document))
                         } catch {
                             this._onFileChange.send(.failure(error))
@@ -78,7 +78,7 @@ extension Synchronizer {
         }
         
         func save(document html: String) async throws {
-            let paths = try getDocumentFilePath()
+            let paths = try getPaths()
             try html.write(to: paths.document, atomically: true, encoding: .utf8)
             // TODO: do I need to rewrite to picecsave a new uuid if it does not exist??
             if let appId: String = pieceSaver.value(for: .appIdentifier) {
@@ -87,11 +87,11 @@ extension Synchronizer {
         }
         
         func load() throws -> String {
-            let paths = try getDocumentFilePath()
+            let paths = try getPaths()
             return try String(contentsOf: paths.document, encoding: .utf8)
         }
         
-        private func getDocumentFilePath() throws -> Paths {
+        private func getPaths() throws -> Paths {
             let mgr = FileManager.default
             
             guard let container = mgr.url(forUbiquityContainerIdentifier: nil) else { throw SomeError.icloudContainerUnavailable  }
