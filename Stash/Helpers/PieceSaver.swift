@@ -22,6 +22,8 @@ class PieceSaver {
         case appIdentifier
         
         case migration3_0
+        
+        case synchronizerApproach
     }
 
     func save(for key: Key, value: Any?) {

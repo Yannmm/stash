@@ -21,7 +21,6 @@ struct SettingsView: View {
             })
         }
     }
-    //    @State private var updateFrequency = UpdateFrequency.weekly
     @State private var alert: SettingsView.Alert = .none
     
     var importDescription: AttributedString? {
@@ -52,12 +51,18 @@ struct SettingsView: View {
         return String(path.lastPathComponent.split(separator: ".")[0])
     }
     
+    private func synchronizerApproachDescription(_ approach: Synchronizer.Approach) -> String {
+        switch approach {
+        case .local: return "Local"
+        case .icloud: return "iCloud"
+        case .dropbox: return "Dropbox"
+        }
+    }
+    
     var body: some View {
         Form {
-            // General Section
             Section("General") {
                 Toggle("Launch on Login", isOn: $viewModel.launchOnLogin)
-                Toggle("iCloud Sync", isOn: $viewModel.icloudSync)
                 HStack {
                     Text("App Global Shortcut")
                     Spacer()
@@ -83,6 +88,14 @@ struct SettingsView: View {
                             .foregroundColor(.secondary)
                             .multilineTextAlignment(.leading)
                         Spacer()
+                    }
+                }
+            }
+            
+            Section("Synchronization") {
+                Picker("Approach", selection: $viewModel.synchronizerApproach) {
+                    ForEach(Synchronizer.Approach.allCases) { approach in
+                        Text(synchronizerApproachDescription(approach)).tag(approach)
                     }
                 }
             }

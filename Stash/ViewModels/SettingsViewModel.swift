@@ -13,7 +13,6 @@ import SwiftUI
 
 class SettingsViewModel: ObservableObject {
     @Published var collapseHistory: Bool
-    @Published var icloudSync: Bool
     @Published var launchOnLogin: Bool
     @Published var showDockIcon: Bool
     @Published var importFromFile: URL?
@@ -26,6 +25,7 @@ class SettingsViewModel: ObservableObject {
     @Published var checkedVersionDescription: String = ""
     @Published var newReleaseNotes: String?
     @Published var error: Error?
+    @Published var synchronizerApproach: Synchronizer.Approach
     
     private var cancellables = Set<AnyCancellable>()
     private let pieceSaver = PieceSaver()
@@ -63,9 +63,9 @@ class SettingsViewModel: ObservableObject {
     init(housekeeper: Housekeeper) {
         self.housekeeper = housekeeper
         collapseHistory = pieceSaver.value(for: .collapseHistory) ?? false
-        icloudSync = pieceSaver.value(for: .icloudSync) ?? true
         launchOnLogin = RocketLauncher.shared.enabled
         showDockIcon = pieceSaver.value(for: .showDockIcon) ?? false
+        synchronizerApproach = pieceSaver.value(for: .synchronizerApproach) ?? .local
         
         if let code: UInt32 = pieceSaver.value(for: .appShortcut),
            let key = Key(carbonKeyCode: code),
@@ -91,18 +91,6 @@ class SettingsViewModel: ObservableObject {
                 self?.pieceSaver.save(for: .collapseHistory, value: $0)
             }
             .store(in: &cancellables)
-        $icloudSync
-            .dropFirst()
-            .sink { [weak self] in
-                self?.pieceSaver.save(for: .icloudSync, value: $0)
-                do {
-                    try self?.housekeeper.save()
-                    self?.housekeeper.provider?.monitor($0)
-                } catch {
-                    self?.error = error
-                }
-            }
-            .store(in: &cancellables)
         
         // Handle launch at login changes
         $launchOnLogin
@@ -112,6 +100,7 @@ class SettingsViewModel: ObservableObject {
                 self?.pieceSaver.save(for: .launchOnLogin, value: enabled)
             }
             .store(in: &cancellables)
+        
         $showDockIcon
             .dropFirst()
             .sink { [weak self] in
@@ -184,6 +173,14 @@ class SettingsViewModel: ObservableObject {
 //                self.newReleaseNotes = update?.releaseNotes
 //            }
 //            .store(in: &cancellables)
+        
+        $synchronizerApproach
+            .dropFirst()
+            .sink { [weak self] in
+                self?.housekeeper.synchronizer.approach = $0
+                self?.pieceSaver.save(for: .synchronizerApproach, value: $0)
+            }
+            .store(in: &cancellables)
         
         $error
             .compactMap({ $0 })

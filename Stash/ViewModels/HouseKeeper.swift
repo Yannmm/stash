@@ -19,19 +19,12 @@ class Housekeeper: ObservableObject {
     
     private let pieceSaver = PieceSaver()
     
-    var provider: Synchronizer.IcloudProvider!
+    let synchronizer: Synchronizer
     
     private var cancellables = Set<AnyCancellable>()
     
-    init() {
-        Task {
-            do {
-                self.provider = try await Synchronizer.IcloudProvider.initialize()
-                load()
-            } catch {
-                // TODO: handle initialize failure error. alert user or reinitailize???
-            }
-        }
+    init(synchronizer: Synchronizer) {
+        self.synchronizer = synchronizer
     }
     
     func update(entry: any Entry) throws {
@@ -96,7 +89,7 @@ extension Housekeeper {
     func save() throws {
         let html = try toNetscapeBookmarkFile()
         Task.detached {
-            try await self.provider.save(document: html)
+            try await self.synchronizer.save(document: html)
         }
         
         // In case for import
@@ -129,7 +122,7 @@ extension Housekeeper {
     }
     
     private func _load() throws {
-        let htmlString = try provider.load()
+        let htmlString = try synchronizer.load()
         let dominator = Dominator()
         let data = try dominator.decompose(htmlString)
         

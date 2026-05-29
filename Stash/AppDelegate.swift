@@ -33,7 +33,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return viewModel
     }()
     
-    internal let housekeeper = Housekeeper()
+    internal let housekeeper = Housekeeper(synchronizer: Synchronizer(pieceSaver: PieceSaver()))
     
     private var updateChecker: UpdateChecker { UpdateChecker.shared }
     
