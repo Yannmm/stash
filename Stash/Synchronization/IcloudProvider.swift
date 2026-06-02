@@ -16,6 +16,7 @@ extension Synchronizer {
         
         private let pieceSaver = PieceSaver()
         
+        
         private let _onFileChange = PassthroughSubject<Result<URL, Error>, Never>()
         
         var onFileChange: AnyPublisher<Result<URL, Error>, Never> { _onFileChange.eraseToAnyPublisher() }

@@ -201,6 +201,7 @@ class SettingsViewModel: ObservableObject {
     }
     
     private func setAppIdentifier() {
+        
         guard let id: UUID? = pieceSaver.value(for: .appIdentifier), id == nil else { return }
         pieceSaver.save(for: .appIdentifier, value: UUID().uuidString)
     }
