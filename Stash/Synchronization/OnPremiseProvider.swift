@@ -26,7 +26,7 @@ extension Synchronizer {
             let paths = try getPaths()
             try html.write(to: paths.document, atomically: true, encoding: .utf8)
             // TODO: do I need to rewrite to picecsave a new uuid if it does not exist??
-            if let appId: String = pieceSaver.value(for: .appIdentifier) {
+            if let appId = pieceSaver.value(for: PieceSaver.Key.appIdentifier) {
                 try appId.write(to: paths.sidecar, atomically: true, encoding: .utf8)
             }
         }

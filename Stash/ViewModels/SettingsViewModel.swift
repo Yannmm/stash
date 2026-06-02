@@ -62,20 +62,20 @@ class SettingsViewModel: ObservableObject {
     
     init(housekeeper: Housekeeper) {
         self.housekeeper = housekeeper
-        collapseHistory = pieceSaver.value(for: .collapseHistory) ?? false
+        collapseHistory = pieceSaver.value(for: PieceSaver.Key.collapseHistory) ?? false
         launchOnLogin = RocketLauncher.shared.enabled
-        showDockIcon = pieceSaver.value(for: .showDockIcon) ?? false
-        synchronizerApproach = pieceSaver.value(for: .synchronizerApproach) ?? .local
+        showDockIcon = pieceSaver.value(for: PieceSaver.Key.showDockIcon) ?? false
+        synchronizerApproach = pieceSaver.value(for: PieceSaver.Key.synchronizerApproach) ?? .local
         
-        if let code: UInt32 = pieceSaver.value(for: .appShortcut),
+        if let code = pieceSaver.value(for: PieceSaver.Key.appShortcut),
            let key = Key(carbonKeyCode: code),
-           let modifiers: UInt = pieceSaver.value(for: .appShortcutModifiers) {
+           let modifiers = pieceSaver.value(for: PieceSaver.Key.appShortcutModifiers) {
             appShortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
         }
         
-        if let code: UInt32 = pieceSaver.value(for: .searchShortcut),
+        if let code = pieceSaver.value(for: PieceSaver.Key.searchShortcut),
            let key = Key(carbonKeyCode: code),
-           let modifiers: UInt = pieceSaver.value(for: .searchShortcutModifiers) {
+           let modifiers = pieceSaver.value(for: PieceSaver.Key.searchShortcutModifiers) {
             searchShortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
         }
         
@@ -88,7 +88,7 @@ class SettingsViewModel: ObservableObject {
         $collapseHistory
             .dropFirst()
             .sink { [weak self] in
-                self?.pieceSaver.save(for: .collapseHistory, value: $0)
+                self?.pieceSaver.save(for: PieceSaver.Key.collapseHistory, value: $0)
             }
             .store(in: &cancellables)
         
@@ -97,7 +97,7 @@ class SettingsViewModel: ObservableObject {
             .dropFirst()
             .sink { [weak self] enabled in
                 RocketLauncher.shared.enabled = enabled
-                self?.pieceSaver.save(for: .launchOnLogin, value: enabled)
+                self?.pieceSaver.save(for: PieceSaver.Key.launchOnLogin, value: enabled)
             }
             .store(in: &cancellables)
         
@@ -105,7 +105,7 @@ class SettingsViewModel: ObservableObject {
             .dropFirst()
             .sink { [weak self] in
                 //                NSApp.setActivationPolicy($0 ? .regular : .accessory)
-                self?.pieceSaver.save(for: .showDockIcon, value: $0)
+                self?.pieceSaver.save(for: PieceSaver.Key.showDockIcon, value: $0)
             }
             .store(in: &cancellables)
         
@@ -116,8 +116,8 @@ class SettingsViewModel: ObservableObject {
                 } else {
                     self?.appHotKeyManager.unregister()
                 }
-                self?.pieceSaver.save(for: .appShortcut, value: tuple2?.0.carbonKeyCode)
-                self?.pieceSaver.save(for: .appShortcutModifiers, value: tuple2?.1.rawValue)
+                self?.pieceSaver.save(for: PieceSaver.Key.appShortcut, value: tuple2?.0.carbonKeyCode)
+                self?.pieceSaver.save(for: PieceSaver.Key.appShortcutModifiers, value: tuple2?.1.rawValue)
             }
             .store(in: &cancellables)
         
@@ -146,8 +146,8 @@ class SettingsViewModel: ObservableObject {
                 } else {
                     self?.searchHotKeyManager.unregister()
                 }
-                self?.pieceSaver.save(for: .searchShortcut, value: tuple2?.0.carbonKeyCode)
-                self?.pieceSaver.save(for: .searchShortcutModifiers, value: tuple2?.1.rawValue)
+                self?.pieceSaver.save(for: PieceSaver.Key.searchShortcut, value: tuple2?.0.carbonKeyCode)
+                self?.pieceSaver.save(for: PieceSaver.Key.searchShortcutModifiers, value: tuple2?.1.rawValue)
             }
             .store(in: &cancellables)
         
@@ -178,7 +178,7 @@ class SettingsViewModel: ObservableObject {
             .dropFirst()
             .sink { [weak self] in
                 self?.housekeeper.synchronizer.approach = $0
-                self?.pieceSaver.save(for: .synchronizerApproach, value: $0)
+                self?.pieceSaver.save(for: PieceSaver.Key.synchronizerApproach, value: $0)
             }
             .store(in: &cancellables)
         
@@ -202,8 +202,8 @@ class SettingsViewModel: ObservableObject {
     
     private func setAppIdentifier() {
         
-        guard let id: UUID? = pieceSaver.value(for: .appIdentifier), id == nil else { return }
-        pieceSaver.save(for: .appIdentifier, value: UUID().uuidString)
+        guard pieceSaver.value(for: PieceSaver.Key.appIdentifier) == nil else { return }
+        pieceSaver.save(for: PieceSaver.Key.appIdentifier, value: UUID().uuidString)
     }
 }
 

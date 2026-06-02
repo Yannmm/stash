@@ -53,7 +53,7 @@ extension Synchronizer {
                         return Empty().eraseToAnyPublisher()
                     }
                     .filter({ incoming in
-                        if let saved: String? = self.pieceSaver.value(for: .appIdentifier) {
+                        if let saved = self.pieceSaver.value(for: PieceSaver.Key.appIdentifier) {
                             return incoming != saved
                         }
                         return true
@@ -61,7 +61,7 @@ extension Synchronizer {
                     .delay(for: .seconds(2), scheduler: RunLoop.main)
                     .sink(receiveValue: { [weak self] identifier in
                         guard let this = self else { return }
-                        this.pieceSaver.save(for: .appIdentifier, value: identifier)
+                        this.pieceSaver.save(for: PieceSaver.Key.appIdentifier, value: identifier)
                         do {
                             let paths = try this.getPaths()
                             this._onFileChange.send(.success(paths.document))
@@ -82,7 +82,7 @@ extension Synchronizer {
             let paths = try getPaths()
             try html.write(to: paths.document, atomically: true, encoding: .utf8)
             // TODO: do I need to rewrite to picecsave a new uuid if it does not exist??
-            if let appId: String = pieceSaver.value(for: .appIdentifier) {
+            if let appId = pieceSaver.value(for: PieceSaver.Key.appIdentifier) {
                 try appId.write(to: paths.sidecar, atomically: true, encoding: .utf8)
             }
         }

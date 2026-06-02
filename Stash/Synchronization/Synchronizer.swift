@@ -22,7 +22,7 @@ class Synchronizer {
     
     init(pieceSaver: PieceSaver) {
         self.pieceSaver = pieceSaver
-        self.approach = pieceSaver.value(for: .synchronizerApproach) ?? .local
+        self.approach = pieceSaver.value(for: PieceSaver.Key.synchronizerApproach) ?? .local
         
         
         // TODO: set up listener to local file so that each time sidecar change, use provdre to save as well
@@ -32,7 +32,7 @@ class Synchronizer {
         self.localSidecarMonitor = FileMonitor(paths.sidecar)
 //        let monitor = FileMonitor(paths.sidecar) {
 //            // 1. 读取pref里面的 uuid 进行比较
-//            let appId: String = pieceSaver.value(for: .appIdentifier)
+//            let appId: String = pieceSaver.value(for: PieceSaver.Key.appIdentifier)
 //        }
 
         bind()
@@ -50,7 +50,7 @@ class Synchronizer {
                 return Empty().eraseToAnyPublisher()
             }
             .filter { [weak self] event in
-                if let appid: String? = self?.pieceSaver.value(for: .appIdentifier) {
+                if let appid = self?.pieceSaver.value(for: PieceSaver.Key.appIdentifier) {
                     return appid != event
                 } else {
                     return true
@@ -66,7 +66,7 @@ class Synchronizer {
         let paths = try getPaths()
         try html.write(to: paths.document, atomically: true, encoding: .utf8)
         // TODO: do I need to rewrite to picecsave a new uuid if it does not exist??
-        if let appId: String = pieceSaver.value(for: .appIdentifier) {
+        if let appId = pieceSaver.value(for: PieceSaver.Key.appIdentifier) {
             try appId.write(to: paths.sidecar, atomically: true, encoding: .utf8)
         }
     }
