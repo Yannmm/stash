@@ -39,3 +39,24 @@ class PieceSaver {
         UserDefaults.standard.value(forKey: key.rawValue) as? Value
     }
 }
+
+extension PieceSaver {
+    func save<Value: RawRepresentable>(
+        for key: Entry<Value>,
+        value: Value?
+    ) {
+        UserDefaults.standard.set(value?.rawValue, forKey: key.rawValue)
+    }
+
+    func value<Value: RawRepresentable>(
+        for key: Entry<Value>
+    ) -> Value? {
+        guard let rawValue = UserDefaults.standard.object(forKey: key.rawValue)
+                as? Value.RawValue
+        else {
+            return nil
+        }
+
+        return Value(rawValue: rawValue)
+    }
+}

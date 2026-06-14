@@ -16,10 +16,9 @@ extension Synchronizer {
         
         private let pieceSaver = PieceSaver()
         
+        private let _onRemoteChange = PassthroughSubject<Result<URL, Error>, Never>()
         
-        private let _onFileChange = PassthroughSubject<Result<URL, Error>, Never>()
-        
-        var onFileChange: AnyPublisher<Result<URL, Error>, Never> { _onFileChange.eraseToAnyPublisher() }
+        var onRemoteChange: AnyPublisher<Result<URL, Error>, Never> { _onRemoteChange.eraseToAnyPublisher() }
         
         private init() {
             monitor(true)
@@ -43,6 +42,16 @@ extension Synchronizer {
             }
         }
         
+        func dispose() throws {
+            monitor(false)
+        }
+        
+        func synchronize(source: Paths) async throws {
+            let paths = try getPaths()
+            try await FileHelper.replaceFile(from: source.document, to: paths.document)
+            try await FileHelper.replaceFile(from: source.sidecar, to: paths.sidecar)
+        }
+        
         func monitor(_ start: Bool) {
             if start {
                 monitorHandle = monitor.$onChange
@@ -64,9 +73,9 @@ extension Synchronizer {
                         this.pieceSaver.save(for: PieceSaver.Key.appIdentifier, value: identifier)
                         do {
                             let paths = try this.getPaths()
-                            this._onFileChange.send(.success(paths.document))
+                            this._onRemoteChange.send(.success(paths.document))
                         } catch {
-                            this._onFileChange.send(.failure(error))
+                            this._onRemoteChange.send(.failure(error))
                         }
                     })
                 
@@ -76,20 +85,6 @@ extension Synchronizer {
                 monitorHandle?.cancel()
                 monitorHandle = nil
             }
-        }
-        
-        func save(document html: String) async throws {
-            let paths = try getPaths()
-            try html.write(to: paths.document, atomically: true, encoding: .utf8)
-            // TODO: do I need to rewrite to picecsave a new uuid if it does not exist??
-            if let appId = pieceSaver.value(for: PieceSaver.Key.appIdentifier) {
-                try appId.write(to: paths.sidecar, atomically: true, encoding: .utf8)
-            }
-        }
-        
-        func load() throws -> String {
-            let paths = try getPaths()
-            return try String(contentsOf: paths.document, encoding: .utf8)
         }
         
         private func getPaths() throws -> Paths {

@@ -9,90 +9,89 @@ import Foundation
 import Combine
 
 class Synchronizer {
-    private var provider: Synchronizer.Provider!
+    private var provider: Synchronizer.Provider?
     private let pieceSaver: PieceSaver
-    private var localSidecarMonitor: FileMonitor!
+    private var sidecarMonitor: FileMonitor!
+    private var cancellables = Set<AnyCancellable>()
     
-    var approach: Approach {
-        didSet {
-            guard oldValue != approach else { return }
-            spawnProvider()
-        }
+    private var _approach: Approach? {
+//        didSet {
+//            guard oldValue != approach else { return }
+//            spawnProvider()
+//        }
+    }
+    
+    var getApproach: Approach {
+        
     }
     
     init(pieceSaver: PieceSaver) {
         self.pieceSaver = pieceSaver
         self.approach = pieceSaver.value(for: PieceSaver.Key.synchronizerApproach) ?? .local
         
-        
-        // TODO: set up listener to local file so that each time sidecar change, use provdre to save as well
-        
-        
         let paths = try! getPaths()
-        self.localSidecarMonitor = FileMonitor(paths.sidecar)
-//        let monitor = FileMonitor(paths.sidecar) {
-//            // 1. 读取pref里面的 uuid 进行比较
-//            let appId: String = pieceSaver.value(for: PieceSaver.Key.appIdentifier)
-//        }
-
+        self.sidecarMonitor = FileMonitor(paths.sidecar)
         bind()
         
-        localSidecarMonitor.start()
+        sidecarMonitor.start()
     }
     
     // TODO: always write to pref before update local sidecar file when update within the current app
     
     private func bind() {
-        localSidecarMonitor.onChange
+        sidecarMonitor.onChange
             .tryMap({ try String(contentsOf: $0, encoding: .utf8) })
             .catch { error -> AnyPublisher<String, Never> in
                 ErrorTracker.shared.add(error)
                 return Empty().eraseToAnyPublisher()
             }
             .filter { [weak self] event in
-                if let appid = self?.pieceSaver.value(for: PieceSaver.Key.appIdentifier) {
-                    return appid != event
-                } else {
-                    return true
+                let appid = self?.pieceSaver.value(for: PieceSaver.Key.appIdentifier) ?? ""
+                return appid == event
+            }
+//            .delay(for: .seconds(2), scheduler: RunLoop.main)
+            .sink { x in
+                guard let p = self.provider else { return }
+                Task {
+                    do {
+                        try await p.synchronize(source: try self.getPaths())
+                    } catch {
+                        print("there is error \(error)")
+                    }
                 }
             }
-            .delay(for: .seconds(2), scheduler: RunLoop.main)
-            .sink { x in
-                // TODO: sync via provider
-            }
+            .store(in: &cancellables)
     }
     
     func save(document html: String) async throws {
         let paths = try getPaths()
         try html.write(to: paths.document, atomically: true, encoding: .utf8)
-        // TODO: do I need to rewrite to picecsave a new uuid if it does not exist??
-        if let appId = pieceSaver.value(for: PieceSaver.Key.appIdentifier) {
-            try appId.write(to: paths.sidecar, atomically: true, encoding: .utf8)
-        }
+        let appid = UUID().uuidString
+        pieceSaver.save(for: PieceSaver.Key.appIdentifier, value: appid)
+        try appid.write(to: paths.sidecar, atomically: true, encoding: .utf8)
     }
     
     func load() throws -> String {
         let paths = try getPaths()
+        
+        let xx = Synchronizer.Approach(rawValue: "xx")
         return try String(contentsOf: paths.document, encoding: .utf8)
     }
     
     private func spawnProvider() {
         Task {
             do {
+                try self.provider?.dispose()
                 switch approach {
                 case .icloud:
                     self.provider = try await IcloudProvider.initialize()
                 case .local:
-                    self.provider = try await OnPremiseProvider.initialize()
+                    self.provider = nil
                 case .dropbox:
                     fatalError("Not impelmented")
                 }
                 
-                // TODO: common local paths
-                let paths = try getPaths()
-                let xx = try String(contentsOf: paths.document, encoding: .utf8)
-                
-                try await self.provider.save(document: xx)
+                try await self.provider?.synchronize(source: try self.getPaths())
             } catch {
                 // TODO: handle initialize failure error. alert user or reinitailize???
                 print("there is an error: \(error)")
@@ -119,12 +118,13 @@ extension Synchronizer {
     protocol Provider {
         static func initialize() async throws -> Self
         
-        // TODO: 这个方法似乎应该去除，某些provider会有 file （icloud）， 但某些没有，或者不应该常驻，如 dropbox 和 icloud
-        var onFileChange: AnyPublisher<Result<URL, Error>, Never> { get }
+        func dispose() throws
         
-        func save(document html: String) async throws
+        /// Synchronize down
+        var onRemoteChange: AnyPublisher<Result<URL, Error>, Never> { get }
         
-        func load() throws -> String
+        /// Synchronize up
+        func synchronize(source: Paths) async throws
     }
     
     struct Paths {
@@ -140,8 +140,16 @@ extension Synchronizer {
         case dropbox
     }
     
-    enum FileName {
-        static let document = "default.html"
-        static let sidecar = "default.html.sidecar"
+    enum Status {
+        case checking
+        case available
+        case unavailable(Error?)
     }
+    
+    enum FileName {
+        static let document = "nustash_index.html"
+        static let sidecar = "nustash_index.html.sidecar"
+    }
+    
+    struct 
 }

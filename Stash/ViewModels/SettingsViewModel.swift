@@ -178,6 +178,7 @@ class SettingsViewModel: ObservableObject {
             .dropFirst()
             .sink { [weak self] in
                 self?.housekeeper.synchronizer.approach = $0
+                // 如果 approach 切换失败，这里不应该保存，而是应该给用户提示,并退回之前的选择
                 self?.pieceSaver.save(for: PieceSaver.Key.synchronizerApproach, value: $0)
             }
             .store(in: &cancellables)

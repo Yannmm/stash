@@ -275,10 +275,6 @@ extension Housekeeper {
             }
         }
     }
-    
-    enum KindError {
-        case providerUninitialized
-    }
 }
 
 // 1. 启动时存入一个uuid
