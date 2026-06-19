@@ -8,9 +8,28 @@
 import AppKit
 import SwiftyDropbox
 import Carbon
+import Combine
 
 extension Synchronizer {
-    final class DropboxProvider {
+    final class DropboxProvider: Provider {
+        
+        
+        func synchronize(source: Synchronizer.Paths) async throws {
+            
+        }
+        
+        private let _onRemoteChange = PassthroughSubject<Result<URL, Error>, Never>()
+        
+        var onRemoteChange: AnyPublisher<Result<URL, Error>, Never> { _onRemoteChange.eraseToAnyPublisher() }
+        
+        private let _available = PassthroughSubject<Availability, Never>()
+        
+        var available: AnyPublisher<Synchronizer.Availability, Never> { _available.eraseToAnyPublisher() }
+        
+        func pause() async throws {
+            
+        }
+        
         enum AuthError: Error {
             case cancelled
             case failed(String)

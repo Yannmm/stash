@@ -1,5 +1,5 @@
 //
-//  IcloudProvider.swift
+//  AiCloudProvider.swift
 //  Stash
 //
 //  Created by Rayman on 2026/5/11.
@@ -9,7 +9,8 @@ import Foundation
 import Combine
 
 extension Synchronizer {
-    final class IcloudProvider: Provider {
+    final class AiCloudProvider: Provider {
+        
         private var monitorHandle: AnyCancellable?
         
         private let monitor = IcloudContainerMonitor(filename: FileName.sidecar)
@@ -20,15 +21,28 @@ extension Synchronizer {
         
         var onRemoteChange: AnyPublisher<Result<URL, Error>, Never> { _onRemoteChange.eraseToAnyPublisher() }
         
-        private init() {
+        private let _available = PassthroughSubject<Availability, Never>()
+        
+        var available: AnyPublisher<Synchronizer.Availability, Never> { _available.eraseToAnyPublisher() }
+        
+        func prepare() async throws {
+            checkAvailability()
             monitor(true)
         }
+        
+        func pause() async throws {
+            monitor(false)
+        }
+        
+        init() {}
         
         deinit {
             monitor(false)
         }
         
-        static func initialize() async throws -> Synchronizer.IcloudProvider {
+        
+        
+        static func initialize() async throws -> Synchronizer.AiCloudProvider {
             let available = await withCheckedContinuation { continuation in
                 DispatchQueue.global(qos: .utility).async {
                     let url = FileManager.default.url(forUbiquityContainerIdentifier: nil)
@@ -36,15 +50,29 @@ extension Synchronizer {
                 }
             }
             if available {
-                return IcloudProvider()
+                return AiCloudProvider()
             } else {
                 throw SomeError.icloudContainerUnavailable
             }
         }
         
-        func dispose() throws {
-            monitor(false)
+        private func checkAvailability() {
+            Task {
+                _available.send(.checking)
+                let available = await withCheckedContinuation { continuation in
+                    DispatchQueue.global(qos: .utility).async {
+                        let url = FileManager.default.url(forUbiquityContainerIdentifier: nil)
+                        continuation.resume(returning: url != nil)
+                    }
+                }
+                if available {
+                    _available.send(.yes)
+                } else {
+                    _available.send(.no(SomeError.icloudContainerUnavailable))
+                }
+            }
         }
+        
         
         func synchronize(source: Paths) async throws {
             let paths = try getPaths()
@@ -103,7 +131,7 @@ extension Synchronizer {
     }
 }
 
-extension Synchronizer.IcloudProvider {
+extension Synchronizer.AiCloudProvider {
     enum SomeError: Error, LocalizedError {
         case icloudContainerUnavailable
     }

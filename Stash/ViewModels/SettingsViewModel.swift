@@ -33,6 +33,9 @@ class SettingsViewModel: ObservableObject {
     private let searchHotKeyManager = HotKeyManager(action: .search)
     private let housekeeper: Housekeeper
     
+    // TODO: add checking status in menu when is checking
+//        self.approach = pieceSaver.value(for: PieceSaver.Key.synchronizerApproach) ?? .local
+    
     
     var empty: Bool { housekeeper.storedEntries.isEmpty }
     

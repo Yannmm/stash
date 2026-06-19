@@ -33,7 +33,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         return viewModel
     }()
     
-    internal let housekeeper = Housekeeper(synchronizer: Synchronizer(pieceSaver: PieceSaver()))
+    internal let housekeeper = Housekeeper(synchronizer: Synchronizer(
+        providers: [
+            .local: Synchronizer.LocalStorageProvider(),
+            .dropbox: Synchronizer.DropboxProvider(),
+            .icloud: Synchronizer.AiCloudProvider()
+    ], pieceSaver: PieceSaver()))
     
     private var updateChecker: UpdateChecker { UpdateChecker.shared }
     
