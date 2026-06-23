@@ -79,7 +79,7 @@ class Synchronizer {
 //                return Empty().eraseToAnyPublisher()
 //            }
 //            .filter { [weak self] event in
-//                let appid = self?.pieceSaver.value(for: PieceSaver.Key.appIdentifier) ?? ""
+//                let appid = self?.Pref.value(for: PieceSaver.Key.appIdentifier) ?? ""
 //                return appid == event
 //            }
 ////            .delay(for: .seconds(2), scheduler: RunLoop.main)

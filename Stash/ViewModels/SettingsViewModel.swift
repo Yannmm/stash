@@ -28,7 +28,6 @@ class SettingsViewModel: ObservableObject {
     @Published var synchronizerApproach: Synchronizer.Option
     
     private var cancellables = Set<AnyCancellable>()
-    private let pieceSaver = PieceSaver()
     private let appHotKeyManager = HotKeyManager(action: .menu)
     private let searchHotKeyManager = HotKeyManager(action: .search)
     
@@ -38,7 +37,7 @@ class SettingsViewModel: ObservableObject {
     private let onChangeApproach: (Synchronizer.Option) -> Void
     
     // TODO: add checking status in menu when is checking
-    //        self.approach = pieceSaver.value(for: PieceSaver.Key.synchronizerApproach) ?? .local
+    //        self.approach = Pref.value(for: PieceSaver.Key.synchronizerApproach) ?? .local
     
     
     var empty: Bool { false }
@@ -68,6 +67,7 @@ class SettingsViewModel: ObservableObject {
     }
     
     init(
+        provider: Synchronizer.Option,
         onReset: @escaping () throws -> Void,
         onImport: @escaping (URL, String.FileType, Bool) throws -> Void,
         onExport: @escaping (URL, String?) throws -> URL,
@@ -78,20 +78,20 @@ class SettingsViewModel: ObservableObject {
         self.onExport = onExport
         self.onChangeApproach = onChangeApproach
         
-        collapseHistory = pieceSaver.value(for: PieceSaver.Key.collapseHistory) ?? false
+        collapseHistory = Pref.value(for: Pref.Key.collapseHistory) ?? false
         launchOnLogin = RocketLauncher.shared.enabled
-        showDockIcon = pieceSaver.value(for: PieceSaver.Key.showDockIcon) ?? false
-        synchronizerApproach = pieceSaver.value(for: PieceSaver.Key.synchronizerApproach) ?? .local
+        showDockIcon = Pref.value(for: Pref.Key.showDockIcon) ?? false
+        synchronizerApproach = provider
         
-        if let code = pieceSaver.value(for: PieceSaver.Key.appShortcut),
+        if let code = Pref.value(for: Pref.Key.appShortcut),
            let key = Key(carbonKeyCode: code),
-           let modifiers = pieceSaver.value(for: PieceSaver.Key.appShortcutModifiers) {
+           let modifiers = Pref.value(for: Pref.Key.appShortcutModifiers) {
             appShortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
         }
         
-        if let code = pieceSaver.value(for: PieceSaver.Key.searchShortcut),
+        if let code = Pref.value(for: Pref.Key.searchShortcut),
            let key = Key(carbonKeyCode: code),
-           let modifiers = pieceSaver.value(for: PieceSaver.Key.searchShortcutModifiers) {
+           let modifiers = Pref.value(for: Pref.Key.searchShortcutModifiers) {
             searchShortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
         }
         
@@ -104,7 +104,7 @@ class SettingsViewModel: ObservableObject {
         $collapseHistory
             .dropFirst()
             .sink { [weak self] in
-                self?.pieceSaver.save(for: PieceSaver.Key.collapseHistory, value: $0)
+                Pref.save(for: Pref.Key.collapseHistory, value: $0)
             }
             .store(in: &cancellables)
         
@@ -113,7 +113,7 @@ class SettingsViewModel: ObservableObject {
             .dropFirst()
             .sink { [weak self] enabled in
                 RocketLauncher.shared.enabled = enabled
-                self?.pieceSaver.save(for: PieceSaver.Key.launchOnLogin, value: enabled)
+                Pref.save(for: Pref.Key.launchOnLogin, value: enabled)
             }
             .store(in: &cancellables)
         
@@ -121,7 +121,7 @@ class SettingsViewModel: ObservableObject {
             .dropFirst()
             .sink { [weak self] in
                 //                NSApp.setActivationPolicy($0 ? .regular : .accessory)
-                self?.pieceSaver.save(for: PieceSaver.Key.showDockIcon, value: $0)
+                Pref.save(for: Pref.Key.showDockIcon, value: $0)
             }
             .store(in: &cancellables)
         
@@ -132,8 +132,8 @@ class SettingsViewModel: ObservableObject {
                 } else {
                     self?.appHotKeyManager.unregister()
                 }
-                self?.pieceSaver.save(for: PieceSaver.Key.appShortcut, value: tuple2?.0.carbonKeyCode)
-                self?.pieceSaver.save(for: PieceSaver.Key.appShortcutModifiers, value: tuple2?.1.rawValue)
+                Pref.save(for: Pref.Key.appShortcut, value: tuple2?.0.carbonKeyCode)
+                Pref.save(for: Pref.Key.appShortcutModifiers, value: tuple2?.1.rawValue)
             }
             .store(in: &cancellables)
         
@@ -162,8 +162,8 @@ class SettingsViewModel: ObservableObject {
                 } else {
                     self?.searchHotKeyManager.unregister()
                 }
-                self?.pieceSaver.save(for: PieceSaver.Key.searchShortcut, value: tuple2?.0.carbonKeyCode)
-                self?.pieceSaver.save(for: PieceSaver.Key.searchShortcutModifiers, value: tuple2?.1.rawValue)
+                Pref.save(for: Pref.Key.searchShortcut, value: tuple2?.0.carbonKeyCode)
+                Pref.save(for: Pref.Key.searchShortcutModifiers, value: tuple2?.1.rawValue)
             }
             .store(in: &cancellables)
         
@@ -194,7 +194,7 @@ class SettingsViewModel: ObservableObject {
             .dropFirst()
             .sink { [weak self] in
                 self?.onChangeApproach($0)
-                self?.pieceSaver.save(for: PieceSaver.Key.synchronizerApproach, value: $0)
+                Pref.save(for: Pref.Key.synchronizerApproach, value: $0)
             }
             .store(in: &cancellables)
         
@@ -218,8 +218,8 @@ class SettingsViewModel: ObservableObject {
     
     private func setAppIdentifier() {
         
-        guard pieceSaver.value(for: PieceSaver.Key.appIdentifier) == nil else { return }
-        pieceSaver.save(for: PieceSaver.Key.appIdentifier, value: UUID().uuidString)
+        guard Pref.value(for: Pref.Key.appIdentifier) == nil else { return }
+        Pref.save(for: Pref.Key.appIdentifier, value: UUID().uuidString)
     }
 }
 

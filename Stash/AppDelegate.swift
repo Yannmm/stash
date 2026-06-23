@@ -23,36 +23,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private var editWindow: NSWindow?
     
-    private lazy var settingsViewModel: SettingsViewModel = {
-        let viewModel = SettingsViewModel(
-            onReset: {
-                try self.housekeeper.removeAll()
-            },
-            onImport: { from , fileType, replace in
-                try self.housekeeper.import(from: from, fileType: fileType, replace: replace)
-            },
-            onExport: { to, suffix in
-                try self.housekeeper.export(to: to, suffix: suffix)
-            },
-            onChangeApproach: { approach in
-                self.housekeeper.synchronizer.approach = approach
-            })
-        
-        return viewModel
-    }()
+    internal var settingsViewModel: SettingsViewModel!
     
-    internal lazy var searchViewModel: SearchViewModel = {
-        let viewModel = SearchViewModel(housekeeper: housekeeper)
-        return viewModel
-    }()
+    internal var searchViewModel: SearchViewModel!
     
-    internal let housekeeper = Housekeeper(synchronizer: Synchronizer(
-        approach: .local,
-        providers: [
-            .local: Synchronizer.LocalStorageProvider(),
-            .dropbox: Synchronizer.DropboxProvider(),
-            .icloud: Synchronizer.AiCloudProvider()
-        ]))
+    internal var housekeeper: Housekeeper!
     
     private var updateChecker: UpdateChecker { UpdateChecker.shared }
     
@@ -65,7 +40,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var window2: NSWindow?
     
     private func initialize() {
-//        let provider = pieceSaver.value(for: PieceSaver.Key.synchronizerApproach) ?? .local
+        let provider = Pref.value(for: Pref.Key.synchronizerApproach) ?? .local
+        let hk = Housekeeper(synchronizer: Synchronizer(
+            approach: provider,
+            providers: [
+                .local: Synchronizer.LocalStorageProvider(),
+                .dropbox: Synchronizer.DropboxProvider(),
+                .icloud: Synchronizer.AiCloudProvider()
+            ]))
+        self.housekeeper = hk
+        
+        self.settingsViewModel = SettingsViewModel(
+            provider: provider,
+            onReset: {
+                try hk.removeAll()
+            },
+            onImport: { from , fileType, replace in
+                try hk.import(from: from, fileType: fileType, replace: replace)
+            },
+            onExport: { to, suffix in
+                try hk.export(to: to, suffix: suffix)
+            },
+            onChangeApproach: { approach in
+                hk.synchronizer.approach = approach
+            })
+        
+        self.searchViewModel = SearchViewModel(housekeeper: hk)
     }
     
     func applicationWillFinishLaunching(_ notification: Notification) {

@@ -17,8 +17,6 @@ class Housekeeper: ObservableObject {
     
     @Published private(set) var recentEntries: [(Bookmark, String)] = []
     
-    private let pieceSaver = PieceSaver()
-    
     let synchronizer: Synchronizer
     
     private var cancellables = Set<AnyCancellable>()
@@ -102,8 +100,8 @@ extension Housekeeper {
         }).compactMap({ $0 })
         
         let data2 = try JSONEncoder().encode(recents.map({ $0.0 }).asAnyEntries)
-        pieceSaver.save(for: PieceSaver.Key.recentEntries, value: data2)
-        pieceSaver.save(for: PieceSaver.Key.recentKeys, value: recents.map({ $0.1 }))
+        Pref.save(for: Pref.Key.recentEntries, value: data2)
+        Pref.save(for: Pref.Key.recentKeys, value: recents.map({ $0.1 }))
         
         DispatchQueue.main.async { [weak self] in
             self?.recentEntries = recents
@@ -130,8 +128,8 @@ extension Housekeeper {
         
         self.storedEntries = anyEntries.asEntries
         
-        if let data = pieceSaver.value(for: PieceSaver.Key.recentEntries),
-           let keys = pieceSaver.value(for: PieceSaver.Key.recentKeys) {
+        if let data = Pref.value(for: Pref.Key.recentEntries),
+           let keys = Pref.value(for: Pref.Key.recentKeys) {
             let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
             var collector = [(Bookmark, String)]()
             for (index, entry) in anyEntries.asEntries.enumerated() {
@@ -227,7 +225,7 @@ fileprivate extension Housekeeper {
 private extension Housekeeper {
     func migrate3_0() throws {
         // 1. read from user default to check whether migration has been done
-        let flag = pieceSaver.value(for: PieceSaver.Key.migration3_0) ?? false
+        let flag = Pref.value(for: Pref.Key.migration3_0) ?? false
         guard !flag else { return }
         // 2. if not, update storedEntries .hashtags accordign to title
         let result = self.storedEntries.map({ e in
@@ -239,7 +237,7 @@ private extension Housekeeper {
         self.storedEntries = result
         try save()
         // 4. update flag from user defaults
-        pieceSaver.save(for: PieceSaver.Key.migration3_0, value: true)
+        Pref.save(for: Pref.Key.migration3_0, value: true)
     }
     
     func parseHashtagsFrom(name text: String, existings: OrderedSet<String>?) -> OrderedSet<String>? {

@@ -1,5 +1,5 @@
 //
-//  PieceSaver.swift
+//  Pref.swift
 //  Stash
 //
 //  Created by Rayman on 2025/4/18.
@@ -7,7 +7,9 @@
 
 import Foundation
 
-class PieceSaver {
+class Pref {
+    private init() {}
+    
     struct Entry<Value> {
         fileprivate let rawValue: String
         fileprivate init(_ rawValue: String) {
@@ -31,24 +33,24 @@ class PieceSaver {
         static let synchronizerApproach = Entry<Synchronizer.Option>("synchronizerApproach")
     }
 
-    func save<Value>(for key: Entry<Value>, value: Value?) {
+    static func save<Value>(for key: Entry<Value>, value: Value?) {
         UserDefaults.standard.set(value, forKey: key.rawValue)
     }
 
-    func value<Value>(for key: Entry<Value>) -> Value? {
+    static func value<Value>(for key: Entry<Value>) -> Value? {
         UserDefaults.standard.value(forKey: key.rawValue) as? Value
     }
 }
 
-extension PieceSaver {
-    func save<Value: RawRepresentable>(
+extension Pref {
+    static func save<Value: RawRepresentable>(
         for key: Entry<Value>,
         value: Value?
     ) {
         UserDefaults.standard.set(value?.rawValue, forKey: key.rawValue)
     }
 
-    func value<Value: RawRepresentable>(
+    static func value<Value: RawRepresentable>(
         for key: Entry<Value>
     ) -> Value? {
         guard let rawValue = UserDefaults.standard.object(forKey: key.rawValue)

@@ -15,8 +15,6 @@ extension Synchronizer {
         
         private let monitor = AiCloudContainerMonitor(filename: FileName.sidecar)
         
-        private let pieceSaver = PieceSaver()
-        
         private let _incoming = PassthroughSubject<Result<Paths, Error>, Never>()
         
         var incoming: AnyPublisher<Result<Paths, Error>, Never> { _incoming.eraseToAnyPublisher() }
@@ -83,7 +81,7 @@ extension Synchronizer {
                         return Empty().eraseToAnyPublisher()
                     }
                     .filter({ incoming in
-                        if let saved = self.pieceSaver.value(for: PieceSaver.Key.appIdentifier) {
+                        if let saved = Pref.value(for: Pref.Key.appIdentifier) {
                             return incoming != saved
                         }
                         return true
@@ -91,7 +89,7 @@ extension Synchronizer {
                     .delay(for: .seconds(2), scheduler: RunLoop.main)
                     .sink(receiveValue: { [weak self] identifier in
                         guard let this = self else { return }
-                        this.pieceSaver.save(for: PieceSaver.Key.appIdentifier, value: identifier)
+                        Pref.save(for: Pref.Key.appIdentifier, value: identifier)
                         do {
                             let paths = try this.getPaths()
                             this._incoming.send(.success(paths))
