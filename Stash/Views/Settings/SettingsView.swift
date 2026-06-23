@@ -51,7 +51,7 @@ struct SettingsView: View {
         return String(path.lastPathComponent.split(separator: ".")[0])
     }
     
-    private func synchronizerApproachDescription(_ approach: Synchronizer.Approach) -> String {
+    private func synchronizerApproachDescription(_ approach: Synchronizer.Option) -> String {
         switch approach {
         case .local: return "Local"
         case .icloud: return "iCloud"
@@ -94,7 +94,7 @@ struct SettingsView: View {
             
             Section("Synchronization") {
                 Picker("Approach", selection: $viewModel.synchronizerApproach) {
-                    ForEach(Synchronizer.Approach.allCases) { approach in
+                    ForEach(Synchronizer.Option.allCases) { approach in
                         Text(synchronizerApproachDescription(approach)).tag(approach)
                     }
                 }

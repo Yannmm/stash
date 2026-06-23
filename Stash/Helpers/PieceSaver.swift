@@ -28,7 +28,7 @@ class PieceSaver {
         static let recentKeys = Entry<[String]>("recentKeys")
         static let appIdentifier = Entry<String>("appIdentifier")
         static let migration3_0 = Entry<Bool>("migration3_0")
-        static let synchronizerApproach = Entry<Synchronizer.Approach>("synchronizerApproach")
+        static let synchronizerApproach = Entry<Synchronizer.Option>("synchronizerApproach")
     }
 
     func save<Value>(for key: Entry<Value>, value: Value?) {

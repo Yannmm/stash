@@ -9,20 +9,11 @@ import Foundation
 import Combine
 
 class Synchronizer {
-    var approach: Approach! {
+    var approach: Option {
         didSet {
             Task {
                 do {
-//                    try self.currentProvider?.dispose()
-//                    switch approach {
-//                    case .icloud:
-//                        self.provider = try await AiCloudProvider.initialize()
-//                    case .local:
-//                        self.provider = nil
-//                    case .dropbox:
-//                        fatalError("Not impelmented")
-//                    }
-                    try await self.selection.provider.synchronize(source: try self.getPaths())
+                    try await self.selection.provider.send(content: .file(try self.localStorageProvider.getPaths()))
                 } catch {
                     // TODO: handle initialize failure error. alert user or reinitailize???
                     print("there is an error: \(error)")
@@ -31,106 +22,89 @@ class Synchronizer {
         }
     }
     
-    private let pieceSaver: PieceSaver
-    
-    private var sidecarMonitor: FileMonitor!
-    
     private var cancellables = Set<AnyCancellable>()
     
-    private var providers: [Approach: any Provider]
+    private var providers: [Option: any Provider]
     
-    private var availabilities: [Approach: Availability]!
+    private var availabilities: [Option: Availability]!
     
     var selection: Selection { Selection(approach: approach, available: availabilities[approach]!, provider: providers[approach]!) }
+    
+    private var localStorageProvider: Provider!
  
-    init(providers: [Approach: any Provider], pieceSaver: PieceSaver) {
-        self.pieceSaver = pieceSaver
+    init(approach: Option, providers: [Option: any Provider]) {
+        self.approach = approach
         self.providers = providers
         self.availabilities = providers.mapValues({ _ in Availability.checking })
-        
-        let paths = try! getPaths()
-        self.sidecarMonitor = FileMonitor(paths.sidecar)
+        self.localStorageProvider = providers[.local] ?? LocalStorageProvider()
         bind()
-        
-        sidecarMonitor.start()
     }
     
     // TODO: always write to pref before update local sidecar file when update within the current app
     
     private func bind() {
+        localStorageProvider.incoming.sink { result in
+            let selection = self.selection
+            guard selection.available == .yes else { return }
+//            Task {
+//                do {
+//                    switch result {
+//                    case .success(let paths):
+//                        try await selection.provider.send(content: .file(paths))
+//                    case .failure(let error):
+//                        print(error)
+//                        break
+//                    }
+//                    
+//                } catch {
+//                    print("there is error \(error)")
+//                }
+//            }
+            
+            print("try to upload to: \(selection)")
+        }
+        .store(in: &cancellables)
+        
+        
         for x in providers {
             let a = x.value.available.sink { a in
                 self.availabilities[x.key] = a
             }
         }
         
-        sidecarMonitor.onChange
-            .tryMap({ try String(contentsOf: $0, encoding: .utf8) })
-            .catch { error -> AnyPublisher<String, Never> in
-                ErrorTracker.shared.add(error)
-                return Empty().eraseToAnyPublisher()
-            }
-            .filter { [weak self] event in
-                let appid = self?.pieceSaver.value(for: PieceSaver.Key.appIdentifier) ?? ""
-                return appid == event
-            }
-//            .delay(for: .seconds(2), scheduler: RunLoop.main)
-            .sink { x in
-                let selection = self.selection
-                guard selection.available == .yes else { return }
-                Task {
-                    do {
-                        try await selection.provider.synchronize(source: try self.getPaths())
-                    } catch {
-                        print("there is error \(error)")
-                    }
-                }
-            }
-            .store(in: &cancellables)
+//        sidecarMonitor.onChange
+//            .tryMap({ try String(contentsOf: $0, encoding: .utf8) })
+//            .catch { error -> AnyPublisher<String, Never> in
+//                ErrorTracker.shared.add(error)
+//                return Empty().eraseToAnyPublisher()
+//            }
+//            .filter { [weak self] event in
+//                let appid = self?.pieceSaver.value(for: PieceSaver.Key.appIdentifier) ?? ""
+//                return appid == event
+//            }
+////            .delay(for: .seconds(2), scheduler: RunLoop.main)
+//            .sink { x in
+//                let selection = self.selection
+//                guard selection.available == .yes else { return }
+//                Task {
+//                    do {
+//                        try await selection.provider.send(content: .file(try self.localStorageProvider.getPaths()))
+//                    } catch {
+//                        print("there is error \(error)")
+//                    }
+//                }
+//            }
+//            .store(in: &cancellables)
     }
     
     func save(document html: String) async throws {
-        let paths = try getPaths()
-        try html.write(to: paths.document, atomically: true, encoding: .utf8)
-        let appid = UUID().uuidString
-        pieceSaver.save(for: PieceSaver.Key.appIdentifier, value: appid)
-        try appid.write(to: paths.sidecar, atomically: true, encoding: .utf8)
+        try await localStorageProvider.send(content: .html(html))
     }
     
     func load() throws -> String {
-        let paths = try getPaths()
+        // TODO: should I refine this????
+        let paths = try localStorageProvider.getPaths()
         return try String(contentsOf: paths.document, encoding: .utf8)
-    }
-    
-//    private func spawnProvider() {
-//        Task {
-//            do {
-//                try self.currentProvider?.dispose()
-//                switch approach {
-//                case .icloud:
-//                    self.provider = try await AiCloudProvider.initialize()
-//                case .local:
-//                    self.provider = nil
-//                case .dropbox:
-//                    fatalError("Not impelmented")
-//                }
-//                
-//                try await self.provider?.synchronize(source: try self.getPaths())
-//            } catch {
-//                // TODO: handle initialize failure error. alert user or reinitailize???
-//                print("there is an error: \(error)")
-//            }
-//        }
-//    }
-    
-    private func getPaths() throws -> Paths {
-        let fileManager = FileManager.default
-        guard let support = fileManager.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { throw SomeError.missingApplicationSupportDirectory}
-        let direcotry = support.appendingPathComponent("Stash", isDirectory: true)
-        if !fileManager.fileExists(atPath: direcotry.path) {
-            try fileManager.createDirectory(at: direcotry, withIntermediateDirectories: true, attributes: nil)
-        }
-        return Paths(document: direcotry.appendingPathComponent(Synchronizer.FileName.document), sidecar: direcotry.appendingPathComponent(Synchronizer.FileName.sidecar))
     }
     
     enum SomeError: Error, LocalizedError {
@@ -140,17 +114,11 @@ class Synchronizer {
 
 extension Synchronizer {
     protocol Provider {
-//        static func initialize() async throws -> Self
+        // Downstream
+        var incoming: AnyPublisher<Result<Paths, Error>, Never> { get }
         
-//        func dispose() throws
-        
-        /// Synchronize down
-        var onRemoteChange: AnyPublisher<Result<URL, Error>, Never> { get }
-        
-        /// Synchronize up
-        func synchronize(source: Paths) async throws
-        
-//        func available() async -> Availability
+        // Upstream
+        func send(content: Synchronizer.Content) async throws
         
         var available: AnyPublisher<Availability, Never> { get }
         
@@ -160,8 +128,9 @@ extension Synchronizer {
             // ask user to signin
             // etc
         
-        
         func pause() async throws
+        
+        func getPaths() throws -> Paths
     }
     
     struct Paths {
@@ -174,7 +143,7 @@ extension Synchronizer {
         static let sidecar = "nustash_index.html.sidecar"
     }
     
-    enum Approach: String, CaseIterable, Identifiable {
+    enum Option: String, CaseIterable, Identifiable {
         var id: String { rawValue }
         
         case icloud
@@ -196,16 +165,36 @@ extension Synchronizer {
             }
         }
         
-        
-        
         case checking
         case yes
         case no(Error?)
     }
     
+    enum Content {
+        case file(Paths)
+        case html(String)
+    }
+    
     struct Selection {
-        let approach: Approach
+        let approach: Option
         let available: Availability
         let provider: Provider
+    }
+}
+
+extension Synchronizer.Provider {
+    func send(content: Synchronizer.Content) async throws {
+        switch content {
+        case .file(let from):
+            let to = try getPaths()
+            guard from.document != to.document && from.sidecar != to.sidecar else { return }
+            try await FileHelper.replaceFile(from: from.document, to: to.document)
+            try await FileHelper.replaceFile(from: from.sidecar, to: to.sidecar)
+        case .html(let html):
+            let to = try getPaths()
+            try html.write(to: to.document, atomically: true, encoding: .utf8)
+            let appid = UUID().uuidString
+            try appid.write(to: to.sidecar, atomically: true, encoding: .utf8)
+        }
     }
 }

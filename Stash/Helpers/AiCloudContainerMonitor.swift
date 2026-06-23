@@ -8,7 +8,7 @@
 import Foundation
 import Combine
 
-class IcloudContainerMonitor {
+class AiCloudContainerMonitor {
     @Published var onChange: URL?
     
     private let filename: String

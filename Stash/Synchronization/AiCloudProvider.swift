@@ -13,13 +13,13 @@ extension Synchronizer {
         
         private var monitorHandle: AnyCancellable?
         
-        private let monitor = IcloudContainerMonitor(filename: FileName.sidecar)
+        private let monitor = AiCloudContainerMonitor(filename: FileName.sidecar)
         
         private let pieceSaver = PieceSaver()
         
-        private let _onRemoteChange = PassthroughSubject<Result<URL, Error>, Never>()
+        private let _incoming = PassthroughSubject<Result<Paths, Error>, Never>()
         
-        var onRemoteChange: AnyPublisher<Result<URL, Error>, Never> { _onRemoteChange.eraseToAnyPublisher() }
+        var incoming: AnyPublisher<Result<Paths, Error>, Never> { _incoming.eraseToAnyPublisher() }
         
         private let _available = PassthroughSubject<Availability, Never>()
         
@@ -73,13 +73,6 @@ extension Synchronizer {
             }
         }
         
-        
-        func synchronize(source: Paths) async throws {
-            let paths = try getPaths()
-            try await FileHelper.replaceFile(from: source.document, to: paths.document)
-            try await FileHelper.replaceFile(from: source.sidecar, to: paths.sidecar)
-        }
-        
         func monitor(_ start: Bool) {
             if start {
                 monitorHandle = monitor.$onChange
@@ -101,9 +94,9 @@ extension Synchronizer {
                         this.pieceSaver.save(for: PieceSaver.Key.appIdentifier, value: identifier)
                         do {
                             let paths = try this.getPaths()
-                            this._onRemoteChange.send(.success(paths.document))
+                            this._incoming.send(.success(paths))
                         } catch {
-                            this._onRemoteChange.send(.failure(error))
+                            this._incoming.send(.failure(error))
                         }
                     })
                 
@@ -115,7 +108,7 @@ extension Synchronizer {
             }
         }
         
-        private func getPaths() throws -> Paths {
+        func getPaths() throws -> Paths {
             let mgr = FileManager.default
             
             guard let container = mgr.url(forUbiquityContainerIdentifier: nil) else { throw SomeError.icloudContainerUnavailable  }

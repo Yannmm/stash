@@ -24,7 +24,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var editWindow: NSWindow?
     
     private lazy var settingsViewModel: SettingsViewModel = {
-        let viewModel = SettingsViewModel(housekeeper: housekeeper)
+        let viewModel = SettingsViewModel(
+            onReset: {
+                try self.housekeeper.removeAll()
+            },
+            onImport: { from , fileType, replace in
+                try self.housekeeper.import(from: from, fileType: fileType, replace: replace)
+            },
+            onExport: { to, suffix in
+                try self.housekeeper.export(to: to, suffix: suffix)
+            },
+            onChangeApproach: { approach in
+                self.housekeeper.synchronizer.approach = approach
+            })
+        
         return viewModel
     }()
     
@@ -34,11 +47,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }()
     
     internal let housekeeper = Housekeeper(synchronizer: Synchronizer(
+        approach: .local,
         providers: [
             .local: Synchronizer.LocalStorageProvider(),
             .dropbox: Synchronizer.DropboxProvider(),
             .icloud: Synchronizer.AiCloudProvider()
-    ], pieceSaver: PieceSaver()))
+        ]))
     
     private var updateChecker: UpdateChecker { UpdateChecker.shared }
     
@@ -50,12 +64,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private var window2: NSWindow?
     
+    private func initialize() {
+//        let provider = pieceSaver.value(for: PieceSaver.Key.synchronizerApproach) ?? .local
+    }
+    
     func applicationWillFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         
-        // TODO: remove this line
-        //        ImageCache.default.diskStorage.config.expiration = .days(1)
-        //        ImageCache.default.clearDiskCache()
+        initialize()
         
         Task {
             try? await updateChecker.check()

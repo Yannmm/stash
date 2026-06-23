@@ -13,14 +13,14 @@ import Combine
 extension Synchronizer {
     final class DropboxProvider: Provider {
         
-        
-        func synchronize(source: Synchronizer.Paths) async throws {
-            
+        func getPaths() throws -> Paths {
+            // TODO: not work
+            return Paths(document: URL(string: "")!, sidecar: URL(string: "")!)
         }
         
-        private let _onRemoteChange = PassthroughSubject<Result<URL, Error>, Never>()
+        private let _incoming = PassthroughSubject<Result<Paths, Error>, Never>()
         
-        var onRemoteChange: AnyPublisher<Result<URL, Error>, Never> { _onRemoteChange.eraseToAnyPublisher() }
+        var incoming: AnyPublisher<Result<Paths, Error>, Never> { _incoming.eraseToAnyPublisher() }
         
         private let _available = PassthroughSubject<Availability, Never>()
         

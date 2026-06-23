@@ -25,19 +25,23 @@ class SettingsViewModel: ObservableObject {
     @Published var checkedVersionDescription: String = ""
     @Published var newReleaseNotes: String?
     @Published var error: Error?
-    @Published var synchronizerApproach: Synchronizer.Approach
+    @Published var synchronizerApproach: Synchronizer.Option
     
     private var cancellables = Set<AnyCancellable>()
     private let pieceSaver = PieceSaver()
     private let appHotKeyManager = HotKeyManager(action: .menu)
     private let searchHotKeyManager = HotKeyManager(action: .search)
-    private let housekeeper: Housekeeper
+    
+    private let onReset: () throws -> Void
+    private let onImport: (URL, String.FileType, Bool) throws -> Void
+    private let onExport: (URL, String?) throws -> URL
+    private let onChangeApproach: (Synchronizer.Option) -> Void
     
     // TODO: add checking status in menu when is checking
-//        self.approach = pieceSaver.value(for: PieceSaver.Key.synchronizerApproach) ?? .local
+    //        self.approach = pieceSaver.value(for: PieceSaver.Key.synchronizerApproach) ?? .local
     
     
-    var empty: Bool { housekeeper.storedEntries.isEmpty }
+    var empty: Bool { false }
     
     private lazy var timestampFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -47,7 +51,7 @@ class SettingsViewModel: ObservableObject {
     }()
     
     func reset() throws {
-        try housekeeper.removeAll()
+        try self.onReset()
     }
     
     
@@ -59,12 +63,21 @@ class SettingsViewModel: ObservableObject {
     }
     
     func `import`(_ filePath: URL, fileType: String.FileType, replace: Bool) throws {
-        try housekeeper.import(from: filePath, fileType: fileType, replace: replace)
+        try self.onImport(filePath, fileType, replace)
         self.importFromFile = filePath
     }
     
-    init(housekeeper: Housekeeper) {
-        self.housekeeper = housekeeper
+    init(
+        onReset: @escaping () throws -> Void,
+        onImport: @escaping (URL, String.FileType, Bool) throws -> Void,
+        onExport: @escaping (URL, String?) throws -> URL,
+        onChangeApproach: @escaping (Synchronizer.Option) -> Void
+    ) {
+        self.onReset = onReset
+        self.onImport = onImport
+        self.onExport = onExport
+        self.onChangeApproach = onChangeApproach
+        
         collapseHistory = pieceSaver.value(for: PieceSaver.Key.collapseHistory) ?? false
         launchOnLogin = RocketLauncher.shared.enabled
         showDockIcon = pieceSaver.value(for: PieceSaver.Key.showDockIcon) ?? false
@@ -159,29 +172,28 @@ class SettingsViewModel: ObservableObject {
             .compactMap({ $0 })
             .sink { [unowned self] in
                 do {
-                    self.exportToFile = try self.housekeeper.export(to: $0, suffix: "_\(self.timestampFormatter.string(from: Date.now))")
+                    self.exportToFile = try self.onExport($0, "_\(self.timestampFormatter.string(from: Date.now))")
                 } catch {
                     self.error = error
                 }
             }
             .store(in: &cancellables)
         
-//        updateChcker.$new
-//            .sink { [unowned self] update in
-//                if let v = update {
-//                    self.checkedVersionDescription = "New Version Available: \(v.version)"
-//                } else {
-//                    self.checkedVersionDescription = "You're Up to Date"
-//                }
-//                self.newReleaseNotes = update?.releaseNotes
-//            }
-//            .store(in: &cancellables)
+        //        updateChcker.$new
+        //            .sink { [unowned self] update in
+        //                if let v = update {
+        //                    self.checkedVersionDescription = "New Version Available: \(v.version)"
+        //                } else {
+        //                    self.checkedVersionDescription = "You're Up to Date"
+        //                }
+        //                self.newReleaseNotes = update?.releaseNotes
+        //            }
+        //            .store(in: &cancellables)
         
         $synchronizerApproach
             .dropFirst()
             .sink { [weak self] in
-                self?.housekeeper.synchronizer.approach = $0
-                // 如果 approach 切换失败，这里不应该保存，而是应该给用户提示,并退回之前的选择
+                self?.onChangeApproach($0)
                 self?.pieceSaver.save(for: PieceSaver.Key.synchronizerApproach, value: $0)
             }
             .store(in: &cancellables)
