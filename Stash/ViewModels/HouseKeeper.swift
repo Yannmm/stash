@@ -23,6 +23,27 @@ class Housekeeper: ObservableObject {
     
     init(synchronizer: Synchronizer) {
         self.synchronizer = synchronizer
+        bind()
+        reload()
+    }
+
+    private func bind() {
+        synchronizer.onRemoteDataApplied
+            .receive(on: RunLoop.main)
+            .sink { [weak self] in
+                self?.reload()
+            }
+            .store(in: &cancellables)
+    }
+
+    func reload() {
+        Task.detached(priority: .utility) { [weak self] in
+            do {
+                try self?._load()
+            } catch {
+                ErrorTracker.shared.add(error)
+            }
+        }
     }
     
     func update(entry: any Entry) throws {
@@ -86,9 +107,7 @@ class Housekeeper: ObservableObject {
 extension Housekeeper {
     func save() throws {
         let html = try toNetscapeBookmarkFile()
-        Task.detached {
-            try await self.synchronizer.save(document: html)
-        }
+        synchronizer.save(document: html)
         
         // In case for import
         let recents = storedEntries.map({ e in
@@ -105,17 +124,6 @@ extension Housekeeper {
         
         DispatchQueue.main.async { [weak self] in
             self?.recentEntries = recents
-        }
-    }
-    
-    private func load() {
-        // Task {} will inherit MainActor but Task.detached does not.
-        Task.detached(priority: .utility) { [weak self] in
-            do {
-                try self?._load()
-            } catch {
-                ErrorTracker.shared.add(error)
-            }
         }
     }
     

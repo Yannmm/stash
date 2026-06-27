@@ -40,34 +40,51 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var window2: NSWindow?
     
     private func initialize() {
-        let provider = Pref.value(for: Pref.Key.synchronizerApproach) ?? .local
+        let savedApproach = Pref.value(for: Pref.Key.synchronizerApproach) ?? Synchronizer.Option.local
         let localProvider = Synchronizer.LocalStorageProvider()
-        let hk = Housekeeper(synchronizer: Synchronizer(
-            approach: provider,
-            providers: [
-                .local: localProvider,
-                .dropbox: Synchronizer.DropboxProvider(),
-                .icloud: Synchronizer.AiCloudProvider()
-            ],
-            localProvider: localProvider))
+        let providers: [Synchronizer.Option: any Synchronizer.Provider] = [
+            .local: localProvider,
+            .dropbox: Synchronizer.DropboxProvider(),
+            .icloud: Synchronizer.AiCloudProvider()
+        ]
+        let synchronizer = Synchronizer(
+            approach: savedApproach,
+            providers: providers,
+            localProvider: localProvider
+        )
+
+        if savedApproach != .local, let remote = providers[savedApproach] {
+            Task { try? await remote.prepare() }
+        }
+
+        let hk = Housekeeper(synchronizer: synchronizer)
         self.housekeeper = hk
-        
-        self.settingsViewModel = SettingsViewModel(
-            provider: provider,
+
+        let svm = SettingsViewModel(
+            provider: savedApproach,
             onReset: {
                 try hk.removeAll()
             },
-            onImport: { from , fileType, replace in
+            onImport: { from, fileType, replace in
                 try hk.import(from: from, fileType: fileType, replace: replace)
             },
             onExport: { to, suffix in
                 try hk.export(to: to, suffix: suffix)
             },
             onChangeApproach: { approach in
-                hk.synchronizer.approach = approach
+                synchronizer.approach = approach
             })
-        
+        svm.onCheckAvailability = { [providers] option in
+            guard let provider = providers[option] else { return .no(nil) }
+            return await provider.checkAvailability()
+        }
+        self.settingsViewModel = svm
+
         self.searchViewModel = SearchViewModel(housekeeper: hk)
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        Task { await housekeeper.synchronizer.sync() }
     }
     
     func applicationWillFinishLaunching(_ notification: Notification) {

@@ -26,7 +26,18 @@ class SettingsViewModel: ObservableObject {
     @Published var newReleaseNotes: String?
     @Published var error: Error?
     @Published var synchronizerApproach: Synchronizer.Option
-    
+    @Published var availability: Synchronizer.Availability?
+
+    var onCheckAvailability: ((Synchronizer.Option) async -> Synchronizer.Availability)?
+
+    func refreshAvailability() {
+        guard let check = onCheckAvailability else { return }
+        let current = synchronizerApproach
+        Task { @MainActor in
+            self.availability = await check(current)
+        }
+    }
+
     private var cancellables = Set<AnyCancellable>()
     private let appHotKeyManager = HotKeyManager(action: .menu)
     private let searchHotKeyManager = HotKeyManager(action: .search)
@@ -193,6 +204,7 @@ class SettingsViewModel: ObservableObject {
             .sink { [weak self] in
                 self?.onChangeApproach($0)
                 Pref.save(for: Pref.Key.synchronizerApproach, value: $0)
+                self?.refreshAvailability()
             }
             .store(in: &cancellables)
         
