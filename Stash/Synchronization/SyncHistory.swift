@@ -10,6 +10,7 @@ extension Synchronizer {
 
         private let fileURL: URL
         private let cap = 100
+        private let queue = DispatchQueue(label: "com.stash.sync-history")
         private(set) var entries: [Entry] = []
 
         init() {
@@ -19,16 +20,18 @@ extension Synchronizer {
                 try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
             }
             fileURL = dir.appendingPathComponent("sync_history.json")
-            load()
+            queue.sync { load() }
         }
 
         func log(action: String, sidecar: SidecarData) {
-            let entry = Entry(timestamp: sidecar.timestamp, device: sidecar.device, action: action)
-            entries.append(entry)
-            if entries.count > cap {
-                entries = Array(entries.suffix(cap))
+            queue.sync {
+                let entry = Entry(timestamp: sidecar.timestamp, device: sidecar.device, action: action)
+                entries.append(entry)
+                if entries.count > cap {
+                    entries = Array(entries.suffix(cap))
+                }
+                save()
             }
-            save()
         }
 
         private func load() {

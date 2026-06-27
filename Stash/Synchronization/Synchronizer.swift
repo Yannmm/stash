@@ -12,7 +12,13 @@ class Synchronizer {
     var approach: Option {
         didSet {
             guard approach != oldValue else { return }
-            Task { await sync() }
+            let oldProvider = providers[oldValue]
+            let newProvider = remoteProvider
+            Task {
+                try? await oldProvider?.pause()
+                try? await newProvider?.prepare()
+                await sync()
+            }
         }
     }
 
