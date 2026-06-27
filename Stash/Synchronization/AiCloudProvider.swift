@@ -10,122 +10,115 @@ import Combine
 
 extension Synchronizer {
     final class AiCloudProvider: Provider {
-        
-        private var monitorHandle: AnyCancellable?
-        
+        private let _incoming = PassthroughSubject<SidecarData, Never>()
+        var incoming: AnyPublisher<SidecarData, Never> { _incoming.eraseToAnyPublisher() }
+
         private let monitor = AiCloudContainerMonitor(filename: FileName.sidecar)
-        
-        private let _incoming = PassthroughSubject<Result<Paths, Error>, Never>()
-        
-        var incoming: AnyPublisher<Result<Paths, Error>, Never> { _incoming.eraseToAnyPublisher() }
-        
-        private let _available = PassthroughSubject<Availability, Never>()
-        
-        var available: AnyPublisher<Synchronizer.Availability, Never> { _available.eraseToAnyPublisher() }
-        
-        func prepare() async throws {
-            checkAvailability()
-            monitor(true)
-        }
-        
-        func pause() async throws {
-            monitor(false)
-        }
-        
+        private var monitorHandle: AnyCancellable?
+
         init() {}
-        
+
         deinit {
-            monitor(false)
+            stopMonitor()
         }
-        
-        
-        
-        static func initialize() async throws -> Synchronizer.AiCloudProvider {
+
+        // MARK: - Protocol
+
+        func checkAvailability() async -> Availability {
             let available = await withCheckedContinuation { continuation in
                 DispatchQueue.global(qos: .utility).async {
                     let url = FileManager.default.url(forUbiquityContainerIdentifier: nil)
                     continuation.resume(returning: url != nil)
                 }
             }
-            if available {
-                return AiCloudProvider()
-            } else {
-                throw SomeError.icloudContainerUnavailable
-            }
+            return available ? .yes : .no(ProviderError.icloudContainerUnavailable)
         }
-        
-        private func checkAvailability() {
-            Task {
-                _available.send(.checking)
-                let available = await withCheckedContinuation { continuation in
-                    DispatchQueue.global(qos: .utility).async {
-                        let url = FileManager.default.url(forUbiquityContainerIdentifier: nil)
-                        continuation.resume(returning: url != nil)
+
+        func readSidecar() async throws -> SidecarData {
+            let url = try sidecarURL()
+            let data = try Data(contentsOf: url)
+            return try JSONDecoder().decode(SidecarData.self, from: data)
+        }
+
+        func readDocument() async throws -> Data {
+            let url = try documentURL()
+            return try Data(contentsOf: url)
+        }
+
+        func send(document: Data, sidecar: SidecarData) async throws {
+            let docURL = try documentURL()
+            let scURL = try sidecarURL()
+            try document.write(to: docURL, options: .atomic)
+            let sidecarData = try JSONEncoder().encode(sidecar)
+            try sidecarData.write(to: scURL, options: .atomic)
+        }
+
+        func prepare() async throws {
+            startMonitor()
+        }
+
+        func pause() async throws {
+            stopMonitor()
+        }
+
+        // MARK: - Monitor
+
+        private func startMonitor() {
+            monitorHandle = monitor.$onChange
+                .compactMap { $0 }
+                .delay(for: .seconds(2), scheduler: RunLoop.main)
+                .sink { [weak self] _ in
+                    guard let self else { return }
+                    do {
+                        let url = try self.sidecarURL()
+                        let data = try Data(contentsOf: url)
+                        let sidecar = try JSONDecoder().decode(SidecarData.self, from: data)
+                        self._incoming.send(sidecar)
+                    } catch {
+                        print("[iCloud] failed to parse incoming sidecar: \(error)")
                     }
                 }
-                if available {
-                    _available.send(.yes)
-                } else {
-                    _available.send(.no(SomeError.icloudContainerUnavailable))
-                }
-            }
+            monitor.start()
         }
-        
-        func monitor(_ start: Bool) {
-            if start {
-                monitorHandle = monitor.$onChange
-                    .compactMap({ $0 })
-                    .tryMap({ try String(contentsOf: $0, encoding: .utf8) })
-                    .catch { error -> AnyPublisher<String, Never> in
-                        ErrorTracker.shared.add(error)
-                        return Empty().eraseToAnyPublisher()
-                    }
-                    .filter({ incoming in
-                        if let saved = Pref.value(for: Pref.Key.appIdentifier) {
-                            return incoming != saved
-                        }
-                        return true
-                    })
-                    .delay(for: .seconds(2), scheduler: RunLoop.main)
-                    .sink(receiveValue: { [weak self] identifier in
-                        guard let this = self else { return }
-                        Pref.save(for: Pref.Key.appIdentifier, value: identifier)
-                        do {
-                            let paths = try this.getPaths()
-                            this._incoming.send(.success(paths))
-                        } catch {
-                            this._incoming.send(.failure(error))
-                        }
-                    })
-                
-                monitor.start()
-            } else {
-                monitor.stop()
-                monitorHandle?.cancel()
-                monitorHandle = nil
-            }
+
+        private func stopMonitor() {
+            monitor.stop()
+            monitorHandle?.cancel()
+            monitorHandle = nil
         }
-        
-        func getPaths() throws -> Paths {
-            let mgr = FileManager.default
-            
-            guard let container = mgr.url(forUbiquityContainerIdentifier: nil) else { throw SomeError.icloudContainerUnavailable  }
-            
+
+        // MARK: - Paths
+
+        private func containerDocumentsURL() throws -> URL {
+            guard let container = FileManager.default.url(forUbiquityContainerIdentifier: nil) else {
+                throw ProviderError.icloudContainerUnavailable
+            }
             let documents = container.appendingPathComponent("Documents")
-            
-            if !mgr.fileExists(atPath: documents.path) {
-                try mgr.createDirectory(at: documents, withIntermediateDirectories: true, attributes: nil)
+            if !FileManager.default.fileExists(atPath: documents.path) {
+                try FileManager.default.createDirectory(at: documents, withIntermediateDirectories: true)
             }
-            
-            return Paths(document: documents.appendingPathComponent(FileName.document), sidecar: documents.appendingPathComponent(FileName.sidecar))
+            return documents
+        }
+
+        private func documentURL() throws -> URL {
+            try containerDocumentsURL().appendingPathComponent(FileName.document)
+        }
+
+        private func sidecarURL() throws -> URL {
+            try containerDocumentsURL().appendingPathComponent(FileName.sidecar)
         }
     }
 }
 
 extension Synchronizer.AiCloudProvider {
-    enum SomeError: Error, LocalizedError {
+    enum ProviderError: Error, LocalizedError {
         case icloudContainerUnavailable
+
+        var errorDescription: String? {
+            switch self {
+            case .icloudContainerUnavailable:
+                return "iCloud container is not available"
+            }
+        }
     }
 }
-
-
