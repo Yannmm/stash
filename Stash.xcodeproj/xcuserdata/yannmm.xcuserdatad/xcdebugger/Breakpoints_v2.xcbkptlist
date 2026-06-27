@@ -17,5 +17,65 @@
             </Locations>
          </BreakpointContent>
       </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "DABF7B1E-882C-4FA2-8D2B-FE963A81629C"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Stash/Synchronization/Synchronizer.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "16"
+            endingLineNumber = "16"
+            landmarkName = "approach"
+            landmarkType = "24">
+            <Locations>
+               <Location
+                  uuid = "DABF7B1E-882C-4FA2-8D2B-FE963A81629C - ab70f365c5537942"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(1) suspend resume partial function for closure #1 () async -&gt; () in Nustash.Synchronizer.approach.didset : Nustash.Synchronizer.Option"
+                  moduleName = "Nustash.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/CHIPFANCIER/Stash/gwt/revert_synchronizer/Stash/Synchronization/Synchronizer.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "16"
+                  endingLineNumber = "16">
+               </Location>
+               <Location
+                  uuid = "DABF7B1E-882C-4FA2-8D2B-FE963A81629C - 1d3918ee4f4f3814"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(2) await resume partial function for closure #1 () async -&gt; () in Nustash.Synchronizer.approach.didset : Nustash.Synchronizer.Option"
+                  moduleName = "Nustash.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/CHIPFANCIER/Stash/gwt/revert_synchronizer/Stash/Synchronization/Synchronizer.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "16"
+                  endingLineNumber = "16">
+               </Location>
+               <Location
+                  uuid = "DABF7B1E-882C-4FA2-8D2B-FE963A81629C - 5825863ca10a86c5"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(4) suspend resume partial function for closure #1 () async -&gt; () in Nustash.Synchronizer.approach.didset : Nustash.Synchronizer.Option"
+                  moduleName = "Nustash.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/CHIPFANCIER/Stash/gwt/revert_synchronizer/Stash/Synchronization/Synchronizer.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "16"
+                  endingLineNumber = "16">
+               </Location>
+            </Locations>
+         </BreakpointContent>
+      </BreakpointProxy>
    </Breakpoints>
 </Bucket>

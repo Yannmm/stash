@@ -78,13 +78,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             guard let provider = providers[option] else { return .no(nil) }
             return await provider.checkAvailability()
         }
+        svm.refreshAvailability()
         self.settingsViewModel = svm
 
         self.searchViewModel = SearchViewModel(housekeeper: hk)
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
-        Task { await housekeeper.synchronizer.sync() }
+        guard let hk = housekeeper else { return }
+        Task { await hk.synchronizer.sync() }
     }
     
     func applicationWillFinishLaunching(_ notification: Notification) {
