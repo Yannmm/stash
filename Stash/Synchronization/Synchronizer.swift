@@ -127,6 +127,11 @@ class Synchronizer {
 // MARK: - Protocol & Types
 
 extension Synchronizer {
+    enum FileName {
+        static let document = "nustash_index.html"
+        static let sidecar = "nustash_index.html.sidecar"
+    }
+
     protocol Provider {
         var incoming: AnyPublisher<SidecarData, Never> { get }
         func readSidecar() async throws -> SidecarData
