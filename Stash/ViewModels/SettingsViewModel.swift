@@ -94,9 +94,7 @@ class SettingsViewModel: ObservableObject {
            let modifiers = Pref.value(for: Pref.Key.searchShortcutModifiers) {
             searchShortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
         }
-        
-        self.setAppIdentifier()
-        
+
         bind()
     }
     
@@ -206,7 +204,7 @@ class SettingsViewModel: ObservableObject {
     
     var currentVersionDescription: String {
         var result = " ("
-        
+
         if let version = Bundle.main.version {
             result += "v\(version)"
         }
@@ -214,12 +212,6 @@ class SettingsViewModel: ObservableObject {
             result += "·b\(build)"
         }
         return result + ")"
-    }
-    
-    private func setAppIdentifier() {
-        
-        guard Pref.value(for: Pref.Key.appIdentifier) == nil else { return }
-        Pref.save(for: Pref.Key.appIdentifier, value: UUID().uuidString)
     }
 }
 

@@ -41,13 +41,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func initialize() {
         let provider = Pref.value(for: Pref.Key.synchronizerApproach) ?? .local
+        let localProvider = Synchronizer.LocalStorageProvider()
         let hk = Housekeeper(synchronizer: Synchronizer(
             approach: provider,
             providers: [
-                .local: Synchronizer.LocalStorageProvider(),
+                .local: localProvider,
                 .dropbox: Synchronizer.DropboxProvider(),
                 .icloud: Synchronizer.AiCloudProvider()
-            ]))
+            ],
+            localProvider: localProvider))
         self.housekeeper = hk
         
         self.settingsViewModel = SettingsViewModel(
