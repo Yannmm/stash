@@ -11,190 +11,158 @@ import Combine
 class Synchronizer {
     var approach: Option {
         didSet {
-            Task {
-                do {
-                    try await self.selection.provider.send(content: .file(try self.localStorageProvider.getPaths()))
-                } catch {
-                    // TODO: handle initialize failure error. alert user or reinitailize???
-                    print("there is an error: \(error)")
-                }
-            }
+            guard approach != oldValue else { return }
+            Task { await sync() }
         }
     }
-    
+
+    let onRemoteDataApplied: AnyPublisher<Void, Never>
+    private let _onRemoteDataApplied = PassthroughSubject<Void, Never>()
+
     private var cancellables = Set<AnyCancellable>()
-    
-    private var providers: [Option: any Provider]
-    
-    private var availabilities: [Option: Availability]!
-    
-    var selection: Selection { Selection(approach: approach, available: availabilities[approach]!, provider: providers[approach]!) }
-    
-    private var localStorageProvider: Provider!
- 
-    init(approach: Option, providers: [Option: any Provider]) {
+    private let providers: [Option: any Provider]
+    private let localProvider: LocalStorageProvider
+    private let history = History()
+
+    private var remoteProvider: (any Provider)? {
+        guard approach != .local else { return nil }
+        return providers[approach]
+    }
+
+    init(approach: Option, providers: [Option: any Provider], localProvider: LocalStorageProvider) {
         self.approach = approach
         self.providers = providers
-        self.availabilities = providers.mapValues({ _ in Availability.checking })
-        self.localStorageProvider = providers[.local] ?? LocalStorageProvider()
+        self.localProvider = localProvider
+        self.onRemoteDataApplied = _onRemoteDataApplied.eraseToAnyPublisher()
         bind()
     }
-    
-    // TODO: always write to pref before update local sidecar file when update within the current app
-    
+
     private func bind() {
-        localStorageProvider.incoming.sink { result in
-            let selection = self.selection
-            guard selection.available == .yes else { return }
-//            Task {
-//                do {
-//                    switch result {
-//                    case .success(let paths):
-//                        try await selection.provider.send(content: .file(paths))
-//                    case .failure(let error):
-//                        print(error)
-//                        break
-//                    }
-//                    
-//                } catch {
-//                    print("there is error \(error)")
-//                }
-//            }
-            
-            print("try to upload to: \(selection)")
-        }
-        .store(in: &cancellables)
-        
-        
-        for x in providers {
-            let a = x.value.available.sink { a in
-                self.availabilities[x.key] = a
+        localProvider.incoming
+            .sink { [weak self] _ in
+                self?._onRemoteDataApplied.send(())
             }
+            .store(in: &cancellables)
+
+        for (option, provider) in providers where option != .local {
+            provider.incoming
+                .sink { [weak self] remoteSidecar in
+                    guard let self, self.approach == option else { return }
+                    Task { await self.handleRemoteIncoming(remoteSidecar) }
+                }
+                .store(in: &cancellables)
         }
-        
-//        sidecarMonitor.onChange
-//            .tryMap({ try String(contentsOf: $0, encoding: .utf8) })
-//            .catch { error -> AnyPublisher<String, Never> in
-//                ErrorTracker.shared.add(error)
-//                return Empty().eraseToAnyPublisher()
-//            }
-//            .filter { [weak self] event in
-//                let appid = self?.Pref.value(for: PieceSaver.Key.appIdentifier) ?? ""
-//                return appid == event
-//            }
-////            .delay(for: .seconds(2), scheduler: RunLoop.main)
-//            .sink { x in
-//                let selection = self.selection
-//                guard selection.available == .yes else { return }
-//                Task {
-//                    do {
-//                        try await selection.provider.send(content: .file(try self.localStorageProvider.getPaths()))
-//                    } catch {
-//                        print("there is error \(error)")
-//                    }
-//                }
-//            }
-//            .store(in: &cancellables)
     }
-    
-    func save(document html: String) async throws {
-        try await localStorageProvider.send(content: .html(html))
+
+    // MARK: - Public API
+
+    func save(document html: String) {
+        do {
+            let sidecar = try localProvider.write(html: html)
+            history.log(action: "local_edit", sidecar: sidecar)
+            guard let remote = remoteProvider else { return }
+            Task {
+                do {
+                    let document = try await localProvider.readDocument()
+                    try await remote.send(document: document, sidecar: sidecar)
+                    history.log(action: "push_to_\(approach.rawValue)", sidecar: sidecar)
+                } catch {
+                    print("[Sync] push failed: \(error)")
+                }
+            }
+        } catch {
+            print("[Sync] local write failed: \(error)")
+        }
     }
-    
+
     func load() throws -> String {
-        // TODO: should I refine this????
-        let paths = try localStorageProvider.getPaths()
-        return try String(contentsOf: paths.document, encoding: .utf8)
+        let data = try localProvider.readDocumentSync()
+        guard let html = String(data: data, encoding: .utf8) else {
+            throw SyncError.corruptDocument
+        }
+        return html
     }
-    
-    enum SomeError: Error, LocalizedError {
-        case missingApplicationSupportDirectory
+
+    func sync() async {
+        guard let remote = remoteProvider else { return }
+        do {
+            let availability = await remote.checkAvailability()
+            guard availability == .yes else { return }
+
+            let remoteSidecar = try await remote.readSidecar()
+            let localSidecar = try localProvider.readSidecarSync()
+
+            if remoteSidecar.timestamp > localSidecar.timestamp {
+                let document = try await remote.readDocument()
+                try localProvider.send(document: document, sidecar: remoteSidecar)
+                history.log(action: "download_from_\(approach.rawValue)", sidecar: remoteSidecar)
+            } else if localSidecar.timestamp > remoteSidecar.timestamp {
+                let document = try await localProvider.readDocument()
+                try await remote.send(document: document, sidecar: localSidecar)
+                history.log(action: "push_to_\(approach.rawValue)", sidecar: localSidecar)
+            }
+        } catch {
+            print("[Sync] sync failed: \(error)")
+        }
+    }
+
+    // MARK: - Private
+
+    private func handleRemoteIncoming(_ remoteSidecar: SidecarData) async {
+        do {
+            let localSidecar = try localProvider.readSidecarSync()
+            guard remoteSidecar.uid != localSidecar.uid else { return }
+            guard remoteSidecar.timestamp > localSidecar.timestamp else { return }
+
+            guard let remote = remoteProvider else { return }
+            let document = try await remote.readDocument()
+            try localProvider.send(document: document, sidecar: remoteSidecar)
+            history.log(action: "download_from_\(approach.rawValue)", sidecar: remoteSidecar)
+        } catch {
+            print("[Sync] remote incoming failed: \(error)")
+        }
     }
 }
 
+// MARK: - Protocol & Types
+
 extension Synchronizer {
     protocol Provider {
-        // Downstream
-        var incoming: AnyPublisher<Result<Paths, Error>, Never> { get }
-        
-        // Upstream
-        func send(content: Synchronizer.Content) async throws
-        
-        var available: AnyPublisher<Availability, Never> { get }
-        
+        var incoming: AnyPublisher<SidecarData, Never> { get }
+        func readSidecar() async throws -> SidecarData
+        func readDocument() async throws -> Data
+        func send(document: Data, sidecar: SidecarData) async throws
+        func checkAvailability() async -> Availability
         func prepare() async throws
-//            func start or prepare?? to start monitor etc, it may throw an
-            // monitor file
-            // ask user to signin
-            // etc
-        
         func pause() async throws
-        
-        func getPaths() throws -> Paths
     }
-    
-    struct Paths {
-        let document: URL
-        let sidecar: URL
-    }
-    
-    enum FileName {
-        static let document = "nustash_index.html"
-        static let sidecar = "nustash_index.html.sidecar"
-    }
-    
+
     enum Option: String, CaseIterable, Identifiable {
         var id: String { rawValue }
-        
         case icloud
         case local
         case dropbox
     }
-    
+
     enum Availability: Equatable {
-        static func == (lhs: Synchronizer.Availability, rhs: Synchronizer.Availability) -> Bool {
+        static func == (lhs: Availability, rhs: Availability) -> Bool {
             switch (lhs, rhs) {
-            case (.checking, .checking):
-                return true
-            case (.yes, .yes):
-                return true
-            case (.no(_), .no(_)):
-                return true
-            default:
-                return false
+            case (.yes, .yes): return true
+            case (.no, .no): return true
+            default: return false
             }
         }
-        
-        case checking
         case yes
         case no(Error?)
     }
-    
-    enum Content {
-        case file(Paths)
-        case html(String)
-    }
-    
-    struct Selection {
-        let approach: Option
-        let available: Availability
-        let provider: Provider
+
+    enum SyncError: Error, LocalizedError {
+        case corruptDocument
+        case corruptSidecar
     }
 }
 
 extension Synchronizer.Provider {
-    func send(content: Synchronizer.Content) async throws {
-        switch content {
-        case .file(let from):
-            let to = try getPaths()
-            guard from.document != to.document && from.sidecar != to.sidecar else { return }
-            try await FileHelper.replaceFile(from: from.document, to: to.document)
-            try await FileHelper.replaceFile(from: from.sidecar, to: to.sidecar)
-        case .html(let html):
-            let to = try getPaths()
-            try html.write(to: to.document, atomically: true, encoding: .utf8)
-            let appid = UUID().uuidString
-            try appid.write(to: to.sidecar, atomically: true, encoding: .utf8)
-        }
-    }
+    func prepare() async throws {}
+    func pause() async throws {}
 }
