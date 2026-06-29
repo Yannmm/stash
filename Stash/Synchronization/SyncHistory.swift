@@ -23,7 +23,7 @@ extension Synchronizer {
             queue.sync { load() }
         }
 
-        func log(action: String, sidecar: SidecarData) {
+        func log(action: String, sidecar: Sidecar) {
             queue.sync {
                 let entry = Entry(timestamp: sidecar.timestamp, device: sidecar.device, action: action)
                 entries.append(entry)

@@ -10,8 +10,8 @@ import Combine
 
 extension Synchronizer {
     final class AiCloudProvider: Provider {
-        private let _incoming = PassthroughSubject<SidecarData, Never>()
-        var incoming: AnyPublisher<SidecarData, Never> { _incoming.eraseToAnyPublisher() }
+        private let _incoming = PassthroughSubject<Sidecar, Never>()
+        var incoming: AnyPublisher<Sidecar, Never> { _incoming.eraseToAnyPublisher() }
 
         private let monitor = AiCloudContainerMonitor(filename: FileName.sidecar)
         private var monitorHandle: AnyCancellable?
@@ -34,18 +34,18 @@ extension Synchronizer {
             return available ? .yes : .no(ProviderError.icloudContainerUnavailable)
         }
 
-        func readSidecar() async throws -> SidecarData {
+        func sidecar() async throws -> Sidecar {
             let url = try sidecarURL()
             let data = try Data(contentsOf: url)
-            return try JSONDecoder().decode(SidecarData.self, from: data)
+            return try JSONDecoder().decode(Sidecar.self, from: data)
         }
 
-        func readDocument() async throws -> Data {
+        func document() async throws -> Data {
             let url = try documentURL()
             return try Data(contentsOf: url)
         }
 
-        func send(document: Data, sidecar: SidecarData) async throws {
+        func send(document: Data, sidecar: Sidecar) async throws {
             let docURL = try documentURL()
             let scURL = try sidecarURL()
             try document.write(to: docURL, options: .atomic)
@@ -72,7 +72,7 @@ extension Synchronizer {
                     do {
                         let url = try self.sidecarURL()
                         let data = try Data(contentsOf: url)
-                        let sidecar = try JSONDecoder().decode(SidecarData.self, from: data)
+                        let sidecar = try JSONDecoder().decode(Sidecar.self, from: data)
                         self._incoming.send(sidecar)
                     } catch {
                         print("[iCloud] failed to parse incoming sidecar: \(error)")

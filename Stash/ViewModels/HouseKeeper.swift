@@ -128,27 +128,29 @@ extension Housekeeper {
     }
     
     private func _load() throws {
-        let htmlString = try synchronizer.load()
-        let dominator = Dominator()
-        let data = try dominator.decompose(htmlString)
-        
-        let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
-        
-        self.storedEntries = anyEntries.asEntries
-        
-        if let data = Pref.value(for: Pref.Key.recentEntries),
-           let keys = Pref.value(for: Pref.Key.recentKeys) {
+        Task {
+            let htmlString = try await synchronizer.load()
+            let dominator = Dominator()
+            let data = try dominator.decompose(htmlString)
+            
             let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
-            var collector = [(Bookmark, String)]()
-            for (index, entry) in anyEntries.asEntries.enumerated() {
-                if let bookmark = entry as? Bookmark, index <= keys.count - 1 {
-                    collector.append((bookmark, keys[index]))
+            
+            self.storedEntries = anyEntries.asEntries
+            
+            if let data = Pref.value(for: Pref.Key.recentEntries),
+               let keys = Pref.value(for: Pref.Key.recentKeys) {
+                let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
+                var collector = [(Bookmark, String)]()
+                for (index, entry) in anyEntries.asEntries.enumerated() {
+                    if let bookmark = entry as? Bookmark, index <= keys.count - 1 {
+                        collector.append((bookmark, keys[index]))
+                    }
                 }
+                self.recentEntries = collector
             }
-            self.recentEntries = collector
+            
+            try migrate3_0()
         }
-        
-        try migrate3_0()
     }
 }
 

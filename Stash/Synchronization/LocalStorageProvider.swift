@@ -3,8 +3,8 @@ import Combine
 
 extension Synchronizer {
     final class LocalStorageProvider: Provider {
-        private let _incoming = PassthroughSubject<SidecarData, Never>()
-        var incoming: AnyPublisher<SidecarData, Never> { _incoming.eraseToAnyPublisher() }
+        private let _incoming = PassthroughSubject<Sidecar, Never>()
+        var incoming: AnyPublisher<Sidecar, Never> { _incoming.eraseToAnyPublisher() }
 
         private let directory: URL
 
@@ -26,16 +26,16 @@ extension Synchronizer {
 
         // MARK: - Protocol conformance
 
-        func readSidecar() async throws -> SidecarData {
-            try readSidecarSync()
+        func sidecar() async throws -> Sidecar {
+            try _sidecar()
         }
 
-        func readDocument() async throws -> Data {
-            try readDocumentSync()
+        func document() async throws -> Data {
+            try _document()
         }
 
-        func send(document: Data, sidecar: SidecarData) throws {
-            let localSidecar = try? readSidecarSync()
+        func send(document: Data, sidecar: Sidecar) async throws {
+            let localSidecar = try? _sidecar()
             if let localSidecar, localSidecar.uid == sidecar.uid {
                 return
             }
@@ -50,25 +50,24 @@ extension Synchronizer {
         }
 
         // MARK: - Non-protocol (local hub role)
-
         @discardableResult
-        func write(html: String) throws -> SidecarData {
-            let sidecar = SidecarData.stamp()
-            guard let documentData = html.data(using: .utf8) else {
+        func write(html: String) throws -> Sidecar {
+            let sidecar = Sidecar.stamp()
+            guard let document = html.data(using: .utf8) else {
                 throw SyncError.corruptDocument
             }
-            try documentData.write(to: documentURL, options: .atomic)
+            try document.write(to: documentURL, options: .atomic)
             let sidecarData = try JSONEncoder().encode(sidecar)
             try sidecarData.write(to: sidecarURL, options: .atomic)
             return sidecar
         }
-
-        func readSidecarSync() throws -> SidecarData {
+        
+        private func _sidecar() throws -> Sidecar {
             let data = try Data(contentsOf: sidecarURL)
-            return try JSONDecoder().decode(SidecarData.self, from: data)
+            return try JSONDecoder().decode(Sidecar.self, from: data)
         }
-
-        func readDocumentSync() throws -> Data {
+        
+        private func _document() throws -> Data {
             try Data(contentsOf: documentURL)
         }
     }

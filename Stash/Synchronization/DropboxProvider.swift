@@ -10,8 +10,8 @@ import Combine
 
 extension Synchronizer {
     final class DropboxProvider: Provider {
-        private let _incoming = PassthroughSubject<SidecarData, Never>()
-        var incoming: AnyPublisher<SidecarData, Never> { _incoming.eraseToAnyPublisher() }
+        private let _incoming = PassthroughSubject<Sidecar, Never>()
+        var incoming: AnyPublisher<Sidecar, Never> { _incoming.eraseToAnyPublisher() }
 
         init() {}
 
@@ -19,15 +19,15 @@ extension Synchronizer {
             .no(ProviderError.notImplemented)
         }
 
-        func readSidecar() async throws -> SidecarData {
+        func sidecar() async throws -> Sidecar {
             throw ProviderError.notImplemented
         }
 
-        func readDocument() async throws -> Data {
+        func document() async throws -> Data {
             throw ProviderError.notImplemented
         }
 
-        func send(document: Data, sidecar: SidecarData) async throws {
+        func send(document: Data, sidecar: Sidecar) async throws {
             throw ProviderError.notImplemented
         }
     }
