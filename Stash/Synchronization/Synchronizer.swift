@@ -17,13 +17,13 @@ class Synchronizer {
             Task {
                 try? await oldProvider?.pause()
                 try? await newProvider?.prepare()
-                await sync()
+                await align()
             }
         }
     }
 
-    let onRemoteDataApplied: AnyPublisher<Void, Never>
-    private let _onRemoteDataApplied = PassthroughSubject<Void, Never>()
+    let onChange: AnyPublisher<Void, Never>
+    private let _onChange = PassthroughSubject<Void, Never>()
 
     private var cancellables = Set<AnyCancellable>()
     private let providers: [Option: any Provider]
@@ -39,19 +39,19 @@ class Synchronizer {
         self.approach = approach
         self.providers = providers
         self.localProvider = localProvider
-        self.onRemoteDataApplied = _onRemoteDataApplied.eraseToAnyPublisher()
+        self.onChange = _onChange.eraseToAnyPublisher() 
         bind()
     }
 
     private func bind() {
-        localProvider.incoming
+        localProvider.onArrive
             .sink { [weak self] _ in
-                self?._onRemoteDataApplied.send(())
+                self?._onChange.send(())
             }
             .store(in: &cancellables)
 
         for (option, provider) in providers where option != .local {
-            provider.incoming
+            provider.onArrive
                 .sink { [weak self] remoteSidecar in
                     guard let self, self.approach == option else { return }
                     Task { await self.handleRemoteIncoming(remoteSidecar) }
@@ -89,26 +89,26 @@ class Synchronizer {
         return html
     }
 
-    func sync() async {
+    func align() async {
         guard let remote = remoteProvider else { return }
         do {
             let availability = await remote.checkAvailability()
             guard availability == .yes else { return }
 
-            let remoteSidecar = try await remote.sidecar()
-            let localSidecar = try await localProvider.sidecar()
+            let sidecar1 = try await remote.sidecar()
+            let sidecar2 = try await localProvider.sidecar()
 
-            if remoteSidecar.timestamp > localSidecar.timestamp {
+            if sidecar1.timestamp > sidecar2.timestamp {
                 let document = try await remote.document()
-                try await localProvider.send(document: document, sidecar: remoteSidecar)
-                history.log(action: "download_from_\(approach.rawValue)", sidecar: remoteSidecar)
-            } else if localSidecar.timestamp > remoteSidecar.timestamp {
+                try await localProvider.send(document: document, sidecar: sidecar1)
+                history.log(action: "download_from_\(approach.rawValue)", sidecar: sidecar1)
+            } else if sidecar2.timestamp > sidecar1.timestamp {
                 let document = try await localProvider.document()
-                try await remote.send(document: document, sidecar: localSidecar)
-                history.log(action: "push_to_\(approach.rawValue)", sidecar: localSidecar)
+                try await remote.send(document: document, sidecar: sidecar2)
+                history.log(action: "push_to_\(approach.rawValue)", sidecar: sidecar2)
             }
         } catch {
-            print("[Sync] sync failed: \(error)")
+            print("[Align] align failed: \(error)")
         }
     }
 
@@ -139,7 +139,7 @@ extension Synchronizer {
     }
 
     protocol Provider {
-        var incoming: AnyPublisher<Sidecar, Never> { get }
+        var onArrive: AnyPublisher<Sidecar, Never> { get }
         func sidecar() async throws -> Sidecar
         func document() async throws -> Data
         func send(document: Data, sidecar: Sidecar) async throws

@@ -10,8 +10,8 @@ import Combine
 
 extension Synchronizer {
     final class DropboxProvider: Provider {
-        private let _incoming = PassthroughSubject<Sidecar, Never>()
-        var incoming: AnyPublisher<Sidecar, Never> { _incoming.eraseToAnyPublisher() }
+        private let _onArrive = PassthroughSubject<Sidecar, Never>()
+        var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
 
         init() {}
 

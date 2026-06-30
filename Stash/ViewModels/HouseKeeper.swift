@@ -28,7 +28,7 @@ class Housekeeper: ObservableObject {
     }
 
     private func bind() {
-        synchronizer.onRemoteDataApplied
+        synchronizer.onChange
             .receive(on: RunLoop.main)
             .sink { [weak self] in
                 self?.reload()

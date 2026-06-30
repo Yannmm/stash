@@ -10,8 +10,8 @@ import Combine
 
 extension Synchronizer {
     final class AiCloudProvider: Provider {
-        private let _incoming = PassthroughSubject<Sidecar, Never>()
-        var incoming: AnyPublisher<Sidecar, Never> { _incoming.eraseToAnyPublisher() }
+        private let _onArrive = PassthroughSubject<Sidecar, Never>()
+        var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
 
         private let monitor = AiCloudContainerMonitor(filename: FileName.sidecar)
         private var monitorHandle: AnyCancellable?
@@ -73,7 +73,7 @@ extension Synchronizer {
                         let url = try self.sidecarURL()
                         let data = try Data(contentsOf: url)
                         let sidecar = try JSONDecoder().decode(Sidecar.self, from: data)
-                        self._incoming.send(sidecar)
+                        self._onArrive.send(sidecar)
                     } catch {
                         print("[iCloud] failed to parse incoming sidecar: \(error)")
                     }

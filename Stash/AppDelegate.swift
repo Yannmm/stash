@@ -86,7 +86,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidBecomeActive(_ notification: Notification) {
         guard let hk = housekeeper else { return }
-        Task { await hk.synchronizer.sync() }
+        Task { await hk.synchronizer.align() }
     }
     
     func applicationWillFinishLaunching(_ notification: Notification) {

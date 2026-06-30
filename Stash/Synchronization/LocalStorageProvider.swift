@@ -3,8 +3,8 @@ import Combine
 
 extension Synchronizer {
     final class LocalStorageProvider: Provider {
-        private let _incoming = PassthroughSubject<Sidecar, Never>()
-        var incoming: AnyPublisher<Sidecar, Never> { _incoming.eraseToAnyPublisher() }
+        private let _onArrive = PassthroughSubject<Sidecar, Never>()
+        var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
 
         private let directory: URL
 
@@ -42,7 +42,7 @@ extension Synchronizer {
             try document.write(to: documentURL, options: .atomic)
             let sidecarData = try JSONEncoder().encode(sidecar)
             try sidecarData.write(to: sidecarURL, options: .atomic)
-            _incoming.send(sidecar)
+            _onArrive.send(sidecar)
         }
 
         func checkAvailability() async -> Availability {
