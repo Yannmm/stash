@@ -71,22 +71,29 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             onExport: { to, suffix in
                 try hk.export(to: to, suffix: suffix)
             },
-            onChangeApproach: { approach in
+            onApproachChange: { approach in
                 synchronizer.approach = approach
             })
-        svm.onCheckAvailability = { [providers] option in
-            guard let provider = providers[option] else { return .no(nil) }
-            return await provider.checkAvailability()
-        }
-        svm.refreshAvailability()
+        
+        synchronizer.availability.sink { availability in
+            Task { @MainActor in
+                svm.availability = availability
+            }
+        }.store(in: &cancellables)
+        
+//        svm.onCheckAvailability = { [providers] option in
+//            guard let provider = providers[option] else { return .no(nil) }
+//            return await provider.checkAvailability()
+//        }
+//        svm.refreshAvailability()
         self.settingsViewModel = svm
 
         self.searchViewModel = SearchViewModel(housekeeper: hk)
     }
 
     func applicationDidBecomeActive(_ notification: Notification) {
-        guard let hk = housekeeper else { return }
-        Task { await hk.synchronizer.align() }
+//        guard let hk = housekeeper else { return }
+//        Task { await hk.synchronizer.align() }
     }
     
     func applicationWillFinishLaunching(_ notification: Notification) {

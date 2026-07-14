@@ -5,6 +5,9 @@ extension Synchronizer {
     final class LocalStorageProvider: Provider {
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
+        
+        var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
+        private let _availability = CurrentValueSubject<Availability, Never>(.yes)
 
         private let directory: URL
 
@@ -46,7 +49,9 @@ extension Synchronizer {
         }
 
         func checkAvailability() async -> Availability {
-            .yes
+            let a: Availability = .yes
+            defer { _availability.send(a) }
+            return .yes
         }
 
         // MARK: - Non-protocol (local hub role)

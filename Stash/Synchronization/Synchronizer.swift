@@ -13,7 +13,7 @@ class Synchronizer {
         didSet {
             guard approach != oldValue else { return }
             let oldProvider = providers[oldValue]
-            let newProvider = remoteProvider
+            let newProvider = providers[approach]
             Task {
                 try? await oldProvider?.pause()
                 try? await newProvider?.prepare()
@@ -34,16 +34,26 @@ class Synchronizer {
         guard approach != .local else { return nil }
         return providers[approach]
     }
+    
+    let availability = CurrentValueSubject<Availability?, Never>(nil)
 
     init(approach: Option, providers: [Option: any Provider], localProvider: LocalStorageProvider) {
         self.approach = approach
         self.providers = providers
         self.localProvider = localProvider
-        self.onChange = _onChange.eraseToAnyPublisher() 
+        self.onChange = _onChange.eraseToAnyPublisher()
         bind()
     }
 
     private func bind() {
+        for (option, provider) in providers {
+            provider.availability.sink { a in
+                guard option == self.approach else { return }
+                self.availability.send(a)
+            }
+            .store(in: &cancellables)
+        }
+        
         localProvider.onArrive
             .sink { [weak self] _ in
                 self?._onChange.send(())
@@ -143,7 +153,8 @@ extension Synchronizer {
         func sidecar() async throws -> Sidecar
         func document() async throws -> Data
         func send(document: Data, sidecar: Sidecar) async throws
-        func checkAvailability() async -> Availability
+        @discardableResult func checkAvailability() async -> Availability
+        var availability: AnyPublisher<Availability, Never> { get }
         func prepare() async throws
         func pause() async throws
     }
@@ -160,11 +171,13 @@ extension Synchronizer {
             switch (lhs, rhs) {
             case (.yes, .yes): return true
             case (.no, .no): return true
+            case (.pending, .pending): return true
             default: return false
             }
         }
         case yes
         case no(Error?)
+        case pending
     }
 
     enum SyncError: Error, LocalizedError {
@@ -174,6 +187,8 @@ extension Synchronizer {
 }
 
 extension Synchronizer.Provider {
-    func prepare() async throws {}
+    func prepare() async throws {
+        await checkAvailability()
+    }
     func pause() async throws {}
 }

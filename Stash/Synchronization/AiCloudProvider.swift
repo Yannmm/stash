@@ -12,6 +12,9 @@ extension Synchronizer {
     final class AiCloudProvider: Provider {
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
+        
+        var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
+        private let _availability = CurrentValueSubject<Availability, Never>(.pending)
 
         private let monitor = AiCloudContainerMonitor(filename: FileName.sidecar)
         private var monitorHandle: AnyCancellable?
@@ -23,7 +26,7 @@ extension Synchronizer {
         }
 
         // MARK: - Protocol
-
+        @discardableResult
         func checkAvailability() async -> Availability {
             let available = await withCheckedContinuation { continuation in
                 DispatchQueue.global(qos: .utility).async {
@@ -31,7 +34,9 @@ extension Synchronizer {
                     continuation.resume(returning: url != nil)
                 }
             }
-            return available ? .yes : .no(ProviderError.icloudContainerUnavailable)
+            let a: Availability = available ? .yes : .no(ProviderError.icloudContainerUnavailable)
+            defer { _availability.send(a) }
+            return a
         }
 
         func sidecar() async throws -> Sidecar {
@@ -55,6 +60,7 @@ extension Synchronizer {
 
         func prepare() async throws {
             startMonitor()
+            await checkAvailability()
         }
 
         func pause() async throws {

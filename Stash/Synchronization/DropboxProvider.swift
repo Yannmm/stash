@@ -12,11 +12,17 @@ extension Synchronizer {
     final class DropboxProvider: Provider {
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
+        
+        var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
+        private let _availability = CurrentValueSubject<Availability, Never>(.pending)
 
         init() {}
-
+        
+        @discardableResult
         func checkAvailability() async -> Availability {
-            .no(ProviderError.notImplemented)
+            let a: Availability = .no(ProviderError.notImplemented)
+            defer { _availability.send(a) }
+            return a
         }
 
         func sidecar() async throws -> Sidecar {

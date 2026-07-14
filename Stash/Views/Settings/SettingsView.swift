@@ -93,10 +93,27 @@ struct SettingsView: View {
             }
             
             Section("Synchronization") {
-                Picker("Approach", selection: $viewModel.synchronizerApproach) {
-                    ForEach(Synchronizer.Option.allCases) { approach in
-                        Text(synchronizerApproachDescription(approach)).tag(approach)
+                VStack(alignment: .leading) {
+                    Picker("Approach", selection: $viewModel.synchronizerApproach) {
+                        ForEach(Synchronizer.Option.allCases) { approach in
+                            Text(synchronizerApproachDescription(approach)).tag(approach)
+                        }
                     }
+                    Text("\(viewModel.availability)")
+                    .foregroundColor(.secondary)
+                    .environment(\.openURL, OpenURLAction { url in
+//                        let browser = url.absoluteString
+//                        switch browser {
+//                        case "Chrome", "Edge", "Safari", "Firefox":
+//                            alert = .export(browser)
+//                        case "Hungrymark":
+//                            importFileType = .hungrymarks
+//                        case "Pocket":
+//                            importFileType = .pocket
+//                        default: break
+//                        }
+                        return .handled
+                    })
                 }
             }
             

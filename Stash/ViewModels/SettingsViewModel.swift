@@ -28,16 +28,6 @@ class SettingsViewModel: ObservableObject {
     @Published var synchronizerApproach: Synchronizer.Option
     @Published var availability: Synchronizer.Availability?
 
-    var onCheckAvailability: ((Synchronizer.Option) async -> Synchronizer.Availability)?
-
-    func refreshAvailability() {
-        guard let check = onCheckAvailability else { return }
-        let current = synchronizerApproach
-        Task { @MainActor in
-            self.availability = await check(current)
-        }
-    }
-
     private var cancellables = Set<AnyCancellable>()
     private let appHotKeyManager = HotKeyManager(action: .menu)
     private let searchHotKeyManager = HotKeyManager(action: .search)
@@ -45,11 +35,7 @@ class SettingsViewModel: ObservableObject {
     private let onReset: () throws -> Void
     private let onImport: (URL, String.FileType, Bool) throws -> Void
     private let onExport: (URL, String?) throws -> URL
-    private let onChangeApproach: (Synchronizer.Option) -> Void
-    
-    // TODO: add checking status in menu when is checking
-    //        self.approach = Pref.value(for: PieceSaver.Key.synchronizerApproach) ?? .local
-    
+    private let onApproachChange: (Synchronizer.Option) -> Void
     
     var empty: Bool { false }
     
@@ -82,12 +68,12 @@ class SettingsViewModel: ObservableObject {
         onReset: @escaping () throws -> Void,
         onImport: @escaping (URL, String.FileType, Bool) throws -> Void,
         onExport: @escaping (URL, String?) throws -> URL,
-        onChangeApproach: @escaping (Synchronizer.Option) -> Void
+        onApproachChange: @escaping (Synchronizer.Option) -> Void
     ) {
         self.onReset = onReset
         self.onImport = onImport
         self.onExport = onExport
-        self.onChangeApproach = onChangeApproach
+        self.onApproachChange = onApproachChange
         
         collapseHistory = Pref.value(for: Pref.Key.collapseHistory) ?? false
         launchOnLogin = RocketLauncher.shared.enabled
@@ -188,23 +174,12 @@ class SettingsViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        //        updateChcker.$new
-        //            .sink { [unowned self] update in
-        //                if let v = update {
-        //                    self.checkedVersionDescription = "New Version Available: \(v.version)"
-        //                } else {
-        //                    self.checkedVersionDescription = "You're Up to Date"
-        //                }
-        //                self.newReleaseNotes = update?.releaseNotes
-        //            }
-        //            .store(in: &cancellables)
-        
         $synchronizerApproach
             .dropFirst()
             .sink { [weak self] in
-                self?.onChangeApproach($0)
+                self?.onApproachChange($0)
                 Pref.save(for: Pref.Key.synchronizerApproach, value: $0)
-                self?.refreshAvailability()
+//                self?.refreshAvailability()
             }
             .store(in: &cancellables)
         
