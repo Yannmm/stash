@@ -8,19 +8,16 @@
 import Foundation
 import Combine
 
-class Synchronizer {
-    var approach: Option {
-        didSet {
-            guard approach != oldValue else { return }
-            let oldProvider = providers[oldValue]
-            let newProvider = providers[approach]
-            Task {
-                try? await oldProvider?.pause()
-                try? await newProvider?.prepare()
-                await align()
-            }
-        }
+class Synchronizer {    
+    let _approach: CurrentValueSubject<Option, Never>!
+    
+    var approach: AnyPublisher<Option, Never> { _approach.eraseToAnyPublisher() }
+    
+    func setApproach(_ value: Option) {
+        _approach.send(value)
     }
+    
+    private(set) var availability: AnyPublisher<Availability, Never>!
 
     let onChange: AnyPublisher<Void, Never>
     private let _onChange = PassthroughSubject<Void, Never>()
@@ -31,14 +28,13 @@ class Synchronizer {
     private let history = History()
 
     private var remoteProvider: (any Provider)? {
-        guard approach != .local else { return nil }
-        return providers[approach]
+        let a = _approach.value
+        guard a != .local else { return nil }
+        return providers[a]
     }
-    
-    let availability = CurrentValueSubject<Availability?, Never>(nil)
 
     init(approach: Option, providers: [Option: any Provider], localProvider: LocalStorageProvider) {
-        self.approach = approach
+        self._approach = CurrentValueSubject<Option, Never>(approach)
         self.providers = providers
         self.localProvider = localProvider
         self.onChange = _onChange.eraseToAnyPublisher()
@@ -46,13 +42,30 @@ class Synchronizer {
     }
 
     private func bind() {
-        for (option, provider) in providers {
-            provider.availability.sink { a in
-                guard option == self.approach else { return }
-                self.availability.send(a)
-            }
-            .store(in: &cancellables)
-        }
+        self._approach
+            .removeDuplicates()
+            .scan((Option?.none, Option?.none)) { pair, value in
+                    (pair.1, value)
+                }
+            .compactMap { pair in
+                    pair.1.map { (pair.0, $0) }
+                }
+            .sink { [weak self]  x  in
+                let old = x.0
+                let new = x.1
+                let oldProvider = old != nil ? self?.providers[old!] : nil
+                let newProvider = self?.providers[new]
+                Task {
+                    try? await oldProvider?.pause()
+                    try? await newProvider?.prepare()
+                    await self?.align()
+                }
+        }.store(in: &cancellables)
+        
+        self.availability = _approach
+            .compactMap { self.providers[$0]?.availability }
+            .switchToLatest()
+            .eraseToAnyPublisher()
         
         localProvider.onArrive
             .sink { [weak self] _ in
@@ -63,7 +76,7 @@ class Synchronizer {
         for (option, provider) in providers where option != .local {
             provider.onArrive
                 .sink { [weak self] remoteSidecar in
-                    guard let self, self.approach == option else { return }
+                    guard let self, self._approach.value == option else { return }
                     Task { await self.handleRemoteIncoming(remoteSidecar) }
                 }
                 .store(in: &cancellables)
@@ -81,7 +94,7 @@ class Synchronizer {
                 do {
                     let document = try await localProvider.document()
                     try await remote.send(document: document, sidecar: sidecar)
-                    history.log(action: "push_to_\(approach.rawValue)", sidecar: sidecar)
+                    history.log(action: "push_to_\(_approach.value.rawValue)", sidecar: sidecar)
                 } catch {
                     print("[Sync] push failed: \(error)")
                 }
@@ -111,11 +124,11 @@ class Synchronizer {
             if sidecar1.timestamp > sidecar2.timestamp {
                 let document = try await remote.document()
                 try await localProvider.send(document: document, sidecar: sidecar1)
-                history.log(action: "download_from_\(approach.rawValue)", sidecar: sidecar1)
+                history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: sidecar1)
             } else if sidecar2.timestamp > sidecar1.timestamp {
                 let document = try await localProvider.document()
                 try await remote.send(document: document, sidecar: sidecar2)
-                history.log(action: "push_to_\(approach.rawValue)", sidecar: sidecar2)
+                history.log(action: "push_to_\(_approach.value.rawValue)", sidecar: sidecar2)
             }
         } catch {
             print("[Align] align failed: \(error)")
@@ -133,7 +146,7 @@ class Synchronizer {
             guard let remote = remoteProvider else { return }
             let document = try await remote.document()
             try await localProvider.send(document: document, sidecar: remoteSidecar)
-            history.log(action: "download_from_\(approach.rawValue)", sidecar: remoteSidecar)
+            history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: remoteSidecar)
         } catch {
             print("[Sync] remote incoming failed: \(error)")
         }

@@ -72,7 +72,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 try hk.export(to: to, suffix: suffix)
             },
             onApproachChange: { approach in
-                synchronizer.approach = approach
+                synchronizer.setApproach(approach)
             })
         
         synchronizer.availability.sink { availability in
@@ -81,11 +81,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }.store(in: &cancellables)
         
-//        svm.onCheckAvailability = { [providers] option in
-//            guard let provider = providers[option] else { return .no(nil) }
-//            return await provider.checkAvailability()
-//        }
-//        svm.refreshAvailability()
         self.settingsViewModel = svm
 
         self.searchViewModel = SearchViewModel(housekeeper: hk)
