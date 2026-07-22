@@ -116,7 +116,9 @@ class Synchronizer {
         guard let remote = remoteProvider else { return }
         do {
             let availability = await remote.checkAvailability()
-            guard availability == .yes else { return }
+            guard case .yes = availability else {
+                return
+            }
 
             let sidecar1 = try await remote.sidecar()
             let sidecar2 = try await localProvider.sidecar()
@@ -179,7 +181,7 @@ extension Synchronizer {
         case dropbox
     }
 
-    enum Availability: Equatable {
+    enum Availability: Equatable, Synchronizer.PendingDescriptor {
         static func == (lhs: Availability, rhs: Availability) -> Bool {
             switch (lhs, rhs) {
             case (.yes, .yes): return true
@@ -188,9 +190,9 @@ extension Synchronizer {
             default: return false
             }
         }
-        case yes
+        case yes(String)
         case no(Error?)
-        case pending
+        case pending(Synchronizer.PendingDescriptor)
     }
 
     enum SyncError: Error, LocalizedError {
@@ -199,9 +201,59 @@ extension Synchronizer {
     }
 }
 
+extension Synchronizer.Availability {
+    func describe() -> AttributedString {
+        switch self {
+        case .yes(let name):
+            var attr = AttributedString("\(name) is good to go.")
+            return attr
+        case .no(let error):
+            var attr = AttributedString("\(error?.localizedDescription ?? "no error")")
+            return attr
+        case .pending(let descriptor):
+            return descriptor.describe()
+        }
+    }
+    
+    var action: (() -> Void)? {
+        switch self {
+        case .yes(let name):
+            return nil;
+        case .no(let error):
+            return nil;
+        case .pending(let descriptor):
+            return descriptor.action
+        }
+    }
+}
+
 extension Synchronizer.Provider {
     func prepare() async throws {
         await checkAvailability()
     }
     func pause() async throws {}
+}
+
+extension Synchronizer {
+    protocol PendingDescriptor {
+        func describe() -> AttributedString
+        
+        var action: (() -> Void)? { get }
+    }
+    
+    struct InitialPendingState: PendingDescriptor {
+        let name: String
+        
+        func describe() -> AttributedString {
+            var attr = AttributedString("\(name) is initializing.")
+            if let range = attr.range(of: name) {
+                attr[range].foregroundColor = .primary
+            }
+            return attr
+        }
+    }
+}
+
+extension Synchronizer.PendingDescriptor {
+    var action: (() -> Void)? { nil }
 }

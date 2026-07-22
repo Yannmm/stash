@@ -26,7 +26,7 @@ class SettingsViewModel: ObservableObject {
     @Published var newReleaseNotes: String?
     @Published var error: Error?
     @Published var synchronizerApproach: Synchronizer.Option
-    @Published var availability: Synchronizer.Availability?
+    @Published var availability: Synchronizer.Availability!
 
     private var cancellables = Set<AnyCancellable>()
     private let appHotKeyManager = HotKeyManager(action: .menu)
@@ -98,7 +98,7 @@ class SettingsViewModel: ObservableObject {
     private func bind() {
         $collapseHistory
             .dropFirst()
-            .sink { [weak self] in
+            .sink {
                 Pref.save(for: Pref.Key.collapseHistory, value: $0)
             }
             .store(in: &cancellables)
@@ -106,7 +106,7 @@ class SettingsViewModel: ObservableObject {
         // Handle launch at login changes
         $launchOnLogin
             .dropFirst()
-            .sink { [weak self] enabled in
+            .sink { enabled in
                 RocketLauncher.shared.enabled = enabled
                 Pref.save(for: Pref.Key.launchOnLogin, value: enabled)
             }
@@ -114,7 +114,7 @@ class SettingsViewModel: ObservableObject {
         
         $showDockIcon
             .dropFirst()
-            .sink { [weak self] in
+            .sink {
                 //                NSApp.setActivationPolicy($0 ? .regular : .accessory)
                 Pref.save(for: Pref.Key.showDockIcon, value: $0)
             }
@@ -179,7 +179,6 @@ class SettingsViewModel: ObservableObject {
             .sink { [weak self] in
                 self?.onApproachChange($0)
                 Pref.save(for: Pref.Key.synchronizerApproach, value: $0)
-//                self?.refreshAvailability()
             }
             .store(in: &cancellables)
         

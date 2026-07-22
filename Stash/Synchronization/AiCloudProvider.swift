@@ -14,7 +14,7 @@ extension Synchronizer {
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
         
         var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
-        private let _availability = CurrentValueSubject<Availability, Never>(.pending)
+        private let _availability = CurrentValueSubject<Availability, Never>(.pending(InitialPendingState(name: "iCloud")))
 
         private let monitor = AiCloudContainerMonitor(filename: FileName.sidecar)
         private var monitorHandle: AnyCancellable?
@@ -34,7 +34,7 @@ extension Synchronizer {
                     continuation.resume(returning: url != nil)
                 }
             }
-            let a: Availability = available ? .yes : .no(ProviderError.icloudContainerUnavailable)
+            let a: Availability = available ? .yes("iCloud") : .no(ProviderError.icloudContainerUnavailable)
             defer { _availability.send(a) }
             return a
         }

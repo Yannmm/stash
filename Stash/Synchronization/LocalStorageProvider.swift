@@ -7,7 +7,7 @@ extension Synchronizer {
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
         
         var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
-        private let _availability = CurrentValueSubject<Availability, Never>(.yes)
+        private let _availability = CurrentValueSubject<Availability, Never>(.yes("Local"))
 
         private let directory: URL
 
@@ -49,9 +49,9 @@ extension Synchronizer {
         }
 
         func checkAvailability() async -> Availability {
-            let a: Availability = .yes
+            let a: Availability = .yes("Local")
             defer { _availability.send(a) }
-            return .yes
+            return a
         }
 
         // MARK: - Non-protocol (local hub role)

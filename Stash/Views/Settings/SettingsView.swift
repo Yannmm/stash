@@ -99,21 +99,11 @@ struct SettingsView: View {
                             Text(synchronizerApproachDescription(approach)).tag(approach)
                         }
                     }
-                    Text("\(viewModel.availability)")
-                    .foregroundColor(.secondary)
-                    .environment(\.openURL, OpenURLAction { url in
-//                        let browser = url.absoluteString
-//                        switch browser {
-//                        case "Chrome", "Edge", "Safari", "Firefox":
-//                            alert = .export(browser)
-//                        case "Hungrymark":
-//                            importFileType = .hungrymarks
-//                        case "Pocket":
-//                            importFileType = .pocket
-//                        default: break
-//                        }
-                        return .handled
-                    })
+                    Text(viewModel.availability.describe())
+                        .environment(\.openURL, OpenURLAction { url in
+                            viewModel.availability.action?()
+                            return .handled
+                        })
                 }
             }
             
@@ -243,15 +233,6 @@ struct SettingsView: View {
             // About Section
             Section("About\(viewModel.currentVersionDescription)") {
                 VStack(alignment: .leading) {
-                    //                    Link("https://github.com/Yannmm/stash", destination: URL(string: "https://github.com/Yannmm/stash")!)
-                    //                        .foregroundStyle(.secondary)
-                    //                        .onHover { hovering in
-                    //                            if hovering {
-                    //                                NSCursor.pointingHand.push()
-                    //                            } else {
-                    //                                NSCursor.pop()
-                    //                            }
-                    //                        }
                     Text("[Nustash](stash) is a open-source project. To provide feedback, you may [log issues](repo) or [write email](email) to \(Constant.email).")
                         .foregroundColor(.secondary)
                         .environment(\.openURL, OpenURLAction { url in

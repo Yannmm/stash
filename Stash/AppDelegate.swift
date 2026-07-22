@@ -52,7 +52,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             providers: providers,
             localProvider: localProvider
         )
-
+        // TODO: can we remove prepare here??????
         if savedApproach != .local, let remote = providers[savedApproach] {
             Task { try? await remote.prepare() }
         }
@@ -261,9 +261,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
             // Important for Stage Manager
             window.orderFrontRegardless()
-            
-            // Make app active again after ordering
-            //            NSApp.activate(ignoringOtherApps: true)
         }
     }
     
