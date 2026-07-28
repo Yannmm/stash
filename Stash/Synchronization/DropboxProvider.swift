@@ -25,10 +25,18 @@ extension Synchronizer {
         
         @discardableResult
         func checkAvailability() async -> Availability {
-            let a: Availability = .pending(Authentication.anonymous({ [weak self] in
-                self?.authenticate()
-            }))
-            defer { _availability.send(a) }
+            var a: Availability!
+            if signedIn {
+                let name = await getAccount();
+                a = .yes(Authentication.ready(name))
+            } else {
+                a = .pending(Authentication.anonymous({ [weak self] in
+                    self?.authenticate()
+                }))
+            }
+            defer {
+                _availability.send(a)
+            }
             return a
         }
         
@@ -52,24 +60,28 @@ extension Synchronizer {
             
             // Register authenticate callback
             NSAppleEventManager.shared().setEventHandler(self,
-                                                             andSelector: #selector(handleGetURLEvent),
-                                                             forEventClass: AEEventClass(kInternetEventClass),
-                                                             andEventID: AEEventID(kAEGetURL))
+                                                         andSelector: #selector(handleGetURLEvent),
+                                                         forEventClass: AEEventClass(kInternetEventClass),
+                                                         andEventID: AEEventID(kAEGetURL))
         }
         
         @objc private func handleGetURLEvent(_ event: NSAppleEventDescriptor?, replyEvent: NSAppleEventDescriptor?) {
             if let aeEventDescriptor = event?.paramDescriptor(forKeyword: AEKeyword(keyDirectObject)) {
                 if let urlStr = aeEventDescriptor.stringValue {
                     let url = URL(string: urlStr)!
-                    let oauthCompletion: DropboxOAuthCompletion = {
+                    let oauthCompletion: DropboxOAuthCompletion = { [weak self] in
                         if let authResult = $0 {
                             switch authResult {
                             case .success:
-                                print("Success! User is logged into Dropbox.")
+                                self?._availability.send(.yes(Authentication.ready("xxx")))
                             case .cancel:
-                                print("Authorization flow was manually canceled by user!")
-                            case .error(_, let description):
-                                print("Error: \(String(describing: description))")
+                                self?._availability.send(.pending(Authentication.anonymous({ [weak self] in
+                                    self?.authenticate()
+                                })))
+                            case .error(let error, let _):
+                                self?._availability.send(.pending(Authentication.error(error, { [weak self] in
+                                    self?.authenticate()
+                                })))
                             }
                         }
                     }
@@ -86,22 +98,29 @@ extension Synchronizer {
             DropboxClientsManager.authorizedClient != nil
         }
         
-        var account: String? {
-            if let client = DropboxClientsManager.authorizedClient {
-                return client.selectUser
-//                client.users.getCurrentAccount().response { account, error in
-//                    if let account {
-//
-//                    } else {
-//                        print("Token is invalid or expired: \(String(describing: error))")
-//                    }
-//                }
+        func getAccount() async -> String? {
+            guard let client = DropboxClientsManager.authorizedClient else {
+                return nil
             }
-            return nil
+
+            return await withCheckedContinuation { continuation in
+                client.users.getCurrentAccount().response { account, error in
+                    if let account {
+                        continuation.resume(returning: account.name.displayName)
+                    } else {
+                        print("Token is invalid or expired: \(String(describing: error))")
+                        continuation.resume(returning: nil)
+                    }
+                }
+            }
         }
         
         func authenticate() {
-            let scope = ScopeRequest(scopeType: .user, scopes: ["account_info.read"], includeGrantedScopes: false)
+            let scope = ScopeRequest(
+                scopeType: .user,
+                scopes: ["account_info.read", "files.content.read", "files.content.write", "files.metadata.read"],
+                includeGrantedScopes: false
+            )
             DropboxClientsManager.authorizeFromControllerV2(
                 sharedApplication: NSApplication.shared,
                 controller: nil,
@@ -129,11 +148,12 @@ extension Synchronizer.DropboxProvider {
 extension Synchronizer.DropboxProvider {
     enum Authentication {
         case anonymous(() -> Void)
-        case ready
+        case ready(String?)
+        case error(Error, () -> Void)
     }
 }
 
-extension Synchronizer.DropboxProvider.Authentication: Synchronizer.PendingDescriptor {
+extension Synchronizer.DropboxProvider.Authentication: Synchronizer.Descriptor {
     func describe() -> AttributedString {
         switch self {
         case .anonymous:
@@ -144,8 +164,16 @@ extension Synchronizer.DropboxProvider.Authentication: Synchronizer.PendingDescr
                 attr[range].link = URL(string: "action://abc")
             }
             return attr
-        case .ready:
-            var attr = AttributedString("Dropbox is good to go (Here should be acount inf )")
+        case .error(let e, _):
+            var attr = AttributedString("An error happended, please try again: \(e.localizedDescription)")
+            attr.foregroundColor = .secondary
+            if let range = attr.range(of: "try again") {
+                attr[range].foregroundColor = Color.theme
+                attr[range].link = URL(string: "action://abc")
+            }
+            return attr
+        case .ready(let name):
+            var attr = AttributedString(name ?? "nobody")
             return attr
         }
     }
@@ -153,6 +181,8 @@ extension Synchronizer.DropboxProvider.Authentication: Synchronizer.PendingDescr
     var action: (() -> Void)? {
         switch self {
         case .anonymous(let action):
+            return action
+        case .error(_, let action):
             return action
         case .ready:
             return nil

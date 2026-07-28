@@ -181,7 +181,7 @@ extension Synchronizer {
         case dropbox
     }
 
-    enum Availability: Equatable, Synchronizer.PendingDescriptor {
+    enum Availability: Equatable, Synchronizer.Descriptor {
         static func == (lhs: Availability, rhs: Availability) -> Bool {
             switch (lhs, rhs) {
             case (.yes, .yes): return true
@@ -190,9 +190,9 @@ extension Synchronizer {
             default: return false
             }
         }
-        case yes(String)
+        case yes(Synchronizer.Descriptor)
         case no(Error?)
-        case pending(Synchronizer.PendingDescriptor)
+        case pending(Synchronizer.Descriptor)
     }
 
     enum SyncError: Error, LocalizedError {
@@ -204,9 +204,8 @@ extension Synchronizer {
 extension Synchronizer.Availability {
     func describe() -> AttributedString {
         switch self {
-        case .yes(let name):
-            var attr = AttributedString("\(name) is good to go.")
-            return attr
+        case .yes(let descriptor):
+            return descriptor.describe()
         case .no(let error):
             var attr = AttributedString("\(error?.localizedDescription ?? "no error")")
             return attr
@@ -235,13 +234,12 @@ extension Synchronizer.Provider {
 }
 
 extension Synchronizer {
-    protocol PendingDescriptor {
+    protocol Descriptor {
         func describe() -> AttributedString
-        
         var action: (() -> Void)? { get }
     }
     
-    struct InitialPendingState: PendingDescriptor {
+    struct InitialPendingState: Descriptor {
         let name: String
         
         func describe() -> AttributedString {
@@ -254,6 +252,10 @@ extension Synchronizer {
     }
 }
 
-extension Synchronizer.PendingDescriptor {
+extension Synchronizer.Descriptor {
     var action: (() -> Void)? { nil }
+}
+
+extension String: Synchronizer.Descriptor {
+    func describe() -> AttributedString { AttributedString(self) }
 }
