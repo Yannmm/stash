@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 extension Synchronizer {
-    final class LocalStorageProvider: Provider {
+    final class OnPremiseProvider: Provider {
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
         

@@ -41,7 +41,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private func initialize() {
         let savedApproach = Pref.value(for: Pref.Key.synchronizerApproach) ?? Synchronizer.Option.local
-        let localProvider = Synchronizer.LocalStorageProvider()
+        let localProvider = Synchronizer.OnPremiseProvider()
         let providers: [Synchronizer.Option: any Synchronizer.Provider] = [
             .local: localProvider,
             .dropbox: Synchronizer.DropboxProvider(),

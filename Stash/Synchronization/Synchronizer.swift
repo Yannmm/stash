@@ -24,7 +24,7 @@ class Synchronizer {
 
     private var cancellables = Set<AnyCancellable>()
     private let providers: [Option: any Provider]
-    private let localProvider: LocalStorageProvider
+    private let localProvider: OnPremiseProvider
     private let history = History()
 
     private var remoteProvider: (any Provider)? {
@@ -33,7 +33,7 @@ class Synchronizer {
         return providers[a]
     }
 
-    init(approach: Option, providers: [Option: any Provider], localProvider: LocalStorageProvider) {
+    init(approach: Option, providers: [Option: any Provider], localProvider: OnPremiseProvider) {
         self._approach = CurrentValueSubject<Option, Never>(approach)
         self.providers = providers
         self.localProvider = localProvider
