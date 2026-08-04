@@ -92,7 +92,7 @@ class Synchronizer {
             guard let remote = remoteProvider else { return }
             Task {
                 do {
-                    let document = try await localProvider.document()
+                    let document = try await localProvider.document()!
                     try await remote.send(document: document, sidecar: sidecar)
                     history.log(action: "push_to_\(_approach.value.rawValue)", sidecar: sidecar)
                 } catch {
@@ -105,7 +105,7 @@ class Synchronizer {
     }
 
     func load() async throws -> String {
-        let data = try await localProvider.document()
+        let data = try await localProvider.document()!
         guard let html = String(data: data, encoding: .utf8) else {
             throw SyncError.corruptDocument
         }
@@ -113,27 +113,41 @@ class Synchronizer {
     }
 
     func align() async {
+        func _push(_ remote: Provider) async throws {
+            let sidecar = try await localProvider.sidecar()!
+            let document = try await localProvider.document()!
+            try await remote.send(document: document, sidecar: sidecar)
+            history.log(action: "push_to_\(_approach.value.rawValue)", sidecar: sidecar)
+        }
+        
+        func _pull(_ remote: Provider, _ sidecar: Sidecar) async throws {
+            if let document = try await remote.document() {
+                try await localProvider.send(document: document, sidecar: sidecar)
+                history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: sidecar)
+            } else {
+                throw SyncError.documentNotFound
+            }
+        }
+        
         guard let remote = remoteProvider else { return }
         do {
             let availability = await remote.checkAvailability()
-            guard case .yes = availability else {
-                return
-            }
-
-            let sidecar1 = try await remote.sidecar()
-            let sidecar2 = try await localProvider.sidecar()
-
-            if sidecar1.timestamp > sidecar2.timestamp {
-                let document = try await remote.document()
-                try await localProvider.send(document: document, sidecar: sidecar1)
-                history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: sidecar1)
-            } else if sidecar2.timestamp > sidecar1.timestamp {
-                let document = try await localProvider.document()
-                try await remote.send(document: document, sidecar: sidecar2)
-                history.log(action: "push_to_\(_approach.value.rawValue)", sidecar: sidecar2)
+            guard case .yes = availability else { return }
+            let lsc = try await localProvider.sidecar()!
+            if let rsc = try await remote.sidecar() {
+                if rsc.timestamp > lsc.timestamp {
+                    try await _pull(remote, rsc)
+                } else if lsc.timestamp > rsc.timestamp {
+                    try await _push(remote)
+                } else {
+                    print("[Align] sidecar equal, dothing")
+                }
+            } else {
+                try await _push(remote)
             }
         } catch {
             print("[Align] align failed: \(error)")
+            ErrorTracker.shared.add(error)
         }
     }
 
@@ -141,14 +155,17 @@ class Synchronizer {
 
     private func handleRemoteIncoming(_ remoteSidecar: Sidecar) async {
         do {
-            let localSidecar = try await localProvider.sidecar()
+            let localSidecar = try await localProvider.sidecar()!
             guard remoteSidecar.uid != localSidecar.uid else { return }
             guard remoteSidecar.timestamp > localSidecar.timestamp else { return }
 
             guard let remote = remoteProvider else { return }
-            let document = try await remote.document()
-            try await localProvider.send(document: document, sidecar: remoteSidecar)
-            history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: remoteSidecar)
+            if let document = try await remote.document() {
+                try await localProvider.send(document: document, sidecar: remoteSidecar)
+                history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: remoteSidecar)
+            } else {
+                throw SyncError.documentNotFound
+            }
         } catch {
             print("[Sync] remote incoming failed: \(error)")
         }
@@ -160,13 +177,13 @@ class Synchronizer {
 extension Synchronizer {
     enum FileName {
         static let document = "nustash_index.html"
-        static let sidecar = "nustash_index.html.sidecar"
+        static let sidecar = "nustash_index.html.sidecar.json"
     }
 
     protocol Provider {
         var onArrive: AnyPublisher<Sidecar, Never> { get }
-        func sidecar() async throws -> Sidecar
-        func document() async throws -> Data
+        func sidecar() async throws -> Sidecar?
+        func document() async throws -> Data?
         func send(document: Data, sidecar: Sidecar) async throws
         @discardableResult func checkAvailability() async -> Availability
         var availability: AnyPublisher<Availability, Never> { get }
@@ -198,6 +215,7 @@ extension Synchronizer {
     enum SyncError: Error, LocalizedError {
         case corruptDocument
         case corruptSidecar
+        case documentNotFound
     }
 }
 

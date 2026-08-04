@@ -39,13 +39,13 @@ extension Synchronizer {
             return a
         }
 
-        func sidecar() async throws -> Sidecar {
+        func sidecar() async throws -> Sidecar? {
             let url = try sidecarURL()
             let data = try Data(contentsOf: url)
             return try JSONDecoder().decode(Sidecar.self, from: data)
         }
 
-        func document() async throws -> Data {
+        func document() async throws -> Data? {
             let url = try documentURL()
             return try Data(contentsOf: url)
         }
