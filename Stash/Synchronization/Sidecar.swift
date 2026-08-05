@@ -1,13 +1,13 @@
 import Foundation
 
 struct Sidecar: Codable, Equatable {
-    let uid: String
+    let uid: UUID
     let timestamp: Date
     let device: String
 
     static func stamp() -> Sidecar {
         Sidecar(
-            uid: UUID().uuidString,
+            uid: UUID(),
             timestamp: Date(),
             device: Host.current().localizedName ?? "Unknown"
         )

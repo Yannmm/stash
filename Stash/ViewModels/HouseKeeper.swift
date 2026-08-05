@@ -129,9 +129,9 @@ extension Housekeeper {
     
     private func _load() throws {
         Task {
-            let htmlString = try await synchronizer.load()
+            guard let html = try await synchronizer.load() else { return }
             let dominator = Dominator()
-            let data = try dominator.decompose(htmlString)
+            let data = try dominator.decompose(html)
             
             let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
             

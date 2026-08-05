@@ -20,18 +20,18 @@ extension Synchronizer {
                     try fmgr.createDirectory(at: directory, withIntermediateDirectories: true)
                 }
                 
-                if !fmgr.fileExists(atPath: sidecarURL.path) {
-                    let kk = Sidecar.stamp()
-                    let encoder = JSONEncoder()
-                    // Optional: Make the JSON human-readable
-                    encoder.outputFormatting = .prettyPrinted
-                    
-                    let data = try encoder.encode(kk)
-                    let success = fmgr.createFile(atPath: sidecarURL.path, contents: data, attributes: nil)
-                }
-                if !fmgr.fileExists(atPath: documentURL.path) {
-                    let success = fmgr.createFile(atPath: documentURL.path, contents: Data(), attributes: nil)
-                }
+//                if !fmgr.fileExists(atPath: sidecarURL.path) {
+//                    let kk = Sidecar.stamp()
+//                    let encoder = JSONEncoder()
+//                    // Optional: Make the JSON human-readable
+//                    encoder.outputFormatting = .prettyPrinted
+//                    
+//                    let data = try encoder.encode(kk)
+//                    let success = fmgr.createFile(atPath: sidecarURL.path, contents: data, attributes: nil)
+//                }
+//                if !fmgr.fileExists(atPath: documentURL.path) {
+//                    let success = fmgr.createFile(atPath: documentURL.path, contents: Data(), attributes: nil)
+//                }
             } catch {
                 ErrorTracker.shared.add(error)
             }
@@ -72,16 +72,16 @@ extension Synchronizer {
             return a
         }
         
-        // MARK: - Non-protocol (local hub role)
+        // MARK: - Non-protocol
         @discardableResult
         func write(html: String) throws -> Sidecar {
-            let sidecar = Sidecar.stamp()
-            guard let document = html.data(using: .utf8) else {
+            guard let data1 = html.data(using: .utf8) else {
                 throw SyncError.corruptDocument
             }
-            try document.write(to: documentURL, options: .atomic)
-            let sidecarData = try JSONEncoder().encode(sidecar)
-            try sidecarData.write(to: sidecarURL, options: .atomic)
+            try data1.write(to: documentURL, options: .atomic)
+            let sidecar = Sidecar.stamp()
+            let data2 = try JSONEncoder().encode(sidecar)
+            try data2.write(to: sidecarURL, options: .atomic)
             return sidecar
         }
         
