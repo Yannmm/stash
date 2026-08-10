@@ -58,7 +58,6 @@ class Synchronizer {
                 Task {
                     try? await oldProvider?.pause()
                     try? await newProvider?.prepare()
-                    await self?.align()
                 }
         }.store(in: &cancellables)
         
@@ -66,6 +65,21 @@ class Synchronizer {
             .compactMap { self.providers[$0]?.availability }
             .switchToLatest()
             .eraseToAnyPublisher()
+        
+        self.availability
+            .filter {
+                guard case .yes = $0 else {
+                    return false
+                }
+                return true
+            }
+            .sink { [weak self] _ in
+                Task {
+                    await self?.compare()
+                }
+            }
+            .store(in: &cancellables)
+        
         
         local.onArrive
             .sink { [weak self] _ in
@@ -126,7 +140,7 @@ class Synchronizer {
         }
     }
 
-    func align() async {
+    func compare() async {
         func _push(to remote: Provider, sidecar: Sidecar, document: Data?) async throws {
             guard let d = document, d.count > 0 else { return }
             try await remote.send(document: d, sidecar: sidecar)
@@ -253,14 +267,14 @@ extension Synchronizer.Availability {
         }
     }
     
-    var action: (() -> Void)? {
+    func action(_ phrase: String) {
         switch self {
-        case .yes(let name):
-            return nil;
+        case .yes(let descriptor):
+            descriptor.action(phrase)
         case .no(let error):
-            return nil;
+            break
         case .pending(let descriptor):
-            return descriptor.action
+            descriptor.action(phrase)
         }
     }
 }
@@ -275,7 +289,7 @@ extension Synchronizer.Provider {
 extension Synchronizer {
     protocol Descriptor {
         func describe() -> AttributedString
-        var action: (() -> Void)? { get }
+        func action(_ phrase: String)
     }
     
     struct InitialPendingState: Descriptor {
@@ -292,7 +306,9 @@ extension Synchronizer {
 }
 
 extension Synchronizer.Descriptor {
-    var action: (() -> Void)? { nil }
+    func action(_ phrase: String) {
+        // noop
+    }
 }
 
 extension String: Synchronizer.Descriptor {

@@ -20,45 +20,89 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "09D324F3-03DA-4152-AC1F-D95137CF1140"
+            uuid = "92987798-6C89-4EDA-8339-AC53A005E4DC"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
             filePath = "Stash/Synchronization/Synchronizer.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "131"
-            endingLineNumber = "131"
-            landmarkName = "_push(to:sidecar:document:)"
-            landmarkType = "9">
+            startingLineNumber = "104"
+            endingLineNumber = "104"
+            landmarkName = "save(document:)"
+            landmarkType = "7">
+         </BreakpointContent>
+      </BreakpointProxy>
+      <BreakpointProxy
+         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
+         <BreakpointContent
+            uuid = "89EF40EB-A6B3-4033-A7CF-09C93F620C27"
+            shouldBeEnabled = "Yes"
+            ignoreCount = "0"
+            continueAfterRunningActions = "No"
+            filePath = "Stash/Synchronization/Synchronizer.swift"
+            startingColumnNumber = "9223372036854775807"
+            endingColumnNumber = "9223372036854775807"
+            startingLineNumber = "113"
+            endingLineNumber = "113"
+            landmarkName = "save(document:)"
+            landmarkType = "7">
             <Locations>
                <Location
-                  uuid = "09D324F3-03DA-4152-AC1F-D95137CF1140 - 9386475ec05f6119"
+                  uuid = "89EF40EB-A6B3-4033-A7CF-09C93F620C27 - b56dba52fd43a302"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "(1) suspend resume partial function for _push(to: Nustash.Synchronizer.Provider, sidecar: Nustash.Sidecar, document: Swift.Optional&lt;Foundation.Data&gt;) async throws -&gt; ()"
+                  symbolName = "(1) suspend resume partial function for closure #1 () async -&gt; () in Nustash.Synchronizer.save(document: Swift.String) -&gt; ()"
                   moduleName = "Nustash.debug.dylib"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Volumes/CHIPFANCIER/Stash/gwt/revert_synchronizer/Stash/Synchronization/Synchronizer.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "131"
-                  endingLineNumber = "131">
+                  startingLineNumber = "113"
+                  endingLineNumber = "113">
                </Location>
                <Location
-                  uuid = "09D324F3-03DA-4152-AC1F-D95137CF1140 - 9386475ec05f6119"
+                  uuid = "89EF40EB-A6B3-4033-A7CF-09C93F620C27 - 6d07b5a3e0d93903"
                   shouldBeEnabled = "Yes"
                   ignoreCount = "0"
                   continueAfterRunningActions = "No"
-                  symbolName = "(1) suspend resume partial function for _push(to: Nustash.Synchronizer.Provider, sidecar: Nustash.Sidecar, document: Swift.Optional&lt;Foundation.Data&gt;) async throws -&gt; ()"
+                  symbolName = "(2) await resume partial function for closure #1 () async -&gt; () in Nustash.Synchronizer.save(document: Swift.String) -&gt; ()"
                   moduleName = "Nustash.debug.dylib"
                   usesParentBreakpointCondition = "Yes"
                   urlString = "file:///Volumes/CHIPFANCIER/Stash/gwt/revert_synchronizer/Stash/Synchronization/Synchronizer.swift"
                   startingColumnNumber = "9223372036854775807"
                   endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "131"
-                  endingLineNumber = "131">
+                  startingLineNumber = "113"
+                  endingLineNumber = "113">
+               </Location>
+               <Location
+                  uuid = "89EF40EB-A6B3-4033-A7CF-09C93F620C27 - 50911236671ce704"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(3) suspend resume partial function for closure #1 () async -&gt; () in Nustash.Synchronizer.save(document: Swift.String) -&gt; ()"
+                  moduleName = "Nustash.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/CHIPFANCIER/Stash/gwt/revert_synchronizer/Stash/Synchronization/Synchronizer.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "113"
+                  endingLineNumber = "113">
+               </Location>
+               <Location
+                  uuid = "89EF40EB-A6B3-4033-A7CF-09C93F620C27 - a3b03fedafe2dd09"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "(6) suspend resume partial function for closure #1 () async -&gt; () in Nustash.Synchronizer.save(document: Swift.String) -&gt; ()"
+                  moduleName = "Nustash.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Volumes/CHIPFANCIER/Stash/gwt/revert_synchronizer/Stash/Synchronization/Synchronizer.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "113"
+                  endingLineNumber = "113">
                </Location>
             </Locations>
          </BreakpointContent>
@@ -66,89 +110,17 @@
       <BreakpointProxy
          BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
          <BreakpointContent
-            uuid = "A5AE4E6E-F099-452A-B75A-FAE57D60D4E6"
+            uuid = "94263A24-758B-46F7-9C67-6460F2978995"
             shouldBeEnabled = "Yes"
             ignoreCount = "0"
             continueAfterRunningActions = "No"
-            filePath = "Stash/Synchronization/DropboxProvider.swift"
+            filePath = "Stash/Synchronization/Synchronizer.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "125"
-            endingLineNumber = "125"
-            landmarkName = "poll()"
+            startingLineNumber = "156"
+            endingLineNumber = "156"
+            landmarkName = "compare()"
             landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "A5AE4E6E-F099-452A-B75A-FAE57D60D4E6 - eb79310ad7b9f7ba"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(1) suspend resume partial function for Nustash.Synchronizer.DropboxProvider.poll() async -&gt; ()"
-                  moduleName = "Nustash.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Volumes/CHIPFANCIER/Stash/gwt/revert_synchronizer/Stash/Synchronization/DropboxProvider.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "126"
-                  endingLineNumber = "126">
-               </Location>
-               <Location
-                  uuid = "A5AE4E6E-F099-452A-B75A-FAE57D60D4E6 - 1e4b0ff1c1250db4"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(3) suspend resume partial function for Nustash.Synchronizer.DropboxProvider.poll() async -&gt; ()"
-                  moduleName = "Nustash.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Volumes/CHIPFANCIER/Stash/gwt/revert_synchronizer/Stash/Synchronization/DropboxProvider.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "126"
-                  endingLineNumber = "126">
-               </Location>
-               <Location
-                  uuid = "A5AE4E6E-F099-452A-B75A-FAE57D60D4E6 - d955ab9329043b6"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(5) suspend resume partial function for Nustash.Synchronizer.DropboxProvider.poll() async -&gt; ()"
-                  moduleName = "Nustash.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Volumes/CHIPFANCIER/Stash/gwt/revert_synchronizer/Stash/Synchronization/DropboxProvider.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "126"
-                  endingLineNumber = "126">
-               </Location>
-               <Location
-                  uuid = "A5AE4E6E-F099-452A-B75A-FAE57D60D4E6 - a0e4c04a54624b1"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(6) suspend resume partial function for Nustash.Synchronizer.DropboxProvider.poll() async -&gt; ()"
-                  moduleName = "Nustash.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Volumes/CHIPFANCIER/Stash/gwt/revert_synchronizer/Stash/Synchronization/DropboxProvider.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "126"
-                  endingLineNumber = "126">
-               </Location>
-               <Location
-                  uuid = "A5AE4E6E-F099-452A-B75A-FAE57D60D4E6 - e6b1601fff99b0"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(7) suspend resume partial function for Nustash.Synchronizer.DropboxProvider.poll() async -&gt; ()"
-                  moduleName = "Nustash.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Volumes/CHIPFANCIER/Stash/gwt/revert_synchronizer/Stash/Synchronization/DropboxProvider.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "126"
-                  endingLineNumber = "126">
-               </Location>
-            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

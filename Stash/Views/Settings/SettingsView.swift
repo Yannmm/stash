@@ -96,12 +96,14 @@ struct SettingsView: View {
                 VStack(alignment: .leading) {
                     Picker("Approach", selection: $viewModel.synchronizerApproach) {
                         ForEach(Synchronizer.Option.allCases) { approach in
-                            Text(synchronizerApproachDescription(approach)).tag(approach)
+                            Text(synchronizerApproachDescription(approach))
+//                                .foregroundColor(viewModel.synchronizerApproach == approach ? .theme : .primary)
+                                .tag(approach)
                         }
                     }
                     Text(viewModel.availability.describe())
                         .environment(\.openURL, OpenURLAction { url in
-                            viewModel.availability.action?()
+                            viewModel.availability.action(url.absoluteString)
                             return .handled
                         })
                 }
