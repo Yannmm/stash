@@ -15,16 +15,16 @@ extension Synchronizer {
         
         var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
         private let _availability = CurrentValueSubject<Availability, Never>(.pending(InitialPendingState(name: "iCloud")))
-
+        
         private let monitor = AiCloudContainerMonitor(filename: FileName.sidecar)
         private var monitorHandle: AnyCancellable?
-
+        
         init() {}
-
+        
         deinit {
             stopMonitor()
         }
-
+        
         // MARK: - Protocol
         func checkAvailability() async {
             let available = await withCheckedContinuation { continuation in
@@ -33,40 +33,47 @@ extension Synchronizer {
                     continuation.resume(returning: url != nil)
                 }
             }
-            let a: Availability = available ? .yes("iCloud") : .no(ProviderError.icloudContainerUnavailable)
+            let a: Availability = available ? .yes("iCloud") : .pending(SomeError.unsupported)
             _availability.send(a)
         }
-
+        
         func sidecar() async throws -> Sidecar? {
-            let url = try sidecarURL()
+            guard let url = try sidecarURL() else {
+                return nil
+            }
             let data = try Data(contentsOf: url)
             return try JSONDecoder().decode(Sidecar.self, from: data)
         }
-
+        
         func document() async throws -> Data? {
-            let url = try documentURL()
+            guard let url = try documentURL() else {
+                return nil
+            }
             return try Data(contentsOf: url)
         }
-
+        
         func send(document: Data, sidecar: Sidecar) async throws {
-            let docURL = try documentURL()
-            let scURL = try sidecarURL()
-            try document.write(to: docURL, options: .atomic)
+            guard
+                let durl = try documentURL(),
+                let surl = try sidecarURL() else {
+                return
+            }
+            try document.write(to: durl, options: .atomic)
             let sidecarData = try JSONEncoder().encode(sidecar)
-            try sidecarData.write(to: scURL, options: .atomic)
+            try sidecarData.write(to: surl, options: .atomic)
         }
-
+        
         func prepare() async throws {
             startMonitor()
             await checkAvailability()
         }
-
+        
         func pause() async throws {
             stopMonitor()
         }
-
+        
         // MARK: - Monitor
-
+        
         private func startMonitor() {
             monitorHandle = monitor.$onChange
                 .compactMap { $0 }
@@ -74,7 +81,9 @@ extension Synchronizer {
                 .sink { [weak self] _ in
                     guard let self else { return }
                     do {
-                        let url = try self.sidecarURL()
+                        guard let url = try self.sidecarURL() else {
+                            return
+                        }
                         let data = try Data(contentsOf: url)
                         let sidecar = try JSONDecoder().decode(Sidecar.self, from: data)
                         self._onArrive.send(sidecar)
@@ -84,18 +93,19 @@ extension Synchronizer {
                 }
             monitor.start()
         }
-
+        
         private func stopMonitor() {
             monitor.stop()
             monitorHandle?.cancel()
             monitorHandle = nil
         }
-
+        
         // MARK: - Paths
-
-        private func containerDocumentsURL() throws -> URL {
+        
+        private func containerDocumentsURL() throws -> URL? {
             guard let container = FileManager.default.url(forUbiquityContainerIdentifier: nil) else {
-                throw ProviderError.icloudContainerUnavailable
+                _availability.send(.pending(SomeError.unsupported))
+                return nil
             }
             let documents = container.appendingPathComponent("Documents")
             if !FileManager.default.fileExists(atPath: documents.path) {
@@ -103,26 +113,35 @@ extension Synchronizer {
             }
             return documents
         }
-
-        private func documentURL() throws -> URL {
-            try containerDocumentsURL().appendingPathComponent(FileName.document)
+        
+        private func documentURL() throws -> URL? {
+            try containerDocumentsURL()?.appendingPathComponent(FileName.document)
         }
-
-        private func sidecarURL() throws -> URL {
-            try containerDocumentsURL().appendingPathComponent(FileName.sidecar)
+        
+        private func sidecarURL() throws -> URL? {
+            try containerDocumentsURL()?.appendingPathComponent(FileName.sidecar)
         }
     }
 }
 
 extension Synchronizer.AiCloudProvider {
-    enum ProviderError: Error, LocalizedError {
-        case icloudContainerUnavailable
-
-        var errorDescription: String? {
+    enum SomeError: Error, Synchronizer.Descriptor {
+        case unsupported
+        case corruptData(Error)
+        
+        func describe() -> AttributedString {
+            var attr: AttributedString!
             switch self {
-            case .icloudContainerUnavailable:
-                return "iCloud container is not available"
+            case .unsupported:
+                attr = AttributedString("iCloud is not available.")
+            case .corruptData(let error):
+                attr = AttributedString(error.localizedDescription)
             }
+            attr.foregroundColor = .red
+            return attr
         }
     }
 }
+
+
+

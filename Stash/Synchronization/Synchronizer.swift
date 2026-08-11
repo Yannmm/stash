@@ -236,13 +236,11 @@ extension Synchronizer {
         static func == (lhs: Availability, rhs: Availability) -> Bool {
             switch (lhs, rhs) {
             case (.yes, .yes): return true
-            case (.no, .no): return true
             case (.pending, .pending): return true
             default: return false
             }
         }
         case yes(Synchronizer.Descriptor)
-        case no(Error?)
         case pending(Synchronizer.Descriptor)
     }
 
@@ -259,9 +257,6 @@ extension Synchronizer.Availability {
         switch self {
         case .yes(let descriptor):
             return descriptor.describe()
-        case .no(let error):
-            var attr = AttributedString("\(error?.localizedDescription ?? "no error")")
-            return attr
         case .pending(let descriptor):
             return descriptor.describe()
         }
@@ -271,8 +266,6 @@ extension Synchronizer.Availability {
         switch self {
         case .yes(let descriptor):
             descriptor.action(phrase)
-        case .no(let error):
-            break
         case .pending(let descriptor):
             descriptor.action(phrase)
         }
@@ -317,4 +310,8 @@ extension Synchronizer.Descriptor {
 
 extension String: Synchronizer.Descriptor {
     func describe() -> AttributedString { AttributedString(self) }
+}
+
+extension AttributedString: Synchronizer.Descriptor {
+    func describe() -> AttributedString { self }
 }
