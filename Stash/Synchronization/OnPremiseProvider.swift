@@ -6,8 +6,9 @@ extension Synchronizer {
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
         
-        var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
-        private let _availability = CurrentValueSubject<Availability, Never>(.yes("Local"))
+        var availability: AnyPublisher<Availability, Never> { Just(.yes("Local")).eraseToAnyPublisher() }
+        
+        func getAvailability() async -> Availability { .yes("Local") }
         
         private let directory: URL
         
@@ -19,19 +20,6 @@ extension Synchronizer {
                 if !fmgr.fileExists(atPath: directory.path) {
                     try fmgr.createDirectory(at: directory, withIntermediateDirectories: true)
                 }
-                
-//                if !fmgr.fileExists(atPath: sidecarURL.path) {
-//                    let kk = Sidecar.stamp()
-//                    let encoder = JSONEncoder()
-//                    // Optional: Make the JSON human-readable
-//                    encoder.outputFormatting = .prettyPrinted
-//                    
-//                    let data = try encoder.encode(kk)
-//                    let success = fmgr.createFile(atPath: sidecarURL.path, contents: data, attributes: nil)
-//                }
-//                if !fmgr.fileExists(atPath: documentURL.path) {
-//                    let success = fmgr.createFile(atPath: documentURL.path, contents: Data(), attributes: nil)
-//                }
             } catch {
                 ErrorTracker.shared.add(error)
             }
@@ -64,12 +52,6 @@ extension Synchronizer {
             let sidecarData = try JSONEncoder().encode(sidecar)
             try sidecarData.write(to: sidecarURL, options: .atomic)
             _onArrive.send(sidecar)
-        }
-        
-        func checkAvailability() async -> Availability {
-            let a: Availability = .yes("Local")
-            defer { _availability.send(a) }
-            return a
         }
         
         // MARK: - Non-protocol

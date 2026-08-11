@@ -26,8 +26,7 @@ extension Synchronizer {
         }
 
         // MARK: - Protocol
-        @discardableResult
-        func checkAvailability() async -> Availability {
+        func checkAvailability() async {
             let available = await withCheckedContinuation { continuation in
                 DispatchQueue.global(qos: .utility).async {
                     let url = FileManager.default.url(forUbiquityContainerIdentifier: nil)
@@ -35,8 +34,7 @@ extension Synchronizer {
                 }
             }
             let a: Availability = available ? .yes("iCloud") : .no(ProviderError.icloudContainerUnavailable)
-            defer { _availability.send(a) }
-            return a
+            _availability.send(a)
         }
 
         func sidecar() async throws -> Sidecar? {

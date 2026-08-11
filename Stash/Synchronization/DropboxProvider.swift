@@ -30,9 +30,7 @@ extension Synchronizer {
         init() {}
         
         // MARK: - Protocol
-        
-        @discardableResult
-        func checkAvailability() async -> Availability {
+        func checkAvailability() async {
             var a: Availability!
             if signedIn {
                 let name = await getAccount()
@@ -43,10 +41,7 @@ extension Synchronizer {
                     self?.authenticate()
                 }))
             }
-            defer {
-                _availability.send(a)
-            }
-            return a
+            _availability.send(a)
         }
         
         func sidecar() async throws -> Sidecar? {

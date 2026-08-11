@@ -155,7 +155,7 @@ class Synchronizer {
         
         guard let remote = remote else { return }
         do {
-            let availability = await remote.checkAvailability()
+            let availability = await remote.getAvailability()
             guard case .yes = availability else {
                 print("[Align] remote provider not available, do nothing")
                 return
@@ -219,8 +219,8 @@ extension Synchronizer {
         func sidecar() async throws -> Sidecar?
         func document() async throws -> Data?
         func send(document: Data, sidecar: Sidecar) async throws
-        @discardableResult func checkAvailability() async -> Availability
         var availability: AnyPublisher<Availability, Never> { get }
+        func getAvailability() async -> Availability
         func prepare() async throws
         func pause() async throws
     }
@@ -280,9 +280,13 @@ extension Synchronizer.Availability {
 }
 
 extension Synchronizer.Provider {
-    func prepare() async throws {
-        await checkAvailability()
+    func getAvailability() async -> Synchronizer.Availability {
+        let a = await availability.values.first(where: { _ in true })
+        return a!
     }
+    
+    func prepare() async throws {}
+    
     func pause() async throws {}
 }
 
