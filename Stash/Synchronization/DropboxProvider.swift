@@ -17,7 +17,7 @@ extension Synchronizer {
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
         
         var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
-        private let _availability = CurrentValueSubject<Availability, Never>(.pending(InitialPendingState(name: "Dropbox")))
+        private let _availability = CurrentValueSubject<Availability, Never>(.no(InitialPendingState(name: "Dropbox")))
         
         private var _sdkInitialized = false
         private var _anchor: UUID?
@@ -37,7 +37,7 @@ extension Synchronizer {
                 a = .yes(AuthStatus.ready(name, logout))
                 start()
             } else {
-                a = .pending(AuthStatus.anonymous({ [weak self] in
+                a = .no(AuthStatus.anonymous({ [weak self] in
                     self?.authenticate()
                 }))
             }
@@ -46,7 +46,8 @@ extension Synchronizer {
         
         func sidecar() async throws -> Sidecar? {
             guard let client = DropboxClientsManager.authorizedClient else {
-                throw SomeError.unauthenticated
+                _availability.send(.no(AuthStatus.anonymous(authenticate)))
+                return nil
             }
             do {
                 let data = try await download(client: client, path: sidecarPath)
@@ -58,7 +59,8 @@ extension Synchronizer {
         
         func document() async throws -> Data? {
             guard let client = DropboxClientsManager.authorizedClient else {
-                throw SomeError.unauthenticated
+                _availability.send(.no(AuthStatus.anonymous(authenticate)))
+                return nil
             }
             do {
                 return try await download(client: client, path: documentPath)
@@ -69,7 +71,8 @@ extension Synchronizer {
         
         func send(document: Data, sidecar: Sidecar) async throws {
             guard let client = DropboxClientsManager.authorizedClient else {
-                throw SomeError.unauthenticated
+                _availability.send(.no(AuthStatus.anonymous(authenticate)))
+                return
             }
             // Upload document
             try await upload(client: client, path: documentPath, data: document)
@@ -135,35 +138,6 @@ extension Synchronizer {
             }
         }
         
-        // MARK: - Dropbox API Helpers
-        
-//        private func getContentHash(client: DropboxClient, path: String) async throws -> String? {
-//            try await withCheckedThrowingContinuation { continuation in
-//                client.files.getMetadata(path: path).response { response, error in
-//                    if let metadata = response as? Files.FileMetadata {
-//                        continuation.resume(returning: metadata.contentHash)
-//                    } else if let error {
-//                        switch error {
-//                        case .routeError(let boxed, _, _, _):
-//                            switch boxed.unboxed as Files.GetMetadataError {
-//                            case .path(let lookupError):
-//                                switch lookupError {
-//                                case .notFound:
-//                                    continuation.resume(with: .failure(ProviderError.fileNotFound))
-//                                default:
-//                                    continuation.resume(with: .failure(ProviderError.apiError(lookupError.description)))
-//                                }
-//                            }
-//                        default:
-//                            continuation.resume(with: .failure(ProviderError.apiError(error.description)))
-//                        }
-//                    } else {
-//                        continuation.resume(returning: nil)
-//                    }
-//                }
-//            }
-//        }
-        
         private func download(client: DropboxClient, path: String) async throws -> Data {
             try await withCheckedThrowingContinuation { continuation in
                 client.files.download(path: path).response { response, error in
@@ -214,11 +188,11 @@ extension Synchronizer {
                                     self?._availability.send(.yes(AuthStatus.ready(name, this.logout)))
                                 }
                             case .cancel:
-                                self?._availability.send(.pending(AuthStatus.anonymous({ [weak self] in
+                                self?._availability.send(.no(AuthStatus.anonymous({ [weak self] in
                                     self?.authenticate()
                                 })))
                             case .error(let error, _):
-                                self?._availability.send(.pending(AuthStatus.error(error, { [weak self] in
+                                self?._availability.send(.no(AuthStatus.error(error, { [weak self] in
                                     self?.authenticate()
                                 })))
                             }
@@ -279,7 +253,6 @@ extension Synchronizer {
 
 extension Synchronizer.DropboxProvider {
     enum SomeError: Error {
-        case unauthenticated
         case fileNotFound(String)
         case api(String)
     }

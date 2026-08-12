@@ -14,7 +14,7 @@ extension Synchronizer {
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
         
         var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
-        private let _availability = CurrentValueSubject<Availability, Never>(.pending(InitialPendingState(name: "iCloud")))
+        private let _availability = CurrentValueSubject<Availability, Never>(.no(InitialPendingState(name: "iCloud")))
         
         private let monitor = AiCloudContainerMonitor(filename: FileName.sidecar)
         private var monitorHandle: AnyCancellable?
@@ -33,7 +33,7 @@ extension Synchronizer {
                     continuation.resume(returning: url != nil)
                 }
             }
-            let a: Availability = available ? .yes("iCloud") : .pending(SomeError.unsupported)
+            let a: Availability = available ? .yes(raedyMessage) : .no(SomeError.unsupported)
             _availability.send(a)
         }
         
@@ -104,7 +104,7 @@ extension Synchronizer {
         
         private func containerDocumentsURL() throws -> URL? {
             guard let container = FileManager.default.url(forUbiquityContainerIdentifier: nil) else {
-                _availability.send(.pending(SomeError.unsupported))
+                _availability.send(.no(SomeError.unsupported))
                 return nil
             }
             let documents = container.appendingPathComponent("Documents")
@@ -140,6 +140,12 @@ extension Synchronizer.AiCloudProvider {
             attr.foregroundColor = .red
             return attr
         }
+    }
+    
+    var raedyMessage: AttributedString {
+        var attr = AttributedString("iCloud is ready.")
+        attr.foregroundColor = .secondary
+        return attr
     }
 }
 

@@ -236,12 +236,12 @@ extension Synchronizer {
         static func == (lhs: Availability, rhs: Availability) -> Bool {
             switch (lhs, rhs) {
             case (.yes, .yes): return true
-            case (.pending, .pending): return true
+            case (.no, .no): return true
             default: return false
             }
         }
         case yes(Synchronizer.Descriptor)
-        case pending(Synchronizer.Descriptor)
+        case no(Synchronizer.Descriptor)
     }
 
     enum SyncError: Error, LocalizedError {
@@ -257,7 +257,7 @@ extension Synchronizer.Availability {
         switch self {
         case .yes(let descriptor):
             return descriptor.describe()
-        case .pending(let descriptor):
+        case .no(let descriptor):
             return descriptor.describe()
         }
     }
@@ -266,7 +266,7 @@ extension Synchronizer.Availability {
         switch self {
         case .yes(let descriptor):
             descriptor.action(phrase)
-        case .pending(let descriptor):
+        case .no(let descriptor):
             descriptor.action(phrase)
         }
     }
