@@ -45,7 +45,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let providers: [Synchronizer.Option: any Synchronizer.Provider] = [
             .local: localProvider,
             .dropbox: Synchronizer.DropboxProvider(),
-            .icloud: Synchronizer.AiCloudProvider()
+            .icloud: Synchronizer.AiCloudProvider(),
+            .baidupan: Synchronizer.BaiduPanProvider(),
         ]
         let synchronizer = Synchronizer(
             approach: savedApproach,
@@ -94,11 +95,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationWillFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
         
+        NSAppleEventManager.shared().setEventHandler(self,
+                                                     andSelector: #selector(handleGetURLEvent(_:replyEvent:)),
+                                                     forEventClass: AEEventClass(kInternetEventClass),
+                                                     andEventID: AEEventID(kAEGetURL))
+        
         initialize()
         
         Task {
             try? await updateChecker.check()
         }
+    }
+    
+    @objc private func handleGetURLEvent(_ event: NSAppleEventDescriptor?, replyEvent: NSAppleEventDescriptor?) {
+        guard let descriptor = event?.paramDescriptor(forKeyword: AEKeyword(keyDirectObject)),
+              let urlStr = descriptor.stringValue,
+              let url = URL(string: urlStr) else { return }
+        NotificationCenter.default.post(name: .oauthCallback, object: url)
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {

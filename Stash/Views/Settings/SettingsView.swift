@@ -56,6 +56,7 @@ struct SettingsView: View {
         case .local: return "Local"
         case .icloud: return "iCloud"
         case .dropbox: return "Dropbox"
+        case .baidupan: return "BaiduPan"
         }
     }
     

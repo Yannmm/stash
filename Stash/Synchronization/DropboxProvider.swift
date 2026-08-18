@@ -15,6 +15,7 @@ extension Synchronizer {
     final class DropboxProvider: Provider {
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
+        private var cancellables = Set<AnyCancellable>()
         
         var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
         private let _availability = CurrentValueSubject<Availability, Never>(.no(InitialPendingState(name: "Dropbox")))
@@ -27,7 +28,15 @@ extension Synchronizer {
         
         private var pollTask: Task<Void, Never>?
         
-        init() {}
+        init() {
+            NotificationCenter.default.publisher(for: .oauthCallback)
+                .compactMap { $0.object as? URL }
+                .filter { $0.scheme?.starts(with: "db-") == true }
+                .sink { [weak self] url in
+                    self?.handleRedirectURL(url)
+                }
+                .store(in: &cancellables)
+        }
         
         // MARK: - Protocol
         func checkAvailability() async {
@@ -84,15 +93,7 @@ extension Synchronizer {
         func prepare() async throws {
             guard !_sdkInitialized else { return }
             _sdkInitialized = true
-            // Set up dropbox sdk
             DropboxClientsManager.setupWithAppKeyDesktop("y6ijm2p3vqr7kt8")
-            
-            // Register authenticate callback
-            NSAppleEventManager.shared().setEventHandler(self,
-                                                         andSelector: #selector(handleGetURLEvent),
-                                                         forEventClass: AEEventClass(kInternetEventClass),
-                                                         andEventID: AEEventID(kAEGetURL))
-            
             await checkAvailability()
         }
 
@@ -173,35 +174,30 @@ extension Synchronizer {
         
         // MARK: - OAuth
         
-        @objc private func handleGetURLEvent(_ event: NSAppleEventDescriptor?, replyEvent: NSAppleEventDescriptor?) {
-            if let aeEventDescriptor = event?.paramDescriptor(forKeyword: AEKeyword(keyDirectObject)) {
-                if let urlStr = aeEventDescriptor.stringValue {
-                    let url = URL(string: urlStr)!
-                    let oauthCompletion: DropboxOAuthCompletion = { [weak self] in
-                        if let authResult = $0 {
-                            switch authResult {
-                            case .success:
-                                self?.start()
-                                Task {
-                                    let name = await self?.getAccount()
-                                    guard let this = self else { return }
-                                    self?._availability.send(.yes(AuthStatus.ready(name, this.logout)))
-                                }
-                            case .cancel:
-                                self?._availability.send(.no(AuthStatus.anonymous({ [weak self] in
-                                    self?.authenticate()
-                                })))
-                            case .error(let error, _):
-                                self?._availability.send(.no(AuthStatus.error(error, { [weak self] in
-                                    self?.authenticate()
-                                })))
-                            }
+        private func handleRedirectURL(_ url: URL) {
+            let oauthCompletion: DropboxOAuthCompletion = { [weak self] in
+                if let authResult = $0 {
+                    switch authResult {
+                    case .success:
+                        self?.start()
+                        Task {
+                            let name = await self?.getAccount()
+                            guard let this = self else { return }
+                            self?._availability.send(.yes(AuthStatus.ready(name, this.logout)))
                         }
+                    case .cancel:
+                        self?._availability.send(.no(AuthStatus.anonymous({ [weak self] in
+                            self?.authenticate()
+                        })))
+                    case .error(let error, _):
+                        self?._availability.send(.no(AuthStatus.error(error, { [weak self] in
+                            self?.authenticate()
+                        })))
                     }
-                    DropboxClientsManager.handleRedirectURL(url, includeBackgroundClient: false, completion: oauthCompletion)
-                    NSApp.activate(ignoringOtherApps: true)
                 }
             }
+            DropboxClientsManager.handleRedirectURL(url, includeBackgroundClient: false, completion: oauthCompletion)
+            NSApp.activate(ignoringOtherApps: true)
         }
         
         // MARK: - Helpers

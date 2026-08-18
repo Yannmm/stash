@@ -230,6 +230,7 @@ extension Synchronizer {
         case icloud
         case local
         case dropbox
+        case baidupan
     }
 
     enum Availability: Equatable, Synchronizer.Descriptor {
