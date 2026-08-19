@@ -349,8 +349,9 @@ extension Synchronizer {
                   let resp = try? JSONDecoder().decode(UserInfoResponse.self, from: data) else {
                 return nil
             }
-            let name = resp.netdisk_name ?? resp.baidu_name
-            return name?.isEmpty == true ? nil : name
+            let name1 = resp.netdisk_name ?? ""
+            let name2 = resp.baidu_name
+            return name1.isEmpty ? name2 : name1
         }
 
         func logout() {
