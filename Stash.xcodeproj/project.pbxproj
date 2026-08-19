@@ -37,6 +37,9 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		6D12883F303564E4002A6493 /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		6D128841303564E4002A6493 /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		6D128842303564E4002A6493 /* wrangler.toml */ = {isa = PBXFileReference; lastKnownFileType = text; path = wrangler.toml; sourceTree = "<group>"; };
 		7222C1C02D491BEC00096255 /* Nustash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nustash.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7222C1D32D491BEF00096255 /* StashTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StashTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7222C1DD2D491BEF00096255 /* StashUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StashUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -95,6 +98,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6D128840303564E4002A6493 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				6D12883F303564E4002A6493 /* index.js */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		6D128843303564E4002A6493 /* cloudflare-worker */ = {
+			isa = PBXGroup;
+			children = (
+				6D128840303564E4002A6493 /* src */,
+				6D128841303564E4002A6493 /* package.json */,
+				6D128842303564E4002A6493 /* wrangler.toml */,
+			);
+			path = "cloudflare-worker";
+			sourceTree = "<group>";
+		};
 		6D6718452D672CDC0063FE57 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -110,6 +131,7 @@
 				7222C1E02D491BEF00096255 /* StashUITests */,
 				6D6718452D672CDC0063FE57 /* Frameworks */,
 				7222C1C12D491BEC00096255 /* Products */,
+				6D128843303564E4002A6493 /* cloudflare-worker */,
 				72B646272E9A6668009DE023 /* README.md */,
 			);
 			sourceTree = "<group>";

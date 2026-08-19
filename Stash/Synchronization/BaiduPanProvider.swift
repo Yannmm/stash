@@ -12,9 +12,9 @@ import SwiftUI
 
 extension Synchronizer {
     final class BaiduPanProvider: Provider {
-        private static let clientId = "YOUR_APP_KEY"
-        private static let clientSecret = "YOUR_SECRET_KEY"
-        private static let redirectUri = "https://nustash-auth.YOUR_ACCOUNT.workers.dev/callback/baidupan"
+        private static let clientId = "I5PDsDtk6M0sv821sdXmc585DzeUb8cn"
+        private static let clientSecret = "oMebbuXLuLXXlODsssfsv1oyRUha4r3W"
+        private static let redirectUri = "https://nustash-auth.yannmm.workers.dev/callback/baidupan"
         private static let authorizeURL = "https://openapi.baidu.com/oauth/2.0/authorize"
         private static let tokenURL = "https://openapi.baidu.com/oauth/2.0/token"
         private static let basePath = "/apps/Nustash"
