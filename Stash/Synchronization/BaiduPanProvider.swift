@@ -10,29 +10,41 @@ import Combine
 import AppKit
 import SwiftUI
 
+fileprivate extension Synchronizer.BaiduPanProvider {
+    enum Constant {
+        static let clientId = "I5PDsDtk6M0sv821sdXmc585DzeUb8cn"
+        static let clientSecret = "oMebbuXLuLXXlODsssfsv1oyRUha4r3W"
+        static let redirectUri = "https://nustash-auth.yannmm.workers.dev/callback/baidupan"
+        static let authorizeUrl = "https://openapi.baidu.com/oauth/2.0/authorize"
+        static let tokenUrl = "https://openapi.baidu.com/oauth/2.0/token"
+        static let basePath = "/apps/Nustash"
+        static let sidecarPath: String = "\(basePath)/\(Synchronizer.FileName.sidecar)"
+        static let documentPath: String = "\(basePath)/\(Synchronizer.FileName.document)"
+    }
+}
+
 extension Synchronizer {
-    final class BaiduPanProvider: Provider {
-        private static let clientId = "I5PDsDtk6M0sv821sdXmc585DzeUb8cn"
-        private static let clientSecret = "oMebbuXLuLXXlODsssfsv1oyRUha4r3W"
-        private static let redirectUri = "https://nustash-auth.yannmm.workers.dev/callback/baidupan"
-        private static let authorizeURL = "https://openapi.baidu.com/oauth/2.0/authorize"
-        private static let tokenURL = "https://openapi.baidu.com/oauth/2.0/token"
-        private static let basePath = "/apps/Nustash"
+    final class BaiduPanProvider: Provider, Polling {
 
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
+        
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
+        
+        func setOnArrive(_ sidecar: Sidecar) { _onArrive.send(sidecar) }
 
         var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
+        
         private let _availability = CurrentValueSubject<Availability, Never>(.no(InitialPendingState(name: "BaiduPan")))
 
-        private var pendingState: String?
-        private var _anchor: UUID?
-        private var pollTask: Task<Void, Never>?
-        private var refreshTask: Task<Token, Error>?
+        private var _state: String?
+        
+        var polanchor: UUID?
+        
+        var poltask: Task<Void, Never>?
+        
+        private var _refreshTask: Task<Token, Error>?
+        
         private var cancellables = Set<AnyCancellable>()
-
-        private let sidecarPath: String = "\(basePath)/\(FileName.sidecar)"
-        private let documentPath: String = "\(basePath)/\(FileName.document)"
 
         init() {
             NotificationCenter.default.publisher(for: .oauthCallback)
@@ -50,16 +62,11 @@ extension Synchronizer {
             await checkAvailability()
         }
 
-        func pause() async throws {
-            pollTask?.cancel()
-            pollTask = nil
-        }
-
         func checkAvailability() async {
             if let token = Keychain.load() {
                 let name = await getAccountName(accessToken: token.accessToken)
                 _availability.send(.yes(AuthStatus.ready(name, logout)))
-                start()
+                startpol()
             } else {
                 _availability.send(.no(AuthStatus.anonymous({ [weak self] in
                     self?.authenticate()
@@ -70,9 +77,9 @@ extension Synchronizer {
         func sidecar() async throws -> Sidecar? {
             let accessToken = try await validAccessToken()
             do {
-                let data = try await download(path: sidecarPath, accessToken: accessToken)
+                let data = try await download(path: Constant.sidecarPath, accessToken: accessToken)
                 return try JSONDecoder().decode(Sidecar.self, from: data)
-            } catch BaiduError.fileNotFound {
+            } catch Synchronizer.SyncError.fileNotFound {
                 return nil
             }
         }
@@ -80,30 +87,30 @@ extension Synchronizer {
         func document() async throws -> Data? {
             let accessToken = try await validAccessToken()
             do {
-                return try await download(path: documentPath, accessToken: accessToken)
-            } catch BaiduError.fileNotFound {
+                return try await download(path: Constant.documentPath, accessToken: accessToken)
+            } catch Synchronizer.SyncError.fileNotFound {
                 return nil
             }
         }
 
         func send(document: Data, sidecar: Sidecar) async throws {
             let accessToken = try await validAccessToken()
-            try await upload(path: documentPath, data: document, accessToken: accessToken)
+            try await upload(path: Constant.documentPath, data: document, accessToken: accessToken)
             let sidecarData = try JSONEncoder().encode(sidecar)
-            try await upload(path: sidecarPath, data: sidecarData, accessToken: accessToken)
-            _anchor = sidecar.uid
+            try await upload(path: Constant.sidecarPath, data: sidecarData, accessToken: accessToken)
+            polanchor = sidecar.uid
         }
 
         // MARK: - OAuth
 
         func authenticate() {
             let state = UUID().uuidString
-            pendingState = state
-            var components = URLComponents(string: Self.authorizeURL)!
+            _state = state
+            var components = URLComponents(string: Constant.authorizeUrl)!
             components.queryItems = [
                 URLQueryItem(name: "response_type", value: "code"),
-                URLQueryItem(name: "client_id", value: Self.clientId),
-                URLQueryItem(name: "redirect_uri", value: Self.redirectUri),
+                URLQueryItem(name: "client_id", value: Constant.clientId),
+                URLQueryItem(name: "redirect_uri", value: Constant.redirectUri),
                 URLQueryItem(name: "scope", value: "basic,netdisk"),
                 URLQueryItem(name: "state", value: state),
             ]
@@ -114,20 +121,20 @@ extension Synchronizer {
             guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
                   let code = components.queryItems?.first(where: { $0.name == "code" })?.value,
                   let state = components.queryItems?.first(where: { $0.name == "state" })?.value,
-                  state == pendingState else {
+                  state == _state else {
                 _availability.send(.no(AuthStatus.error(BaiduError.authFailed, { [weak self] in
                     self?.authenticate()
                 })))
                 return
             }
-            pendingState = nil
+            _state = nil
 
             do {
                 let token = try await exchangeCode(code)
                 try Keychain.save(token)
                 let name = await getAccountName(accessToken: token.accessToken)
                 _availability.send(.yes(AuthStatus.ready(name, logout)))
-                start()
+                startpol()
             } catch {
                 _availability.send(.no(AuthStatus.error(error, { [weak self] in
                     self?.authenticate()
@@ -137,13 +144,13 @@ extension Synchronizer {
         }
 
         private func exchangeCode(_ code: String) async throws -> Token {
-            var components = URLComponents(string: Self.tokenURL)!
+            var components = URLComponents(string: Constant.tokenUrl)!
             components.queryItems = [
                 URLQueryItem(name: "grant_type", value: "authorization_code"),
                 URLQueryItem(name: "code", value: code),
-                URLQueryItem(name: "client_id", value: Self.clientId),
-                URLQueryItem(name: "client_secret", value: Self.clientSecret),
-                URLQueryItem(name: "redirect_uri", value: Self.redirectUri),
+                URLQueryItem(name: "client_id", value: Constant.clientId),
+                URLQueryItem(name: "client_secret", value: Constant.clientSecret),
+                URLQueryItem(name: "redirect_uri", value: Constant.redirectUri),
             ]
             var request = URLRequest(url: components.url!)
             request.httpMethod = "GET"
@@ -168,18 +175,18 @@ extension Synchronizer {
         }
 
         private func refreshAccessToken() async throws -> Token {
-            if let existing = refreshTask {
+            if let existing = _refreshTask {
                 return try await existing.value
             }
             let task = Task<Token, Error> {
-                defer { refreshTask = nil }
+                defer { _refreshTask = nil }
                 guard let current = Keychain.load() else { throw BaiduError.notAuthenticated }
-                var components = URLComponents(string: Self.tokenURL)!
+                var components = URLComponents(string: Constant.tokenUrl)!
                 components.queryItems = [
                     URLQueryItem(name: "grant_type", value: "refresh_token"),
                     URLQueryItem(name: "refresh_token", value: current.refreshToken),
-                    URLQueryItem(name: "client_id", value: Self.clientId),
-                    URLQueryItem(name: "client_secret", value: Self.clientSecret),
+                    URLQueryItem(name: "client_id", value: Constant.clientId),
+                    URLQueryItem(name: "client_secret", value: Constant.clientSecret),
                 ]
                 var request = URLRequest(url: components.url!)
                 request.httpMethod = "GET"
@@ -192,7 +199,7 @@ extension Synchronizer {
                 try Keychain.save(newToken)
                 return newToken
             }
-            refreshTask = task
+            _refreshTask = task
             return try await task.value
         }
 
@@ -204,35 +211,6 @@ extension Synchronizer {
             } catch BaiduError.tokenExpired {
                 let refreshed = try await refreshAccessToken()
                 return try await work(refreshed.accessToken)
-            }
-        }
-
-        // MARK: - Polling
-
-        private func start() {
-            guard pollTask == nil else { return }
-            pollTask = Task { [weak self] in
-                while !Task.isCancelled {
-                    guard let self else { return }
-                    await self.poll()
-                    do {
-                        try await Task.sleep(for: .seconds(10))
-                    } catch { break }
-                }
-            }
-        }
-
-        private func poll() async {
-            do {
-                guard let sidecar = try await sidecar(),
-                      let a = _anchor,
-                      sidecar.uid != a else { return }
-                _anchor = sidecar.uid
-                _onArrive.send(sidecar)
-            } catch BaiduError.fileNotFound {
-                return
-            } catch {
-                print("[BaiduPan] poll failed: \(error)")
             }
         }
 
@@ -249,7 +227,7 @@ extension Synchronizer {
             ]
             let (metaData, _) = try await URLSession.shared.data(from: components.url!)
             let meta = try JSONDecoder().decode(FileMetasResponse.self, from: metaData)
-            guard let dlink = meta.list?.first?.dlink else { throw BaiduError.fileNotFound }
+            guard let dlink = meta.list?.first?.dlink else { throw Synchronizer.SyncError.fileNotFound(path) }
 
             // Step 2: download using dlink
             var dlURL = URLComponents(string: dlink)!
@@ -268,13 +246,13 @@ extension Synchronizer {
             components.queryItems = [
                 URLQueryItem(name: "method", value: "list"),
                 URLQueryItem(name: "access_token", value: accessToken),
-                URLQueryItem(name: "dir", value: Self.basePath),
+                URLQueryItem(name: "dir", value: Constant.basePath),
             ]
             let (data, _) = try await URLSession.shared.data(from: components.url!)
             let resp = try JSONDecoder().decode(FileListResponse.self, from: data)
             let fileName = (path as NSString).lastPathComponent
             guard let file = resp.list?.first(where: { $0.server_filename == fileName }) else {
-                throw BaiduError.fileNotFound
+                throw Synchronizer.SyncError.fileNotFound(path)
             }
             return file.fs_id
         }
@@ -356,13 +334,13 @@ extension Synchronizer {
 
         func logout() {
             Keychain.delete()
-            pollTask?.cancel()
-            pollTask = nil
+            poltask?.cancel()
+            poltask = nil
             Task { await checkAvailability() }
         }
 
         deinit {
-            pollTask?.cancel()
+            poltask?.cancel()
         }
     }
 }
@@ -418,7 +396,6 @@ extension Synchronizer.BaiduPanProvider {
         case authFailed
         case tokenExpired
         case tokenExchangeFailed(String)
-        case fileNotFound
         case api(String)
 
         var errorDescription: String? {
@@ -427,7 +404,6 @@ extension Synchronizer.BaiduPanProvider {
             case .authFailed: return "Authorization failed"
             case .tokenExpired: return "Token expired"
             case .tokenExchangeFailed(let msg): return "Token exchange failed: \(msg)"
-            case .fileNotFound: return "File not found"
             case .api(let msg): return msg
             }
         }

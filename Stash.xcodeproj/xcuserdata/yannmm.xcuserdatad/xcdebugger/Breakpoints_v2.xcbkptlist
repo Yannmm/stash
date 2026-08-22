@@ -107,51 +107,5 @@
             </Locations>
          </BreakpointContent>
       </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "8DC25A58-0F62-47BC-A067-FB79F2382265"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "Stash/Synchronization/BaiduPanProvider.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "114"
-            endingLineNumber = "114"
-            landmarkName = "handleOAuthCallback(url:)"
-            landmarkType = "7">
-            <Locations>
-               <Location
-                  uuid = "8DC25A58-0F62-47BC-A067-FB79F2382265 - e5337b5c730847d0"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(1) suspend resume partial function for Nustash.Synchronizer.BaiduPanProvider.handleOAuthCallback(url: Foundation.URL) async -&gt; ()"
-                  moduleName = "Nustash.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Volumes/CHIPFANCIER/Stash/gwt/revert_synchronizer/Stash/Synchronization/BaiduPanProvider.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "114"
-                  endingLineNumber = "114">
-               </Location>
-               <Location
-                  uuid = "8DC25A58-0F62-47BC-A067-FB79F2382265 - 38878e93880197a8"
-                  shouldBeEnabled = "Yes"
-                  ignoreCount = "0"
-                  continueAfterRunningActions = "No"
-                  symbolName = "(9) suspend resume partial function for Nustash.Synchronizer.BaiduPanProvider.handleOAuthCallback(url: Foundation.URL) async -&gt; ()"
-                  moduleName = "Nustash.debug.dylib"
-                  usesParentBreakpointCondition = "Yes"
-                  urlString = "file:///Volumes/CHIPFANCIER/Stash/gwt/revert_synchronizer/Stash/Synchronization/BaiduPanProvider.swift"
-                  startingColumnNumber = "9223372036854775807"
-                  endingColumnNumber = "9223372036854775807"
-                  startingLineNumber = "114"
-                  endingLineNumber = "114">
-               </Location>
-            </Locations>
-         </BreakpointContent>
-      </BreakpointProxy>
    </Breakpoints>
 </Bucket>

@@ -250,6 +250,7 @@ extension Synchronizer {
         case corruptSidecar
         case documentNotFound
         case sidecarNotFound
+        case fileNotFound(String)
     }
 }
 

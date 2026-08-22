@@ -11,22 +11,32 @@ import SwiftyDropbox
 import AppKit
 import SwiftUI
 
+fileprivate extension Synchronizer.DropboxProvider {
+    enum Constant {
+        static let sidecarPath = "/\(Synchronizer.FileName.sidecar)"
+        static let documentPath = "/\(Synchronizer.FileName.document)"
+    }
+}
+
 extension Synchronizer {
-    final class DropboxProvider: Provider {
+    final class DropboxProvider: Provider, Polling {
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
+        
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
+        
+        func setOnArrive(_ sidecar: Sidecar) { _onArrive.send(sidecar) }
+        
         private var cancellables = Set<AnyCancellable>()
         
         var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
+        
         private let _availability = CurrentValueSubject<Availability, Never>(.no(InitialPendingState(name: "Dropbox")))
         
         private var _sdkInitialized = false
-        private var _anchor: UUID?
         
-        private let sidecarPath = "/\(FileName.sidecar)"
-        private let documentPath = "/\(FileName.document)"
+        var polanchor: UUID?
         
-        private var pollTask: Task<Void, Never>?
+        var poltask: Task<Void, Never>?
         
         init() {
             NotificationCenter.default.publisher(for: .oauthCallback)
@@ -44,7 +54,7 @@ extension Synchronizer {
             if signedIn {
                 let name = await getAccount()
                 a = .yes(AuthStatus.ready(name, logout))
-                start()
+                startpol()
             } else {
                 a = .no(AuthStatus.anonymous({ [weak self] in
                     self?.authenticate()
@@ -59,7 +69,7 @@ extension Synchronizer {
                 return nil
             }
             do {
-                let data = try await download(client: client, path: sidecarPath)
+                let data = try await download(client: client, path: Constant.sidecarPath)
                 return try JSONDecoder().decode(Sidecar.self, from: data)
             } catch SomeError.fileNotFound {
                 return nil
@@ -72,7 +82,7 @@ extension Synchronizer {
                 return nil
             }
             do {
-                return try await download(client: client, path: documentPath)
+                return try await download(client: client, path: Constant.documentPath)
             } catch SomeError.fileNotFound {
                 return nil
             }
@@ -84,10 +94,10 @@ extension Synchronizer {
                 return
             }
             // Upload document
-            try await upload(client: client, path: documentPath, data: document)
+            try await upload(client: client, path: Constant.documentPath, data: document)
             // Upload sidecar and update cached hash
-            try await upload(client: client, path: sidecarPath, data: try JSONEncoder().encode(sidecar))
-            _anchor = sidecar.uid
+            try await upload(client: client, path: Constant.sidecarPath, data: try JSONEncoder().encode(sidecar))
+            polanchor = sidecar.uid
         }
         
         func prepare() async throws {
@@ -95,48 +105,6 @@ extension Synchronizer {
             _sdkInitialized = true
             DropboxClientsManager.setupWithAppKeyDesktop("y6ijm2p3vqr7kt8")
             await checkAvailability()
-        }
-
-        // MARK: - Polling
-        private func start() {
-            guard pollTask == nil else { return }
-
-            pollTask = Task { [weak self] in
-                while !Task.isCancelled {
-                    guard let self else { return }
-
-                    await self.poll()
-
-                    do {
-                        try await Task.sleep(for: .seconds(10))
-                    } catch {
-                        break
-                    }
-                }
-            }
-        }
-        
-        func pause() {
-            pollTask?.cancel()
-            pollTask = nil
-        }
-
-        
-        private func poll() async {
-            do {
-                guard
-                    let sidecar = try await sidecar(),
-                    let a = _anchor,
-                    sidecar.uid != a else {
-                    return
-                }
-                _anchor = sidecar.uid
-                _onArrive.send(sidecar)
-            } catch SomeError.fileNotFound {
-                return
-            } catch {
-                print("[Dropbox] poll failed: \(error)")
-            }
         }
         
         private func download(client: DropboxClient, path: String) async throws -> Data {
@@ -179,7 +147,7 @@ extension Synchronizer {
                 if let authResult = $0 {
                     switch authResult {
                     case .success:
-                        self?.start()
+                        self?.startpol()
                         Task {
                             let name = await self?.getAccount()
                             guard let this = self else { return }
@@ -242,7 +210,7 @@ extension Synchronizer {
         }
         
         deinit {
-            pause()
+            pausepol()
         }
     }
 }
