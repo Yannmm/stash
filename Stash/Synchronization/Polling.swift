@@ -55,7 +55,7 @@ extension Synchronizer.Polling {
                   sidecar.uid != a else { return }
             polanchor = sidecar.uid
             setOnArrive(sidecar)
-        } catch Synchronizer.SyncError.fileNotFound {
+        } catch Synchronizer.SomeError.fileNotFound {
             return
         } catch {
             print("[\(Self.Type.self)] poll failed: \(error)")

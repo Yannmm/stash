@@ -20,11 +20,15 @@ class Synchronizer {
     private(set) var availability: AnyPublisher<Availability, Never>!
 
     let onChange: AnyPublisher<Void, Never>
+    
     private let _onChange = PassthroughSubject<Void, Never>()
 
     private var cancellables = Set<AnyCancellable>()
+    
     private let providers: [Option: any Provider]
+    
     private let local: OnPremiseProvider
+    
     private let history = History()
 
     private var remote: (any Provider)? {
@@ -111,7 +115,7 @@ class Synchronizer {
             Task {
                 do {
                     guard let document = try await local.document() else {
-                        throw SyncError.documentNotFound
+                        throw SomeError.fileNotFound(FileName.document)
                     }
                     try await r.send(document: document, sidecar: sidecar)
                     history.log(action: "push_to_\(_approach.value.rawValue)", sidecar: sidecar)
@@ -130,10 +134,10 @@ class Synchronizer {
                 return nil
             }
             guard let html = String(data: data, encoding: .utf8) else {
-                throw SyncError.corruptDocument
+                throw SomeError.corruptDocument
             }
             return html
-        } catch SyncError.documentNotFound {
+        } catch SomeError.fileNotFound {
             return nil
         } catch {
             throw error
@@ -198,7 +202,7 @@ class Synchronizer {
                 try await local.send(document: document, sidecar: remoteSidecar)
                 history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: remoteSidecar)
             } else {
-                throw SyncError.documentNotFound
+                throw SomeError.fileNotFound(FileName.document)
             }
         } catch {
             print("[Sync] remote incoming failed: \(error)")
@@ -214,17 +218,6 @@ extension Synchronizer {
         static let sidecar = "nustash_index.html.sidecar.json"
     }
 
-    protocol Provider {
-        var onArrive: AnyPublisher<Sidecar, Never> { get }
-        func sidecar() async throws -> Sidecar?
-        func document() async throws -> Data?
-        func send(document: Data, sidecar: Sidecar) async throws
-        var availability: AnyPublisher<Availability, Never> { get }
-        func getAvailability() async -> Availability
-        func prepare() async throws
-        func pause() async throws
-    }
-
     enum Option: String, CaseIterable, Identifiable {
         var id: String { rawValue }
         case icloud
@@ -233,87 +226,9 @@ extension Synchronizer {
         case baidupan
     }
 
-    enum Availability: Equatable, Synchronizer.Descriptor {
-        static func == (lhs: Availability, rhs: Availability) -> Bool {
-            switch (lhs, rhs) {
-            case (.yes, .yes): return true
-            case (.no, .no): return true
-            default: return false
-            }
-        }
-        case yes(Synchronizer.Descriptor)
-        case no(Synchronizer.Descriptor)
-    }
-
-    enum SyncError: Error, LocalizedError {
+    enum SomeError: Error, LocalizedError {
         case corruptDocument
         case corruptSidecar
-        case documentNotFound
-        case sidecarNotFound
         case fileNotFound(String)
     }
-}
-
-extension Synchronizer.Availability {
-    func describe() -> AttributedString {
-        switch self {
-        case .yes(let descriptor):
-            return descriptor.describe()
-        case .no(let descriptor):
-            return descriptor.describe()
-        }
-    }
-    
-    func action(_ phrase: String) {
-        switch self {
-        case .yes(let descriptor):
-            descriptor.action(phrase)
-        case .no(let descriptor):
-            descriptor.action(phrase)
-        }
-    }
-}
-
-extension Synchronizer.Provider {
-    func getAvailability() async -> Synchronizer.Availability {
-        let a = await availability.values.first(where: { _ in true })
-        return a!
-    }
-    
-    func prepare() async throws {}
-    
-    func pause() async throws {}
-}
-
-extension Synchronizer {
-    protocol Descriptor {
-        func describe() -> AttributedString
-        func action(_ phrase: String)
-    }
-    
-    struct InitialPendingState: Descriptor {
-        let name: String
-        
-        func describe() -> AttributedString {
-            var attr = AttributedString("\(name) is initializing.")
-            if let range = attr.range(of: name) {
-                attr[range].foregroundColor = .primary
-            }
-            return attr
-        }
-    }
-}
-
-extension Synchronizer.Descriptor {
-    func action(_ phrase: String) {
-        // noop
-    }
-}
-
-extension String: Synchronizer.Descriptor {
-    func describe() -> AttributedString { AttributedString(self) }
-}
-
-extension AttributedString: Synchronizer.Descriptor {
-    func describe() -> AttributedString { self }
 }

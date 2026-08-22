@@ -58,7 +58,7 @@ extension Synchronizer {
         @discardableResult
         func write(html: String) throws -> Sidecar {
             guard let data1 = html.data(using: .utf8) else {
-                throw SyncError.corruptDocument
+                throw SomeError.corruptDocument
             }
             try data1.write(to: documentURL, options: .atomic)
             let sidecar = Sidecar.stamp()

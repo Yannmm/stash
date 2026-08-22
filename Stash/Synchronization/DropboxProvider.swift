@@ -71,7 +71,7 @@ extension Synchronizer {
             do {
                 let data = try await download(client: client, path: Constant.sidecarPath)
                 return try JSONDecoder().decode(Sidecar.self, from: data)
-            } catch SomeError.fileNotFound {
+            } catch Synchronizer.SomeError.fileNotFound {
                 return nil
             }
         }
@@ -83,7 +83,7 @@ extension Synchronizer {
             }
             do {
                 return try await download(client: client, path: Constant.documentPath)
-            } catch SomeError.fileNotFound {
+            } catch Synchronizer.SomeError.fileNotFound {
                 return nil
             }
         }
@@ -114,7 +114,7 @@ extension Synchronizer {
                         continuation.resume(returning: response.1)
                     } else if let error {
                         if case .routeError(let boxed, _, _, _) = error, case .path(let lookupError) = boxed.unboxed, case .notFound = lookupError {
-                            continuation.resume(with: .failure(SomeError.fileNotFound(path)))
+                            continuation.resume(with: .failure(Synchronizer.SomeError.fileNotFound(path)))
                         } else {
                             continuation.resume(with: .failure(SomeError.api(error.description)))
                         }
@@ -217,7 +217,6 @@ extension Synchronizer {
 
 extension Synchronizer.DropboxProvider {
     enum SomeError: Error {
-        case fileNotFound(String)
         case api(String)
     }
 }

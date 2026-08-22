@@ -79,7 +79,7 @@ extension Synchronizer {
             do {
                 let data = try await download(path: Constant.sidecarPath, accessToken: accessToken)
                 return try JSONDecoder().decode(Sidecar.self, from: data)
-            } catch Synchronizer.SyncError.fileNotFound {
+            } catch Synchronizer.SomeError.fileNotFound {
                 return nil
             }
         }
@@ -88,7 +88,7 @@ extension Synchronizer {
             let accessToken = try await validAccessToken()
             do {
                 return try await download(path: Constant.documentPath, accessToken: accessToken)
-            } catch Synchronizer.SyncError.fileNotFound {
+            } catch Synchronizer.SomeError.fileNotFound {
                 return nil
             }
         }
@@ -227,7 +227,7 @@ extension Synchronizer {
             ]
             let (metaData, _) = try await URLSession.shared.data(from: components.url!)
             let meta = try JSONDecoder().decode(FileMetasResponse.self, from: metaData)
-            guard let dlink = meta.list?.first?.dlink else { throw Synchronizer.SyncError.fileNotFound(path) }
+            guard let dlink = meta.list?.first?.dlink else { throw Synchronizer.SomeError.fileNotFound(path) }
 
             // Step 2: download using dlink
             var dlURL = URLComponents(string: dlink)!
@@ -252,7 +252,7 @@ extension Synchronizer {
             let resp = try JSONDecoder().decode(FileListResponse.self, from: data)
             let fileName = (path as NSString).lastPathComponent
             guard let file = resp.list?.first(where: { $0.server_filename == fileName }) else {
-                throw Synchronizer.SyncError.fileNotFound(path)
+                throw Synchronizer.SomeError.fileNotFound(path)
             }
             return file.fs_id
         }
