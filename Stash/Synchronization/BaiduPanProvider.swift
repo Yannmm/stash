@@ -62,7 +62,7 @@ extension Synchronizer {
             await checkAvailability()
         }
 
-        func checkAvailability() async {
+        private func checkAvailability() async {
             if let token = Keychain.load() {
                 let name = await getAccountName(accessToken: token.accessToken)
                 _availability.send(.yes(AuthStatus.ready(name, logout)))
@@ -75,7 +75,7 @@ extension Synchronizer {
         }
 
         func sidecar() async throws -> Sidecar? {
-            let accessToken = try await validAccessToken()
+            let accessToken = try await getAccessToken()
             do {
                 let data = try await download(path: Constant.sidecarPath, accessToken: accessToken)
                 return try JSONDecoder().decode(Sidecar.self, from: data)
@@ -85,7 +85,7 @@ extension Synchronizer {
         }
 
         func document() async throws -> Data? {
-            let accessToken = try await validAccessToken()
+            let accessToken = try await getAccessToken()
             do {
                 return try await download(path: Constant.documentPath, accessToken: accessToken)
             } catch Synchronizer.SomeError.fileNotFound {
@@ -94,7 +94,7 @@ extension Synchronizer {
         }
 
         func send(document: Data, sidecar: Sidecar) async throws {
-            let accessToken = try await validAccessToken()
+            let accessToken = try await getAccessToken()
             try await upload(path: Constant.documentPath, data: document, accessToken: accessToken)
             let sidecarData = try JSONEncoder().encode(sidecar)
             try await upload(path: Constant.sidecarPath, data: sidecarData, accessToken: accessToken)
@@ -140,7 +140,7 @@ extension Synchronizer {
                     self?.authenticate()
                 })))
             }
-            NSApp.activate(ignoringOtherApps: true)
+            await NSApp.activate()
         }
 
         private func exchangeCode(_ code: String) async throws -> Token {
@@ -157,14 +157,14 @@ extension Synchronizer {
             let (data, _) = try await URLSession.shared.data(for: request)
             let resp = try JSONDecoder().decode(TokenResponse.self, from: data)
             guard let access = resp.access_token, let refresh = resp.refresh_token else {
-                throw BaiduError.tokenExchangeFailed(resp.error_description ?? "unknown")
+                throw BaiduError.tokenExchangeFailed(resp.error_description ?? "Exchange token failed")
             }
             return Token(accessToken: access, refreshToken: refresh)
         }
 
         // MARK: - Token Refresh
 
-        private func validAccessToken() async throws -> String {
+        private func getAccessToken() async throws -> String {
             guard let token = Keychain.load() else {
                 _availability.send(.no(AuthStatus.anonymous({ [weak self] in
                     self?.authenticate()
@@ -205,7 +205,7 @@ extension Synchronizer {
 
         /// Executes a request; on 111 (token expired) refreshes and retries once.
         private func authedRequest<T>(_ work: @escaping (String) async throws -> T) async throws -> T {
-            let token = try await validAccessToken()
+            let token = try await getAccessToken()
             do {
                 return try await work(token)
             } catch BaiduError.tokenExpired {
@@ -406,62 +406,6 @@ extension Synchronizer.BaiduPanProvider {
             case .tokenExchangeFailed(let msg): return "Token exchange failed: \(msg)"
             case .api(let msg): return msg
             }
-        }
-    }
-}
-
-// MARK: - AuthStatus
-
-extension Synchronizer.BaiduPanProvider {
-    enum AuthStatus {
-        case anonymous(() -> Void)
-        case ready(String?, () -> Void)
-        case error(Error, () -> Void)
-    }
-}
-
-extension Synchronizer.BaiduPanProvider.AuthStatus: Synchronizer.Descriptor {
-    func describe() -> AttributedString {
-        switch self {
-        case .anonymous:
-            var attr = AttributedString("Please sign in BaiduPan.")
-            attr.foregroundColor = .secondary
-            if let range = attr.range(of: "sign in") {
-                attr[range].foregroundColor = Color.theme
-                attr[range].link = URL(string: "action://abc")
-            }
-            return attr
-        case .error(let e, _):
-            var attr = AttributedString("An error happened, please try again: \(e.localizedDescription)")
-            attr.foregroundColor = .secondary
-            if let range = attr.range(of: "try again") {
-                attr[range].foregroundColor = Color.theme
-                attr[range].link = URL(string: "action://abc")
-            }
-            return attr
-        case .ready(let name, _):
-            var attr = AttributedString("Already signed in BaiduPan")
-            if let n = name {
-                attr = attr + AttributedString(" as \(n)")
-            }
-            attr = attr + AttributedString(" (logout)")
-            attr.foregroundColor = .secondary
-            if let n = name, let range = attr.range(of: n) {
-                attr[range].foregroundColor = Color.theme
-            }
-            if let range = attr.range(of: "logout") {
-                attr[range].foregroundColor = Color.red
-                attr[range].link = URL(string: "action://abc")
-            }
-            return attr
-        }
-    }
-
-    func action(_ phrase: String) {
-        switch self {
-        case .anonymous(let action): action()
-        case .error(_, let action): action()
-        case .ready(_, let action): action()
         }
     }
 }
