@@ -21,4 +21,6 @@ extension NSNotification.Name {
     static let onCellBecomeFirstResponder = NSNotification.Name("onBecomeFirstResponder")
     static let onCellResignFirstResponder = NSNotification.Name("onResignFirstResponder")
     static let onDragWindow = NSNotification.Name("onDragWindow")
+    
+    static let onUrlEvent = Notification.Name("onUrlEvent")
 }

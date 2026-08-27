@@ -14,9 +14,9 @@ extension Synchronizer {
     protocol Provider {
         var onArrive: AnyPublisher<Sidecar, Never> { get }
         
-        func sidecar() async throws -> Sidecar?
+        func sidecar() async throws -> Sidecar // TODO: remove throws
         
-        func document() async throws -> Data?
+        func document() async throws -> Data // TODO: remove throws
         
         func send(document: Data, sidecar: Sidecar) async throws
         

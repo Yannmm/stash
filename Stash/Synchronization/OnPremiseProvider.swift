@@ -29,28 +29,28 @@ extension Synchronizer {
             directory.appendingPathComponent(FileName.document)
         }
         
-        private var sidecarURL: URL {
+        private var sidecarUrl: URL {
             directory.appendingPathComponent(FileName.sidecar)
         }
         
         // MARK: - Protocol conformance
         
-        func sidecar() async throws -> Sidecar? {
-            _sidecar()
+        func sidecar() async throws -> Sidecar {
+            try _sidecar()
         }
         
-        func document() async throws -> Data? {
+        func document() async throws -> Data {
             try _document()
         }
         
         func send(document: Data, sidecar: Sidecar) async throws {
-            let localSidecar = _sidecar()
-            if let localSidecar, localSidecar.uid == sidecar.uid {
+            let localSidecar = try _sidecar()
+            guard localSidecar.uid != sidecar.uid else {
                 return
             }
             try document.write(to: documentURL, options: .atomic)
             let sidecarData = try JSONEncoder().encode(sidecar)
-            try sidecarData.write(to: sidecarURL, options: .atomic)
+            try sidecarData.write(to: sidecarUrl, options: .atomic)
             _onArrive.send(sidecar)
         }
         
@@ -58,27 +58,45 @@ extension Synchronizer {
         @discardableResult
         func write(html: String) throws -> Sidecar {
             guard let data1 = html.data(using: .utf8) else {
-                throw SomeError.corruptDocument
+                throw SomeError.corruptData(html)
             }
             try data1.write(to: documentURL, options: .atomic)
             let sidecar = Sidecar.stamp()
             let data2 = try JSONEncoder().encode(sidecar)
-            try data2.write(to: sidecarURL, options: .atomic)
+            try data2.write(to: sidecarUrl, options: .atomic)
             return sidecar
         }
         
-        private func _sidecar() -> Sidecar? {
+        private func _sidecar() throws -> Sidecar {
             do {
-                let data = try Data(contentsOf: sidecarURL)
+                let data = try Data(contentsOf: sidecarUrl)
                 return try JSONDecoder().decode(Sidecar.self, from: data)
+            } catch let error as NSError
+                where error.domain == NSCocoaErrorDomain &&
+                      error.code == NSFileNoSuchFileError {
+                throw SomeError.fileNotFound(sidecarUrl)
             } catch {
-                ErrorTracker.shared.add(error)
-                return nil
+                throw error
             }
         }
         
         private func _document() throws -> Data {
-            try Data(contentsOf: documentURL)
+            do {
+                return try Data(contentsOf: documentURL)
+            } catch let error as NSError
+                where error.domain == NSCocoaErrorDomain &&
+                      error.code == NSFileNoSuchFileError {
+                throw SomeError.fileNotFound(sidecarUrl)
+            } catch {
+                throw error
+            }
         }
+    }
+}
+
+extension Synchronizer.OnPremiseProvider {
+    enum SomeError: Error {
+        case fileNotFound(URL)
+        case corruptData(String)
     }
 }

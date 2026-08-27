@@ -21,7 +21,7 @@ extension Synchronizer {
         
         func poll() async
         
-        func sidecar() async throws -> Sidecar?
+        func sidecar() async throws -> Sidecar
         
         func setOnArrive(_ sidecar: Sidecar)
     }
@@ -50,13 +50,11 @@ extension Synchronizer.Polling {
     
     func poll() async {
         do {
-            guard let sidecar = try await sidecar(),
-                  let a = polanchor,
+            let sidecar = try await sidecar()
+            guard let a = polanchor,
                   sidecar.uid != a else { return }
             polanchor = sidecar.uid
             setOnArrive(sidecar)
-        } catch Synchronizer.SomeError.fileNotFound {
-            return
         } catch {
             print("[\(Self.Type.self)] poll failed: \(error)")
         }

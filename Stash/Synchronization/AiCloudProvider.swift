@@ -37,30 +37,19 @@ extension Synchronizer {
             _availability.send(a)
         }
         
-        func sidecar() async throws -> Sidecar? {
-            guard let url = try sidecarURL() else {
-                return nil
-            }
-            let data = try Data(contentsOf: url)
+        func sidecar() async throws -> Sidecar {
+            let data = try Data(contentsOf: try sidecarUrl())
             return try JSONDecoder().decode(Sidecar.self, from: data)
         }
         
-        func document() async throws -> Data? {
-            guard let url = try documentURL() else {
-                return nil
-            }
-            return try Data(contentsOf: url)
+        func document() async throws -> Data {
+            return try Data(contentsOf: try documentUrl())
         }
         
         func send(document: Data, sidecar: Sidecar) async throws {
-            guard
-                let durl = try documentURL(),
-                let surl = try sidecarURL() else {
-                return
-            }
-            try document.write(to: durl, options: .atomic)
+            try document.write(to: try documentUrl(), options: .atomic)
             let sidecarData = try JSONEncoder().encode(sidecar)
-            try sidecarData.write(to: surl, options: .atomic)
+            try sidecarData.write(to: try sidecarUrl(), options: .atomic)
         }
         
         func prepare() async throws {
@@ -81,10 +70,7 @@ extension Synchronizer {
                 .sink { [weak self] _ in
                     guard let self else { return }
                     do {
-                        guard let url = try self.sidecarURL() else {
-                            return
-                        }
-                        let data = try Data(contentsOf: url)
+                        let data = try Data(contentsOf: try self.sidecarUrl())
                         let sidecar = try JSONDecoder().decode(Sidecar.self, from: data)
                         self._onArrive.send(sidecar)
                     } catch {
@@ -102,10 +88,10 @@ extension Synchronizer {
         
         // MARK: - Paths
         
-        private func containerDocumentsURL() throws -> URL? {
+        private func containerDocumentsURL() throws -> URL {
             guard let container = FileManager.default.url(forUbiquityContainerIdentifier: nil) else {
                 _availability.send(.no(SomeError.unsupported))
-                return nil
+                throw SomeError.unsupported
             }
             let documents = container.appendingPathComponent("Documents")
             if !FileManager.default.fileExists(atPath: documents.path) {
@@ -114,12 +100,12 @@ extension Synchronizer {
             return documents
         }
         
-        private func documentURL() throws -> URL? {
-            try containerDocumentsURL()?.appendingPathComponent(FileName.document)
+        private func documentUrl() throws -> URL {
+            try containerDocumentsURL().appendingPathComponent(FileName.document)
         }
         
-        private func sidecarURL() throws -> URL? {
-            try containerDocumentsURL()?.appendingPathComponent(FileName.sidecar)
+        private func sidecarUrl() throws -> URL {
+            try containerDocumentsURL().appendingPathComponent(FileName.sidecar)
         }
     }
 }

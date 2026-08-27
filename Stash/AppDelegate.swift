@@ -57,10 +57,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if savedApproach != .local, let remote = providers[savedApproach] {
             Task { try? await remote.prepare() }
         }
-
+        
         let hk = Housekeeper(synchronizer: synchronizer)
         self.housekeeper = hk
-
+        
         let svm = SettingsViewModel(
             provider: savedApproach,
             onReset: {
@@ -83,14 +83,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }.store(in: &cancellables)
         
         self.settingsViewModel = svm
-
+        
         self.searchViewModel = SearchViewModel(housekeeper: hk)
     }
-
-    func applicationDidBecomeActive(_ notification: Notification) {
-//        guard let hk = housekeeper else { return }
-//        Task { await hk.synchronizer.align() }
-    }
+    
+    func applicationDidBecomeActive(_ notification: Notification) {}
     
     func applicationWillFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
@@ -107,11 +104,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
     
-    @objc private func handleGetURLEvent(_ event: NSAppleEventDescriptor?, replyEvent: NSAppleEventDescriptor?) {
+    @objc private func handleGetURLEvent(_ event: NSAppleEventDescriptor?,
+        replyEvent: NSAppleEventDescriptor?) {
         guard let descriptor = event?.paramDescriptor(forKeyword: AEKeyword(keyDirectObject)),
               let urlStr = descriptor.stringValue,
               let url = URL(string: urlStr) else { return }
-        NotificationCenter.default.post(name: .oauthCallback, object: url)
+        NotificationCenter.default.post(name: .onUrlEvent, object: url)
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
