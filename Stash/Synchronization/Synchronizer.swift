@@ -71,6 +71,7 @@ class Synchronizer {
             .eraseToAnyPublisher()
         
         self.availability
+            .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .filter {
                 guard case .yes = $0 else {
                     return false
