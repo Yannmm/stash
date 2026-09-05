@@ -44,8 +44,8 @@ extension Synchronizer {
         }
         
         func send(document: Data, sidecar: Sidecar) async throws {
-            let localSidecar = try _sidecar()
-            guard localSidecar.uid != sidecar.uid else {
+            let sd = try? _sidecar()
+            guard sd?.uid != sidecar.uid else {
                 return
             }
             try document.write(to: documentURL, options: .atomic)
@@ -73,7 +73,8 @@ extension Synchronizer {
                 return try JSONDecoder().decode(Sidecar.self, from: data)
             } catch let error as NSError
                 where error.domain == NSCocoaErrorDomain &&
-                      error.code == NSFileNoSuchFileError {
+                        (error.code == NSFileNoSuchFileError ||
+                         error.code == NSFileReadNoSuchFileError) {
                 throw SomeError.fileNotFound(sidecarUrl)
             } catch {
                 throw error
