@@ -10,8 +10,12 @@
 		6D6718472D672CDC0063FE57 /* Kingfisher in Frameworks */ = {isa = PBXBuildFile; productRef = 6D6718462D672CDC0063FE57 /* Kingfisher */; };
 		6DCEC8752DAC9A9B00089699 /* Glur in Frameworks */ = {isa = PBXBuildFile; productRef = 6DCEC8742DAC9A9B00089699 /* Glur */; };
 		720642CA2D8DBA0600F62043 /* HotKey in Frameworks */ = {isa = PBXBuildFile; productRef = 720642C92D8DBA0600F62043 /* HotKey */; };
+		7242A6DA2FB004B4007ABC1C /* SwiftyDropbox in Frameworks */ = {isa = PBXBuildFile; productRef = 7242A6D92FB004B4007ABC1C /* SwiftyDropbox */; };
+		7242A6DC2FB004B4007ABC1C /* SwiftyDropboxObjC in Frameworks */ = {isa = PBXBuildFile; productRef = 7242A6DB2FB004B4007ABC1C /* SwiftyDropboxObjC */; };
 		7245871D2E1913FB00804B21 /* CodableCSV in Frameworks */ = {isa = PBXBuildFile; productRef = 7245871C2E1913FB00804B21 /* CodableCSV */; };
 		726B64F82D6DCEA1000AA419 /* SwiftSoup in Frameworks */ = {isa = PBXBuildFile; productRef = 726B64F72D6DCEA1000AA419 /* SwiftSoup */; };
+		7276CF1E2F530F4B00B25FA5 /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 7276CF1D2F530F4B00B25FA5 /* OrderedCollections */; };
+		72B10310304C66550094CFD8 /* LICENSE.txt in Sources */ = {isa = PBXBuildFile; fileRef = 72B1030F304C66510094CFD8 /* LICENSE.txt */; };
 		72B6462E2E9A6668009DE023 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 72B646272E9A6668009DE023 /* README.md */; };
 		72D8AE7C2E635B6900D6DACB /* CombineExt in Frameworks */ = {isa = PBXBuildFile; productRef = 72D8AE7B2E635B6900D6DACB /* CombineExt */; };
 /* End PBXBuildFile section */
@@ -34,11 +38,35 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		7222C1C02D491BEC00096255 /* Stashy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Stashy.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		6D12883F303564E4002A6493 /* index.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = index.js; sourceTree = "<group>"; };
+		6D128841303564E4002A6493 /* package.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = package.json; sourceTree = "<group>"; };
+		6D128842303564E4002A6493 /* wrangler.toml */ = {isa = PBXFileReference; lastKnownFileType = text; path = wrangler.toml; sourceTree = "<group>"; };
+		7222C1C02D491BEC00096255 /* Nustash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nustash.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7222C1D32D491BEF00096255 /* StashTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StashTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		7222C1DD2D491BEF00096255 /* StashUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StashUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		72B1030F304C66510094CFD8 /* LICENSE.txt */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LICENSE.txt; sourceTree = "<group>"; };
 		72B646272E9A6668009DE023 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		72B1030D304BC5900094CFD8 /* Exceptions for "scripts" folder in "Stash" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				release.sh,
+			);
+			target = 7222C1BF2D491BEC00096255 /* Stash */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		72B1030E304BC5900094CFD8 /* Exceptions for "scripts" folder in "Compile Sources" phase from "Stash" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 7222C1BC2D491BEC00096255 /* Sources */;
+			membershipExceptions = (
+				release.sh,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7222C1C22D491BEC00096255 /* Stash */ = {
@@ -56,6 +84,15 @@
 			path = StashUITests;
 			sourceTree = "<group>";
 		};
+		72B10306304BA9890094CFD8 /* scripts */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				72B1030D304BC5900094CFD8 /* Exceptions for "scripts" folder in "Stash" target */,
+				72B1030E304BC5900094CFD8 /* Exceptions for "scripts" folder in "Compile Sources" phase from "Stash" target */,
+			);
+			path = scripts;
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,11 +101,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				720642CA2D8DBA0600F62043 /* HotKey in Frameworks */,
+				7242A6DA2FB004B4007ABC1C /* SwiftyDropbox in Frameworks */,
 				6D6718472D672CDC0063FE57 /* Kingfisher in Frameworks */,
 				6DCEC8752DAC9A9B00089699 /* Glur in Frameworks */,
 				726B64F82D6DCEA1000AA419 /* SwiftSoup in Frameworks */,
 				72D8AE7C2E635B6900D6DACB /* CombineExt in Frameworks */,
+				7276CF1E2F530F4B00B25FA5 /* OrderedCollections in Frameworks */,
 				7245871D2E1913FB00804B21 /* CodableCSV in Frameworks */,
+				7242A6DC2FB004B4007ABC1C /* SwiftyDropboxObjC in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -89,6 +129,24 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		6D128840303564E4002A6493 /* src */ = {
+			isa = PBXGroup;
+			children = (
+				6D12883F303564E4002A6493 /* index.js */,
+			);
+			path = src;
+			sourceTree = "<group>";
+		};
+		6D128843303564E4002A6493 /* cloudflare-worker */ = {
+			isa = PBXGroup;
+			children = (
+				6D128840303564E4002A6493 /* src */,
+				6D128841303564E4002A6493 /* package.json */,
+				6D128842303564E4002A6493 /* wrangler.toml */,
+			);
+			path = "cloudflare-worker";
+			sourceTree = "<group>";
+		};
 		6D6718452D672CDC0063FE57 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
@@ -99,19 +157,22 @@
 		7222C1B72D491BEC00096255 = {
 			isa = PBXGroup;
 			children = (
+				72B10306304BA9890094CFD8 /* scripts */,
 				7222C1C22D491BEC00096255 /* Stash */,
 				7222C1D62D491BEF00096255 /* StashTests */,
 				7222C1E02D491BEF00096255 /* StashUITests */,
 				6D6718452D672CDC0063FE57 /* Frameworks */,
 				7222C1C12D491BEC00096255 /* Products */,
+				6D128843303564E4002A6493 /* cloudflare-worker */,
 				72B646272E9A6668009DE023 /* README.md */,
+				72B1030F304C66510094CFD8 /* LICENSE.txt */,
 			);
 			sourceTree = "<group>";
 		};
 		7222C1C12D491BEC00096255 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				7222C1C02D491BEC00096255 /* Stashy.app */,
+				7222C1C02D491BEC00096255 /* Nustash.app */,
 				7222C1D32D491BEF00096255 /* StashTests.xctest */,
 				7222C1DD2D491BEF00096255 /* StashUITests.xctest */,
 			);
@@ -135,6 +196,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				7222C1C22D491BEC00096255 /* Stash */,
+				72B10306304BA9890094CFD8 /* scripts */,
 			);
 			name = Stash;
 			packageProductDependencies = (
@@ -144,9 +206,12 @@
 				6DCEC8742DAC9A9B00089699 /* Glur */,
 				7245871C2E1913FB00804B21 /* CodableCSV */,
 				72D8AE7B2E635B6900D6DACB /* CombineExt */,
+				7276CF1D2F530F4B00B25FA5 /* OrderedCollections */,
+				7242A6D92FB004B4007ABC1C /* SwiftyDropbox */,
+				7242A6DB2FB004B4007ABC1C /* SwiftyDropboxObjC */,
 			);
 			productName = Stash;
-			productReference = 7222C1C02D491BEC00096255 /* Stashy.app */;
+			productReference = 7222C1C02D491BEC00096255 /* Nustash.app */;
 			productType = "com.apple.product-type.application";
 		};
 		7222C1D22D491BEF00096255 /* StashTests */ = {
@@ -234,6 +299,8 @@
 				6DCEC8732DAC9A9200089699 /* XCRemoteSwiftPackageReference "Glur" */,
 				7245868F2E19136300804B21 /* XCRemoteSwiftPackageReference "CodableCSV" */,
 				72D8ADD82E635A3100D6DACB /* XCRemoteSwiftPackageReference "CombineExt" */,
+				7276CE682F530D5300B25FA5 /* XCRemoteSwiftPackageReference "swift-collections" */,
+				7242A6D82FB004A1007ABC1C /* XCRemoteSwiftPackageReference "SwiftyDropbox" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7222C1C12D491BEC00096255 /* Products */;
@@ -277,6 +344,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				72B10310304C66550094CFD8 /* LICENSE.txt in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -433,29 +501,33 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_ENTITLEMENTS = Stash/Stash.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 37;
 				DEVELOPMENT_ASSET_PATHS = "\"Stash/Preview Content\"";
 				DEVELOPMENT_TEAM = QX885U799E;
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Stash/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Stashy;
+				INFOPLIST_KEY_CFBundleDisplayName = Nustash;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_LSUIElement = NO;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 3.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rendezvousauoaradis.stash;
-				PRODUCT_NAME = Stashy;
+				PRODUCT_NAME = Nustash;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -466,29 +538,33 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
 				CODE_SIGN_ENTITLEMENTS = Stash/Stash.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 31;
+				CURRENT_PROJECT_VERSION = 37;
 				DEVELOPMENT_ASSET_PATHS = "\"Stash/Preview Content\"";
 				DEVELOPMENT_TEAM = QX885U799E;
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Stash/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Stashy;
+				INFOPLIST_KEY_CFBundleDisplayName = Nustash;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_LSUIElement = NO;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MACOSX_DEPLOYMENT_TARGET = 14.0;
-				MARKETING_VERSION = 2.0;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 3.1;
 				PRODUCT_BUNDLE_IDENTIFIER = com.rendezvousauoaradis.stash;
-				PRODUCT_NAME = Stashy;
+				PRODUCT_NAME = Nustash;
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 			};
@@ -562,6 +638,132 @@
 			};
 			name = Release;
 		};
+		72B10229304A407D0094CFD8 /* GitHub Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = "GitHub Release";
+		};
+		72B1022A304A407D0094CFD8 /* GitHub Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGNING_ALLOWED = NO;
+				CODE_SIGNING_REQUIRED = NO;
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_IDENTITY = "";
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 37;
+				DEVELOPMENT_ASSET_PATHS = "\"Stash/Preview Content\"";
+				DEVELOPMENT_TEAM = QX885U799E;
+				ENABLE_HARDENED_RUNTIME = NO;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Stash/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Nustash;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = NO;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 15.0;
+				MARKETING_VERSION = 3.1;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rendezvousauoaradis.stash;
+				PRODUCT_NAME = Nustash;
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = "GitHub Release";
+		};
+		72B1022B304A407D0094CFD8 /* GitHub Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QX885U799E;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yannmm.StashTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Stash.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Stash";
+			};
+			name = "GitHub Release";
+		};
+		72B1022C304A407D0094CFD8 /* GitHub Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = QX885U799E;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yannmm.StashUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = Stash;
+			};
+			name = "GitHub Release";
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -570,6 +772,7 @@
 			buildConfigurations = (
 				7222C1E52D491BEF00096255 /* Debug */,
 				7222C1E62D491BEF00096255 /* Release */,
+				72B10229304A407D0094CFD8 /* GitHub Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -579,6 +782,7 @@
 			buildConfigurations = (
 				7222C1E82D491BEF00096255 /* Debug */,
 				7222C1E92D491BEF00096255 /* Release */,
+				72B1022A304A407D0094CFD8 /* GitHub Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -588,6 +792,7 @@
 			buildConfigurations = (
 				7222C1EB2D491BEF00096255 /* Debug */,
 				7222C1EC2D491BEF00096255 /* Release */,
+				72B1022B304A407D0094CFD8 /* GitHub Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -597,6 +802,7 @@
 			buildConfigurations = (
 				7222C1EE2D491BEF00096255 /* Debug */,
 				7222C1EF2D491BEF00096255 /* Release */,
+				72B1022C304A407D0094CFD8 /* GitHub Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -628,6 +834,14 @@
 				kind = branch;
 			};
 		};
+		7242A6D82FB004A1007ABC1C /* XCRemoteSwiftPackageReference "SwiftyDropbox" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/dropbox/SwiftyDropbox.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 10.2.4;
+			};
+		};
 		7245868F2E19136300804B21 /* XCRemoteSwiftPackageReference "CodableCSV" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/dehesa/CodableCSV";
@@ -642,6 +856,14 @@
 			requirement = {
 				kind = upToNextMajorVersion;
 				minimumVersion = 2.8.0;
+			};
+		};
+		7276CE682F530D5300B25FA5 /* XCRemoteSwiftPackageReference "swift-collections" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-collections.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.3.0;
 			};
 		};
 		72D8ADD82E635A3100D6DACB /* XCRemoteSwiftPackageReference "CombineExt" */ = {
@@ -670,6 +892,16 @@
 			package = 720642C82D8DB9D400F62043 /* XCRemoteSwiftPackageReference "HotKey" */;
 			productName = HotKey;
 		};
+		7242A6D92FB004B4007ABC1C /* SwiftyDropbox */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7242A6D82FB004A1007ABC1C /* XCRemoteSwiftPackageReference "SwiftyDropbox" */;
+			productName = SwiftyDropbox;
+		};
+		7242A6DB2FB004B4007ABC1C /* SwiftyDropboxObjC */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7242A6D82FB004A1007ABC1C /* XCRemoteSwiftPackageReference "SwiftyDropbox" */;
+			productName = SwiftyDropboxObjC;
+		};
 		7245871C2E1913FB00804B21 /* CodableCSV */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 7245868F2E19136300804B21 /* XCRemoteSwiftPackageReference "CodableCSV" */;
@@ -679,6 +911,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 726B64F32D6DCE32000AA419 /* XCRemoteSwiftPackageReference "SwiftSoup" */;
 			productName = SwiftSoup;
+		};
+		7276CF1D2F530F4B00B25FA5 /* OrderedCollections */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 7276CE682F530D5300B25FA5 /* XCRemoteSwiftPackageReference "swift-collections" */;
+			productName = OrderedCollections;
 		};
 		72D8AE7B2E635B6900D6DACB /* CombineExt */ = {
 			isa = XCSwiftPackageProductDependency;

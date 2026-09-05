@@ -16,6 +16,10 @@ extension String {
         static let pattern2 = "#[^\\s]+"
         static let regex2 = try! NSRegularExpression(pattern: pattern2)
         
+        static let pattern3 = "(?<=^|\\s)#[A-Za-z0-9]+(?=\\s|$)"
+        static let regex3 = try! NSRegularExpression(pattern: pattern3)
+        
+        
         static let predefinedHashtags = String.Browser.allCases.map({ "#\($0.rawValue)" })
     }
 }
@@ -32,9 +36,10 @@ extension String {
     }
     
     func highlightHashtags() -> NSAttributedString {
-        let attributed = NSMutableAttributedString(string: self)
+        let attributed = NSMutableAttributedString(string: self, attributes: [.font: NSFont.systemFont(ofSize: NSFont.systemFontSize)])
         
         let attributes: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: NSFont.systemFontSize),
             .foregroundColor: NSColor(.theme),
         ]
         for match in self.hashtagMatches {

@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import OrderedCollections
 
 enum EntryType: String, Codable {
     case bookmark
@@ -18,19 +19,22 @@ struct AnyEntry: Codable {
     let name: String
     let type: EntryType
     let url: URL?
+    let hashtags: Array<String>?
     var children: [AnyEntry]
     
-    init(id: UUID?, name: String, type: EntryType, url: URL?, children: [AnyEntry]) {
+    init(id: UUID?, name: String, type: EntryType, url: URL?, hashtags: Array<String>, children: [AnyEntry]) {
         self.id = id ?? UUID()
         self.name = name
         self.type = type
         self.url = url
+        self.hashtags = hashtags
         self.children = children
     }
     
     init(_ entry: any Entry) {
         self.id = entry.id
         self.name = entry.name
+        self.hashtags = entry.hashtags.flatMap({ Array($0) })
         self.children = []
         
         switch entry {
@@ -46,7 +50,7 @@ struct AnyEntry: Codable {
     }
     
     enum CodingKeys: String, CodingKey {
-        case id, name, type, url, children
+        case id, name, type, url, hashtags, children
     }
     
     init(from decoder: Decoder) throws {
@@ -55,6 +59,7 @@ struct AnyEntry: Codable {
         name = try container.decode(String.self, forKey: .name)
         type = try container.decode(EntryType.self, forKey: .type)
         url = try container.decodeIfPresent(URL.self, forKey: .url)
+        hashtags = try container.decodeIfPresent(Array<String>.self, forKey: .hashtags)
         children = try container.decodeIfPresent([AnyEntry].self, forKey: .children) ?? []
     }
     
@@ -64,6 +69,9 @@ struct AnyEntry: Codable {
         try container.encode(self.name, forKey: .name)
         try container.encode(self.type, forKey: .type)
         try container.encodeIfPresent(self.url, forKey: .url)
+        if !(self.hashtags?.isEmpty ?? true) {
+            try container.encode(self.hashtags, forKey: .hashtags)
+        }
         if self.children.count > 0 {
             try container.encode(self.children, forKey: .children)
         }
@@ -74,9 +82,9 @@ extension AnyEntry {
     func asEntry(with parentId: UUID?) -> any Entry {
         switch self.type {
         case .bookmark:
-            return Bookmark(id: id, name: name, parentId: parentId, url: url!)
+            return Bookmark(id: id, name: name, parentId: parentId, url: url!, hashtags: hashtags.flatMap({ OrderedSet($0) }))
         case .directory:
-            return Group(id: id, name: name, parentId: parentId)
+            return Group(id: id, name: name, parentId: parentId, hashtags: hashtags.flatMap({ OrderedSet($0) }))
         }
     }
 }

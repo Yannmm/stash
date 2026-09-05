@@ -117,6 +117,8 @@ extension Dominator {
             let h3 = h3s.first()!
             let name = try h3.text()
             let id = try h3.attr("stash_id")
+            let hashtags = try h3.attr("stash_hashtags")
+                .split(separator: ",").map(String.init).filter({ !$0.isEmpty })
             guard let dl = try dt.select("> dl").first() else { return nil }
             let dts = try dl.select("> dt")
             try dts.map({ try decomposeDT($0) })
@@ -128,6 +130,7 @@ extension Dominator {
                 "name": name,
                 "type": "directory",
                 "id": id,
+                "hashtags": hashtags,
                 "children": children
             ] as [String : Any]
         } else {
@@ -135,11 +138,14 @@ extension Dominator {
             let name = try a.text()
             let url = try a.attr("href")
             let id = try a.attr("stash_id")
+            let hashtags = try a.attr("stash_hashtags")
+                .split(separator: ",").map(String.init).filter({ !$0.isEmpty })
             return [
                 "name": name,
                 "type": "bookmark",
                 "url": url,
-                "id": id
+                "id": id,
+                "hashtags": hashtags
             ]
         }
     }
@@ -193,6 +199,7 @@ extension Dominator {
         
         let name = json["name"] as? String ?? ""
         let id = json["id"] as? String ?? ""
+        let hashtags = (json["hashtags"] as? [String] ?? []).joined(separator: ",")
         
         switch type {
         case "bookmark":
@@ -202,6 +209,7 @@ extension Dominator {
                 .text(name)
                 .attr("href", href)
                 .attr("stash_id", id)
+                .attr("stash_hashtags", hashtags)
             try dt.appendChild(a)
             return dt
         case "directory":
@@ -209,6 +217,7 @@ extension Dominator {
             let h3 = try Element(Tag("h3"), "")
                 .text(name)
                 .attr("stash_id", id)
+                .attr("stash_hashtags", hashtags)
             try dt.appendChild(h3)
             
             let dl = Element(Tag("dl"), "")

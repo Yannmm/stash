@@ -21,47 +21,95 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     internal var searchPanelPosition: CGPoint?
     
-    private lazy var editPopover: NSPopover = {
-        let p = NSPopover()
-        let contentView = ContentView().environmentObject(cabinet)
-        p.behavior = .transient
-        p.contentViewController = NSHostingController(rootView: contentView)
-        p.delegate = self
-        return p
-    }()
+    private var editWindow: NSWindow?
     
-    private lazy var settingsViewModel: SettingsViewModel = {
-        let viewModel = SettingsViewModel(cabinet: cabinet, updateChecker: updateChecker)
-        return viewModel
-    }()
+    internal var settingsViewModel: SettingsViewModel!
     
-    internal lazy var searchViewModel: SearchViewModel = {
-        let viewModel = SearchViewModel(cabinet: cabinet)
-        return viewModel
-    }()
+    internal var searchViewModel: SearchViewModel!
     
-    var cabinet: OkamuraCabinet { OkamuraCabinet.shared }
+    internal var housekeeper: Housekeeper!
     
     private var updateChecker: UpdateChecker { UpdateChecker.shared }
-    
-    private let dominator = Dominator()
     
     private var cancellables = Set<AnyCancellable>()
     
     private var outlineViewHeight: CGFloat?
     
-    private var settingsWindow: NSWindow?
+    private var window1: NSWindow?
+    
+    private var window2: NSWindow?
+    
+    private func initialize() {
+        let savedApproach = Pref.value(for: Pref.Key.synchronizerApproach) ?? Synchronizer.Option.local
+        let localProvider = Synchronizer.OnPremiseProvider()
+        let providers: [Synchronizer.Option: any Synchronizer.Provider] = [
+            .local: localProvider,
+            .dropbox: Synchronizer.DropboxProvider(),
+            .icloud: Synchronizer.AiCloudProvider(),
+            .baidupan: Synchronizer.BaiduPanProvider(),
+        ]
+        let synchronizer = Synchronizer(
+            approach: savedApproach,
+            providers: providers,
+            localProvider: localProvider
+        )
+        // TODO: can we remove prepare here??????
+        if savedApproach != .local, let remote = providers[savedApproach] {
+            Task { try? await remote.prepare() }
+        }
+        
+        let hk = Housekeeper(synchronizer: synchronizer)
+        self.housekeeper = hk
+        
+        let svm = SettingsViewModel(
+            provider: savedApproach,
+            onReset: {
+                try hk.removeAll()
+            },
+            onImport: { from, fileType, replace in
+                try hk.import(from: from, fileType: fileType, replace: replace)
+            },
+            onExport: { to, suffix in
+                try hk.export(to: to, suffix: suffix)
+            },
+            onApproachChange: { approach in
+                synchronizer.setApproach(approach)
+            })
+        
+        synchronizer.availability.sink { availability in
+            Task { @MainActor in
+                svm.availability = availability
+            }
+        }.store(in: &cancellables)
+        
+        self.settingsViewModel = svm
+        
+        self.searchViewModel = SearchViewModel(housekeeper: hk)
+    }
+    
+    func applicationDidBecomeActive(_ notification: Notification) {}
     
     func applicationWillFinishLaunching(_ notification: Notification) {
-        //        NSApp.setActivationPolicy(settingsViewModel.showDockIcon ? .regular : .accessory)
+        NSApp.setActivationPolicy(.accessory)
         
-        // TODO: remove this line
-        //        ImageCache.default.diskStorage.config.expiration = .days(1)
-        //        ImageCache.default.clearDiskCache()
+        NSAppleEventManager.shared().setEventHandler(self,
+                                                     andSelector: #selector(handleGetURLEvent(_:replyEvent:)),
+                                                     forEventClass: AEEventClass(kInternetEventClass),
+                                                     andEventID: AEEventID(kAEGetURL))
+        
+        initialize()
         
         Task {
             try? await updateChecker.check()
         }
+    }
+    
+    @objc private func handleGetURLEvent(_ event: NSAppleEventDescriptor?,
+        replyEvent: NSAppleEventDescriptor?) {
+        guard let descriptor = event?.paramDescriptor(forKeyword: AEKeyword(keyDirectObject)),
+              let urlStr = descriptor.stringValue,
+              let url = URL(string: urlStr) else { return }
+        NotificationCenter.default.post(name: .onUrlEvent, object: url)
     }
     
     func applicationDidFinishLaunching(_ notification: Notification) {
@@ -73,8 +121,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func bind() {
-        Publishers.CombineLatest4(cabinet.$storedEntries,
-                                  cabinet.$recentEntries,
+        Publishers.CombineLatest4(housekeeper.$storedEntries,
+                                  housekeeper.$recentEntries,
                                   settingsViewModel.$collapseHistory,
                                   NSApp.publisher(for: \.effectiveAppearance))
         .sink { [weak self] tuple5 in
@@ -99,23 +147,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             
         }
         
-        NotificationCenter.default.addObserver(forName: .onOutlineViewRowCount, object: nil, queue: nil) { [unowned self] noti in
-            guard let height = noti.object as? CGFloat else { return }
-            editPopoverContentSize(height)
-        }
-        
-        NotificationCenter.default.addObserver(forName: .onCellBecomeFirstResponder, object: nil, queue: nil) { [weak self] _ in
-            self?.editPopover.behavior = .applicationDefined
-        }
-        
-        NotificationCenter.default.addObserver(forName: .onCellResignFirstResponder, object: nil, queue: nil) { [weak self] _ in
-            self?.editPopover.behavior = .transient
-        }
-        
         NotificationCenter.default.addObserver(forName: .onDragWindow, object: nil, queue: nil) { [weak self] noti in
-//            guard let p1 = noti.object as? FloatingPanel,
-//                  let p2 = self?.searchPanel,
-//                  p1 === p2 else { return }
+            //            guard let p1 = noti.object as? FloatingPanel,
+            //                  let p2 = self?.searchPanel,
+            //                  p1 === p2 else { return }
             guard let panel = noti.object as? NSPanel else { return }
             self?.searchPanelPosition = CGPoint(x: panel.frame.origin.x + panel.frame.width, y: panel.frame.origin.y + panel.frame.height)
         }
@@ -141,74 +176,126 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         
         if let button = statusItem?.button {
-            button.image = NSImage(systemSymbolName: "square.stack.3d.up.fill", accessibilityDescription: nil)
+            //            button.image = NSImage(systemSymbolName: "square.stack.3d.up.fill", accessibilityDescription: nil)
+            button.image = NSImage(named: "forest")
         }
     }
     
-    private func setupSettingsWindow() {
-        let hostingView = NSHostingView(rootView: SettingsView(viewModel: self.settingsViewModel))
+    private func setupWindow1() {
+        let hostingView = NSHostingView(rootView: SettingsView(viewModel: self.settingsViewModel, updateChcker: self.updateChecker))
         
-        settingsWindow = NSWindow(
+        window1 = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: hostingView.fittingSize.width, height: hostingView.fittingSize.height),
             styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
-        settingsWindow?.isReleasedWhenClosed = false
-        settingsWindow?.center()
-        settingsWindow?.contentView = hostingView
+        window1?.isReleasedWhenClosed = false
+        window1?.center()
+        window1?.contentView = hostingView
         
     }
     
-    @objc func openSettings() {
-        if settingsWindow == nil {
-            setupSettingsWindow()
-        }
+    private func setupWindow2() {
+        let manageView = ManageView(wrapper: GroupSelectionWrapper())
+            .environmentObject(housekeeper)
+        let hostingView = NSHostingView(rootView: manageView)
         
-        // Ensure proper activation and window focusing
-        NSApp.activate(ignoringOtherApps: true)
+        window2 = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 1000, height: 700),
+            styleMask: [
+                .titled,
+                .closable,
+                .miniaturizable,
+                .resizable,
+                .fullSizeContentView
+            ],
+            backing: .buffered,
+            defer: false
+        )
         
-        // Use a small delay to ensure app activation completes
-        DispatchQueue.main.async {
-            self.settingsWindow?.makeKeyAndOrderFront(nil)
-            // Force the window to become key window
-            self.settingsWindow?.level = .floating
-            self.settingsWindow?.level = .normal
-            NSApp.arrangeInFront(nil)
+        window2?.title = ""
+        window2?.titleVisibility = .hidden
+        window2?.titlebarAppearsTransparent = true
+        window2?.isReleasedWhenClosed = false
+        window2?.center()
+        window2?.contentView = hostingView
+        window2?.minSize = NSSize(width: 900, height: 600)
+        
+        // 🔑 IMPORTANT
+        window2?.toolbarStyle = .unified   // ← not unifiedCompact
+        
+        let toolbar = NSToolbar(identifier: "CollectionToolbar")
+        toolbar.displayMode = .iconOnly
+        toolbar.showsBaselineSeparator = false
+        toolbar.allowsUserCustomization = false
+        toolbar.isVisible = true
+        
+        window2?.toolbar = toolbar
+    }
+    
+    @objc func settings() {
+        if window1 == nil {
+            setupWindow1()
+            observeWindowClose(window1)
         }
+        guard let window = window1 else { return }
+        _openWindow(window)
     }
     
     @objc func quit() {
         NSApp.terminate(nil)
     }
     
-    @objc func edit() {
-        if (editPopover.isShown) {
-            editPopover.performClose(self)
-        } else {
-            editPopoverContentSize(nil)
-            NSApplication.shared.activate(ignoringOtherApps: true)
-            DispatchQueue.main.async { [unowned self] in
-                self.editPopover.show(relativeTo: .zero, of: self.statusItem!.button!, preferredEdge: .minY)
-            }
+    @objc func manage() {
+        if window2 == nil {
+            setupWindow2()
+            observeWindowClose(window2)
+        }
+        guard let window = window2 else { return }
+        _openWindow(window)
+    }
+    
+    private func _openWindow(_ window: NSWindow) {
+        // Convert accessory app to foreground app
+        NSApp.setActivationPolicy(.regular)
+        
+        // Activate app FIRST
+        NSApp.activate(ignoringOtherApps: true)
+        
+        DispatchQueue.main.async {
+            // Ensure window can participate in activation
+            window.collectionBehavior.remove(.transient)
+            
+            // Bring window forward
+            window.makeKeyAndOrderFront(nil)
+            
+            // Important for Stage Manager
+            window.orderFrontRegardless()
         }
     }
     
-    private func editPopoverContentSize(_ height: CGFloat?) {
-        let h = height
-        ?? outlineViewHeight
-        ?? cabinet.storedEntries
-            .filter({ $0.parentId == nil })
-            .map({ $0.height })
-            .reduce(0, { $0 + $1 })
-        outlineViewHeight = h
-        self.editPopover.contentSize = CGSize(width: 800, height: (h <= 200 ? 200 : h) + 34)
+    private func observeWindowClose(_ window: NSWindow?) {
+        guard let window = window else { return }
+        NotificationCenter.default.addObserver(
+            forName: NSWindow.willCloseNotification,
+            object: window,
+            queue: .main
+        ) { [weak self] notification in
+            guard let closingWindow = notification.object as? NSWindow else { return }
+            self?.updateDockIconVisibility(excluding: closingWindow)
+        }
+    }
+    
+    private func updateDockIconVisibility(excluding closingWindow: NSWindow) {
+        // Check visibility excluding the window that's closing
+        let settingsVisible = (window1 != nil && window1 !== closingWindow && window1!.isVisible)
+        let collectionVisible = (window2 != nil && window2 !== closingWindow && window2!.isVisible)
+        
+        if !settingsVisible && !collectionVisible {
+            NSApp.setActivationPolicy(.accessory)
+        }
     }
 }
 
-extension AppDelegate: NSPopoverDelegate {
-    func popoverDidClose(_ notification: Notification) {
-        NotificationCenter.default.post(name: .onEditPopoverClose, object: nil)
-    }
-}
 

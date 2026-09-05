@@ -15,4 +15,16 @@ extension View {
             return AnyView(self)
         }
     }
+    
+    @ViewBuilder
+    func ifAvailable<T: View>(
+        _ availability: () -> Bool,
+        transform: (Self) -> T
+    ) -> some View {
+        if availability() {
+            transform(self)
+        } else {
+            self
+        }
+    }
 }

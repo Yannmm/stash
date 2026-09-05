@@ -21,31 +21,18 @@ struct SearchView: View {
         VStack(spacing: 0) {
             searchField()
             if viewModel.items.count > 0 {
+                Divider()
+                    .padding(.horizontal, 12)
+                    .opacity(0.5)
                 list()
             }
         }
-        .frame(width: 500)
+        .frame(width: 520)
+        .padding(.horizontal, 16)
+        .modifier(SearchPanelBackground())
         .onAppear {
             focused = true
         }
-        .padding(.horizontal, 12)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(Color(NSColor.controlBackgroundColor))
-                .shadow(
-                    color: .black.opacity(0.15),
-                    radius: 10,
-                    x: 0,
-                    y: 4
-                )
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(Color(NSColor.separatorColor).opacity(0.3), lineWidth: 0.5)
-        )
-        .onAppear(perform: {
-            focused = true
-        })
         .onReceive(viewModel.bookmark) { value in
             onTap(value)
         }
@@ -55,14 +42,14 @@ struct SearchView: View {
     private func list() -> some View {
         ScrollViewReader { proxy in
             ScrollView {
-                VStack(spacing: 0) {
+                VStack(spacing: 2) {
                     ForEach(Array(Array(viewModel.items).enumerated()), id: \.element.id) { index, item in
                         // TODO: need a dummy search view item to deal with go back.
                         _SearchItemView(
                             item: item,
                             highlight: self.viewModel.index == nil ? false : (self.viewModel.index! == index),
                             onTap: { viewModel.select($0) },
-                            searchText: $viewModel.query
+                            query: viewModel.query
                         )
                         .id(index)
                         .overlay(
@@ -111,15 +98,15 @@ struct SearchView: View {
             Image(systemName: "sparkle.magnifyingglass")
                 .resizable()
                 .aspectRatio(contentMode: .fit)
-                .frame(width: 18, height: 18)
+                .frame(width: 20, height: 20)
                 .foregroundStyle(Color.theme)
             SearchField(text: $viewModel.query, keyboardAction: $viewModel.keyboardAction, focused: $focused, placeholder: Binding(
                 get: {
                     switch viewModel.depth {
                     case .root:
-                        return "Search by Title or Address"
+                        return "Search for bookmarks or groups in Nustash"
                     case .group(let name):
-                        return "Search in Group \"\(name)\""
+                        return "Search in \"\(name)\""
                     }
                 },
                 set: { _ in }
@@ -130,16 +117,42 @@ struct SearchView: View {
                     viewModel.query = ""
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                 }
                 .buttonStyle(BorderlessButtonStyle()) // Important for macOS!
             }
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 12)
+        .padding(.horizontal, 10)
+        .padding(.vertical, 14)
     }
 }
 
+
+private struct SearchPanelBackground: ViewModifier {
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if #available(macOS 26, *) {
+            content
+                .glassEffect(in: .rect(cornerRadius: 16))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 16, style: .continuous)
+                        .stroke(Color.white.opacity(0.16), lineWidth: 0.6)
+                )
+        } else {
+            content
+                .background(
+                    RoundedRectangle(cornerRadius: 6)
+                        .fill(Color(NSColor.controlBackgroundColor))
+                        .shadow(color: .black.opacity(0.15), radius: 10, x: 0, y: 4)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 6)
+                        .stroke(Color(NSColor.separatorColor).opacity(0.3), lineWidth: 0.5)
+                )
+        }
+    }
+}
 
 class FocusablePanel: NSPanel {
     override var canBecomeKey: Bool { true }

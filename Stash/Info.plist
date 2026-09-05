@@ -4,16 +4,29 @@
 <dict>
 	<key>CFBundleIconName</key>
 	<string>AppIcon</string>
-    <key>CFBundleDisplayName</key>
-    <string>Stashy</string>
-    <key>CFBundleURLTypes</key>
-    <array>
-        <dict>
-            <key>CFBundleURLSchemes</key>
-            <array>
-                <string>stashyyy</string>
-            </array>
-        </dict>
-    </array>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>dropbox</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>db-y6ijm2p3vqr7kt8</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>nustash</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>nustash</string>
+			</array>
+		</dict>
+	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>dbapi-8-emm</string>
+		<string>dbapi-2</string>
+	</array>
 </dict>
 </plist>

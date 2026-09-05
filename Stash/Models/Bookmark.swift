@@ -6,12 +6,14 @@
 //
 
 import Cocoa
+import OrderedCollections
 
 struct Bookmark {
     var id: UUID
     var name: String
     var parentId: UUID?
-    let url: URL
+    var url: URL
+    var hashtags: OrderedSet<String>?
 }
 
 extension Bookmark: Entry {
@@ -30,17 +32,11 @@ extension Bookmark: Entry {
     }
     
     var container: Bool { false }
-    
-    var shouldExpand: Bool { true }
-    
-    var height: CGFloat { CellView.Constant.bookmarkHeight }
 }
 
-extension Bookmark {
+extension Bookmark: Actionable {
     func open() {
-        let browser = name.hashtags
-            .map({ $0.split(separator: "#").last })
-            .compactMap({ $0 })
+        let browser = (hashtags ?? [])
             .map({ String.Browser(rawValue: String($0)) })
             .compactMap({ $0 })
             .last

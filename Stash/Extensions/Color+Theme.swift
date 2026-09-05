@@ -5,7 +5,7 @@
 //  Created by Yan Meng on 2025/2/18.
 //
 
-import SwiftUICore
+import SwiftUI
 import AppKit
 
 extension Color {
@@ -29,6 +29,16 @@ extension Color {
             green: Double((hex >> 08) & 0xff) / 255,
             blue: Double((hex >> 00) & 0xff) / 255,
             opacity: alpha
+        )
+    }
+}
+
+extension Color {
+    static var random: Color {
+        Color(
+            red: .random(in: 0...1),
+            green: .random(in: 0...1),
+            blue: .random(in: 0...1)
         )
     }
 }

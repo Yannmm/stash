@@ -44,10 +44,10 @@ class SearchViewModel: ObservableObject {
     
     func select(_ item: SearchItem) { _select.send(item) }
     
-    let cabinet: OkamuraCabinet
+    let housekeeper: Housekeeper
     
-    init(cabinet: OkamuraCabinet) {
-        self.cabinet = cabinet
+    init(housekeeper: Housekeeper) {
+        self.housekeeper = housekeeper
         bind()
     }
     
@@ -59,7 +59,7 @@ class SearchViewModel: ObservableObject {
         _select
             .filter({ !$0.isBack })
             .map({ [weak self] item in
-                (self?.cabinet.storedEntries ?? []).first(where: { $0.id == item.id })
+                (self?.housekeeper.storedEntries ?? []).first(where: { $0.id == item.id })
             })
             .sink(receiveValue: current_entry.send)
             .store(in: &cancellables)
@@ -67,7 +67,7 @@ class SearchViewModel: ObservableObject {
         // For back only
         let parent1 = _select.filter({ $0.isBack })
             .withLatestFrom(current_entry, resultSelector: { a, b in b?.parentId })
-            .withLatestFrom(Just(cabinet.storedEntries), resultSelector: { a, b in a == nil ? nil : b.findBy(id: a!) })
+            .withLatestFrom(Just(housekeeper.storedEntries), resultSelector: { a, b in a == nil ? nil : b.findBy(id: a!) })
         
         // For back, parent become current
         parent1.sink(receiveValue: current_entry.send)
@@ -99,7 +99,7 @@ class SearchViewModel: ObservableObject {
         
         let children2 = current_entry
             .filter({ $0 == nil || $0!.container })
-            .withLatestFrom(Just(cabinet.storedEntries), resultSelector: {($0, $1)})
+            .withLatestFrom(Just(housekeeper.storedEntries), resultSelector: {($0, $1)})
             .map({ $0.0 == nil ? $0.1 : $0.0!.children(among: $0.1) })
         
         children2
@@ -113,7 +113,7 @@ class SearchViewModel: ObservableObject {
         let entries = CurrentValueSubject<[any Entry], Never>([])
         
         Publishers.Merge(
-            cabinet.$storedEntries
+            housekeeper.$storedEntries
                 .withLatestFrom($depth.filter({ $0 == .root }), resultSelector: { ($0, $1) })
                 .map({ $0.0 }),
             children2
@@ -124,7 +124,7 @@ class SearchViewModel: ObservableObject {
         let seachItems = CurrentValueSubject<[SearchItem], Never>([])
         
         entries
-            .withLatestFrom(Just(cabinet.storedEntries), resultSelector: { ($0, $1) })
+            .withLatestFrom(Just(housekeeper.storedEntries), resultSelector: { ($0, $1) })
             .map({ event in
                 event.0.map({ e in
                     var detail: String!
@@ -148,7 +148,7 @@ class SearchViewModel: ObservableObject {
         
         let parent2 = current_entry
             .map({ $0?.parentId })
-            .withLatestFrom(Just(cabinet.storedEntries), resultSelector: {($0, $1)})
+            .withLatestFrom(Just(housekeeper.storedEntries), resultSelector: {($0, $1)})
             .map({ event in event.0 == nil ? nil : event.1.first(where: { event.0 == $0.id }) })
         
         Publishers.CombineLatest3(seachItems, $query.map({ $0.lowercased() }), $depth)
@@ -191,7 +191,7 @@ class SearchViewModel: ObservableObject {
             }
             .store(in: &cancellables)
         
-        $keyboardAction.withLatestFrom2($index, $items)
+        $keyboardAction.withLatestFrom($index, $items, resultSelector: { ($0, $1.0, $1.1) })
             .map({ t3 in
                 guard let index = t3.1 else { return nil }
                 switch t3.0 {
@@ -209,7 +209,7 @@ class SearchViewModel: ObservableObject {
             .store(in: &cancellables)
         
         $keyboardAction.filter({ $0 == .enter })
-            .withLatestFrom2($index, $items)
+            .withLatestFrom($index, $items, resultSelector: { ($0, $1.0, $1.1) })
             .map({ $0.1 == nil ? nil : $0.2[$0.1!] })
             .compactMap({ $0 })
             .sink { [weak self] in

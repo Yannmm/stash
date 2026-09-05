@@ -44,9 +44,7 @@ extension AppDelegate {
     
     private func addGuide(_ menu: NSMenu, _ entries: [any Entry]) {
         var items = [
-            NSMenuItem(title: "Welcom to Stashy 🎉", action: nil, keyEquivalent: ""),
-            NSMenuItem(title: "Create New Bookmark", action: #selector(createBookmark), keyEquivalent: "c"),
-            NSMenuItem(title: "Import from File", action: #selector(importFromBrowsers), keyEquivalent: "i")
+            NSMenuItem(title: "Welcom to Nustash! 🐿️", action: nil, keyEquivalent: ""),
         ] as [NSMenuItem]
         
         if entries.count > 0 {
@@ -57,11 +55,10 @@ extension AppDelegate {
     }
     
     private func addActions(_ menu: NSMenu) {
-        menu.addItem(NSMenuItem(title: "Manage", action: #selector(edit), keyEquivalent: "m"))
-        menu.addItem(NSMenuItem(title: "Settings", action: #selector(openSettings), keyEquivalent: "t"))
+        menu.addItem(NSMenuItem(title: "Manage", action: #selector(manage), keyEquivalent: "m"))
         menu.addItem(NSMenuItem(title: "Search", action: #selector(search), keyEquivalent: "s"))
+        menu.addItem(NSMenuItem(title: "Settings", action: #selector(settings), keyEquivalent: "t"))
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: ""))
-        
     }
     
     private func addEntries(_ menu: NSMenu, _ entries: [any Entry]) {
@@ -71,7 +68,10 @@ extension AppDelegate {
     private func g(menu: NSMenu, entries: [any Entry], parentId: UUID?, keyEquivalents: [String]) {
         for (index, entry) in entries.filter({ $0.parentId == parentId }).enumerated() {
             let item = CustomMenuItem(title: entry.name, action: #selector(action(_:)), keyEquivalent: "", with: entry)
-            item.attributedTitle = entry.name.highlightHashtags()
+            
+            let title = NSMutableAttributedString(string: entry.name, attributes: [.font: NSFont.systemFont(ofSize: NSFont.systemFontSize)])
+            title.append((" " + (entry.hashtags ?? []).joined(separator: " ")).highlightHashtags())
+            item.attributedTitle = title
             
             item.keyEquivalentModifierMask = []
             if index <= keyEquivalents.count - 1 {
@@ -145,26 +145,12 @@ extension AppDelegate {
     internal func act(upon entry: any Entry) {
         if let b = entry as? Bookmark {
             do {
-                try cabinet.asRecent(b)
+                try housekeeper.asRecent(b)
+                b.open()
             } catch {
                 ErrorTracker.shared.add(error)
             }
             
-        }
-        entry.open()
-    }
-    
-    @objc private func createBookmark() {
-        edit()
-        DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.25)) {
-            NotificationCenter.default.post(name: .onShouldPresentBookmarkForm, object: nil)
-        }
-    }
-    
-    @objc private func importFromBrowsers() {
-        openSettings()
-        DispatchQueue.main.asyncAfter(deadline: (DispatchTime.now() + 0.25)) {
-            NotificationCenter.default.post(name: .onShouldOpenImportPanel, object: nil)
         }
     }
 }

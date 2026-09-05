@@ -11,9 +11,12 @@ struct _SearchItemView: View {
     let item: SearchItem
     let highlight: Bool
     let onTap: (SearchItem) -> Void
-    // Not used
-    @State private var frame = CGRect.zero
-    @Binding var searchText: String
+    let query: String
+    
+    private var usesGlassStyle: Bool {
+        if #available(macOS 26, *) { return true }
+        return false
+    }
     
     var body: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -27,65 +30,41 @@ struct _SearchItemView: View {
         .padding(.vertical, 8)
         .padding(.horizontal, 12)
         .background(
-            Rectangle()
-                .fill(highlight ? Color(NSColor.controlAccentColor) : .clear)
+            RoundedRectangle(cornerRadius: 8)
+                .fill(highlight ? (usesGlassStyle ? Color.accentColor.opacity(0.15) : Color(NSColor.controlAccentColor)) : .clear)
         )
-        .cornerRadius(6)
+        .cornerRadius(8)
         .onTapGesture {
             onTap(item)
-        }
-        .onGeometryChange(for: CGRect.self) { proxy in
-            // TODO: will the window change
-            if let frame = NSApp.windows
-                .first(where: { $0.level == .statusBar })?
-                .convertToScreen(proxy.frame(in: .global)) {
-                return frame
-            }
-            return .zero
-        } action: {
-            self.frame = $0
         }
     }
     
     @ViewBuilder
     private func title() -> some View {
-        Text(emphasize(item.title) { attr in
-            attr.foregroundColor = highlight ? .white : .primary
+        Text(item.title.condense(matching: query).emphasize(query) { attr in
+            attr.foregroundColor = (highlight && !usesGlassStyle) ? .white : .primary
             attr.font = .system(size: 15, weight: .light)
         } highlightStyle: { attr, range in
-            attr[range].foregroundColor = highlight ? .white : .theme
+            attr[range].foregroundColor = (highlight && !usesGlassStyle) ? .white : .theme
             attr[range].font = .system(size: 15, weight: .bold)
         })
-        .lineLimit(nil)
-        .fixedSize(horizontal: false, vertical: true)
+        .lineLimit(1)
+//        .fixedSize(horizontal: false, vertical: true)
+        .truncationMode(.middle)
         .padding(.top, -2)
     }
     
     @ViewBuilder
     private func detail() -> some View {
-        Text(emphasize(item.detail) { attr in
-            attr.foregroundColor = highlight ? .white : .secondary
+        Text(item.detail.condense(matching: query, leading: 30, trailing: 30, context: 10).emphasize(query) { attr in
+            attr.foregroundColor = (highlight && !usesGlassStyle) ? .white : .secondary
             attr.font = .system(size: 12, weight: .light)
         } highlightStyle: { attr, range in
-            attr[range].foregroundColor = highlight ? .white : .theme
+            attr[range].foregroundColor = (highlight && !usesGlassStyle) ? .white : .theme
             attr[range].font = .system(size: 12, weight: .bold)
         })
-        .lineLimit(nil)
-        .fixedSize(horizontal: false, vertical: true)
-    }
-    
-    private func emphasize(_ base: String, baseStyle: (inout AttributedString) -> Void, highlightStyle: (inout AttributedString, Range<AttributedString.Index>) -> Void) -> AttributedString {
-        var attr = AttributedString(base)
-        baseStyle(&attr)
-        
-        let ranges = base.lowercased().ranges(of: searchText.lowercased())
-        guard ranges.count > 0 else { return attr }
-        ranges.forEach { r in
-            let rr = NSRange(r, in: base)
-            if let range = Range(rr, in: attr) {
-                highlightStyle(&attr, range)
-            }
-        }
-        return attr
+        .lineLimit(1)
+//        .fixedSize(horizontal: false, vertical: true)
+        .truncationMode(.middle)
     }
 }

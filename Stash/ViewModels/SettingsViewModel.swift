@@ -13,7 +13,6 @@ import SwiftUI
 
 class SettingsViewModel: ObservableObject {
     @Published var collapseHistory: Bool
-    @Published var icloudSync: Bool
     @Published var launchOnLogin: Bool
     @Published var showDockIcon: Bool
     @Published var importFromFile: URL?
@@ -26,15 +25,19 @@ class SettingsViewModel: ObservableObject {
     @Published var checkedVersionDescription: String = ""
     @Published var newReleaseNotes: String?
     @Published var error: Error?
-    
+    @Published var synchronizerApproach: Synchronizer.Option
+    @Published var availability: Synchronizer.Availability!
+
     private var cancellables = Set<AnyCancellable>()
-    private let pieceSaver = PieceSaver()
     private let appHotKeyManager = HotKeyManager(action: .menu)
     private let searchHotKeyManager = HotKeyManager(action: .search)
-    private let cabinet: OkamuraCabinet
-    @ObservedObject var updateChcker: UpdateChecker
     
-    var empty: Bool { cabinet.storedEntries.isEmpty }
+    private let onReset: () throws -> Void
+    private let onImport: (URL, String.FileType, Bool) throws -> Void
+    private let onExport: (URL, String?) throws -> URL
+    private let onApproachChange: (Synchronizer.Option) -> Void
+    
+    var empty: Bool { false }
     
     private lazy var timestampFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -44,7 +47,7 @@ class SettingsViewModel: ObservableObject {
     }()
     
     func reset() throws {
-        try cabinet.removeAll()
+        try self.onReset()
     }
     
     
@@ -56,72 +59,64 @@ class SettingsViewModel: ObservableObject {
     }
     
     func `import`(_ filePath: URL, fileType: String.FileType, replace: Bool) throws {
-        try cabinet.import(from: filePath, fileType: fileType, replace: replace)
+        try self.onImport(filePath, fileType, replace)
         self.importFromFile = filePath
     }
     
-    func goToAppStore() {
-        updateChcker.go()
-    }
-    
-    init(cabinet: OkamuraCabinet, updateChecker: UpdateChecker) {
-        self.cabinet = cabinet
-        self.updateChcker = updateChecker
-        collapseHistory = pieceSaver.value(for: .collapseHistory) ?? false
-        icloudSync = pieceSaver.value(for: .icloudSync) ?? true
-        launchOnLogin = RocketLauncher.shared.enabled
-        showDockIcon = pieceSaver.value(for: .showDockIcon) ?? false
+    init(
+        provider: Synchronizer.Option,
+        onReset: @escaping () throws -> Void,
+        onImport: @escaping (URL, String.FileType, Bool) throws -> Void,
+        onExport: @escaping (URL, String?) throws -> URL,
+        onApproachChange: @escaping (Synchronizer.Option) -> Void
+    ) {
+        self.onReset = onReset
+        self.onImport = onImport
+        self.onExport = onExport
+        self.onApproachChange = onApproachChange
         
-        if let code: UInt32 = pieceSaver.value(for: .appShortcut),
+        collapseHistory = Pref.value(for: Pref.Key.collapseHistory) ?? false
+        launchOnLogin = RocketLauncher.shared.enabled
+        showDockIcon = Pref.value(for: Pref.Key.showDockIcon) ?? false
+        synchronizerApproach = provider
+        
+        if let code = Pref.value(for: Pref.Key.appShortcut),
            let key = Key(carbonKeyCode: code),
-           let modifiers: UInt = pieceSaver.value(for: .appShortcutModifiers) {
+           let modifiers = Pref.value(for: Pref.Key.appShortcutModifiers) {
             appShortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
         }
         
-        if let code: UInt32 = pieceSaver.value(for: .searchShortcut),
+        if let code = Pref.value(for: Pref.Key.searchShortcut),
            let key = Key(carbonKeyCode: code),
-           let modifiers: UInt = pieceSaver.value(for: .searchShortcutModifiers) {
+           let modifiers = Pref.value(for: Pref.Key.searchShortcutModifiers) {
             searchShortcut = (key, NSEvent.ModifierFlags(rawValue: modifiers))
         }
-        
-        self.setAppIdentifier()
-        
+
         bind()
     }
     
     private func bind() {
         $collapseHistory
             .dropFirst()
-            .sink { [weak self] in
-                self?.pieceSaver.save(for: .collapseHistory, value: $0)
-            }
-            .store(in: &cancellables)
-        $icloudSync
-            .dropFirst()
-            .sink { [weak self] in
-                self?.pieceSaver.save(for: .icloudSync, value: $0)
-                do {
-                    try self?.cabinet.save()
-                    self?.cabinet.monitorIcloud()
-                } catch {
-                    self?.error = error
-                }
+            .sink {
+                Pref.save(for: Pref.Key.collapseHistory, value: $0)
             }
             .store(in: &cancellables)
         
         // Handle launch at login changes
         $launchOnLogin
             .dropFirst()
-            .sink { [weak self] enabled in
+            .sink { enabled in
                 RocketLauncher.shared.enabled = enabled
-                self?.pieceSaver.save(for: .launchOnLogin, value: enabled)
+                Pref.save(for: Pref.Key.launchOnLogin, value: enabled)
             }
             .store(in: &cancellables)
+        
         $showDockIcon
             .dropFirst()
-            .sink { [weak self] in
+            .sink {
                 //                NSApp.setActivationPolicy($0 ? .regular : .accessory)
-                self?.pieceSaver.save(for: .showDockIcon, value: $0)
+                Pref.save(for: Pref.Key.showDockIcon, value: $0)
             }
             .store(in: &cancellables)
         
@@ -132,8 +127,8 @@ class SettingsViewModel: ObservableObject {
                 } else {
                     self?.appHotKeyManager.unregister()
                 }
-                self?.pieceSaver.save(for: .appShortcut, value: tuple2?.0.carbonKeyCode)
-                self?.pieceSaver.save(for: .appShortcutModifiers, value: tuple2?.1.rawValue)
+                Pref.save(for: Pref.Key.appShortcut, value: tuple2?.0.carbonKeyCode)
+                Pref.save(for: Pref.Key.appShortcutModifiers, value: tuple2?.1.rawValue)
             }
             .store(in: &cancellables)
         
@@ -162,8 +157,8 @@ class SettingsViewModel: ObservableObject {
                 } else {
                     self?.searchHotKeyManager.unregister()
                 }
-                self?.pieceSaver.save(for: .searchShortcut, value: tuple2?.0.carbonKeyCode)
-                self?.pieceSaver.save(for: .searchShortcutModifiers, value: tuple2?.1.rawValue)
+                Pref.save(for: Pref.Key.searchShortcut, value: tuple2?.0.carbonKeyCode)
+                Pref.save(for: Pref.Key.searchShortcutModifiers, value: tuple2?.1.rawValue)
             }
             .store(in: &cancellables)
         
@@ -172,21 +167,18 @@ class SettingsViewModel: ObservableObject {
             .compactMap({ $0 })
             .sink { [unowned self] in
                 do {
-                    self.exportToFile = try self.cabinet.export(to: $0, suffix: "_\(self.timestampFormatter.string(from: Date.now))")
+                    self.exportToFile = try self.onExport($0, "_\(self.timestampFormatter.string(from: Date.now))")
                 } catch {
                     self.error = error
                 }
             }
             .store(in: &cancellables)
         
-        updateChcker.$new
-            .sink { [unowned self] update in
-                if let v = update {
-                    self.checkedVersionDescription = "New Version Available: \(v.version)"
-                } else {
-                    self.checkedVersionDescription = "You're Up to Date"
-                }
-                self.newReleaseNotes = update?.releaseNotes
+        $synchronizerApproach
+            .dropFirst()
+            .sink { [weak self] in
+                self?.onApproachChange($0)
+                Pref.save(for: Pref.Key.synchronizerApproach, value: $0)
             }
             .store(in: &cancellables)
         
@@ -194,20 +186,11 @@ class SettingsViewModel: ObservableObject {
             .compactMap({ $0 })
             .sink { ErrorTracker.shared.add($0)}
             .store(in: &cancellables)
-        
-//        Task {
-//            do {
-//                let a = try await updateChcker.check()
-//                newVersion = a?.releaseNotes
-//            } catch {
-//                self.error = error
-//            }
-//        }
     }
     
     var currentVersionDescription: String {
         var result = " ("
-        
+
         if let version = Bundle.main.version {
             result += "v\(version)"
         }
@@ -215,11 +198,6 @@ class SettingsViewModel: ObservableObject {
             result += "·b\(build)"
         }
         return result + ")"
-    }
-    
-    private func setAppIdentifier() {
-        guard let id: UUID? = pieceSaver.value(for: .appIdentifier), id == nil else { return }
-        pieceSaver.save(for: .appIdentifier, value: UUID().uuidString)
     }
 }
 

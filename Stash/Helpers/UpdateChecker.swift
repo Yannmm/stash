@@ -51,10 +51,10 @@ final class UpdateChecker: ObservableObject {
         let (data, _) = try await URLSession.shared.data(from: Constant.appStoreInfo)
         guard let json = try JSONSerialization.jsonObject(with: data) as? [String: Any],
         let results = json["results"] as? [[String: Any]],
-        let stashy = results.first,
-        let version = stashy["version"] as? String
+        let stash = results.first,
+        let version = stash["version"] as? String
         else { throw SomeError.missingDownloadsUrl }
-        let notes = stashy["releaseNotes"] as? String
+        let notes = stash["releaseNotes"] as? String
         return AppStore(version: version, releaseNotes: notes)
     }
 

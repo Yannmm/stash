@@ -4,12 +4,25 @@ import HotKey
 
 struct SettingsView: View {
     @StateObject var viewModel: SettingsViewModel
-    @State private var resetAlert = false
-    @State private var fileBackupNotice: (String, Bool)?
-    @State private var appendNotice: String?
-    @State private var importFileType: String.FileType?
-    @State private var howToExport: (String, String)?
-    //    @State private var updateFrequency = UpdateFrequency.weekly
+    
+    @StateObject var updateChcker: UpdateChecker
+    
+    @State private var importFileType: String.FileType? {
+        didSet {
+            guard let ft = importFileType else { return }
+            alert = .import(ft, {
+                viewModel.empty
+            }, {
+                handleImport(true, importFileType)
+            }, {
+                handleImport(false, importFileType)
+            }, {
+                handleImport(true, importFileType)
+            })
+        }
+    }
+    @State private var alert: SettingsView.Alert = .none
+    
     var importDescription: AttributedString? {
         if let path = viewModel.importFromFile?.path {
             let tilde = (path as NSString).abbreviatingWithTildeInPath
@@ -38,24 +51,19 @@ struct SettingsView: View {
         return String(path.lastPathComponent.split(separator: ".")[0])
     }
     
-    var importNotice: (String, String)? {
-        guard let t = importFileType else { return nil }
-        switch t {
-        case .netscape:
-            return ("Import from File", "Export from another Stashy or browsers first.")
-        case .hungrymarks:
-            return ("Import from Hungrymarks", "Go to Settings > Bookmark Files (iCloud/Default > Reveal in Finder, locate the txt file and save it.)")
-        case .pocket:
-            return ("Import from Pocket", "Go to \"https://getpocket.com/export\", and click \"Export CSV file\" to download your Pocket saves first.")
+    private func synchronizerApproachDescription(_ approach: Synchronizer.Option) -> String {
+        switch approach {
+        case .local: return "Local"
+        case .icloud: return "iCloud"
+        case .dropbox: return "Dropbox"
+        case .baidupan: return "BaiduPan"
         }
     }
     
     var body: some View {
         Form {
-            // General Section
             Section("General") {
                 Toggle("Launch on Login", isOn: $viewModel.launchOnLogin)
-                Toggle("iCloud Sync", isOn: $viewModel.icloudSync)
                 HStack {
                     Text("App Global Shortcut")
                     Spacer()
@@ -85,6 +93,23 @@ struct SettingsView: View {
                 }
             }
             
+            Section("Synchronization") {
+                VStack(alignment: .leading) {
+                    Picker("Approach", selection: $viewModel.synchronizerApproach) {
+                        ForEach(Synchronizer.Option.allCases) { approach in
+                            Text(synchronizerApproachDescription(approach))
+//                                .foregroundColor(viewModel.synchronizerApproach == approach ? .theme : .primary)
+                                .tag(approach)
+                        }
+                    }
+                    Text(viewModel.availability.describe())
+                        .environment(\.openURL, OpenURLAction { url in
+                            viewModel.availability.action(url.absoluteString)
+                            return .handled
+                        })
+                }
+            }
+            
             Section("Data Management") {
                 VStack(alignment: .leading) {
                     HStack {
@@ -108,20 +133,14 @@ struct SettingsView: View {
                         }
                         Text("""
                             Learn how to export bookmarks from [Chrome](Chrome), [Edge](Edge), [Firefox](Firefox) or [Safari](Safari).
-                            Or import from [Pocket](Pocket) and [Hungrymark](Hungrymark).
+                            Or import from [Pocket](Pocket) and [Hungrymarks](Hungrymark).
                             """)
                         .foregroundColor(.secondary)
                         .environment(\.openURL, OpenURLAction { url in
                             let browser = url.absoluteString
                             switch browser {
-                            case "Chrome":
-                                howToExport = (browser, "Navigate to the Bookmarks Manager, click the three-dot menu, and select \"Export bookmarks\".")
-                            case "Edge":
-                                howToExport = (browser, "Open the Favorites window, click the \"More\" button (three dots), then select \"Export Favorites.\".")
-                            case "Safari":
-                                howToExport = (browser, "Go to File > Export > Bookmarks, choose a location to save the file, and click Save.")
-                            case "Firefox":
-                                howToExport = (browser, "Open the Firefox Library, navigate to \"Import and Backup\", and select \"Export Bookmarks to HTML\".")
+                            case "Chrome", "Edge", "Safari", "Firefox":
+                                alert = .export(browser)
                             case "Hungrymark":
                                 importFileType = .hungrymarks
                             case "Pocket":
@@ -165,7 +184,15 @@ struct SettingsView: View {
                     Text("Clear All Data")
                     Spacer()
                     Button(action: {
-                        resetAlert = true
+                        alert = Alert.reset {
+                            do {
+                                try viewModel.export()
+                                try viewModel.reset()
+                                alert = .backup("Done Reset", true)
+                            } catch {
+                                viewModel.error = error
+                            }
+                        }
                     }, label: {
                         Text("Reset")
                             .foregroundColor(Color(nsColor: .systemRed))
@@ -173,80 +200,30 @@ struct SettingsView: View {
                     .buttonStyle(.bordered)
                 }
             }
-            .alert("Sure to Reset?", isPresented: $resetAlert) {
-                Button("Cancel", role: .cancel) { }
-                Button("Confirm", role: .destructive) {
-                    do {
-                        try viewModel.export()
-                        try viewModel.reset()
-                        fileBackupNotice = ("Done Reset", true)
-                    } catch {
-                        viewModel.error = error
-                    }
-                }
-            } message: {
-                Text("This action cannot be undone. All your data will be permanently deleted.")
-            }
-            .alert(importNotice?.0 ?? "", isPresented: Binding(
-                get: { importFileType != nil },
-                set: { if !$0 { importFileType = nil } }
-            )) {
-                if viewModel.empty {
-                    Button("Continue") {
-                        handleImport(true, importFileType)
-                    }
-                } else {
-                    Button("Append") {
-                        handleImport(false, importFileType)
-                    }
-                    Button("Replace", role: .destructive) {
-                        handleImport(true, importFileType)
-                    }
-                }
-                Button("Cancel", role: .cancel) {}
-            } message: {
-                Text(importNotice?.1 ?? "")
-            }
-            .alert("How to Export Bookmarks from \(howToExport?.0 ?? "")", isPresented: Binding(
-                get: { howToExport != nil },
-                set: { if !$0 { howToExport = nil } }
-            )) {
-                Button("OK") {}
-            } message: {
-                Text(howToExport?.1 ?? "")
-            }
-            .alert(fileBackupNotice?.0 ?? "", isPresented: Binding(
-                get: { fileBackupNotice != nil },
-                set: { if !$0 { fileBackupNotice = nil } }
-            )) {
-                Button("OK") { }
-            } message: {
-                Text((fileBackupNotice?.1 ?? false) ? "Backup file is exported to \"Downloads\", just in case 😉" : "")
-            }
-            .alert(appendNotice ?? "", isPresented: Binding(
-                get: { appendNotice != nil },
-                set: { if !$0 { appendNotice = nil } }
-            )) {
-                Button("OK") { }
-            } message: {
-                Text("Find them in Group \"\(appendAsGroup ?? "")\" at root level.")
-            }
+            .alert(alert.title, isPresented: Binding(
+                get: { alert != .none },
+                set: { if !$0 { alert = .none } }
+            ), actions: {
+                alert.actions()
+            }, message: {
+                alert.message()
+            })
             
             // Check Update Section
             Section("Software Update") {
-  
+                
                 // Check update each day
                 
                 VStack(alignment: .leading) {
                     HStack {
-                        Text(viewModel.checkedVersionDescription)
+                        Text("\(updateChcker.new != nil ? "New Version Available: \(updateChcker.new!.version)" : "You're Up to Date")")
                         Spacer()
                         Button("Go to AppStore") {
-                            viewModel.goToAppStore()
+                            updateChcker.go()
                         }
                         .buttonStyle(.bordered)
                     }
-                    if let notes = viewModel.newReleaseNotes {
+                    if let notes = updateChcker.new?.releaseNotes {
                         HStack {
                             Text(notes)
                                 .foregroundColor(.secondary)
@@ -255,20 +232,11 @@ struct SettingsView: View {
                     }
                 }
             }
-
+            
             // About Section
             Section("About\(viewModel.currentVersionDescription)") {
                 VStack(alignment: .leading) {
-                    //                    Link("https://github.com/Yannmm/stash", destination: URL(string: "https://github.com/Yannmm/stash")!)
-                    //                        .foregroundStyle(.secondary)
-                    //                        .onHover { hovering in
-                    //                            if hovering {
-                    //                                NSCursor.pointingHand.push()
-                    //                            } else {
-                    //                                NSCursor.pop()
-                    //                            }
-                    //                        }
-                    Text("[Stashy](stash) is a open-source project. To provide feedback, you may [log issues](repo) or [write email](email) to \(Constant.email).")
+                    Text("[Nustash](stash) is a open-source project. To provide feedback, you may [log issues](repo) or [write email](email) to \(Constant.email).")
                         .foregroundColor(.secondary)
                         .environment(\.openURL, OpenURLAction { url in
                             let browser = url.absoluteString
@@ -287,11 +255,11 @@ struct SettingsView: View {
             }
             
             Section {
-                Text("Copyright © 2025 RAP Studio. All rights reserved.")
+                Text("Copyright © 2026 RAP Studio. All rights reserved.")
                     .multilineTextAlignment(.center)
             }
         }
-        .navigationTitle("Stashy Settings")
+        .navigationTitle("Nustash Settings")
         .scrollIndicators(.hidden)
         .formStyle(.grouped)
         .padding()
@@ -348,7 +316,7 @@ struct SettingsView: View {
             let flag = viewModel.empty
             if !flag { try viewModel.export() }
             try viewModel.import(url, fileType: fileType, replace: true)
-            fileBackupNotice = ("Done Import", !flag)
+            alert = .backup("Done Import", !flag)
         } catch {
             viewModel.error = error
         }
@@ -357,7 +325,7 @@ struct SettingsView: View {
     private func append(_ url: URL, _ fileType: String.FileType) {
         do {
             try self.viewModel.import(url, fileType: fileType, replace: false)
-            appendNotice = "Done Append"
+            alert = .append(appendAsGroup)
         } catch {
             viewModel.error = error
         }
@@ -365,9 +333,9 @@ struct SettingsView: View {
     
     private func email() {
         let email = Constant.email
-        let subject = "Feedback for Stashy App"
+        let subject = "Feedback for Nustash App"
         let body = """
-        Hi Stashy Team,
+        Hi Nustash Team,
         
         I'd like to share some feedback about the app:
         
@@ -385,7 +353,7 @@ struct SettingsView: View {
         - macOS Version: macOS xx.x
         - Device Model: 
         
-        Thanks for making Stashy!
+        Thanks for making Nustash!
         
         Best regards,
         """
@@ -400,5 +368,129 @@ struct SettingsView: View {
     
     enum Constant {
         static let email = "yannmm@foxmail.com"
+    }
+}
+
+extension SettingsView {
+    enum Alert: Identifiable, Equatable {
+        case none
+        case reset(() -> Void)
+        case `import`(String.FileType, () -> Bool, () -> Void, () -> Void, () -> Void)
+        case export(String)
+        case backup(String, Bool)
+        case append(String?)
+        case error
+        
+        var id: String {
+            switch(self) {
+            case .none: "none"
+            case .reset: "reset"
+            case .`import`: "import"
+            case .export: "export"
+            case .backup: "backup"
+            case .append: "append"
+            case .error: "error"
+            }
+        }
+        
+        static func == (lhs: Alert, rhs: Alert) -> Bool {
+            switch (lhs, rhs) {
+            case (.none, .none), (.reset, .reset), (.`import`, .`import`), (.export, .export), (.backup, .backup), (.append, .append), (.error, .error):
+                return true
+            default:
+                return false
+            }
+        }
+        
+        var title: String {
+            switch (self) {
+            case .none: ""
+            case .reset: "Sure to Reset?"
+            case .`import`(let ft, _, _, _, _):
+                switch ft {
+                case .netscape:
+                    "Import from File"
+                case .hungrymarks:
+                    "Import from Hungrymarks"
+                case .pocket:
+                    "Import from Pocket"
+                }
+            case .export(let browser):
+                "Export Bookmarks from \(browser)"
+            case .backup(let title, _):
+                title
+            case .append: "Done Append"
+            case .error: "xxx"
+            }
+        }
+        
+        @ViewBuilder
+        func message() -> some View {
+            switch (self) {
+            case .none: EmptyView()
+            case .reset: Text("This action cannot be undone. All your data will be permanently deleted.")
+            case .`import`(let ft, _, _, _, _):
+                switch ft {
+                case .netscape:
+                    Text("Export from another Nustash or browsers first.")
+                case .hungrymarks:
+                    Text("Go to Settings > Bookmark Files (iCloud/Default > Reveal in Finder, locate the txt file and save it.)")
+                case .pocket:
+                    Text("Go to \"https://getpocket.com/export\", and click \"Export CSV file\" to download your Pocket saves first.")
+                }
+            case .export(let browser):
+                switch browser {
+                case "Chrome":
+                    Text("Navigate to the Bookmarks Manager, click the three-dot menu, and select \"Export bookmarks\".")
+                case "Edge":
+                    Text("Open the Favorites window, click the \"More\" button (three dots), then select \"Export Favorites.\".")
+                case "Safari":
+                    Text("Go to File > Export > Bookmarks, choose a location to save the file, and click Save.")
+                case "Firefox":
+                    Text("Open the Firefox Library, navigate to \"Import and Backup\", and select \"Export Bookmarks to HTML\".")
+                default: EmptyView()
+                }
+            case .backup(_, let flag):
+                Text(flag ? "Backup file is exported to \"Downloads\", just in case 😉" : "")
+            case .append(let group):
+                Text("Find them in Group \"\(group ?? "")\" at root level.")
+            case .error: Text("xxx")
+            }
+        }
+        
+        @ViewBuilder
+        func actions() -> some View {
+            
+            switch(self) {
+            case .none: EmptyView()
+            case .reset(let c):
+                Button("Cancel", role: .cancel) { }
+                Button("Confirm", role: .destructive) {
+                    c()
+                }
+            case .import(_, let empty, let `continue`, let append, let replace):
+                if empty() {
+                    Button("Continue") {
+                        `continue`()
+                    }
+                } else {
+                    Button("Append") {
+                        append()
+                    }
+                    Button("Replace", role: .destructive) {
+                        replace()
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            case .export(_):
+                Button("OK", role: .cancel) {}
+            case .backup(_, _):
+                Button("OK", role: .cancel) { }
+            case .append(_):
+                Button("OK", role: .cancel) { }
+            case .error:
+                EmptyView()
+            }
+        }
     }
 }
