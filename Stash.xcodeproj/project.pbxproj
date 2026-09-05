@@ -46,6 +46,26 @@
 		72B646272E9A6668009DE023 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		72B1030D304BC5900094CFD8 /* Exceptions for "scripts" folder in "Stash" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				release.sh,
+			);
+			target = 7222C1BF2D491BEC00096255 /* Stash */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		72B1030E304BC5900094CFD8 /* Exceptions for "scripts" folder in "Compile Sources" phase from "Stash" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 7222C1BC2D491BEC00096255 /* Sources */;
+			membershipExceptions = (
+				release.sh,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		7222C1C22D491BEC00096255 /* Stash */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
@@ -60,6 +80,15 @@
 		7222C1E02D491BEF00096255 /* StashUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = StashUITests;
+			sourceTree = "<group>";
+		};
+		72B10306304BA9890094CFD8 /* scripts */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				72B1030D304BC5900094CFD8 /* Exceptions for "scripts" folder in "Stash" target */,
+				72B1030E304BC5900094CFD8 /* Exceptions for "scripts" folder in "Compile Sources" phase from "Stash" target */,
+			);
+			path = scripts;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -126,6 +155,7 @@
 		7222C1B72D491BEC00096255 = {
 			isa = PBXGroup;
 			children = (
+				72B10306304BA9890094CFD8 /* scripts */,
 				7222C1C22D491BEC00096255 /* Stash */,
 				7222C1D62D491BEF00096255 /* StashTests */,
 				7222C1E02D491BEF00096255 /* StashUITests */,
@@ -163,6 +193,7 @@
 			);
 			fileSystemSynchronizedGroups = (
 				7222C1C22D491BEC00096255 /* Stash */,
+				72B10306304BA9890094CFD8 /* scripts */,
 			);
 			name = Stash;
 			packageProductDependencies = (
