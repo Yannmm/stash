@@ -193,6 +193,7 @@ extension Synchronizer {
         
         func logout() {
             DropboxClientsManager.unlinkClients()
+            pausepol()
             Task {
                 await checkAvailability()
             }

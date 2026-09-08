@@ -527,13 +527,12 @@ extension Synchronizer {
         
         func logout() {
             Keychain.delete()
-            poltask?.cancel()
-            poltask = nil
+            pausepol()
             Task { await checkAvailability() }
         }
         
         deinit {
-            poltask?.cancel()
+            pausepol()
         }
     }
 }
