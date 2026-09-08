@@ -41,12 +41,13 @@ extension Synchronizer.AuthStatus: Synchronizer.Descriptor {
                 attr = attr + AttributedString(" as \(n)")
             }
             attr = attr + AttributedString(" (logout)")
+            
             attr.foregroundColor = .secondary
             if let n = name, let range = attr.range(of: n) {
-                attr[range].foregroundColor = Color.theme
+                attr[range].foregroundColor = Color(nsColor: .linkColor)
             }
             if let range = attr.range(of: "logout") {
-                attr[range].foregroundColor = Color.red
+                attr[range].foregroundColor = Color(nsColor: .systemRed)
                 attr[range].link = URL(string: "action://abc")
             }
             
