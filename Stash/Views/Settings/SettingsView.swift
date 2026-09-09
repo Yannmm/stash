@@ -96,7 +96,11 @@ struct SettingsView: View {
             Section("Synchronization") {
                 VStack(alignment: .leading) {
                     Picker("Approach", selection: $viewModel.synchronizerApproach) {
-                        ForEach(Synchronizer.Option.allCases) { approach in
+                        ForEach([
+                            Synchronizer.Option.local,
+                            Synchronizer.Option.dropbox,
+                            Synchronizer.Option.baidupan
+                        ]) { approach in
                             Text(synchronizerApproachDescription(approach))
                                 .tag(approach)
                         }

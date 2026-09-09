@@ -268,8 +268,8 @@ extension Synchronizer {
 
     enum Option: String, CaseIterable, Identifiable {
         var id: String { rawValue }
-        case icloud
         case local
+        case icloud
         case dropbox
         case baidupan
     }
