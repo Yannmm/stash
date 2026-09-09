@@ -217,14 +217,11 @@ struct SettingsView: View {
             
             // Check Update Section
             Section("Software Update") {
-                
-                // Check update each day
-                
                 VStack(alignment: .leading) {
                     HStack {
                         Text("\(updateChcker.new != nil ? "New Version Available: \(updateChcker.new!.version)" : "You're Up to Date")")
                         Spacer()
-                        Button("Go to AppStore") {
+                        Button(updateChcker.mode == .appStore ? "Go to AppStore" : "Go to GitHub") {
                             updateChcker.go()
                         }
                         .buttonStyle(.bordered)
