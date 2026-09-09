@@ -53,23 +53,6 @@ class Housekeeper: ObservableObject {
         }
     }
     
-    func relocate(entry: any Entry, anchorId: UUID?) throws {
-        if let index = storedEntries.firstIndex(where: { $0.id == entry.id }) {
-            // Seems this never happens
-            storedEntries.remove(at: index)
-        }
-        
-        if let aid = anchorId, let index = storedEntries.firstIndex(where: { $0.id == aid }) {
-            let anchor = storedEntries[index]
-            var copy = entry
-            copy.parentId = anchor.location
-            storedEntries.insert(copy, at: index)
-        } else {
-            storedEntries.append(entry)
-        }
-        try save()
-    }
-    
     func delete(entry: any Entry) throws {
         if let index = recentEntries.firstIndex(where: { $0.0.id == entry.id }) {
             recentEntries.remove(at: index)

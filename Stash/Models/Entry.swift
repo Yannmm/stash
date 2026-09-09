@@ -15,27 +15,11 @@ protocol Entry: Identifiable, Equatable, Hashable {
     
     var parentId: UUID? { get set }
     
-    // TODO: can be deleted?
-    var location: UUID? { get }
-    
     var icon: Icon { get }
     
     var container: Bool { get }
     
     var hashtags: OrderedSet<String>? { get set }
-}
-
-extension Entry {
-    var location: UUID? {
-        switch self {
-        case let b as  Bookmark:
-            return b.parentId
-        case let g as Group:
-            return g.id
-        default:
-            return nil
-        }
-    }
 }
 
 extension Entry {

@@ -53,10 +53,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             providers: providers,
             localProvider: localProvider
         )
-        // TODO: can we remove prepare here??????
-        if savedApproach != .local, let remote = providers[savedApproach] {
-            Task { try? await remote.prepare() }
-        }
         
         let hk = Housekeeper(synchronizer: synchronizer)
         self.housekeeper = hk

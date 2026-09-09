@@ -109,7 +109,6 @@ class Synchronizer {
             let sidecar = try local.write(html: html)
             history.log(action: "local_edit", sidecar: sidecar)
             guard let r = remote else {
-                // TODO: do we need to check r.availability??
                 print("[save] remote not available do nothing")
                 return
             }
@@ -237,7 +236,6 @@ class Synchronizer {
     private func _remoteSidecar(_ remote: Provider) async throws -> Sidecar? {
         do {
             return try await remote.sidecar()
-            // TODO: add other remote provider fildNotFound error
         } catch Synchronizer.DropboxProvider.SomeError.fileNotFound {
             return nil
         } catch Synchronizer.BaiduPanProvider.SomeError.fileNotFound {
@@ -250,7 +248,6 @@ class Synchronizer {
     private func _remoteDocument(_ remote: Provider) async throws -> Data? {
         do {
             return try await remote.document()
-            // TODO: add other remote provider fildNotFound error
         } catch Synchronizer.DropboxProvider.SomeError.fileNotFound {
             return nil
         } catch Synchronizer.BaiduPanProvider.SomeError.fileNotFound {
