@@ -545,7 +545,7 @@ fileprivate extension ManageView.Workbench {
                     onDelete(row.id)
                 }
             }, message: {
-                Text("This action cannot be undone.")
+                Text(deletionMessage)
             })
         }
         
@@ -601,6 +601,15 @@ fileprivate extension ManageView.Workbench {
                 return Color.white
             }
             return Color.accentColor
+        }
+        
+        private var deletionMessage: String {
+            switch row.entryType {
+            case .bookmark:
+                return "This action cannot be undone."
+            case .directory:
+                return "All bookmarks and sub-groups will also get deleted. This action cannot be undone."
+            }
         }
     }
 }
