@@ -123,7 +123,7 @@ extension Synchronizer.AiCloudProvider {
             case .corruptData(let error):
                 attr = AttributedString(error.localizedDescription)
             }
-            attr.foregroundColor = .red
+            attr.foregroundColor = .systemRed
             return attr
         }
     }

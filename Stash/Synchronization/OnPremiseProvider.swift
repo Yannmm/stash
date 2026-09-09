@@ -6,9 +6,9 @@ extension Synchronizer {
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
         
-        var availability: AnyPublisher<Availability, Never> { Just(.yes("Local")).eraseToAnyPublisher() }
+        var availability: AnyPublisher<Availability, Never> { Just(.yes(message)).eraseToAnyPublisher() }
         
-        func getAvailability() async -> Availability { .yes("Local") }
+        func getAvailability() async -> Availability { .yes(message) }
         
         private let directory: URL
         
@@ -91,6 +91,12 @@ extension Synchronizer {
             } catch {
                 throw error
             }
+        }
+        
+        private var message: AttributedString {
+            var attr = AttributedString("Select other approach to synchronize across devices.")
+            attr.foregroundColor = .secondary
+            return attr
         }
     }
 }
