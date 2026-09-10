@@ -27,6 +27,8 @@ class Synchronizer {
     
     private let providers: [Option: any Provider]
     
+    private let remoteProviders: [Option: any RemoteProvider]
+    
     private let local: LocalProvider
     
     private let history = History()
@@ -36,9 +38,12 @@ class Synchronizer {
         return providers[a] as? (any RemoteProvider)
     }
     
-    init(approach: Option, providers: [Option: any Provider], localProvider: LocalProvider) {
+    init(approach: Option, remoteProviders: [Option: any RemoteProvider], localProvider: LocalProvider) {
         self._approach = CurrentValueSubject<Option, Never>(approach)
-        self.providers = providers
+        self.remoteProviders = remoteProviders
+        self.providers = remoteProviders.mapValues { $0 as any Provider }
+            .merging([Option.local: localProvider].mapValues { $0 as any Provider },
+                     uniquingKeysWith: { _, new in new })
         self.local = localProvider
         bind()
     }
@@ -263,7 +268,7 @@ extension Synchronizer {
         static let document = "nustash_index.html"
         static let sidecar = "nustash_index.html.sidecar.json"
     }
-
+    
     enum Option: String, CaseIterable, Identifiable {
         var id: String { rawValue }
         case local
@@ -271,7 +276,7 @@ extension Synchronizer {
         case dropbox
         case baidupan
     }
-
+    
     enum SomeError: Error, LocalizedError {
         case corruptDocument
         case corruptSidecar

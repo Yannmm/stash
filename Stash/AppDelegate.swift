@@ -42,15 +42,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func initialize() {
         let savedApproach = Pref.value(for: Pref.Key.synchronizerApproach) ?? Synchronizer.Option.local
         let localProvider = Synchronizer.OnPremiseProvider()
-        let providers: [Synchronizer.Option: any Synchronizer.Provider] = [
-            .local: localProvider,
+        let remoteProviders: [Synchronizer.Option: any Synchronizer.RemoteProvider] = [
             .dropbox: Synchronizer.DropboxProvider(),
             .icloud: Synchronizer.AiCloudProvider(),
             .baidupan: Synchronizer.BaiduPanProvider(),
         ]
         let synchronizer = Synchronizer(
             approach: savedApproach,
-            providers: providers,
+            remoteProviders: remoteProviders,
             localProvider: localProvider
         )
         
