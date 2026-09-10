@@ -19,7 +19,7 @@ fileprivate extension Synchronizer.DropboxProvider {
 }
 
 extension Synchronizer {
-    final class DropboxProvider: Provider, Polling {
+    final class DropboxProvider: RemoteProvider, Polling {
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }

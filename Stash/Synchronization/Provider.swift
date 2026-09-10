@@ -18,8 +18,6 @@ extension Synchronizer {
         
         func document() async throws -> Data
         
-        func send(document: Data, sidecar: Sidecar) async throws
-        
         var availability: AnyPublisher<Availability, Never> { get }
         
         func getAvailability() async -> Availability
@@ -27,6 +25,17 @@ extension Synchronizer {
         func prepare() async throws
         
         func pause() async throws
+    }
+    
+    protocol RemoteProvider: Provider {
+        func send(document: Data, sidecar: Sidecar) async throws
+    }
+    
+    protocol LocalProvider: Provider {
+        func copy(document: Data, sidecar: Sidecar) async throws
+        
+        @discardableResult
+        func write(html: String) throws -> Sidecar
     }
 }
 

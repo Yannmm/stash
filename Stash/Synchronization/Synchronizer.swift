@@ -19,7 +19,7 @@ class Synchronizer {
     
     private(set) var availability: AnyPublisher<Availability, Never>!
     
-    let onChange: AnyPublisher<Void, Never>
+    var onChange: AnyPublisher<Void, Never> { _onChange.eraseToAnyPublisher() }
     
     private let _onChange = PassthroughSubject<Void, Never>()
     
@@ -27,21 +27,19 @@ class Synchronizer {
     
     private let providers: [Option: any Provider]
     
-    private let local: OnPremiseProvider
+    private let local: LocalProvider
     
     private let history = History()
     
-    private var remote: (any Provider)? {
+    private var remote: (any RemoteProvider)? {
         let a = _approach.value
-        guard a != .local else { return nil }
-        return providers[a]
+        return providers[a] as? (any RemoteProvider)
     }
     
-    init(approach: Option, providers: [Option: any Provider], localProvider: OnPremiseProvider) {
+    init(approach: Option, providers: [Option: any Provider], localProvider: LocalProvider) {
         self._approach = CurrentValueSubject<Option, Never>(approach)
         self.providers = providers
         self.local = localProvider
-        self.onChange = _onChange.eraseToAnyPublisher()
         bind()
     }
     
@@ -147,15 +145,15 @@ class Synchronizer {
     }
     
     func compare() async {
-        func _push(to remote: Provider, sidecar: Sidecar, document: Data?) async throws {
+        func _push(to remote: RemoteProvider, sidecar: Sidecar, document: Data?) async throws {
             guard let d = document, d.count > 0 else { return }
             try await remote.send(document: d, sidecar: sidecar)
             history.log(action: "push_to_\(_approach.value.rawValue)", sidecar: sidecar)
         }
         
-        func _pull(to local: Provider, sidecar: Sidecar, document: Data?) async throws {
+        func _pull(to local: LocalProvider, sidecar: Sidecar, document: Data?) async throws {
             guard let d = document, d.count > 0 else { return }
-            try await local.send(document: d, sidecar: sidecar)
+            try await local.copy(document: d, sidecar: sidecar)
             history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: sidecar)
         }
         
@@ -202,7 +200,7 @@ class Synchronizer {
             
             guard let remote = remote else { return }
             if let document = try await _remoteDocument(remote) {
-                try await local.send(document: document, sidecar: remoteSidecar)
+                try await local.copy(document: document, sidecar: remoteSidecar)
                 history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: remoteSidecar)
             } else {
                 throw SomeError.fileNotFound(FileName.document)

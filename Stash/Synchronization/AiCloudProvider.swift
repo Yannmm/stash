@@ -9,7 +9,7 @@ import Foundation
 import Combine
 
 extension Synchronizer {
-    final class AiCloudProvider: Provider {
+    final class AiCloudProvider: RemoteProvider {
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
         

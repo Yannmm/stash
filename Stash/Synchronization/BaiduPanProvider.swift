@@ -24,7 +24,7 @@ fileprivate extension Synchronizer.BaiduPanProvider {
 }
 
 extension Synchronizer {
-    final class BaiduPanProvider: Provider, Polling {
+    final class BaiduPanProvider: RemoteProvider, Polling {
         
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         
