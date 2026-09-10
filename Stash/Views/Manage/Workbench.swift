@@ -124,6 +124,7 @@ fileprivate extension ManageView.Workbench {
                                                 dragTarget: $dragTarget,
                                                 onOpen: { viewModel.open($0) },
                                                 onDelete: { viewModel.delete($0) },
+                                                onUngroup: { viewModel.ungroup($0) },
                                             )
                                             .id(row.id)
                                             .anchorPreference(
@@ -360,6 +361,7 @@ fileprivate extension ManageView.Workbench {
         @Binding var dragTarget: (Int, DragPosition, UUID)?
         let onOpen: (UUID) -> Void
         let onDelete: (UUID) -> Void
+        let onUngroup: (UUID) -> Void
         @State private var dragPosition: DragPosition? = nil
         private var hasIndicator: Bool { _propose(dragPosition)?.operation == .move }
         private var height: CGFloat { Constant.rowHeight }
@@ -367,6 +369,7 @@ fileprivate extension ManageView.Workbench {
         @State private var presentEditor = false
         @State private var presentContextMenu = false
         @State private var presentDeletionAlert: Bool = false
+        @State private var presentUngroupAlert: Bool = false
         
         @EnvironmentObject var housekeeper: Housekeeper
         
@@ -435,7 +438,7 @@ fileprivate extension ManageView.Workbench {
             .focusable()
             .focused(focused, equals: row.id)
             .focusEffectDisabled()
-            .help(row.extra)
+            .help(row.extra ?? "")
             .onKeyPress(.return, action: {
                 presentEditor = true
                 return .handled
@@ -497,7 +500,9 @@ fileprivate extension ManageView.Workbench {
             }
             .contextMenu {
                 Text(row.title)
-                Text(row.extra)
+                if let extra = row.extra {
+                    Text(extra)
+                }
                 Divider()
                 if row.actionable {
                     Button("Open") {
@@ -509,6 +514,11 @@ fileprivate extension ManageView.Workbench {
                     presentEditor = true
                 }
                 Divider()
+                if row.entryType == .directory {
+                    Button("Ungroup") {
+                        presentUngroupAlert = true
+                    }
+                }
                 Button("Delete", role: .destructive) {
                     presentDeletionAlert = true
                 }
@@ -546,6 +556,13 @@ fileprivate extension ManageView.Workbench {
                 }
             }, message: {
                 Text(deletionMessage)
+            })
+            .alert("Sure to ungroup \"\(row.title)\" ?", isPresented: $presentUngroupAlert, actions: {
+                Button("Confirm", role: .destructive) {
+                    onUngroup(row.id)
+                }
+            }, message: {
+                Text("All bookmarks and sub-groups will get dropped in place. This action cannot be undone.")
             })
         }
         

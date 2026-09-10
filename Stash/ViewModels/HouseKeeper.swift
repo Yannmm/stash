@@ -54,13 +54,30 @@ class Housekeeper: ObservableObject {
     }
     
     func delete(entry: any Entry) throws {
-        if let index = recentEntries.firstIndex(where: { $0.0.id == entry.id }) {
-            recentEntries.remove(at: index)
+        var ids = Set([entry.id])
+        if entry.container {
+            let allDescendants = entry.descendants(among: storedEntries)
+            ids.formUnion(allDescendants.map(\.id))
         }
-        if let index = storedEntries.firstIndex(where: { $0.id == entry.id }) {
-            storedEntries.remove(at: index)
-            try save()
+        recentEntries.removeAll { ids.contains($0.0.id) }
+        storedEntries.removeAll { ids.contains($0.id) }
+        try save()
+    }
+    
+    func ungroup(entry: any Entry) throws {
+        guard entry.container else { return }
+        let gid = entry.id
+        let pid = entry.parentId
+        storedEntries = storedEntries.compactMap { e in
+            if e.id == gid { return nil }
+            if e.parentId == gid {
+                var copy = e
+                copy.parentId = pid
+                return copy
+            }
+            return e
         }
+        try save()
     }
     
     func removeAll() throws {

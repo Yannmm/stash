@@ -160,6 +160,15 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         }
     }
     
+    func ungroup(_ id: UUID) {
+        guard let entry = entries.findBy(id: id) else { return }
+        do {
+            try housekeeper.ungroup(entry: entry)
+        } catch {
+            self.error = error
+        }
+    }
+    
     private func heirs(_ entries: [any Entry], _ selection: UUID?, _ hierarchy: Hierarchy) -> [any Entry] {
         let group = housekeeper.storedEntries.first(where: { $0.id == selection }) as? Group
         switch hierarchy {
@@ -198,7 +207,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         return trail
     }
     
-    private func _info(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, String, Bool, Bool, EntryType) {
+    private func _info(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, String?, Bool, Bool, EntryType) {
         switch entry {
         case let b as Bookmark:
             let path = query.count > 0 ? b.url.absoluteString.condense(matching: query) : (b.url.host() ?? b.url.absoluteString)
@@ -213,9 +222,9 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
             }
             switch hierarchy {
             case .child:
-                return (result, "", false, false, .directory)
+                return (result, nil, false, false, .directory)
             case .descendant:
-                return (result, "", children.count > 0, false, .directory)
+                return (result, nil, children.count > 0, false, .directory)
             }
         default:
             fatalError("Impossible case")
@@ -243,7 +252,7 @@ extension WorkbenchViewModel {
         let tags: [String]?
         let expanded: Bool
         let expandable: Bool
-        let extra: String
+        let extra: String?
         let actionable: Bool
         let entryType: EntryType
         
