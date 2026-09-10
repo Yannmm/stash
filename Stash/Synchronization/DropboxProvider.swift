@@ -90,7 +90,8 @@ extension Synchronizer {
         
         private func download(client: DropboxClient, path: String) async throws -> Data {
             try await withCheckedThrowingContinuation { continuation in
-                client.files.download(path: path).response { response, error in
+                let request = client.files.download(path: path)
+                request.response { response, error in
                     if let response {
                         continuation.resume(returning: response.1)
                     } else if let error {
@@ -117,7 +118,8 @@ extension Synchronizer {
         @discardableResult
         private func upload(client: DropboxClient, path: String, data: Data) async throws -> Files.FileMetadata {
             try await withCheckedThrowingContinuation { continuation in
-                client.files.upload(path: path, mode: .overwrite, input: data).response { metadata, error in
+                let request = client.files.upload(path: path, mode: .overwrite, input: data)
+                request.response { metadata, error in
                     if let metadata {
                         continuation.resume(returning: metadata)
                     } else if let error {
@@ -166,7 +168,8 @@ extension Synchronizer {
         func getAccount() async -> String? {
             guard let client = DropboxClientsManager.authorizedClient else { return nil }
             return await withCheckedContinuation { continuation in
-                client.users.getCurrentAccount().response { account, error in
+                let request = client.users.getCurrentAccount()
+                request.response { account, error in
                     if let account {
                         continuation.resume(returning: account.name.displayName)
                     } else {
