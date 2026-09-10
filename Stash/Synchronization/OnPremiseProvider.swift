@@ -2,13 +2,14 @@ import Foundation
 import Combine
 
 extension Synchronizer {
-    final class OnPremiseProvider: Provider {
+    final class OnPremiseProvider: LocalProvider {
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
+        
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
         
-        var availability: AnyPublisher<Availability, Never> { Just(.yes("Local")).eraseToAnyPublisher() }
+        var availability: AnyPublisher<Availability, Never> { Just(.yes(message)).eraseToAnyPublisher() }
         
-        func getAvailability() async -> Availability { .yes("Local") }
+        func getAvailability() async -> Availability { .yes(message) }
         
         private let directory: URL
         
@@ -43,11 +44,7 @@ extension Synchronizer {
             try _document()
         }
         
-        func send(document: Data, sidecar: Sidecar) async throws {
-            let sd = try? _sidecar()
-            guard sd?.uid != sidecar.uid else {
-                return
-            }
+        func copy(document: Data, sidecar: Sidecar) async throws {
             try document.write(to: documentURL, options: .atomic)
             let sidecarData = try JSONEncoder().encode(sidecar)
             try sidecarData.write(to: sidecarUrl, options: .atomic)
@@ -91,6 +88,12 @@ extension Synchronizer {
             } catch {
                 throw error
             }
+        }
+        
+        private var message: AttributedString {
+            var attr = AttributedString("Select other approach to synchronize across devices.")
+            attr.foregroundColor = .secondary
+            return attr
         }
     }
 }

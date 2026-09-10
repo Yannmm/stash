@@ -101,4 +101,5 @@
 // 102. up or down in workbench to repeast by pressing keyboard ✅
 // 103. when open a link under a group, the recent history will not show
 // 104. Manger window and settings window are not brought to front under state manager mode. ✅
-// 105. when local file does not exist, select a remote provider with content does to downlaod to local.
+// 105. when local file does not exist, select a remote provider with content does to downlaod to local. ✅
+// 106. hashtag open with specific browser not work

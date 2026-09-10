@@ -24,7 +24,7 @@ fileprivate extension Synchronizer.BaiduPanProvider {
 }
 
 extension Synchronizer {
-    final class BaiduPanProvider: Provider, Polling {
+    final class BaiduPanProvider: RemoteProvider, Polling {
         
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         
@@ -65,10 +65,12 @@ extension Synchronizer {
         private func checkAvailability() async {
             if let token = Keychain.load() {
                 let name = await getAccountName(accessToken: token.accessToken)
-                _availability.send(.yes(AuthStatus.ready(name, logout)))
+                _availability.send(.yes(AuthStatus.ready(name, { [weak self] _ in
+                    self?.logout()
+                })))
                 startpol()
             } else {
-                _availability.send(.no(AuthStatus.anonymous({ [weak self] in
+                _availability.send(.no(AuthStatus.anonymous({ [weak self] _ in
                     self?.authenticate()
                 })))
             }
@@ -116,7 +118,7 @@ extension Synchronizer {
                   let code = components.queryItems?.first(where: { $0.name == "code" })?.value,
                   let state = components.queryItems?.first(where: { $0.name == "state" })?.value,
                   state == _state else {
-                _availability.send(.no(AuthStatus.error(SomeError.authFailed, { [weak self] in
+                _availability.send(.no(AuthStatus.error(SomeError.authFailed, { [weak self] _ in
                     self?.authenticate()
                 })))
                 return
@@ -127,10 +129,12 @@ extension Synchronizer {
                 let token = try await exchangeCode(code)
                 try Keychain.save(token)
                 let name = await getAccountName(accessToken: token.accessToken)
-                _availability.send(.yes(AuthStatus.ready(name, logout)))
+                _availability.send(.yes(AuthStatus.ready(name, { [weak self] _ in
+                    self?.logout()
+                })))
                 startpol()
             } catch {
-                _availability.send(.no(AuthStatus.error(error, { [weak self] in
+                _availability.send(.no(AuthStatus.error(error, { [weak self] _ in
                     self?.authenticate()
                 })))
             }
@@ -160,7 +164,7 @@ extension Synchronizer {
         
         private func getAccessToken() async throws -> String {
             guard let token = Keychain.load() else {
-                _availability.send(.no(AuthStatus.anonymous({ [weak self] in
+                _availability.send(.no(AuthStatus.anonymous({ [weak self] _ in
                     self?.authenticate()
                 })))
                 throw SomeError.unauthenticated
@@ -527,13 +531,12 @@ extension Synchronizer {
         
         func logout() {
             Keychain.delete()
-            poltask?.cancel()
-            poltask = nil
+            pausepol()
             Task { await checkAvailability() }
         }
         
         deinit {
-            poltask?.cancel()
+            pausepol()
         }
     }
 }

@@ -8,6 +8,48 @@ Nustash supports different kinds of bookmarks, hierarchical groups, hashtags, gl
 
 ---
 
+## Installation
+
+1. Download the latest `Nustash-*.dmg` from the [Releases](...) page.
+2. Open the DMG.
+3. Drag **Nustash** to the **Applications** folder.
+4. Open Nustash from **Applications**.
+
+### macOS Security Warning
+
+Nustash is distributed directly from GitHub rather than through the Mac App Store. It is therefore not notarized by Apple, and macOS may prevent it from opening the first time.
+
+#### If macOS says "Nustash cannot be opened because the developer cannot be verified"
+
+1. Open **Finder → Applications**.
+2. Control-click **Nustash**.
+3. Select **Open**.
+4. Click **Open**.
+
+You only need to approve Nustash once.
+
+You can also go to:
+
+**System Settings → Privacy & Security → Open Anyway**
+
+and approve Nustash there.
+
+### MDM-managed Macs
+
+If your Mac is managed by an organization (MDM), your organization's security policy may impose additional restrictions.
+
+If Nustash is allowed by your organization's policy but macOS still blocks it, open Terminal and run:
+
+```bash
+xattr -dr com.apple.quarantine /Applications/Nustash.app
+```
+
+Then launch it:
+
+```bash
+open /Applications/Nustash.app
+```
+
 ## Features
 
 ### 🧭 Menu-bar bookmark manager

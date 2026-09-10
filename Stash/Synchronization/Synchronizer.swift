@@ -19,7 +19,7 @@ class Synchronizer {
     
     private(set) var availability: AnyPublisher<Availability, Never>!
     
-    let onChange: AnyPublisher<Void, Never>
+    var onChange: AnyPublisher<Void, Never> { _onChange.eraseToAnyPublisher() }
     
     private let _onChange = PassthroughSubject<Void, Never>()
     
@@ -27,21 +27,24 @@ class Synchronizer {
     
     private let providers: [Option: any Provider]
     
-    private let local: OnPremiseProvider
+    private let remoteProviders: [Option: any RemoteProvider]
+    
+    private let local: LocalProvider
     
     private let history = History()
     
-    private var remote: (any Provider)? {
+    private var remote: (any RemoteProvider)? {
         let a = _approach.value
-        guard a != .local else { return nil }
-        return providers[a]
+        return providers[a] as? (any RemoteProvider)
     }
     
-    init(approach: Option, providers: [Option: any Provider], localProvider: OnPremiseProvider) {
+    init(approach: Option, remoteProviders: [Option: any RemoteProvider], localProvider: LocalProvider) {
         self._approach = CurrentValueSubject<Option, Never>(approach)
-        self.providers = providers
+        self.remoteProviders = remoteProviders
+        self.providers = remoteProviders.mapValues { $0 as any Provider }
+            .merging([Option.local: localProvider].mapValues { $0 as any Provider },
+                     uniquingKeysWith: { _, new in new })
         self.local = localProvider
-        self.onChange = _onChange.eraseToAnyPublisher()
         bind()
     }
     
@@ -109,7 +112,6 @@ class Synchronizer {
             let sidecar = try local.write(html: html)
             history.log(action: "local_edit", sidecar: sidecar)
             guard let r = remote else {
-                // TODO: do we need to check r.availability??
                 print("[save] remote not available do nothing")
                 return
             }
@@ -148,15 +150,15 @@ class Synchronizer {
     }
     
     func compare() async {
-        func _push(to remote: Provider, sidecar: Sidecar, document: Data?) async throws {
+        func _push(to remote: RemoteProvider, sidecar: Sidecar, document: Data?) async throws {
             guard let d = document, d.count > 0 else { return }
             try await remote.send(document: d, sidecar: sidecar)
             history.log(action: "push_to_\(_approach.value.rawValue)", sidecar: sidecar)
         }
         
-        func _pull(to local: Provider, sidecar: Sidecar, document: Data?) async throws {
+        func _pull(to local: LocalProvider, sidecar: Sidecar, document: Data?) async throws {
             guard let d = document, d.count > 0 else { return }
-            try await local.send(document: d, sidecar: sidecar)
+            try await local.copy(document: d, sidecar: sidecar)
             history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: sidecar)
         }
         
@@ -203,7 +205,7 @@ class Synchronizer {
             
             guard let remote = remote else { return }
             if let document = try await _remoteDocument(remote) {
-                try await local.send(document: document, sidecar: remoteSidecar)
+                try await local.copy(document: document, sidecar: remoteSidecar)
                 history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: remoteSidecar)
             } else {
                 throw SomeError.fileNotFound(FileName.document)
@@ -237,7 +239,6 @@ class Synchronizer {
     private func _remoteSidecar(_ remote: Provider) async throws -> Sidecar? {
         do {
             return try await remote.sidecar()
-            // TODO: add other remote provider fildNotFound error
         } catch Synchronizer.DropboxProvider.SomeError.fileNotFound {
             return nil
         } catch Synchronizer.BaiduPanProvider.SomeError.fileNotFound {
@@ -250,7 +251,6 @@ class Synchronizer {
     private func _remoteDocument(_ remote: Provider) async throws -> Data? {
         do {
             return try await remote.document()
-            // TODO: add other remote provider fildNotFound error
         } catch Synchronizer.DropboxProvider.SomeError.fileNotFound {
             return nil
         } catch Synchronizer.BaiduPanProvider.SomeError.fileNotFound {
@@ -268,15 +268,15 @@ extension Synchronizer {
         static let document = "nustash_index.html"
         static let sidecar = "nustash_index.html.sidecar.json"
     }
-
+    
     enum Option: String, CaseIterable, Identifiable {
         var id: String { rawValue }
-        case icloud
         case local
+        case icloud
         case dropbox
         case baidupan
     }
-
+    
     enum SomeError: Error, LocalizedError {
         case corruptDocument
         case corruptSidecar

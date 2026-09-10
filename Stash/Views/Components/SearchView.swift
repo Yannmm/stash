@@ -44,7 +44,6 @@ struct SearchView: View {
             ScrollView {
                 VStack(spacing: 2) {
                     ForEach(Array(Array(viewModel.items).enumerated()), id: \.element.id) { index, item in
-                        // TODO: need a dummy search view item to deal with go back.
                         _SearchItemView(
                             item: item,
                             highlight: self.viewModel.index == nil ? false : (self.viewModel.index! == index),
