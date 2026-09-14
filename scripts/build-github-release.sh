@@ -7,6 +7,7 @@ SCHEME="Stash"
 CONFIGURATION="GitHub Release"
 
 PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
 BUILD_DIR="$PROJECT_ROOT/build/github-release"
 DERIVED_DATA_DIR="$BUILD_DIR/DerivedData"
 DMG_SOURCE="$BUILD_DIR/dmg-source"
@@ -59,18 +60,26 @@ if [[ ! -d "$APP_PATH" ]]; then
     exit 1
 fi
 
+echo "==> Ad-hoc signing Nustash..." >&2
+
+codesign \
+    --force \
+    --deep \
+    --sign - \
+    "$APP_PATH"
+
+echo "==> Verifying code signature..." >&2
+
+codesign \
+    --verify \
+    --deep \
+    --strict \
+    --verbose=2 \
+    "$APP_PATH"
+
 echo "==> Creating DMG..." >&2
 
 cp -R "$APP_PATH" "$DMG_SOURCE/"
-
-#/opt/homebrew/bin/create-dmg \
-#    --volname "Nustash" \
-#    --app-drop-link 600 200 \
-#    --icon "$APP_NAME" 200 200 \
-#    --overwrite \
-#    "$DMG_PATH" \
-#    "$DMG_SOURCE" \
-#    > /dev/null
 
 DMG_WINDOW_WIDTH=800
 DMG_WINDOW_HEIGHT=450
@@ -103,8 +112,7 @@ fi
 echo "==> Build complete." >&2
 echo "    DMG: $DMG_PATH" >&2
 
-# IMPORTANT:
 # stdout contains only the DMG path so callers can do:
 #   DMG=$(./scripts/build-github-release.sh)
-printf '%s\n' "$DMG_PATH"
 
+printf '%s\n' "$DMG_PATH"

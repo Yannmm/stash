@@ -34,6 +34,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
             .sorted()
         return Array(set)
     }
+    @Published private var overrides: [UUID: Bool] = [:]
     @Published var error: Error?
     @Published private(set) var selectedGroup: Group?
     
@@ -59,24 +60,43 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         self.housekeeper = housekeeper
         _bind()
     }
+
+    func toggle(_ id: UUID) {
+        let flag = (hierarchy == .descendant)
+        let current = overrides[id] ?? flag
+        overrides[id] = !current
+    }
     
     private func _bind() {
         wrapper.$selection
             .map({ id in self.housekeeper.storedEntries.first(where: { $0.id == id }) as? Group })
             .receive(on: DispatchQueue.main)
-            .sink(receiveValue: { [weak self] in self?.selectedGroup = $0 })
+            .sink(receiveValue: { [weak self] in
+                self?.selectedGroup = $0
+                self?.overrides = [:]
+            })
             .store(in: &_cancellables)
-        
+
         Publishers.CombineLatest4(
             wrapper.$selection,
             housekeeper.$storedEntries,
             $hierarchy.removeDuplicates(),
-            Publishers.CombineLatest($search.map({ $0.trim() }).removeDuplicates(), $hashtagFilter)
+            Publishers.CombineLatest3($search.map({ $0.trim() }).removeDuplicates(), $hashtagFilter, $overrides)
         )
         .map { [unowned self] a, b, c, d in
-            let hashtag = d.1
             let query = d.0
-            let result = self.heirs(b, a, c)
+            let hashtag = d.1
+            let active = query.count > 0 ? [UUID: Bool]() : d.2
+            let excluding: Set<UUID>
+            switch c {
+            case .child:
+                let allGroupIds = Set(b.compactMap { $0 as? Group }.map(\.id))
+                let expanded = Set(active.filter { $0.value }.map(\.key))
+                excluding = allGroupIds.subtracting(expanded)
+            case .descendant:
+                excluding = Set(active.filter { !$0.value }.map(\.key))
+            }
+            let result = self.heirs(b, a, excluding)
                 .map {
                     let tags = $0.hashtags ?? []
                     if let htf = hashtag,
@@ -84,7 +104,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                        !tags.contains(htf) {
                         return Optional<Row>.none
                     }
-                    let info = _info(query, $0, b, c)
+                    let info = _info(query, $0, b, c, active)
                     if query.count > 0 {
                         guard
                             $0.name.range(of: query, options: .caseInsensitive) != nil ||
@@ -94,9 +114,9 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                             return Optional<Row>.none
                         }
                     }
-                    
+
                     return Row(id: $0.id,
-                               icon: $0.icon,
+                               icon: info.5,
                                title: $0.name,
                                description: info.0,
                                trail: trail(query, $0, b, a),
@@ -113,11 +133,13 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         .receive(on: DispatchQueue.main)
         .sink(receiveValue: { [weak self] in self?.rows = $0 })
         .store(in: &_cancellables)
-        
+
         $hierarchy
             .removeDuplicates()
-            .map { _ in [] }
-            .sink(receiveValue: { [weak self] in self?.indentColorStorage = $0 })
+            .sink(receiveValue: { [weak self] _ in
+                self?.indentColorStorage = []
+                self?.overrides = [:]
+            })
             .store(in: &_cancellables)
     }
     
@@ -160,15 +182,18 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         }
     }
     
-    private func heirs(_ entries: [any Entry], _ selection: UUID?, _ hierarchy: Hierarchy) -> [any Entry] {
-        let group = housekeeper.storedEntries.first(where: { $0.id == selection }) as? Group
-        switch hierarchy {
-        case .child:
-            // TODO: selection maybe hashtag as well
-            return group.children(among: entries)
-        case .descendant:
-            return group.descendants(among: entries)
+    func ungroup(_ id: UUID) {
+        guard let entry = entries.findBy(id: id) else { return }
+        do {
+            try housekeeper.ungroup(entry: entry)
+        } catch {
+            self.error = error
         }
+    }
+    
+    private func heirs(_ entries: [any Entry], _ selection: UUID?, _ excluding: Set<UUID>) -> [any Entry] {
+        let group = housekeeper.storedEntries.first(where: { $0.id == selection }) as? Group
+        return group.descendants(among: entries, excluding: excluding)
     }
     
     private func _groups(_ entries: [any Entry]) -> [Group] {
@@ -198,11 +223,11 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         return trail
     }
     
-    private func _info(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, String, Bool, Bool, EntryType) {
+    private func _info(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy, _ overrides: [UUID: Bool]) -> (String, String?, Bool, Bool, EntryType, Icon) {
         switch entry {
         case let b as Bookmark:
             let path = query.count > 0 ? b.url.absoluteString.condense(matching: query) : (b.url.host() ?? b.url.absoluteString)
-            return (path, b.url.absoluteString, false, path.range(of: query, options: .caseInsensitive) != nil, .bookmark)
+            return (path, b.url.absoluteString, false, path.range(of: query, options: .caseInsensitive) != nil, .bookmark, b.icon)
         case let g as Group:
             let children = g.children(among: entries)
             let gcount = _groups(children).count
@@ -211,12 +236,11 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
             if gcount > 0 {
                 result += " / \(gcount) groups"
             }
-            switch hierarchy {
-            case .child:
-                return (result, "", false, false, .directory)
-            case .descendant:
-                return (result, "", children.count > 0, false, .directory)
-            }
+            let hasChildren = children.count > 0
+            let defaultExpanded = hierarchy == .descendant
+            let expanded = (overrides[g.id] ?? defaultExpanded) && hasChildren
+            let icon: Icon = !expanded && hasChildren ? .system("cube.box.fill") : .system("cube.box")
+            return (result, nil, expanded, false, .directory, icon)
         default:
             fatalError("Impossible case")
         }
@@ -243,7 +267,7 @@ extension WorkbenchViewModel {
         let tags: [String]?
         let expanded: Bool
         let expandable: Bool
-        let extra: String
+        let extra: String?
         let actionable: Bool
         let entryType: EntryType
         

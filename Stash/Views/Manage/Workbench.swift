@@ -124,6 +124,12 @@ fileprivate extension ManageView.Workbench {
                                                 dragTarget: $dragTarget,
                                                 onOpen: { viewModel.open($0) },
                                                 onDelete: { viewModel.delete($0) },
+                                                onUngroup: { viewModel.ungroup($0) },
+                                                onToggle: { id in
+                                                    withAnimation(.easeInOut(duration: 0.25)) {
+                                                        viewModel.toggle(id)
+                                                    }
+                                                }
                                             )
                                             .id(row.id)
                                             .anchorPreference(
@@ -360,6 +366,8 @@ fileprivate extension ManageView.Workbench {
         @Binding var dragTarget: (Int, DragPosition, UUID)?
         let onOpen: (UUID) -> Void
         let onDelete: (UUID) -> Void
+        let onUngroup: (UUID) -> Void
+        let onToggle: (UUID) -> Void
         @State private var dragPosition: DragPosition? = nil
         private var hasIndicator: Bool { _propose(dragPosition)?.operation == .move }
         private var height: CGFloat { Constant.rowHeight }
@@ -367,13 +375,14 @@ fileprivate extension ManageView.Workbench {
         @State private var presentEditor = false
         @State private var presentContextMenu = false
         @State private var presentDeletionAlert: Bool = false
+        @State private var presentUngroupAlert: Bool = false
         
         @EnvironmentObject var housekeeper: Housekeeper
         
         var body: some View {
             HStack(spacing: 0) {
                 // Name column
-                IconAndNameCell(row: row, search: search, indentColor: indentColor)
+                IconAndNameCell(row: row, search: search, indentColor: indentColor, onToggle: onToggle)
                     .frame(width: width1, alignment: .leading)
                 
                 Spacer()
@@ -435,7 +444,7 @@ fileprivate extension ManageView.Workbench {
             .focusable()
             .focused(focused, equals: row.id)
             .focusEffectDisabled()
-            .help(row.extra)
+            .help(row.extra ?? "")
             .onKeyPress(.return, action: {
                 presentEditor = true
                 return .handled
@@ -450,6 +459,10 @@ fileprivate extension ManageView.Workbench {
             })
             .onKeyPress(.upArrow, action: {
                 onKeyboardNavigate(.up)
+                return .handled
+            })
+            .onKeyPress(.escape, action: {
+                selection = nil
                 return .handled
             })
             .popover(isPresented: $presentEditor) {
@@ -491,13 +504,24 @@ fileprivate extension ManageView.Workbench {
 //                cascade: cascade,
                 propose: _propose
             ))
+            .onTapGesture(count: 2) {
+                selection = row.id
+                focused.wrappedValue = row.id
+                if row.expandable {
+                    onToggle(row.id)
+                } else {
+                    onOpen(row.id)
+                }
+            }
             .onTapGesture {
                 selection = row.id
                 focused.wrappedValue = row.id
             }
             .contextMenu {
                 Text(row.title)
-                Text(row.extra)
+                if let extra = row.extra {
+                    Text(extra)
+                }
                 Divider()
                 if row.actionable {
                     Button("Open") {
@@ -509,6 +533,11 @@ fileprivate extension ManageView.Workbench {
                     presentEditor = true
                 }
                 Divider()
+                if row.entryType == .directory {
+                    Button("Ungroup") {
+                        presentUngroupAlert = true
+                    }
+                }
                 Button("Delete", role: .destructive) {
                     presentDeletionAlert = true
                 }
@@ -545,7 +574,14 @@ fileprivate extension ManageView.Workbench {
                     onDelete(row.id)
                 }
             }, message: {
-                Text("This action cannot be undone.")
+                Text(deletionMessage)
+            })
+            .alert("Sure to ungroup \"\(row.title)\" ?", isPresented: $presentUngroupAlert, actions: {
+                Button("Confirm", role: .destructive) {
+                    onUngroup(row.id)
+                }
+            }, message: {
+                Text("All bookmarks and sub-groups will get dropped in place. This action cannot be undone.")
             })
         }
         
@@ -602,6 +638,15 @@ fileprivate extension ManageView.Workbench {
             }
             return Color.accentColor
         }
+        
+        private var deletionMessage: String {
+            switch row.entryType {
+            case .bookmark:
+                return "This action cannot be undone."
+            case .directory:
+                return "All bookmarks and sub-groups will also get deleted. This action cannot be undone."
+            }
+        }
     }
 }
 
@@ -610,7 +655,8 @@ fileprivate extension ManageView.Workbench {
         let row: WorkbenchViewModel.Row
         let search: String
         let indentColor: (Int) -> Color
-        
+        let onToggle: (UUID) -> Void
+
         var body: some View {
             HStack(spacing: 0) {
                 ForEach(0..<row.trail.count, id: \.self) { index in
@@ -622,6 +668,11 @@ fileprivate extension ManageView.Workbench {
                 }
                 HStack(spacing: Constant.gap1) {
                     ViewHelper.icon(row.icon, side: Constant.iconWidth)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            guard row.expandable else { return }
+                            onToggle(row.id)
+                        }
                     Text(row.title.emphasize(search) { attr in
                         attr.foregroundColor = .primary
                         attr.font = .system(size: 14, weight: .medium)

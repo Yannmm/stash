@@ -19,7 +19,7 @@ fileprivate extension Synchronizer.DropboxProvider {
 }
 
 extension Synchronizer {
-    final class DropboxProvider: Provider, Polling {
+    final class DropboxProvider: RemoteProvider, Polling {
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
@@ -53,10 +53,10 @@ extension Synchronizer {
             var a: Availability!
             if signedIn {
                 let name = await getAccount()
-                a = .yes(AuthStatus.ready(name, logout))
+                a = .yes(AuthStatus.ready(name, { [weak self] _ in self?.logout() }))
                 startpol()
             } else {
-                a = .no(AuthStatus.anonymous({ [weak self] in
+                a = .no(AuthStatus.anonymous({ [weak self] _ in
                     self?.authenticate()
                 }))
             }
@@ -90,7 +90,8 @@ extension Synchronizer {
         
         private func download(client: DropboxClient, path: String) async throws -> Data {
             try await withCheckedThrowingContinuation { continuation in
-                client.files.download(path: path).response { response, error in
+                let request = client.files.download(path: path)
+                request.response { response, error in
                     if let response {
                         continuation.resume(returning: response.1)
                     } else if let error {
@@ -108,7 +109,7 @@ extension Synchronizer {
         
         private func getClient() throws -> DropboxClient {
             guard let client = DropboxClientsManager.authorizedClient else {
-                _availability.send(.no(AuthStatus.anonymous(authenticate)))
+                _availability.send(.no(AuthStatus.anonymous({ [weak self] _ in self?.authenticate() })))
                 throw SomeError.unauthenticated
             }
             return client
@@ -117,7 +118,8 @@ extension Synchronizer {
         @discardableResult
         private func upload(client: DropboxClient, path: String, data: Data) async throws -> Files.FileMetadata {
             try await withCheckedThrowingContinuation { continuation in
-                client.files.upload(path: path, mode: .overwrite, input: data).response { metadata, error in
+                let request = client.files.upload(path: path, mode: .overwrite, input: data)
+                request.response { metadata, error in
                     if let metadata {
                         continuation.resume(returning: metadata)
                     } else if let error {
@@ -140,14 +142,14 @@ extension Synchronizer {
                         Task {
                             let name = await self?.getAccount()
                             guard let this = self else { return }
-                            self?._availability.send(.yes(AuthStatus.ready(name, this.logout)))
+                            self?._availability.send(.yes(AuthStatus.ready(name, { [weak self] _ in self?.logout() })))
                         }
                     case .cancel:
-                        self?._availability.send(.no(AuthStatus.anonymous({ [weak self] in
+                        self?._availability.send(.no(AuthStatus.anonymous({ [weak self] _ in
                             self?.authenticate()
                         })))
                     case .error(let error, _):
-                        self?._availability.send(.no(AuthStatus.error(error, { [weak self] in
+                        self?._availability.send(.no(AuthStatus.error(error, { [weak self] _ in
                             self?.authenticate()
                         })))
                     }
@@ -166,7 +168,8 @@ extension Synchronizer {
         func getAccount() async -> String? {
             guard let client = DropboxClientsManager.authorizedClient else { return nil }
             return await withCheckedContinuation { continuation in
-                client.users.getCurrentAccount().response { account, error in
+                let request = client.users.getCurrentAccount()
+                request.response { account, error in
                     if let account {
                         continuation.resume(returning: account.name.displayName)
                     } else {
@@ -193,6 +196,7 @@ extension Synchronizer {
         
         func logout() {
             DropboxClientsManager.unlinkClients()
+            pausepol()
             Task {
                 await checkAvailability()
             }

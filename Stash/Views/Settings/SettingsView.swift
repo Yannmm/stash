@@ -96,15 +96,25 @@ struct SettingsView: View {
             Section("Synchronization") {
                 VStack(alignment: .leading) {
                     Picker("Approach", selection: $viewModel.synchronizerApproach) {
-                        ForEach(Synchronizer.Option.allCases) { approach in
+                        ForEach([
+                            Synchronizer.Option.local,
+                            Synchronizer.Option.dropbox,
+                            Synchronizer.Option.baidupan
+                        ]) { approach in
                             Text(synchronizerApproachDescription(approach))
-//                                .foregroundColor(viewModel.synchronizerApproach == approach ? .theme : .primary)
                                 .tag(approach)
                         }
                     }
                     Text(viewModel.availability.describe())
                         .environment(\.openURL, OpenURLAction { url in
-                            viewModel.availability.action(url.absoluteString)
+                            if (url.absoluteString.contains("logout")) {
+                                alert = .logout(synchronizerApproachDescription(viewModel.synchronizerApproach), {
+                                    viewModel.availability.action(url.absoluteString)
+                                })
+                            } else {
+                                viewModel.availability.action(url.absoluteString)
+                            }
+                            
                             return .handled
                         })
                 }
@@ -211,14 +221,11 @@ struct SettingsView: View {
             
             // Check Update Section
             Section("Software Update") {
-                
-                // Check update each day
-                
                 VStack(alignment: .leading) {
                     HStack {
                         Text("\(updateChcker.new != nil ? "New Version Available: \(updateChcker.new!.version)" : "You're Up to Date")")
                         Spacer()
-                        Button("Go to AppStore") {
+                        Button(updateChcker.mode == .appStore ? "Go to AppStore" : "Go to GitHub") {
                             updateChcker.go()
                         }
                         .buttonStyle(.bordered)
@@ -379,7 +386,7 @@ extension SettingsView {
         case export(String)
         case backup(String, Bool)
         case append(String?)
-        case error
+        case logout(String, () -> Void)
         
         var id: String {
             switch(self) {
@@ -389,13 +396,13 @@ extension SettingsView {
             case .export: "export"
             case .backup: "backup"
             case .append: "append"
-            case .error: "error"
+            case .logout: "logout"
             }
         }
         
         static func == (lhs: Alert, rhs: Alert) -> Bool {
             switch (lhs, rhs) {
-            case (.none, .none), (.reset, .reset), (.`import`, .`import`), (.export, .export), (.backup, .backup), (.append, .append), (.error, .error):
+            case (.none, .none), (.reset, .reset), (.`import`, .`import`), (.export, .export), (.backup, .backup), (.append, .append), (.logout, .logout):
                 return true
             default:
                 return false
@@ -420,7 +427,7 @@ extension SettingsView {
             case .backup(let title, _):
                 title
             case .append: "Done Append"
-            case .error: "xxx"
+            case .logout(let name, _): "Sure to Logout from \(name)?"
             }
         }
         
@@ -454,7 +461,7 @@ extension SettingsView {
                 Text(flag ? "Backup file is exported to \"Downloads\", just in case 😉" : "")
             case .append(let group):
                 Text("Find them in Group \"\(group ?? "")\" at root level.")
-            case .error: Text("xxx")
+            case .logout: Text("Both local and remote data will remian intact after logout.")
             }
         }
         
@@ -463,10 +470,10 @@ extension SettingsView {
             
             switch(self) {
             case .none: EmptyView()
-            case .reset(let c):
+            case .reset(let action):
                 Button("Cancel", role: .cancel) { }
                 Button("Confirm", role: .destructive) {
-                    c()
+                    action()
                 }
             case .import(_, let empty, let `continue`, let append, let replace):
                 if empty() {
@@ -488,8 +495,11 @@ extension SettingsView {
                 Button("OK", role: .cancel) { }
             case .append(_):
                 Button("OK", role: .cancel) { }
-            case .error:
-                EmptyView()
+            case .logout(_, let action):
+                Button("Cancel", role: .cancel) { }
+                Button("Confirm", role: .destructive) {
+                    action()
+                }
             }
         }
     }

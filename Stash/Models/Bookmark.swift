@@ -37,7 +37,7 @@ extension Bookmark: Entry {
 extension Bookmark: Actionable {
     func open() {
         let browser = (hashtags ?? [])
-            .map({ String.Browser(rawValue: String($0)) })
+            .map({ String.Browser(rawValue: $0.hasPrefix("#") ? String($0.dropFirst()) : $0) })
             .compactMap({ $0 })
             .last
         NSWorkspace.shared.openURL(url, withPreferredBrowser: browser?.name)
