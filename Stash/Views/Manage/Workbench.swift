@@ -461,6 +461,10 @@ fileprivate extension ManageView.Workbench {
                 onKeyboardNavigate(.up)
                 return .handled
             })
+            .onKeyPress(.escape, action: {
+                selection = nil
+                return .handled
+            })
             .popover(isPresented: $presentEditor) {
                 SwiftUI.Group {
                     switch row.entryType {
