@@ -125,9 +125,9 @@ fileprivate extension ManageView.Workbench {
                                                 onOpen: { viewModel.open($0) },
                                                 onDelete: { viewModel.delete($0) },
                                                 onUngroup: { viewModel.ungroup($0) },
-                                                onToggleCollapse: { id in
+                                                onToggle: { id in
                                                     withAnimation(.easeInOut(duration: 0.25)) {
-                                                        viewModel.toggleCollapse(id)
+                                                        viewModel.toggle(id)
                                                     }
                                                 }
                                             )
@@ -367,7 +367,7 @@ fileprivate extension ManageView.Workbench {
         let onOpen: (UUID) -> Void
         let onDelete: (UUID) -> Void
         let onUngroup: (UUID) -> Void
-        let onToggleCollapse: (UUID) -> Void
+        let onToggle: (UUID) -> Void
         @State private var dragPosition: DragPosition? = nil
         private var hasIndicator: Bool { _propose(dragPosition)?.operation == .move }
         private var height: CGFloat { Constant.rowHeight }
@@ -382,7 +382,7 @@ fileprivate extension ManageView.Workbench {
         var body: some View {
             HStack(spacing: 0) {
                 // Name column
-                IconAndNameCell(row: row, search: search, indentColor: indentColor, onToggleCollapse: onToggleCollapse)
+                IconAndNameCell(row: row, search: search, indentColor: indentColor, onToggle: onToggle)
                     .frame(width: width1, alignment: .leading)
                 
                 Spacer()
@@ -646,7 +646,7 @@ fileprivate extension ManageView.Workbench {
         let row: WorkbenchViewModel.Row
         let search: String
         let indentColor: (Int) -> Color
-        let onToggleCollapse: (UUID) -> Void
+        let onToggle: (UUID) -> Void
 
         var body: some View {
             HStack(spacing: 0) {
@@ -662,7 +662,7 @@ fileprivate extension ManageView.Workbench {
                         .contentShape(Rectangle())
                         .onTapGesture {
                             guard row.expandable else { return }
-                            onToggleCollapse(row.id)
+                            onToggle(row.id)
                         }
                     Text(row.title.emphasize(search) { attr in
                         attr.foregroundColor = .primary
