@@ -125,6 +125,11 @@ fileprivate extension ManageView.Workbench {
                                                 onOpen: { viewModel.open($0) },
                                                 onDelete: { viewModel.delete($0) },
                                                 onUngroup: { viewModel.ungroup($0) },
+                                                onToggleCollapse: { id in
+                                                    withAnimation(.easeInOut(duration: 0.25)) {
+                                                        viewModel.toggleCollapse(id)
+                                                    }
+                                                }
                                             )
                                             .id(row.id)
                                             .anchorPreference(
@@ -362,6 +367,7 @@ fileprivate extension ManageView.Workbench {
         let onOpen: (UUID) -> Void
         let onDelete: (UUID) -> Void
         let onUngroup: (UUID) -> Void
+        let onToggleCollapse: (UUID) -> Void
         @State private var dragPosition: DragPosition? = nil
         private var hasIndicator: Bool { _propose(dragPosition)?.operation == .move }
         private var height: CGFloat { Constant.rowHeight }
@@ -376,7 +382,7 @@ fileprivate extension ManageView.Workbench {
         var body: some View {
             HStack(spacing: 0) {
                 // Name column
-                IconAndNameCell(row: row, search: search, indentColor: indentColor)
+                IconAndNameCell(row: row, search: search, indentColor: indentColor, onToggleCollapse: onToggleCollapse)
                     .frame(width: width1, alignment: .leading)
                 
                 Spacer()
@@ -636,7 +642,8 @@ fileprivate extension ManageView.Workbench {
         let row: WorkbenchViewModel.Row
         let search: String
         let indentColor: (Int) -> Color
-        
+        let onToggleCollapse: (UUID) -> Void
+
         var body: some View {
             HStack(spacing: 0) {
                 ForEach(0..<row.trail.count, id: \.self) { index in
@@ -648,6 +655,11 @@ fileprivate extension ManageView.Workbench {
                 }
                 HStack(spacing: Constant.gap1) {
                     ViewHelper.icon(row.icon, side: Constant.iconWidth)
+                        .contentShape(Rectangle())
+                        .onTapGesture {
+                            guard row.expandable else { return }
+                            onToggleCollapse(row.id)
+                        }
                     Text(row.title.emphasize(search) { attr in
                         attr.foregroundColor = .primary
                         attr.font = .system(size: 14, weight: .medium)

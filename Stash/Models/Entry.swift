@@ -58,6 +58,18 @@ extension Entry {
         }
     }
     
+    func descendants(among entries: [any Entry], excluding bucket: Set<UUID>) -> [any Entry] {
+        var result: [any Entry] = []
+        let directChildren = children(among: entries)
+        for child in directChildren {
+            result.append(child)
+            if !bucket.contains(child.id) {
+                result.append(contentsOf: child.descendants(among: entries, excluding: bucket))
+            }
+        }
+        return result
+    }
+
     func siblings(among list: [any Entry]) -> [any Entry] {
         return list.filter { $0.parentId == parentId }
     }
@@ -81,6 +93,22 @@ extension Optional where Wrapped: Entry {
             var result: [any Entry] = []
             for child in entries.filter({ $0.parentId == nil }) {
                 result.append(contentsOf: child.descendants(among: entries, parent: true))
+            }
+            return result
+        }
+    }
+
+    func descendants(among entries: [any Entry], excluding bucket: Set<UUID>) -> [any Entry] {
+        switch self {
+        case .some(let value):
+            return value.descendants(among: entries, excluding: bucket)
+        case .none:
+            var result: [any Entry] = []
+            for child in entries.filter({ $0.parentId == nil }) {
+                result.append(child)
+                if !bucket.contains(child.id) {
+                    result.append(contentsOf: child.descendants(among: entries, excluding: bucket))
+                }
             }
             return result
         }

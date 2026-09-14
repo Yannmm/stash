@@ -34,6 +34,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
             .sorted()
         return Array(set)
     }
+    @Published private var collapses: Set<UUID> = []
     @Published var error: Error?
     @Published private(set) var selectedGroup: Group?
     
@@ -59,24 +60,36 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         self.housekeeper = housekeeper
         _bind()
     }
+
+    func toggleCollapse(_ id: UUID) {
+        if collapses.contains(id) {
+            collapses.remove(id)
+        } else {
+            collapses.insert(id)
+        }
+    }
     
     private func _bind() {
         wrapper.$selection
             .map({ id in self.housekeeper.storedEntries.first(where: { $0.id == id }) as? Group })
             .receive(on: DispatchQueue.main)
-            .sink(receiveValue: { [weak self] in self?.selectedGroup = $0 })
+            .sink(receiveValue: { [weak self] in
+                self?.selectedGroup = $0
+                self?.collapses = []
+            })
             .store(in: &_cancellables)
-        
+
         Publishers.CombineLatest4(
             wrapper.$selection,
             housekeeper.$storedEntries,
             $hierarchy.removeDuplicates(),
-            Publishers.CombineLatest($search.map({ $0.trim() }).removeDuplicates(), $hashtagFilter)
+            Publishers.CombineLatest3($search.map({ $0.trim() }).removeDuplicates(), $hashtagFilter, $collapses)
         )
         .map { [unowned self] a, b, c, d in
-            let hashtag = d.1
             let query = d.0
-            let result = self.heirs(b, a, c)
+            let hashtag = d.1
+            let collapsed = query.count > 0 ? Set<UUID>() : d.2
+            let result = self.heirs(b, a, c, collapsed)
                 .map {
                     let tags = $0.hashtags ?? []
                     if let htf = hashtag,
@@ -84,7 +97,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                        !tags.contains(htf) {
                         return Optional<Row>.none
                     }
-                    let info = _info(query, $0, b, c)
+                    let info = _info(query, $0, b, c, collapsed)
                     if query.count > 0 {
                         guard
                             $0.name.range(of: query, options: .caseInsensitive) != nil ||
@@ -94,9 +107,9 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                             return Optional<Row>.none
                         }
                     }
-                    
+
                     return Row(id: $0.id,
-                               icon: $0.icon,
+                               icon: info.5,
                                title: $0.name,
                                description: info.0,
                                trail: trail(query, $0, b, a),
@@ -113,11 +126,13 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         .receive(on: DispatchQueue.main)
         .sink(receiveValue: { [weak self] in self?.rows = $0 })
         .store(in: &_cancellables)
-        
+
         $hierarchy
             .removeDuplicates()
-            .map { _ in [] }
-            .sink(receiveValue: { [weak self] in self?.indentColorStorage = $0 })
+            .sink(receiveValue: { [weak self] _ in
+                self?.indentColorStorage = []
+                self?.collapses = []
+            })
             .store(in: &_cancellables)
     }
     
@@ -169,14 +184,14 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         }
     }
     
-    private func heirs(_ entries: [any Entry], _ selection: UUID?, _ hierarchy: Hierarchy) -> [any Entry] {
+    private func heirs(_ entries: [any Entry], _ selection: UUID?, _ hierarchy: Hierarchy, _ collapses: Set<UUID>) -> [any Entry] {
         let group = housekeeper.storedEntries.first(where: { $0.id == selection }) as? Group
         switch hierarchy {
         case .child:
             // TODO: selection maybe hashtag as well
             return group.children(among: entries)
         case .descendant:
-            return group.descendants(among: entries)
+            return group.descendants(among: entries, excluding: collapses)
         }
     }
     
@@ -207,11 +222,11 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         return trail
     }
     
-    private func _info(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy) -> (String, String?, Bool, Bool, EntryType) {
+    private func _info(_ query: String, _ entry: any Entry, _ entries: [any Entry], _ hierarchy: Hierarchy, _ collapses: Set<UUID>) -> (String, String?, Bool, Bool, EntryType, Icon) {
         switch entry {
         case let b as Bookmark:
             let path = query.count > 0 ? b.url.absoluteString.condense(matching: query) : (b.url.host() ?? b.url.absoluteString)
-            return (path, b.url.absoluteString, false, path.range(of: query, options: .caseInsensitive) != nil, .bookmark)
+            return (path, b.url.absoluteString, false, path.range(of: query, options: .caseInsensitive) != nil, .bookmark, b.icon)
         case let g as Group:
             let children = g.children(among: entries)
             let gcount = _groups(children).count
@@ -220,11 +235,14 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
             if gcount > 0 {
                 result += " / \(gcount) groups"
             }
+            let hasChildren = children.count > 0
+            let collapsed = collapses.contains(g.id)
+            let icon: Icon = collapsed && hasChildren ? .system("cube.box.fill") : .system("cube.box")
             switch hierarchy {
             case .child:
-                return (result, nil, false, false, .directory)
+                return (result, nil, false, false, .directory, g.icon)
             case .descendant:
-                return (result, nil, children.count > 0, false, .directory)
+                return (result, nil, hasChildren && !collapsed, false, .directory, icon)
             }
         default:
             fatalError("Impossible case")
