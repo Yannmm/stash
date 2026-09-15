@@ -14,7 +14,7 @@ fileprivate extension Synchronizer.BaiduPanProvider {
     enum Constant {
         static let clientId = "I5PDsDtk6M0sv821sdXmc585DzeUb8cn"
         static let clientSecret = "oMebbuXLuLXXlODsssfsv1oyRUha4r3W"
-        static let redirectUri = "https://nustash-auth.yannmm.workers.dev/callback/baidupan"
+        static let redirectUri = "https://auth.513410.xyz/callback/baidupan"
         static let authorizeUrl = "https://openapi.baidu.com/oauth/2.0/authorize"
         static let tokenUrl = "https://openapi.baidu.com/oauth/2.0/token"
         static let basePath = "/apps/Nustash"
