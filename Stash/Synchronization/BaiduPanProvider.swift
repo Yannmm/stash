@@ -589,13 +589,33 @@ extension Synchronizer.BaiduPanProvider {
 // MARK: - Errors
 
 extension Synchronizer.BaiduPanProvider {
-    enum SomeError: Error {
+    enum SomeError: Error, CustomStringConvertible {
         case fileNotFound(String)
         case unauthenticated
         case authFailed
         case tokenExpired
         case tokenExchangeFailed(String)
         case api(Error)
+        
+        var description: String {
+            switch self {
+            case .api(let error):
+                return error.localizedDescription
+                
+            case .unauthenticated:
+                return "Unauthenticated"
+                
+            case .tokenExpired:
+                return "Token expired"
+                
+            case .fileNotFound(let path):
+                return "File not found: \(path)"
+            case .authFailed:
+                return "Auth failed, please try again."
+            case .tokenExchangeFailed(let msg):
+                return msg
+            }
+        }
     }
 }
 

@@ -28,7 +28,7 @@ extension Synchronizer.AuthStatus: Synchronizer.Descriptor {
             }
             return attr
         case .error(let e, _):
-            var attr = AttributedString("An error happended, please try again: \(e.localizedDescription)")
+            var attr = AttributedString("An error happended, please try later: \(e.localizedDescription)")
             attr.foregroundColor = .secondary
             if let range = attr.range(of: "try again") {
                 attr[range].foregroundColor = Color(nsColor: .linkColor)

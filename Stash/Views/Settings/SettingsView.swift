@@ -95,7 +95,7 @@ struct SettingsView: View {
             
             Section("Synchronization") {
                 VStack(alignment: .leading) {
-                    Picker("Approach", selection: $viewModel.synchronizerApproach) {
+                    Picker("Provider", selection: $viewModel.synchronizerApproach) {
                         ForEach([
                             Synchronizer.Option.local,
                             Synchronizer.Option.dropbox,
