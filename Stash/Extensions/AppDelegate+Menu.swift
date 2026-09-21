@@ -111,7 +111,7 @@ extension AppDelegate {
         case let b as Bookmark:
             return b.url.absoluteString
         case let g as Group:
-            return "\(childrenCount) item(s)"
+            return nil
         default:
             return nil
         }
