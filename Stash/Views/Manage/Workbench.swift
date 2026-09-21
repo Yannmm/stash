@@ -123,6 +123,7 @@ fileprivate extension ManageView.Workbench {
                                                 },
                                                 dragTarget: $dragTarget,
                                                 onOpen: { viewModel.open($0) },
+                                                onCopy: { viewModel.copy($0) },
                                                 onDelete: { viewModel.delete($0) },
                                                 onUngroup: { viewModel.ungroup($0) },
                                                 onToggle: { id in
@@ -365,6 +366,7 @@ fileprivate extension ManageView.Workbench {
         let indentColor: (Int) -> Color
         @Binding var dragTarget: (Int, DragPosition, UUID)?
         let onOpen: (UUID) -> Void
+        let onCopy: (UUID) -> Void
         let onDelete: (UUID) -> Void
         let onUngroup: (UUID) -> Void
         let onToggle: (UUID) -> Void
@@ -526,6 +528,11 @@ fileprivate extension ManageView.Workbench {
                 if row.actionable {
                     Button("Open") {
                         onOpen(row.id)
+                    }
+                }
+                if row.copyable {
+                    Button("Copy") {
+                        onCopy(row.id)
                     }
                 }
                 Button("Edit") {

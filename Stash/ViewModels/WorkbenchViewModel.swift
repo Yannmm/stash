@@ -8,6 +8,7 @@
 import Combine
 import Foundation
 import SwiftUI
+import AppKit
 
 class WorkbenchViewModel: ObservableObject, CascadeJudge {
     @Published var search = "" {
@@ -125,6 +126,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
                                expandable: $0.container,
                                extra: info.1,
                                actionable: $0 is Actionable,
+                               copyable: ($0 as? Actionable)?.copyable == true,
                                entryType: info.4)
                 }
                 .compactMap({ $0 })
@@ -171,6 +173,14 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         } catch {
             self.error = error
         }
+    }
+
+    func copy(_ id: UUID) {
+        guard let actionable = entries.findBy(id: id) as? Actionable,
+              actionable.copyable,
+              let value = actionable.valueToCopy else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(value, forType: .string)
     }
     
     func delete(_ id: UUID) {
@@ -269,6 +279,7 @@ extension WorkbenchViewModel {
         let expandable: Bool
         let extra: String?
         let actionable: Bool
+        let copyable: Bool
         let entryType: EntryType
         
         var level: Int { trail.count }
