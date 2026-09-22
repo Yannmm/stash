@@ -507,8 +507,6 @@ fileprivate extension ManageView.Workbench {
                 propose: _propose
             ))
             .onTapGesture(count: 2) {
-                selection = row.id
-                focused.wrappedValue = row.id
                 if row.expandable {
                     onToggle(row.id)
                 } else {

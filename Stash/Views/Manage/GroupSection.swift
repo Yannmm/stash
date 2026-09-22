@@ -42,6 +42,12 @@ extension ManageView.Sidebar {
                                 _version += 1
                                 dragTarget = nil
                             },
+                            onDelete: { id in
+                                viewModel.delete(id)
+                            },
+                            onUngroup: { id in
+                                viewModel.ungroup(id)
+                            },
                             cascade: { id, subjectId in
                                 viewModel.cascade(from: subjectId, to: id)
                             }
@@ -65,12 +71,19 @@ extension ManageView.Sidebar.GroupSection {
         let onToggleExpansion: () -> Void
         let onTap: () -> Void
         let onDrop: (UUID, UUID, DragPosition) -> Void
+        let onDelete: (UUID) -> Void
+        let onUngroup: (UUID) -> Void
         let cascade: (UUID, UUID) -> CascadeOrder
         private var height: CGFloat { Constant.rowHeight }
         
         @State private var dragPosition: DragPosition? = nil
         private var hasIndicator: Bool { _propose(dragPosition)?.operation == .move }
         @State private var expandTask: Task<Void, Never>? = nil
+        
+        @State private var presentEditor = false
+        @State private var presentDeletionAlert = false
+        @State private var presentUngroupAlert = false
+        @State private var presentContextMenu = false
         
         @EnvironmentObject var viewModel: SidebarViewModel
         
@@ -105,6 +118,16 @@ extension ManageView.Sidebar.GroupSection {
                 RoundedRectangle(cornerRadius: Constant.cornerRadius)
                     .fill(backgroundColor)
             )
+            .overlay(
+                RoundedRectangle(cornerRadius: Constant.cornerRadius)
+                    .strokeBorder(contextBorderColor, lineWidth: 2)
+                    .opacity(presentContextMenu ? 1 : 0)
+            )
+            .background(
+                RightClickMonitorView {
+                    presentContextMenu = true
+                }
+            )
             .overlay(alignment: .top) {
                 if hasIndicator {
                     switch dragPosition! {
@@ -121,6 +144,10 @@ extension ManageView.Sidebar.GroupSection {
                 }
             }
             .zIndex(hasIndicator ? 1 : 0)
+            .onTapGesture(count: 2) {
+                guard row.groupCount > 0 else { return }
+                onToggleExpansion()
+            }
             .onTapGesture {
                 onTap()
             }
@@ -157,6 +184,44 @@ extension ManageView.Sidebar.GroupSection {
             .onChange(of: dragPosition) { oldValue, newValue in
                 handleDragPositionChange(newValue)
             }
+            .onReceive(NotificationCenter.default.publisher(for: NSMenu.didEndTrackingNotification)) { _ in
+                presentContextMenu = false
+            }
+            .contextMenu {
+                // Root "All Bookmarks" pseudo-row (icon != nil) has no menu.
+                if icon == nil {
+                    Text(row.name)
+                    Divider()
+                    Button("Edit") {
+                        presentEditor = true
+                    }
+                    Divider()
+                    Button("Ungroup") {
+                        presentUngroupAlert = true
+                    }
+                    Button("Delete", role: .destructive) {
+                        presentDeletionAlert = true
+                    }
+                }
+            }
+            .popover(isPresented: $presentEditor) {
+                GroupEditor(viewModel: GroupEditorViewModel(mode: .update(row.id), housekeeper: viewModel.housekeeper))
+                    .frame(width: 400)
+            }
+            .alert("Sure to delete \"\(row.name)\" ?", isPresented: $presentDeletionAlert, actions: {
+                Button("Remove", role: .destructive) {
+                    onDelete(row.id)
+                }
+            }, message: {
+                Text("All bookmarks and sub-groups will also get deleted. This action cannot be undone.")
+            })
+            .alert("Sure to ungroup \"\(row.name)\" ?", isPresented: $presentUngroupAlert, actions: {
+                Button("Confirm", role: .destructive) {
+                    onUngroup(row.id)
+                }
+            }, message: {
+                Text("All bookmarks and sub-groups will get dropped in place. This action cannot be undone.")
+            })
         }
         
         private var image: String {
@@ -248,6 +313,10 @@ extension ManageView.Sidebar.GroupSection {
                 return Color(nsColor: .selectedContentBackgroundColor).opacity(0.8)
             }
             return Color.clear
+        }
+        
+        private var contextBorderColor: Color {
+            row.selected ? Color.white : Color.accentColor
         }
         
         private func _indicator1() -> some View {
