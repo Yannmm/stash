@@ -53,31 +53,31 @@ class Housekeeper: ObservableObject {
         }
     }
     
-    func relocate(entry: any Entry, anchorId: UUID?) throws {
-        if let index = storedEntries.firstIndex(where: { $0.id == entry.id }) {
-            // Seems this never happens
-            storedEntries.remove(at: index)
+    func delete(entry: any Entry) throws {
+        var ids = Set([entry.id])
+        if entry.container {
+            let allDescendants = entry.descendants(among: storedEntries)
+            ids.formUnion(allDescendants.map(\.id))
         }
-        
-        if let aid = anchorId, let index = storedEntries.firstIndex(where: { $0.id == aid }) {
-            let anchor = storedEntries[index]
-            var copy = entry
-            copy.parentId = anchor.location
-            storedEntries.insert(copy, at: index)
-        } else {
-            storedEntries.append(entry)
-        }
+        recentEntries.removeAll { ids.contains($0.0.id) }
+        storedEntries.removeAll { ids.contains($0.id) }
         try save()
     }
     
-    func delete(entry: any Entry) throws {
-        if let index = recentEntries.firstIndex(where: { $0.0.id == entry.id }) {
-            recentEntries.remove(at: index)
+    func ungroup(entry: any Entry) throws {
+        guard entry.container else { return }
+        let gid = entry.id
+        let pid = entry.parentId
+        storedEntries = storedEntries.compactMap { e in
+            if e.id == gid { return nil }
+            if e.parentId == gid {
+                var copy = e
+                copy.parentId = pid
+                return copy
+            }
+            return e
         }
-        if let index = storedEntries.firstIndex(where: { $0.id == entry.id }) {
-            storedEntries.remove(at: index)
-            try save()
-        }
+        try save()
     }
     
     func removeAll() throws {

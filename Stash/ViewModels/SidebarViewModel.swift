@@ -38,6 +38,24 @@ class SidebarViewModel: ObservableObject, CascadeJudge {
         }
     }
     
+    func delete(_ id: UUID) {
+        guard let entry = entries.findBy(id: id) else { return }
+        do {
+            try housekeeper.delete(entry: entry)
+        } catch {
+            self.error = error
+        }
+    }
+    
+    func ungroup(_ id: UUID) {
+        guard let entry = entries.findBy(id: id) else { return }
+        do {
+            try housekeeper.ungroup(entry: entry)
+        } catch {
+            self.error = error
+        }
+    }
+    
     private var _cancellables = Set<AnyCancellable>()
     let housekeeper: Housekeeper
     let wrapper: GroupSelectionWrapper

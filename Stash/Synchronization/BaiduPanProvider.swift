@@ -14,7 +14,7 @@ fileprivate extension Synchronizer.BaiduPanProvider {
     enum Constant {
         static let clientId = "I5PDsDtk6M0sv821sdXmc585DzeUb8cn"
         static let clientSecret = "oMebbuXLuLXXlODsssfsv1oyRUha4r3W"
-        static let redirectUri = "https://nustash-auth.yannmm.workers.dev/callback/baidupan"
+        static let redirectUri = "https://auth.513410.xyz/callback/baidupan"
         static let authorizeUrl = "https://openapi.baidu.com/oauth/2.0/authorize"
         static let tokenUrl = "https://openapi.baidu.com/oauth/2.0/token"
         static let basePath = "/apps/Nustash"
@@ -24,7 +24,7 @@ fileprivate extension Synchronizer.BaiduPanProvider {
 }
 
 extension Synchronizer {
-    final class BaiduPanProvider: Provider, Polling {
+    final class BaiduPanProvider: RemoteProvider, Polling {
         
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         
@@ -65,10 +65,12 @@ extension Synchronizer {
         private func checkAvailability() async {
             if let token = Keychain.load() {
                 let name = await getAccountName(accessToken: token.accessToken)
-                _availability.send(.yes(AuthStatus.ready(name, logout)))
+                _availability.send(.yes(AuthStatus.ready(name, { [weak self] _ in
+                    self?.logout()
+                })))
                 startpol()
             } else {
-                _availability.send(.no(AuthStatus.anonymous({ [weak self] in
+                _availability.send(.no(AuthStatus.anonymous({ [weak self] _ in
                     self?.authenticate()
                 })))
             }
@@ -116,7 +118,7 @@ extension Synchronizer {
                   let code = components.queryItems?.first(where: { $0.name == "code" })?.value,
                   let state = components.queryItems?.first(where: { $0.name == "state" })?.value,
                   state == _state else {
-                _availability.send(.no(AuthStatus.error(SomeError.authFailed, { [weak self] in
+                _availability.send(.no(AuthStatus.error(SomeError.authFailed, { [weak self] _ in
                     self?.authenticate()
                 })))
                 return
@@ -127,10 +129,12 @@ extension Synchronizer {
                 let token = try await exchangeCode(code)
                 try Keychain.save(token)
                 let name = await getAccountName(accessToken: token.accessToken)
-                _availability.send(.yes(AuthStatus.ready(name, logout)))
+                _availability.send(.yes(AuthStatus.ready(name, { [weak self] _ in
+                    self?.logout()
+                })))
                 startpol()
             } catch {
-                _availability.send(.no(AuthStatus.error(error, { [weak self] in
+                _availability.send(.no(AuthStatus.error(error, { [weak self] _ in
                     self?.authenticate()
                 })))
             }
@@ -160,7 +164,7 @@ extension Synchronizer {
         
         private func getAccessToken() async throws -> String {
             guard let token = Keychain.load() else {
-                _availability.send(.no(AuthStatus.anonymous({ [weak self] in
+                _availability.send(.no(AuthStatus.anonymous({ [weak self] _ in
                     self?.authenticate()
                 })))
                 throw SomeError.unauthenticated
@@ -527,13 +531,12 @@ extension Synchronizer {
         
         func logout() {
             Keychain.delete()
-            poltask?.cancel()
-            poltask = nil
+            pausepol()
             Task { await checkAvailability() }
         }
         
         deinit {
-            poltask?.cancel()
+            pausepol()
         }
     }
 }
@@ -586,13 +589,33 @@ extension Synchronizer.BaiduPanProvider {
 // MARK: - Errors
 
 extension Synchronizer.BaiduPanProvider {
-    enum SomeError: Error {
+    enum SomeError: Error, CustomStringConvertible {
         case fileNotFound(String)
         case unauthenticated
         case authFailed
         case tokenExpired
         case tokenExchangeFailed(String)
         case api(Error)
+        
+        var description: String {
+            switch self {
+            case .api(let error):
+                return error.localizedDescription
+                
+            case .unauthenticated:
+                return "Unauthenticated"
+                
+            case .tokenExpired:
+                return "Token expired"
+                
+            case .fileNotFound(let path):
+                return "File not found: \(path)"
+            case .authFailed:
+                return "Auth failed, please try again."
+            case .tokenExchangeFailed(let msg):
+                return msg
+            }
+        }
     }
 }
 

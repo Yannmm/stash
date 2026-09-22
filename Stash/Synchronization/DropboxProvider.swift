@@ -19,7 +19,7 @@ fileprivate extension Synchronizer.DropboxProvider {
 }
 
 extension Synchronizer {
-    final class DropboxProvider: Provider, Polling {
+    final class DropboxProvider: RemoteProvider, Polling {
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
@@ -53,10 +53,10 @@ extension Synchronizer {
             var a: Availability!
             if signedIn {
                 let name = await getAccount()
-                a = .yes(AuthStatus.ready(name, logout))
+                a = .yes(AuthStatus.ready(name, { [weak self] _ in self?.logout() }))
                 startpol()
             } else {
-                a = .no(AuthStatus.anonymous({ [weak self] in
+                a = .no(AuthStatus.anonymous({ [weak self] _ in
                     self?.authenticate()
                 }))
             }
@@ -90,15 +90,21 @@ extension Synchronizer {
         
         private func download(client: DropboxClient, path: String) async throws -> Data {
             try await withCheckedThrowingContinuation { continuation in
-                client.files.download(path: path).response { response, error in
+                let request = client.files.download(path: path)
+                request.response { [weak self] response, error in
+                    _ = request
                     if let response {
                         continuation.resume(returning: response.1)
-                    } else if let error {
-                        if case .routeError(let boxed, _, _, _) = error, case .path(let lookupError) = boxed.unboxed, case .notFound = lookupError {
-                            continuation.resume(with: .failure(SomeError.fileNotFound(path)))
-                        } else {
-                            continuation.resume(with: .failure(SomeError.api(error)))
-                        }
+                    } else if let error,
+                              let someError = self?.handleError(error, path: path, isFileNotFound: { error in
+                                  if case .path(let lookupError) = error,
+                                     case .notFound = lookupError {
+                                      return true
+                                  } else {
+                                      return false
+                                  }
+                              }) {
+                        continuation.resume(with: .failure(someError))
                     } else {
                         continuation.resume(with: .failure(SomeError.api("Unknown download error")))
                     }
@@ -108,7 +114,7 @@ extension Synchronizer {
         
         private func getClient() throws -> DropboxClient {
             guard let client = DropboxClientsManager.authorizedClient else {
-                _availability.send(.no(AuthStatus.anonymous(authenticate)))
+                _availability.send(.no(AuthStatus.anonymous({ [weak self] _ in self?.authenticate() })))
                 throw SomeError.unauthenticated
             }
             return client
@@ -117,11 +123,14 @@ extension Synchronizer {
         @discardableResult
         private func upload(client: DropboxClient, path: String, data: Data) async throws -> Files.FileMetadata {
             try await withCheckedThrowingContinuation { continuation in
-                client.files.upload(path: path, mode: .overwrite, input: data).response { metadata, error in
+                let request = client.files.upload(path: path, mode: .overwrite, input: data)
+                request.response { [weak self] metadata, error in
+                    _ = request
                     if let metadata {
                         continuation.resume(returning: metadata)
-                    } else if let error {
-                        continuation.resume(with: .failure(SomeError.api(error)))
+                    } else if let error,
+                              let someError = self?.handleError(error, path: path, isFileNotFound: nil) {
+                        continuation.resume(with: .failure(someError))
                     } else {
                         continuation.resume(with: .failure(SomeError.api("Unknown upload error")))
                     }
@@ -139,15 +148,14 @@ extension Synchronizer {
                         self?.startpol()
                         Task {
                             let name = await self?.getAccount()
-                            guard let this = self else { return }
-                            self?._availability.send(.yes(AuthStatus.ready(name, this.logout)))
+                            self?._availability.send(.yes(AuthStatus.ready(name, { [weak self] _ in self?.logout() })))
                         }
                     case .cancel:
-                        self?._availability.send(.no(AuthStatus.anonymous({ [weak self] in
+                        self?._availability.send(.no(AuthStatus.anonymous({ [weak self] _ in
                             self?.authenticate()
                         })))
                     case .error(let error, _):
-                        self?._availability.send(.no(AuthStatus.error(error, { [weak self] in
+                        self?._availability.send(.no(AuthStatus.error(error, { [weak self] _ in
                             self?.authenticate()
                         })))
                     }
@@ -166,9 +174,14 @@ extension Synchronizer {
         func getAccount() async -> String? {
             guard let client = DropboxClientsManager.authorizedClient else { return nil }
             return await withCheckedContinuation { continuation in
-                client.users.getCurrentAccount().response { account, error in
+                let request = client.users.getCurrentAccount()
+                request.response { [weak self] account, error in
+                    _ = request
                     if let account {
                         continuation.resume(returning: account.name.displayName)
+                    } else if let error,
+                              let _ = self?.handleError(error, path: nil, isFileNotFound: nil) {
+                        continuation.resume(returning: nil)
                     } else {
                         continuation.resume(returning: nil)
                     }
@@ -193,9 +206,60 @@ extension Synchronizer {
         
         func logout() {
             DropboxClientsManager.unlinkClients()
+            pausepol()
             Task {
                 await checkAvailability()
             }
+        }
+        
+        func poll() async {
+            do {
+                let sidecar = try await sidecar()
+                guard let a = polanchor, sidecar.uid != a else { return }
+                polanchor = sidecar.uid
+                setOnArrive(sidecar)
+            } catch {
+                print("[DropboxProvider] poll failed: \(error)")
+            }
+        }
+        
+        private func handleError<T>(
+            _ error: CallError<T>,
+            path: String?,
+            isFileNotFound: ((T) -> Bool)?
+        ) -> SomeError {
+            let someError: SomeError
+            
+            switch error {
+            case .authError, .accessError:
+                someError = .tokenExpired
+                
+            case .clientError(let ce):
+                if case .oauthError = ce {
+                    someError = .tokenExpired
+                } else {
+                    someError = .api(error)
+                }
+                
+            case .routeError(let boxed, _, _, _):
+                if isFileNotFound?(boxed.unboxed) ?? false, let p = path {
+                    someError = .fileNotFound(p)
+                } else {
+                    fallthrough
+                }
+            default:
+                someError = .api(error)
+            }
+            
+            if case .tokenExpired = someError {
+                logout()
+            } else {
+                _availability.send(.no(AuthStatus.error(error, { [weak self] _ in
+                    self?.authenticate()
+                })))
+            }
+            
+            return someError
         }
         
         deinit {
@@ -205,9 +269,26 @@ extension Synchronizer {
 }
 
 extension Synchronizer.DropboxProvider {
-    enum SomeError: Error {
+    enum SomeError: Error, CustomStringConvertible {
         case api(Error)
         case unauthenticated
+        case tokenExpired
         case fileNotFound(String)
+        
+        var description: String {
+            switch self {
+            case .api(let error):
+                return error.localizedDescription
+                
+            case .unauthenticated:
+                return "Unauthenticated"
+                
+            case .tokenExpired:
+                return "Token expired"
+                
+            case .fileNotFound(let path):
+                return "File not found: \(path)"
+            }
+        }
     }
 }

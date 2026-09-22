@@ -26,7 +26,9 @@ extension ManageView {
                         },
                         onDrop: { _, __, ___ in
                             
-                        }) { _, __ in
+                        },
+                        onDelete: { _ in },
+                        onUngroup: { _ in }) { _, __ in
                             return .none
                         }
                     GroupSection()
@@ -43,19 +45,5 @@ extension ManageView {
                 Text(viewModel.error?.localizedDescription ?? "")
             }
         }
-    }
-}
-
-private struct HashtagRow: View {
-    let hashtag: Hashtag
-    let isSelected: Bool
-    let action: () -> Void
-    
-    var body: some View {
-        Button(action: action) {
-            Label(hashtag.name, systemImage: "number")
-        }
-        .buttonStyle(.plain)
-        .listRowBackground(isSelected ? Color.accentColor.opacity(0.2) : Color.clear)
     }
 }

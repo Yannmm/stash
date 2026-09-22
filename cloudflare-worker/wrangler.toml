@@ -1,3 +1,7 @@
 name = "nustash-auth"
 main = "src/index.js"
 compatibility_date = "2024-01-01"
+
+[[routes]]
+pattern = "auth.513410.xyz"
+custom_domain = true
