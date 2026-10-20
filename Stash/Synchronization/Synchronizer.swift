@@ -16,8 +16,14 @@ class Synchronizer {
     func setApproach(_ value: Option) {
         _approach.send(value)
     }
+        
+    private let _remoteAuthentication = PassthroughSubject<Result<AuthStatus, Error>?, Never>()
     
-    private(set) var availability: AnyPublisher<Availability, Never>!
+    private let _error = CurrentValueSubject<(String, Error)?, Never>(nil)
+    
+    var description: AnyPublisher<AttributedString?, Never> { _description.eraseToAnyPublisher() }
+    
+    private let _description = PassthroughSubject<AttributedString?, Never>()
     
     var onChange: AnyPublisher<Void, Never> { _onChange.eraseToAnyPublisher() }
     
@@ -66,28 +72,49 @@ class Synchronizer {
                     try? await oldProvider?.pause()
                     try? await newProvider?.prepare()
                 }
-            }.store(in: &cancellables)
+            }
+            .store(in: &cancellables)
         
-        self.availability = _approach
-            .compactMap { self.providers[$0]?.availability }
+        // Remote provider auth change
+        _approach
+            .map { key -> AnyPublisher<Result<AuthStatus, Error>?, Never> in
+                guard let authentication = self.remoteProviders[key]?.authentication else {
+                    return Just<Result<AuthStatus, Error>?>(nil).eraseToAnyPublisher()
+                }
+                return authentication
+                    .map { Optional($0) }
+                    .eraseToAnyPublisher()
+            }
             .switchToLatest()
-            .eraseToAnyPublisher()
-        
-        self.availability
             .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
-            .filter {
-                guard case .yes = $0 else {
+            .sink { x in
+                self._remoteAuthentication.send(x)
+            }
+            .store(in: &cancellables)
+        
+        _remoteAuthentication
+            .filter { result in
+                guard let r = result else { return false }
+                switch r {
+                case .success(let status):
+                    switch status {
+                    case .ready(_, _):
+                        return true
+                    case .anonymous(_):
+                        fallthrough
+                    case .initializing(_):
+                        return false
+                    }
+                case .failure(_):
                     return false
                 }
-                return true
             }
-            .sink { [weak self] _ in
+            .sink { [weak self] result in
                 Task {
                     await self?.compare()
                 }
             }
             .store(in: &cancellables)
-        
         
         local.onArrive
             .sink { [weak self] _ in
@@ -95,78 +122,111 @@ class Synchronizer {
             }
             .store(in: &cancellables)
         
-        for (option, provider) in providers where option != .local {
-            provider.onArrive
-                .sink { [weak self] remoteSidecar in
-                    guard let self, self._approach.value == option else { return }
-                    Task { await self.handleRemoteIncoming(remoteSidecar) }
+        
+        _approach
+            .compactMap { [weak self] in self?.remoteProviders[$0]?.onArrive }
+            .switchToLatest()
+            .sink { [weak self] remoteSidecar in
+                Task { await self?.handleRemoteIncoming(remoteSidecar) }
+            }
+            .store(in: &cancellables)
+        
+        _approach
+            .removeDuplicates()
+            .sink { [weak self] _ in
+                self?._error.send(nil)
+            }
+            .store(in: &cancellables)
+        
+        Publishers.CombineLatest(_remoteAuthentication, _error)
+            .map { t2 in
+                var result = AttributedString()
+                if let auth = t2.0 {
+                    switch auth {
+                    case .success(let status):
+                        result += status.describe()
+                    case .failure(let error):
+                        result += AttributedString(error.localizedDescription)
+                    }
                 }
-                .store(in: &cancellables)
-        }
+                
+                if let error = t2.1 {
+                    result += AttributedString("\n")
+                    result += AttributedString(error.0) + AttributedString(error.1.localizedDescription)
+                }
+                if result.characters.count > 0 {
+                    return result
+                } else {
+                    return nil
+                }
+            }
+            .sink { [weak self] attr in
+                self?._description.send(attr)
+            }
+            .store(in: &cancellables)
     }
     
     // MARK: - Public API
     
     func save(document html: String) {
-        do {
-            let sidecar = try local.write(html: html)
-            history.log(action: "local_edit", sidecar: sidecar)
-            guard let r = remote else {
-                print("[save] remote not available do nothing")
-                return
-            }
-            Task {
-                do {
-                    guard let document = try await _localDocument() else {
-                        throw SomeError.fileNotFound(FileName.document)
-                    }
-                    try await r.send(document: document, sidecar: sidecar)
-                    history.log(action: "push_to_\(_approach.value.rawValue)", sidecar: sidecar)
-                } catch {
-                    print("[Sync] push failed: \(error)")
-                    ErrorTracker.shared.add(error)
+        Task {
+            do {
+                let sidecar = try local.write(html: html)
+                history.log(action: "local_edit", sidecar: sidecar)
+                guard let r = remote else {
+                    history.log(action: "[save] remote not available do nothing", sidecar: sidecar)
+                    return
                 }
+                guard let document = try await _localDocument() else {
+                    throw SyncError.fileNotFound(FileName.document)
+                }
+                try await r.send(document: document, sidecar: sidecar)
+                history.log(action: "push_to_\(_approach.value.rawValue)", sidecar: sidecar)
+            } catch {
+                _error.send((#function, error))
             }
-        } catch {
-            print("[Sync] local write failed: \(error)")
-            ErrorTracker.shared.add(error)
         }
     }
     
-    func load() async throws -> String? {
+    func load() async -> String? {
         do {
             guard let document = try await _localDocument() else {
                 return nil
             }
             guard let html = String(data: document, encoding: .utf8) else {
-                throw SomeError.corruptDocument
+                throw SyncError.corruptData(document)
             }
             return html
-        } catch SomeError.fileNotFound {
-            return nil
         } catch {
-            throw error
+            _error.send((#function, error))
+            return nil
         }
     }
     
     func compare() async {
         func _push(to remote: RemoteProvider, sidecar: Sidecar, document: Data?) async throws {
-            guard let d = document, d.count > 0 else { return }
+            guard let d = document, d.count > 0 else {
+                history.log(action: "skip push_to_\(_approach.value.rawValue) for empty document", sidecar: sidecar)
+                return
+            }
             try await remote.send(document: d, sidecar: sidecar)
             history.log(action: "push_to_\(_approach.value.rawValue)", sidecar: sidecar)
         }
         
         func _pull(to local: LocalProvider, sidecar: Sidecar, document: Data?) async throws {
-            guard let d = document, d.count > 0 else { return }
+            guard let d = document, d.count > 0 else {
+                history.log(action: "empty document download_from_\(_approach.value.rawValue) ", sidecar: sidecar)
+                return
+            }
             try await local.copy(document: d, sidecar: sidecar)
             history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: sidecar)
         }
         
         guard let remote = remote else { return }
         do {
-            let availability = await remote.getAvailability()
-            guard case .yes = availability else {
-                print("[Align] remote provider not available, do nothing")
+            let flag = await remote.authentication.values.first(where: { _ in true })
+            guard case .success(.ready) = flag else {
+                // remote not available
                 return
             }
             
@@ -179,7 +239,7 @@ class Synchronizer {
                 } else if sidecar1.timestamp > sidecar2.timestamp {
                     try await _push(to: remote, sidecar: sidecar1, document: try await _localDocument())
                 } else {
-                    print("[Align] sidecar equal, dothing")
+                    // sidecar equal
                 }
             } else if let sidecar1 = sidecar1 {
                 try await _push(to: remote, sidecar: sidecar1, document: try await _localDocument())
@@ -189,8 +249,7 @@ class Synchronizer {
                 // do nothing
             }
         } catch {
-            print("[Align] align failed: \(error)")
-            ErrorTracker.shared.add(error)
+            _error.send((#function, error))
         }
     }
     
@@ -208,18 +267,17 @@ class Synchronizer {
                 try await local.copy(document: document, sidecar: remoteSidecar)
                 history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: remoteSidecar)
             } else {
-                throw SomeError.fileNotFound(FileName.document)
+                throw SyncError.fileNotFound(FileName.document)
             }
         } catch {
-            print("[Sync] remote incoming failed: \(error)")
-            ErrorTracker.shared.add(error)
+            _error.send((#function, error))
         }
     }
     
     private func _localSidecar() async throws -> Sidecar? {
         do {
             return try await local.sidecar()
-        } catch Synchronizer.OnPremiseProvider.SomeError.fileNotFound {
+        } catch SyncError.fileNotFound {
             return nil
         } catch {
             throw error
@@ -229,7 +287,7 @@ class Synchronizer {
     private func _localDocument() async throws -> Data? {
         do {
             return try await local.document()
-        } catch Synchronizer.OnPremiseProvider.SomeError.fileNotFound {
+        } catch SyncError.fileNotFound {
             return nil
         } catch {
             throw error
@@ -239,7 +297,7 @@ class Synchronizer {
     private func _remoteSidecar(_ remote: Provider) async throws -> Sidecar? {
         do {
             return try await remote.sidecar()
-        } catch Synchronizer.DropboxProvider.SomeError.fileNotFound {
+        } catch SyncError.fileNotFound {
             return nil
         } catch Synchronizer.BaiduPanProvider.SomeError.fileNotFound {
             return nil
@@ -251,7 +309,7 @@ class Synchronizer {
     private func _remoteDocument(_ remote: Provider) async throws -> Data? {
         do {
             return try await remote.document()
-        } catch Synchronizer.DropboxProvider.SomeError.fileNotFound {
+        } catch SyncError.fileNotFound {
             return nil
         } catch Synchronizer.BaiduPanProvider.SomeError.fileNotFound {
             return nil
@@ -275,11 +333,5 @@ extension Synchronizer {
         case icloud
         case dropbox
         case baidupan
-    }
-    
-    enum SomeError: Error, LocalizedError {
-        case corruptDocument
-        case corruptSidecar
-        case fileNotFound(String)
     }
 }

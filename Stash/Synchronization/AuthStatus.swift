@@ -12,7 +12,7 @@ extension Synchronizer {
     enum AuthStatus {
         case anonymous((String) -> Void)
         case ready(String?, (String) -> Void)
-        case error(Error, (String) -> Void)
+        case initializing(String)
     }
 }
 
@@ -25,14 +25,6 @@ extension Synchronizer.AuthStatus: Synchronizer.Descriptor {
             if let range = attr.range(of: "sign in") {
                 attr[range].foregroundColor = Color(nsColor: .linkColor)
                 attr[range].link = URL(string: "signin://abc")
-            }
-            return attr
-        case .error(let e, _):
-            var attr = AttributedString("An error happended, please try later: \(e.localizedDescription)")
-            attr.foregroundColor = .secondary
-            if let range = attr.range(of: "try again") {
-                attr[range].foregroundColor = Color(nsColor: .linkColor)
-                attr[range].link = URL(string: "error://abc")
             }
             return attr
         case .ready(let name, _):
@@ -55,6 +47,13 @@ extension Synchronizer.AuthStatus: Synchronizer.Descriptor {
             }
             
             return attr
+        case .initializing(let provider):
+            var attr = AttributedString("\(provider) is initializing.")
+            attr.foregroundColor = .secondary
+            if let range = attr.range(of: provider) {
+                attr[range].foregroundColor = .primary
+            }
+            return attr
         }
     }
     
@@ -62,8 +61,8 @@ extension Synchronizer.AuthStatus: Synchronizer.Descriptor {
         switch self {
         case .anonymous(let action):
             action(phrase)
-        case .error(_, let action):
-            action(phrase)
+        case .initializing(_):
+            break // do nothing since it's pending
         case .ready(_, let action):
             action(phrase)
         }

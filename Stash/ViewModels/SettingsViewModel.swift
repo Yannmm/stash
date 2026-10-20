@@ -26,7 +26,7 @@ class SettingsViewModel: ObservableObject {
     @Published var newReleaseNotes: String?
     @Published var error: Error?
     @Published var synchronizerApproach: Synchronizer.Option
-    @Published var availability: Synchronizer.Availability!
+    @Published var synchronizerDescription: AttributedString?
 
     private var cancellables = Set<AnyCancellable>()
     private let appHotKeyManager = HotKeyManager(action: .menu)
