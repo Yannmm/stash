@@ -69,16 +69,20 @@ class Synchronizer {
                 let oldProvider = old != nil ? self?.providers[old!] : nil
                 let newProvider = self?.providers[new]
                 Task {
-                    try? await oldProvider?.pause()
-                    try? await newProvider?.prepare()
-//                    这里要 handle
+                    do {
+                        try await oldProvider?.pause()
+                        try await newProvider?.prepare()
+                    } catch {
+                        self?._error.send(("rotate provider from \(old?.rawValue ?? "N/A") to \(new.rawValue)", error))
+                    }
                 }
             }
             .store(in: &cancellables)
         
         _approach
-            .map { key -> AnyPublisher<Result<any ProviderReadiness, Error>?, Never> in
-                guard let readiness = self.remoteProviders[key]?.readiness else {
+            .map { self.remoteProviders[$0] }
+            .map { p in
+                guard let readiness = p?.readiness else {
                     return Just<Result<any ProviderReadiness, Error>?>(nil).eraseToAnyPublisher()
                 }
                 return readiness
@@ -91,6 +95,21 @@ class Synchronizer {
                 self._readiness.send(x)
             }
             .store(in: &cancellables)
+        
+        _approach
+            .map { self.remoteProviders[$0] }
+            .map({ p in
+                guard let error = p?.strayError else {
+                    return Just<(String, Error)?>(nil).eraseToAnyPublisher()
+                }
+                return error
+            })
+            .switchToLatest()
+            .sink { x in
+                self._error.send(x)
+            }
+            .store(in: &cancellables)
+        
         
         _readiness
             .filter { result in
@@ -157,6 +176,8 @@ class Synchronizer {
                 self?._description.send(attr)
             }
             .store(in: &cancellables)
+        
+        
     }
     
     // MARK: - Public API

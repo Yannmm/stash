@@ -25,6 +25,10 @@ extension Synchronizer {
         
         private let _authentication = CurrentValueSubject<Result<AuthStatus, Error>, Never>(.success(.initializing("Dropbox")))
         
+        var strayError: AnyPublisher<(String, Error)?, Never> { _strayError.eraseToAnyPublisher() }
+        
+        private let _strayError = PassthroughSubject<(String, Error)?, Never>()
+        
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
         
         func setOnArrive(_ sidecar: Sidecar) { _onArrive.send(sidecar) }
@@ -73,7 +77,7 @@ extension Synchronizer {
         }
         
         func onPollError(_ error: Error) {
-            // TODO: send to an error stream? to indicate something?
+            _strayError.send(("dropbox poll", error))
         }
         
         // MARK: - Helpers

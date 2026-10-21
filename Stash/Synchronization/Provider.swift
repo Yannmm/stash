@@ -27,6 +27,8 @@ extension Synchronizer {
         func send(document: Data, sidecar: Sidecar) async throws
         
         var readiness: AnyPublisher<Result<any ProviderReadiness, Error>, Never> { get }
+        
+        var strayError: AnyPublisher<(String, Error)?, Never> { get }
     }
     
     protocol LocalProvider: Provider {

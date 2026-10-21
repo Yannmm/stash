@@ -25,9 +25,14 @@ fileprivate extension Synchronizer.BaiduPanProvider {
 
 extension Synchronizer {
     final class BaiduPanProvider: RemoteProvider, Polling {
+        
         var readiness: AnyPublisher<Result<any ProviderReadiness, Error>, Never> { _authentication.eraseToReadinessPublisher() }
         
         private let _authentication = CurrentValueSubject<Result<AuthStatus, Error>, Never>(.success(.initializing("Baidu Pan")))
+        
+        var strayError: AnyPublisher<(String, Error)?, Never> { _strayError.eraseToAnyPublisher() }
+                
+        private let _strayError = PassthroughSubject<(String, Error)?, Never>()
         
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
         
@@ -80,7 +85,7 @@ extension Synchronizer {
         }
         
         func onPollError(_ error: Error) {
-            // TODO: send to an error stream? to indicate something?
+            _strayError.send(("baidupan poll", error))
         }
         
         // MARK: - Helpers

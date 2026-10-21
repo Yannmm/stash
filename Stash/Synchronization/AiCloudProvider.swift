@@ -16,6 +16,10 @@ extension Synchronizer {
         
         private let _reachability = CurrentValueSubject<Result<UbiquityContainerReachability, Error>, Never>(.success(.indetermined))
         
+        var strayError: AnyPublisher<(String, Error)?, Never> { _strayError.eraseToAnyPublisher() }
+        
+        private let _strayError = PassthroughSubject<(String, Error)?, Never>()
+        
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
         
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
@@ -73,7 +77,7 @@ extension Synchronizer {
                         let sidecar = try JSONDecoder().decode(Sidecar.self, from: data)
                         self._onArrive.send(sidecar)
                     } catch {
-                        print("[iCloud] failed to parse incoming sidecar: \(error)")
+                        _strayError.send(("icloud monitor", error))
                     }
                 }
             monitor.start()
