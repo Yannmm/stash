@@ -12,8 +12,6 @@ import Foundation
 
 extension Synchronizer {
     protocol Provider {
-        var onArrive: AnyPublisher<Sidecar, Never> { get }
-        
         func sidecar() async throws -> Sidecar
         
         func document() async throws -> Data
@@ -24,6 +22,9 @@ extension Synchronizer {
     }
     
     protocol RemoteProvider: Provider {
+        /// Remote sidecar observed by polling or monitoring, nil if absent on remote
+        var onArrive: AnyPublisher<Sidecar?, Never> { get }
+        
         func send(document: Data, sidecar: Sidecar) async throws
         
         var readiness: AnyPublisher<Result<any ProviderReadiness, Error>, Never> { get }
@@ -32,6 +33,7 @@ extension Synchronizer {
     }
     
     protocol LocalProvider: Provider {
+        var onArrive: AnyPublisher<Sidecar, Never> { get }
         
         func copy(document: Data, sidecar: Sidecar) async throws
         

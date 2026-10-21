@@ -13,8 +13,6 @@ extension Synchronizer {
         
         var polinterval: Int { get }
         
-        var polanchor: UUID? { get set }
-        
         func startpol()
         
         func pausepol()
@@ -23,7 +21,7 @@ extension Synchronizer {
         
         func sidecar() async throws -> Sidecar
         
-        func setOnArrive(_ sidecar: Sidecar)
+        func setOnArrive(_ sidecar: Sidecar?)
         
         func onPollError(_ error: Error)
     }
@@ -35,14 +33,19 @@ extension Synchronizer.Polling {
     func startpol() {
         guard poltask == nil else { return }
         poltask = Task { [weak self] in
+            var failures = 0
             while !Task.isCancelled {
                 guard let self else { return }
                 do {
                     try await self.poll()
-                    try await Task.sleep(for: .seconds(polinterval))
+                    failures = 0
                 } catch {
+                    failures += 1
                     onPollError(error)
                 }
+                // Back off on consecutive failures, capped at 32x interval
+                let delay = polinterval * (1 << min(failures, 5))
+                try? await Task.sleep(for: .seconds(delay))
             }
         }
     }
@@ -52,12 +55,14 @@ extension Synchronizer.Polling {
         poltask = nil
     }
     
+    /// Emits the remote sidecar on every tick (nil if absent), the synchronizer decides whether to pull or push.
     func poll() async throws {
-        let sidecar = try await sidecar()
-        guard let a = polanchor,
-              sidecar.uid != a else { return }
-        polanchor = sidecar.uid
+        let sidecar: Sidecar?
+        do {
+            sidecar = try await self.sidecar()
+        } catch Synchronizer.SyncError.fileNotFound {
+            sidecar = nil
+        }
         setOnArrive(sidecar)
     }
 }
-

@@ -39,6 +39,8 @@ class Synchronizer {
     
     private let history = History()
     
+    private let lane = Lane()
+    
     private var remote: (any RemoteProvider)? {
         let a = _approach.value
         return providers[a] as? (any RemoteProvider)
@@ -121,9 +123,14 @@ class Synchronizer {
                     return false
                 }
             }
-            .sink { [weak self] result in
-                Task {
-                    await self?.compare()
+            .sink { [weak self] _ in
+                guard let self, let r = self.remote else { return }
+                self.lane.enqueue {
+                    do {
+                        await self.reconcile(provider: r, remote: try await self._remoteSidecar(r))
+                    } catch {
+                        self._error.send(("compare", error))
+                    }
                 }
             }
             .store(in: &cancellables)
@@ -136,10 +143,19 @@ class Synchronizer {
         
         
         _approach
-            .compactMap { [weak self] in self?.remoteProviders[$0]?.onArrive }
+            .map { [weak self] option -> AnyPublisher<(any RemoteProvider, Sidecar?), Never> in
+                guard let p = self?.remoteProviders[option] else {
+                    return Empty().eraseToAnyPublisher()
+                }
+                return p.onArrive.map { (p, $0) }.eraseToAnyPublisher()
+            }
             .switchToLatest()
-            .sink { [weak self] remoteSidecar in
-                Task { await self?.handleRemoteIncoming(remoteSidecar) }
+            .sink { [weak self] provider, remoteSidecar in
+                guard let self else { return }
+                // Drop ticks while a reconcile is pending, the next tick retries
+                self.lane.enqueue(droppable: true) {
+                    await self.reconcile(provider: provider, remote: remoteSidecar)
+                }
             }
             .store(in: &cancellables)
         
@@ -183,7 +199,7 @@ class Synchronizer {
     // MARK: - Public API
     
     func save(document html: String) {
-        Task {
+        lane.enqueue { [self] in
             do {
                 let sidecar = try local.write(html: html)
                 history.log(action: "local_edit", sidecar: sidecar)
@@ -217,68 +233,53 @@ class Synchronizer {
         }
     }
     
-    func compare() async {
-        func _push(to remote: RemoteProvider, sidecar: Sidecar, document: Data?) async throws {
-            guard let d = document, d.count > 0 else {
-                history.log(action: "skip push_to_\(_approach.value.rawValue) for empty document", sidecar: sidecar)
+    // MARK: - Private
+    
+    /// Reconciles local with `remoteSidecar` of `provider` by timestamp, last writer wins.
+    private func reconcile(provider: any RemoteProvider, remote remoteSidecar: Sidecar?) async {
+        let name = _approach.value.rawValue
+        
+        func _push(sidecar: Sidecar) async throws {
+            guard let d = try await _localDocument(), d.count > 0 else {
+                history.log(action: "skip push_to_\(name) for empty document", sidecar: sidecar)
                 return
             }
-            try await remote.send(document: d, sidecar: sidecar)
-            history.log(action: "push_to_\(_approach.value.rawValue)", sidecar: sidecar)
+            try await provider.send(document: d, sidecar: sidecar)
+            history.log(action: "push_to_\(name)", sidecar: sidecar)
         }
         
-        func _pull(to local: LocalProvider, sidecar: Sidecar, document: Data?) async throws {
-            guard let d = document, d.count > 0 else {
-                history.log(action: "empty document download_from_\(_approach.value.rawValue) ", sidecar: sidecar)
+        func _pull(sidecar: Sidecar) async throws {
+            guard let d = try await _remoteDocument(provider) else {
+                throw SyncError.fileNotFound(FileName.document)
+            }
+            guard d.count > 0 else {
+                history.log(action: "skip download_from_\(name) for empty document", sidecar: sidecar)
                 return
             }
             try await local.copy(document: d, sidecar: sidecar)
-            history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: sidecar)
+            history.log(action: "download_from_\(name)", sidecar: sidecar)
         }
         
-        guard let remote = remote else { return }
         do {
-            let sidecar1 = try await _localSidecar()
-            let sidecar2 = try await _remoteSidecar(remote)
-            
-            if let sidecar1 = sidecar1, let sidecar2 = sidecar2 {
-                if sidecar2.timestamp > sidecar1.timestamp {
-                    try await _pull(to: local, sidecar: sidecar2, document: try await _remoteDocument(remote))
-                } else if sidecar1.timestamp > sidecar2.timestamp {
-                    try await _push(to: remote, sidecar: sidecar1, document: try await _localDocument())
+            let localSidecar = try await _localSidecar()
+            switch (localSidecar, remoteSidecar) {
+            case (nil, nil):
+                break
+            case (let l?, nil):
+                try await _push(sidecar: l)
+            case (nil, let r?):
+                try await _pull(sidecar: r)
+            case (let l?, let r?):
+                if l.uid == r.uid {
+                    break
+                } else if l.timestamp > r.timestamp {
+                    try await _push(sidecar: l)
                 } else {
-                    // sidecar equal
+                    try await _pull(sidecar: r)
                 }
-            } else if let sidecar1 = sidecar1 {
-                try await _push(to: remote, sidecar: sidecar1, document: try await _localDocument())
-            } else if let sidecar2 = sidecar2 {
-                await handleRemoteIncoming(sidecar2)
-            } else { // both nil
-                // do nothing
             }
         } catch {
-            _error.send((#function, error))
-        }
-    }
-    
-    // MARK: - Private
-    
-    private func handleRemoteIncoming(_ remoteSidecar: Sidecar) async {
-        do {
-            if let sidecar1 = try await _localSidecar() {
-                guard remoteSidecar.uid != sidecar1.uid else { return }
-                guard remoteSidecar.timestamp > sidecar1.timestamp else { return }
-            }
-            
-            guard let remote = remote else { return }
-            if let document = try await _remoteDocument(remote) {
-                try await local.copy(document: document, sidecar: remoteSidecar)
-                history.log(action: "download_from_\(_approach.value.rawValue)", sidecar: remoteSidecar)
-            } else {
-                throw SyncError.fileNotFound(FileName.document)
-            }
-        } catch {
-            _error.send((#function, error))
+            _error.send(("reconcile", error))
         }
     }
     

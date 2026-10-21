@@ -29,15 +29,13 @@ extension Synchronizer {
         
         private let _strayError = PassthroughSubject<(String, Error)?, Never>()
         
-        var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
+        var onArrive: AnyPublisher<Sidecar?, Never> { _onArrive.eraseToAnyPublisher() }
         
-        func setOnArrive(_ sidecar: Sidecar) { _onArrive.send(sidecar) }
+        func setOnArrive(_ sidecar: Sidecar?) { _onArrive.send(sidecar) }
         
-        private let _onArrive = PassthroughSubject<Sidecar, Never>()
+        private let _onArrive = PassthroughSubject<Sidecar?, Never>()
         
         private var _sdkInitialized = false
-        
-        var polanchor: UUID?
         
         var poltask: Task<Void, Never>?
         
@@ -49,14 +47,17 @@ extension Synchronizer {
         
         func prepare() async throws {
             observe(true)
-            guard !_sdkInitialized else { return }
-            _sdkInitialized = true
-            DropboxClientsManager.setupWithAppKeyDesktop("y6ijm2p3vqr7kt8")
+            if !_sdkInitialized {
+                _sdkInitialized = true
+                DropboxClientsManager.setupWithAppKeyDesktop("y6ijm2p3vqr7kt8")
+            }
+            // Re-check on every prepare so polling restarts after pause
             await checkAuth()
         }
         
         func pause() async throws {
             observe(false)
+            pausepol()
         }
         
         func sidecar() async throws -> Sidecar {
@@ -73,7 +74,6 @@ extension Synchronizer {
             try await upload(path: Constant.documentPath, data: document)
             // Upload sidecar and update cached hash
             try await upload(path: Constant.sidecarPath, data: try JSONEncoder().encode(sidecar))
-            polanchor = sidecar.uid
         }
         
         func onPollError(_ error: Error) {

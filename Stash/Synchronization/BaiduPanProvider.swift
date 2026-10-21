@@ -34,15 +34,13 @@ extension Synchronizer {
                 
         private let _strayError = PassthroughSubject<(String, Error)?, Never>()
         
-        private let _onArrive = PassthroughSubject<Sidecar, Never>()
+        private let _onArrive = PassthroughSubject<Sidecar?, Never>()
         
-        var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
+        var onArrive: AnyPublisher<Sidecar?, Never> { _onArrive.eraseToAnyPublisher() }
         
-        func setOnArrive(_ sidecar: Sidecar) { _onArrive.send(sidecar) }
+        func setOnArrive(_ sidecar: Sidecar?) { _onArrive.send(sidecar) }
         
         private var _state: String?
-        
-        var polanchor: UUID?
         
         var poltask: Task<Void, Never>?
         
@@ -61,6 +59,7 @@ extension Synchronizer {
         
         func pause() async throws {
             observe(false)
+            pausepol()
         }
         
         func sidecar() async throws -> Sidecar {
@@ -81,7 +80,6 @@ extension Synchronizer {
                 try await self.upload(path: Constant.documentPath, data: document, accessToken: token)
                 try await self.upload(path: Constant.sidecarPath, data: try JSONEncoder().encode(sidecar), accessToken: token)
             }
-            polanchor = sidecar.uid
         }
         
         func onPollError(_ error: Error) {

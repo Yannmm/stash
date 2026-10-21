@@ -20,9 +20,9 @@ extension Synchronizer {
         
         private let _strayError = PassthroughSubject<(String, Error)?, Never>()
         
-        var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
+        var onArrive: AnyPublisher<Sidecar?, Never> { _onArrive.eraseToAnyPublisher() }
         
-        private let _onArrive = PassthroughSubject<Sidecar, Never>()
+        private let _onArrive = PassthroughSubject<Sidecar?, Never>()
         
         private let monitor = AiCloudContainerMonitor(filename: FileName.sidecar)
         
