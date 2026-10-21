@@ -21,15 +21,15 @@ fileprivate extension Synchronizer.DropboxProvider {
 extension Synchronizer {
     final class DropboxProvider: RemoteProvider, Polling {
         
+        var readiness: AnyPublisher<Result<any ProviderReadiness, Error>, Never> { _authentication.eraseToReadinessPublisher() }
+        
+        private let _authentication = CurrentValueSubject<Result<AuthStatus, Error>, Never>(.success(.initializing("Dropbox")))
+        
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
         
         func setOnArrive(_ sidecar: Sidecar) { _onArrive.send(sidecar) }
         
         private let _onArrive = PassthroughSubject<Sidecar, Never>()
-        
-        var authentication: AnyPublisher<Result<AuthStatus, Error>, Never> { _authentication.eraseToAnyPublisher() }
-        
-        private let _authentication = CurrentValueSubject<Result<AuthStatus, Error>, Never>(.success(.initializing("Dropbox")))
         
         private var _sdkInitialized = false
         
@@ -37,9 +37,23 @@ extension Synchronizer {
         
         var poltask: Task<Void, Never>?
         
+        private var accountName: String?
+        
         private var cancellables = Set<AnyCancellable>()
         
         // MARK: - Protocol
+        
+        func prepare() async throws {
+            observe(true)
+            guard !_sdkInitialized else { return }
+            _sdkInitialized = true
+            DropboxClientsManager.setupWithAppKeyDesktop("y6ijm2p3vqr7kt8")
+            await checkAuth()
+        }
+        
+        func pause() async throws {
+            observe(false)
+        }
         
         func sidecar() async throws -> Sidecar {
             let data = try await download(path: Constant.sidecarPath)
@@ -58,18 +72,6 @@ extension Synchronizer {
             polanchor = sidecar.uid
         }
         
-        func prepare() async throws {
-            observe(true)
-            guard !_sdkInitialized else { return }
-            _sdkInitialized = true
-            DropboxClientsManager.setupWithAppKeyDesktop("y6ijm2p3vqr7kt8")
-            await checkAuth()
-        }
-        
-        func pause() async throws {
-            observe(false)
-        }
-        
         func onPollError(_ error: Error) {
             // TODO: send to an error stream? to indicate something?
         }
@@ -78,7 +80,8 @@ extension Synchronizer {
         
         private func checkAuth() async {
             do {
-                if let client = DropboxClientsManager.authorizedClient, let name = try await _getAccount(client) {
+                if let client = DropboxClientsManager.authorizedClient {
+                    let name = try await _getAccount(client)
                     _authentication.send(.success(AuthStatus.ready(name, { [weak self] _ in self?.logout() })))
                     startpol()
                 } else {
@@ -161,8 +164,11 @@ extension Synchronizer {
             }
         }
         
-        private func _getAccount(_ client: DropboxClient) async throws -> String? {
-            return try await withCheckedThrowingContinuation { continuation in
+        private func _getAccount(_ client: DropboxClient) async throws -> String {
+            if let name = accountName {
+                return name
+            }
+            let result = try await withCheckedThrowingContinuation { continuation in
                 let request = client.users.getCurrentAccount()
                 request.response { [weak self, request] account, error in
                     _ = request // Keep the request alive until its response arrives.
@@ -179,6 +185,10 @@ extension Synchronizer {
                     }
                 }
             }
+            
+            accountName = result
+            
+            return result
         }
         
         private func handleError<T>(
@@ -227,6 +237,7 @@ extension Synchronizer {
         }
         
         private func logout() {
+            accountName = nil
             DropboxClientsManager.unlinkClients()
             pausepol()
             Task {

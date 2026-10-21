@@ -17,8 +17,13 @@ extension Synchronizer {
         case unauthenticated // for remote provider only?
         case api(Error) // for remote provider only?
         
-        case malformatString(String)
+        case malformedHtml(String)
         case corruptData(Data)
+        
+        case ubiquityContainerInaccessible
+        
+        case malformedCallbackUrl(URL)
+        case tokenExchangeFailure(String?)
         
         
         var errorDescription: String? {

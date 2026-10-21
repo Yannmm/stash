@@ -5,14 +5,80 @@
 //  Created by Yan Meng on 2026/8/23.
 //
 
+import Combine
 import Foundation
 import SwiftUI
 
 extension Synchronizer {
-    enum AuthStatus {
+    protocol ProviderReadiness: Descriptor {
+        var ready: Bool { get }
+    }
+}
+
+extension Publisher where Failure == Never {
+    /// Erases a subject's concrete readiness type so providers can expose it
+    /// as the `RemoteProvider.readiness` existential stream.
+    func eraseToReadinessPublisher<Readiness: Synchronizer.ProviderReadiness>()
+        -> AnyPublisher<Result<any Synchronizer.ProviderReadiness, Error>, Never>
+        where Output == Result<Readiness, Error> {
+        map { result in
+            result.map { $0 as any Synchronizer.ProviderReadiness }
+        }
+        .eraseToAnyPublisher()
+    }
+}
+
+extension Synchronizer {
+    enum UbiquityContainerReachability: ProviderReadiness {
+        
+        case yes
+        case indetermined
+        
+        func describe() -> AttributedString {
+            switch self {
+            case .yes:
+                var attr = AttributedString("iCloud is ready.")
+                attr.foregroundColor = .secondary
+                if let range = attr.range(of: "iCloud") {
+                    attr[range].foregroundColor = .primary
+                }
+                return attr
+            case .indetermined:
+                var attr = AttributedString("iCloud accessbility not determined yet.")
+                if let range = attr.range(of: "iCloud") {
+                    attr[range].foregroundColor = .primary
+                }
+                return attr
+            }
+        }
+        
+        var ready: Bool {
+            switch self {
+            case .yes:
+                return true
+            case .indetermined:
+                return false
+            }
+        }
+    }
+}
+
+extension Synchronizer {
+    enum AuthStatus: ProviderReadiness {
         case anonymous((String) -> Void)
         case ready(String?, (String) -> Void)
         case initializing(String)
+        
+        var ready: Bool {
+            switch self {
+            case .ready(_, _):
+                return true
+            case .anonymous(_):
+                fallthrough
+            case .initializing(_):
+                return false
+            }
+        }
     }
 }
 

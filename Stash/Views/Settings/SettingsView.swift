@@ -99,24 +99,27 @@ struct SettingsView: View {
                         ForEach([
                             Synchronizer.Option.local,
                             Synchronizer.Option.dropbox,
-                            Synchronizer.Option.baidupan
+                            //                            Synchronizer.Option.baidupan
                         ]) { approach in
                             Text(synchronizerApproachDescription(approach))
                                 .tag(approach)
                         }
                     }
-                    Text(viewModel.availability.describe())
-                        .environment(\.openURL, OpenURLAction { url in
-                            if (url.absoluteString.contains("logout")) {
-                                alert = .logout(synchronizerApproachDescription(viewModel.synchronizerApproach), {
-                                    viewModel.availability.action(url.absoluteString)
-                                })
-                            } else {
-                                viewModel.availability.action(url.absoluteString)
-                            }
-                            
-                            return .handled
-                        })
+                    if let desc = viewModel.synchronizerDescription {
+                        Text(desc)
+                            .environment(\.openURL, OpenURLAction { url in
+                                if (url.absoluteString.contains("logout")) {
+                                    alert = .logout(synchronizerApproachDescription(viewModel.synchronizerApproach), {
+                                        //                                    viewModel.availability.action(url.absoluteString)
+                                        print("action here")
+                                    })
+                                } else {
+                                    //                                viewModel.availability.action(url.absoluteString)
+                                }
+                                
+                                return .handled
+                            })
+                    }
                 }
             }
             

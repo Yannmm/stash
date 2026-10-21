@@ -17,7 +17,7 @@ class Synchronizer {
         _approach.send(value)
     }
         
-    private let _remoteAuthentication = PassthroughSubject<Result<AuthStatus, Error>?, Never>()
+    private let _readiness = PassthroughSubject<Result<ProviderReadiness, Error>?, Never>()
     
     private let _error = CurrentValueSubject<(String, Error)?, Never>(nil)
     
@@ -71,40 +71,33 @@ class Synchronizer {
                 Task {
                     try? await oldProvider?.pause()
                     try? await newProvider?.prepare()
+//                    这里要 handle
                 }
             }
             .store(in: &cancellables)
         
-        // Remote provider auth change
         _approach
-            .map { key -> AnyPublisher<Result<AuthStatus, Error>?, Never> in
-                guard let authentication = self.remoteProviders[key]?.authentication else {
-                    return Just<Result<AuthStatus, Error>?>(nil).eraseToAnyPublisher()
+            .map { key -> AnyPublisher<Result<any ProviderReadiness, Error>?, Never> in
+                guard let readiness = self.remoteProviders[key]?.readiness else {
+                    return Just<Result<any ProviderReadiness, Error>?>(nil).eraseToAnyPublisher()
                 }
-                return authentication
+                return readiness
                     .map { Optional($0) }
                     .eraseToAnyPublisher()
             }
             .switchToLatest()
             .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .sink { x in
-                self._remoteAuthentication.send(x)
+                self._readiness.send(x)
             }
             .store(in: &cancellables)
         
-        _remoteAuthentication
+        _readiness
             .filter { result in
                 guard let r = result else { return false }
                 switch r {
-                case .success(let status):
-                    switch status {
-                    case .ready(_, _):
-                        return true
-                    case .anonymous(_):
-                        fallthrough
-                    case .initializing(_):
-                        return false
-                    }
+                case .success(let r):
+                    return r.ready
                 case .failure(_):
                     return false
                 }
@@ -138,24 +131,24 @@ class Synchronizer {
             }
             .store(in: &cancellables)
         
-        Publishers.CombineLatest(_remoteAuthentication, _error)
+        Publishers.CombineLatest(_readiness, _error)
             .map { t2 in
-                var result = AttributedString()
-                if let auth = t2.0 {
-                    switch auth {
+                var attr = AttributedString()
+                if let result = t2.0 {
+                    switch result {
                     case .success(let status):
-                        result += status.describe()
+                        attr += status.describe()
                     case .failure(let error):
-                        result += AttributedString(error.localizedDescription)
+                        attr += AttributedString(error.localizedDescription)
                     }
                 }
                 
                 if let error = t2.1 {
-                    result += AttributedString("\n")
-                    result += AttributedString(error.0) + AttributedString(error.1.localizedDescription)
+                    attr += AttributedString("\n")
+                    attr += AttributedString(error.0) + AttributedString(error.1.localizedDescription)
                 }
-                if result.characters.count > 0 {
-                    return result
+                if attr.characters.count > 0 {
+                    return attr
                 } else {
                     return nil
                 }
@@ -224,12 +217,6 @@ class Synchronizer {
         
         guard let remote = remote else { return }
         do {
-            let flag = await remote.authentication.values.first(where: { _ in true })
-            guard case .success(.ready) = flag else {
-                // remote not available
-                return
-            }
-            
             let sidecar1 = try await _localSidecar()
             let sidecar2 = try await _remoteSidecar(remote)
             
@@ -299,8 +286,6 @@ class Synchronizer {
             return try await remote.sidecar()
         } catch SyncError.fileNotFound {
             return nil
-        } catch Synchronizer.BaiduPanProvider.SomeError.fileNotFound {
-            return nil
         } catch {
             throw error
         }
@@ -310,8 +295,6 @@ class Synchronizer {
         do {
             return try await remote.document()
         } catch SyncError.fileNotFound {
-            return nil
-        } catch Synchronizer.BaiduPanProvider.SomeError.fileNotFound {
             return nil
         } catch {
             throw error

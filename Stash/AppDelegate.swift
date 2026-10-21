@@ -31,6 +31,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     
     private var updateChecker: UpdateChecker { UpdateChecker.shared }
     
+    private var networkMonitor: NetworkMonitor { NetworkMonitor.shared }
+    
     private var cancellables = Set<AnyCancellable>()
     
     private var outlineViewHeight: CGFloat?
@@ -44,8 +46,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let localProvider = Synchronizer.OnPremiseProvider()
         let remoteProviders: [Synchronizer.Option: any Synchronizer.RemoteProvider] = [
             .dropbox: Synchronizer.DropboxProvider(),
-            .icloud: Synchronizer.AiCloudProvider(),
-            .baidupan: Synchronizer.BaiduPanProvider(),
+//            .icloud: Synchronizer.AiCloudProvider(),
+//            .baidupan: Synchronizer.BaiduPanProvider(),
         ]
         let synchronizer = Synchronizer(
             approach: savedApproach,
@@ -71,9 +73,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 synchronizer.setApproach(approach)
             })
         
-        synchronizer.availability.sink { availability in
+        synchronizer.description.sink { attr in
             Task { @MainActor in
-                svm.availability = availability
+                svm.synchronizerDescription = attr
             }
         }.store(in: &cancellables)
         
@@ -95,6 +97,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         initialize()
         
         Task {
+            NetworkMonitor.shared.start()
             try? await updateChecker.check()
         }
     }

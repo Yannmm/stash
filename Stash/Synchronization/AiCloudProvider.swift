@@ -10,31 +10,29 @@ import Combine
 
 extension Synchronizer {
     final class AiCloudProvider: RemoteProvider {
-        private let _onArrive = PassthroughSubject<Sidecar, Never>()
-        var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
-        
-        var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
-        private let _availability = CurrentValueSubject<Availability, Never>(.no(InitialPendingState(name: "iCloud")))
-        
-        private let monitor = AiCloudContainerMonitor(filename: FileName.sidecar)
-        private var monitorHandle: AnyCancellable?
-        
-        init() {}
-        
-        deinit {
-            stopMonitor()
+        var readiness: AnyPublisher<Result<any ProviderReadiness, Error>, Never> {
+            _reachability.eraseToReadinessPublisher()
         }
         
+        private let _reachability = CurrentValueSubject<Result<UbiquityContainerReachability, Error>, Never>(.success(.indetermined))
+        
+        var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
+        
+        private let _onArrive = PassthroughSubject<Sidecar, Never>()
+        
+        private let monitor = AiCloudContainerMonitor(filename: FileName.sidecar)
+        
+        private var monitorHandle: AnyCancellable?
+        
         // MARK: - Protocol
-        func checkAvailability() async {
-            let available = await withCheckedContinuation { continuation in
+        func checkAvailable() async {
+            let flag = await withCheckedContinuation { continuation in
                 DispatchQueue.global(qos: .utility).async {
                     let url = FileManager.default.url(forUbiquityContainerIdentifier: nil)
                     continuation.resume(returning: url != nil)
                 }
             }
-            let a: Availability = available ? .yes(raedyMessage) : .no(SomeError.unsupported)
-            _availability.send(a)
+            _reachability.send(flag ? .success(.yes) : .failure(SyncError.ubiquityContainerInaccessible))
         }
         
         func sidecar() async throws -> Sidecar {
@@ -54,11 +52,12 @@ extension Synchronizer {
         
         func prepare() async throws {
             startMonitor()
-            await checkAvailability()
+            await checkAvailable()
         }
         
         func pause() async throws {
             stopMonitor()
+            await checkAvailable()
         }
         
         // MARK: - Monitor
@@ -90,8 +89,7 @@ extension Synchronizer {
         
         private func containerDocumentsURL() throws -> URL {
             guard let container = FileManager.default.url(forUbiquityContainerIdentifier: nil) else {
-                _availability.send(.no(SomeError.unsupported))
-                throw SomeError.unsupported
+                throw SyncError.ubiquityContainerInaccessible
             }
             let documents = container.appendingPathComponent("Documents")
             if !FileManager.default.fileExists(atPath: documents.path) {
@@ -107,33 +105,9 @@ extension Synchronizer {
         private func sidecarUrl() throws -> URL {
             try containerDocumentsURL().appendingPathComponent(FileName.sidecar)
         }
-    }
-}
-
-extension Synchronizer.AiCloudProvider {
-    enum SomeError: Error, Synchronizer.Descriptor {
-        case unsupported
-        case corruptData(Error)
         
-        func describe() -> AttributedString {
-            var attr: AttributedString!
-            switch self {
-            case .unsupported:
-                attr = AttributedString("iCloud is not available.")
-            case .corruptData(let error):
-                attr = AttributedString(error.localizedDescription)
-            }
-            attr.foregroundColor = .systemRed
-            return attr
+        deinit {
+            stopMonitor()
         }
     }
-    
-    var raedyMessage: AttributedString {
-        var attr = AttributedString("iCloud is ready.")
-        attr.foregroundColor = .secondary
-        return attr
-    }
 }
-
-
-

@@ -26,7 +26,7 @@ extension Synchronizer {
     protocol RemoteProvider: Provider {
         func send(document: Data, sidecar: Sidecar) async throws
         
-        var authentication: AnyPublisher<Result<AuthStatus, Error>, Never> { get }
+        var readiness: AnyPublisher<Result<any ProviderReadiness, Error>, Never> { get }
     }
     
     protocol LocalProvider: Provider {
