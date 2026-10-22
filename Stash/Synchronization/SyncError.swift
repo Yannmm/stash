@@ -31,7 +31,8 @@ extension Synchronizer {
             case .api(let error):
                 return error.localizedDescription
             default:
-                return self.localizedDescription
+                // `localizedDescription` would call back into `errorDescription` and recurse forever
+                return String(describing: self)
             }
         }
     }

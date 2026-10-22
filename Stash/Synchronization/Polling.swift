@@ -11,7 +11,7 @@ extension Synchronizer {
     protocol Polling: AnyObject {
         var poltask: Task<Void, Never>? { get set }
         
-        var polinterval: Int { get }
+        var polinterval: Duration { get }
         
         func startpol()
         
@@ -28,7 +28,7 @@ extension Synchronizer {
 }
 
 extension Synchronizer.Polling {
-    var polinterval: Int { 10 }
+    var polinterval: Duration { .seconds(10) }
     
     func startpol() {
         guard poltask == nil else { return }
@@ -44,8 +44,7 @@ extension Synchronizer.Polling {
                     onPollError(error)
                 }
                 // Back off on consecutive failures, capped at 32x interval
-                let delay = polinterval * (1 << min(failures, 5))
-                try? await Task.sleep(for: .seconds(delay))
+                try? await Task.sleep(for: polinterval * (1 << min(failures, 5)))
             }
         }
     }

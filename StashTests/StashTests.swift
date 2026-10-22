@@ -6,7 +6,7 @@
 //
 
 import Testing
-@testable import Stash
+@testable import Nustash
 
 struct StashTests {
 

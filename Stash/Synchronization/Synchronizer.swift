@@ -8,6 +8,11 @@
 import Foundation
 import Combine
 
+/// Keeps the local document in sync with the selected remote provider.
+///
+/// Local is the hub: edits are written locally first, then pushed. `reconcile(provider:remote:)` decides
+/// push vs. pull by sidecar uid, then timestamp (last writer wins). It runs on readiness, on every remote
+/// poll tick / change, and all sync work is serialized through `lane`. See `docs/synchronization.md`.
 class Synchronizer {
     let _approach: CurrentValueSubject<Option, Never>!
     
@@ -37,7 +42,7 @@ class Synchronizer {
     
     private let local: LocalProvider
     
-    private let history = History()
+    private let history: History
     
     private let lane = Lane()
     
@@ -46,7 +51,8 @@ class Synchronizer {
         return providers[a] as? (any RemoteProvider)
     }
     
-    init(approach: Option, remoteProviders: [Option: any RemoteProvider], localProvider: LocalProvider) {
+    init(approach: Option, remoteProviders: [Option: any RemoteProvider], localProvider: LocalProvider, history: History = History()) {
+        self.history = history
         self._approach = CurrentValueSubject<Option, Never>(approach)
         self.remoteProviders = remoteProviders
         self.providers = remoteProviders.mapValues { $0 as any Provider }
