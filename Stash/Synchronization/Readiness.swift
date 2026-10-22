@@ -45,6 +45,7 @@ extension Synchronizer {
                 return attr
             case .indetermined:
                 var attr = AttributedString("iCloud accessbility not determined yet.")
+                attr.foregroundColor = .secondary
                 if let range = attr.range(of: "iCloud") {
                     attr[range].foregroundColor = .primary
                 }

@@ -21,7 +21,7 @@ class Synchronizer {
     func setApproach(_ value: Option) {
         _approach.send(value)
     }
-        
+    
     private let _readiness = PassthroughSubject<Result<ProviderReadiness, Error>?, Never>()
     
     private let _error = CurrentValueSubject<(String, Error)?, Never>(nil)
@@ -180,13 +180,16 @@ class Synchronizer {
                     case .success(let status):
                         attr += status.describe()
                     case .failure(let error):
-                        attr += AttributedString(error.localizedDescription)
+                        var eAttr = AttributedString(error.localizedDescription)
+                        eAttr.foregroundColor = .secondary
+                        attr += AttributedString("🚫 \(self._approach.value.description) is not ready due to error: ") + eAttr
                     }
                 }
-                
                 if let error = t2.1 {
-                    attr += AttributedString("\n")
-                    attr += AttributedString(error.0) + AttributedString(error.1.localizedDescription)
+                    var eAttr = AttributedString("\n\n⚠️ An erro happened while \(error.0):\n")
+                    eAttr += AttributedString(error.1.localizedDescription)
+                    eAttr.foregroundColor = .secondary
+                    attr += eAttr
                 }
                 if attr.characters.count > 0 {
                     return attr
@@ -344,5 +347,14 @@ extension Synchronizer {
         case icloud
         case dropbox
         case baidupan
+        
+        var description: String {
+            switch self {
+            case .local: return "Local"
+            case .icloud: return "iCloud"
+            case .dropbox: return "Dropbox"
+            case .baidupan: return "BaiduPan"
+            }
+        }
     }
 }

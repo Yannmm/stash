@@ -51,15 +51,6 @@ struct SettingsView: View {
         return String(path.lastPathComponent.split(separator: ".")[0])
     }
     
-    private func synchronizerApproachDescription(_ approach: Synchronizer.Option) -> String {
-        switch approach {
-        case .local: return "Local"
-        case .icloud: return "iCloud"
-        case .dropbox: return "Dropbox"
-        case .baidupan: return "BaiduPan"
-        }
-    }
-    
     var body: some View {
         Form {
             Section("General") {
@@ -101,7 +92,7 @@ struct SettingsView: View {
                             Synchronizer.Option.dropbox,
                             //                            Synchronizer.Option.baidupan
                         ]) { approach in
-                            Text(synchronizerApproachDescription(approach))
+                            Text(viewModel.synchronizerApproach.description)
                                 .tag(approach)
                         }
                     }
@@ -109,7 +100,7 @@ struct SettingsView: View {
                         Text(desc)
                             .environment(\.openURL, OpenURLAction { url in
                                 if (url.absoluteString.contains("logout")) {
-                                    alert = .logout(synchronizerApproachDescription(viewModel.synchronizerApproach), {
+                                    alert = .logout(viewModel.synchronizerApproach.description, {
                                         //                                    viewModel.availability.action(url.absoluteString)
                                         print("action here")
                                     })
