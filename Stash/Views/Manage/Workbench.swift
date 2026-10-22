@@ -13,7 +13,7 @@ import UniformTypeIdentifiers
 extension ManageView {
     struct Workbench: View {
         @StateObject var viewModel: WorkbenchViewModel
-        @State private var selection: UUID?
+        @State private var selection: WorkbenchViewModel.Row?
         
         var body: some View {
             Sheet(selection: $selection)
@@ -25,7 +25,7 @@ extension ManageView {
                             bookmarkCount: viewModel.bookmarkCount,
                             hashtags: viewModel.hashtags,
                             hashtagFilter: $viewModel.hashtagFilter,
-                            parentId: viewModel.wrapper.selection,
+                            parentId: (selection?.expandable ?? false) ? selection!.id : viewModel.wrapper.selection,
                             onAddBookmark: {},
                             onAddGroup: {})
                 }
@@ -61,7 +61,7 @@ struct RowFrameKey: PreferenceKey {
 fileprivate extension ManageView.Workbench {
     private struct Sheet: View {
         @EnvironmentObject var viewModel: WorkbenchViewModel
-        @Binding var selection: UUID?
+        @Binding var selection: WorkbenchViewModel.Row?
         @State private var drag: WorkbenchViewModel.Row?
         @State private var width1: CGFloat = Constant.initialWidth1
         @State private var width2: CGFloat = Constant.initialWidth2
@@ -169,22 +169,21 @@ fileprivate extension ManageView.Workbench {
                             }
                         }
                         .onChange(of: selection) { _, newValue in
-                            guard let id = newValue else {
+                            guard let row = newValue else {
                                 focusedRow = nil
                                 focused = true
                                 return
                             }
-                            focusedRow = id
+                            focusedRow = row.id
                             focused = false
                             DispatchQueue.main.async {
                                 withAnimation(.easeInOut(duration: 0.12)) {
-                                    let ids = viewModel.rows.map(\.id)
-                                    if id == ids.first {
+                                    if row == viewModel.rows.first {
                                         sproxy.scrollTo(ScrollTarget.headerId, anchor: .top)
-                                    } else if id == ids.last {
-                                        sproxy.scrollTo(id, anchor: .bottom)
+                                    } else if row == viewModel.rows.last {
+                                        sproxy.scrollTo(row.id, anchor: .bottom)
                                     } else {
-                                        sproxy.scrollTo(id)
+                                        sproxy.scrollTo(row.id)
                                     }
                                 }
                             }
@@ -268,34 +267,31 @@ fileprivate extension ManageView.Workbench {
         }
         
         private func navigate(_ direction: MoveCommandDirection) {
-            let ids = viewModel.rows.map(\.id)
-            guard !ids.isEmpty else { return }
+            guard !viewModel.rows.isEmpty else { return }
             
-            let currentIndex = selection.flatMap { id in
-                ids.firstIndex(of: id)
-            }
+            let currentIndex = viewModel.rows.firstIndex(where: { $0 == selection })
             
             let newIndex: Int
             switch direction {
             case .down:
                 if let i = currentIndex {
-                    newIndex = (i + 1) % ids.count
+                    newIndex = (i + 1) % viewModel.rows.count
                 } else {
                     newIndex = 0
                 }
             case .up:
                 if let i = currentIndex {
-                    newIndex = (i - 1 + ids.count) % ids.count
+                    newIndex = (i - 1 + viewModel.rows.count) % viewModel.rows.count
                 } else {
-                    newIndex = ids.count - 1
+                    newIndex = viewModel.rows.count - 1
                 }
             default:
                 return
             }
             
-            let newId = ids[newIndex]
-            if selection != newId {
-                selection = newId
+            let newRow = viewModel.rows[newIndex]
+            if selection != newRow {
+                selection = newRow
             }
         }
     }
@@ -353,7 +349,7 @@ fileprivate extension ManageView.Workbench {
     struct Row: View {
         let index: Int
         let row: WorkbenchViewModel.Row
-        @Binding var selection: UUID?
+        @Binding var selection: WorkbenchViewModel.Row?
         @Binding var drag: WorkbenchViewModel.Row?
         let focused: FocusState<UUID?>.Binding
         let width1: CGFloat
@@ -514,7 +510,7 @@ fileprivate extension ManageView.Workbench {
                 }
             }
             .onTapGesture {
-                selection = row.id
+                selection = row
                 focused.wrappedValue = row.id
             }
             .contextMenu {
@@ -534,7 +530,7 @@ fileprivate extension ManageView.Workbench {
                     }
                 }
                 Button("Edit") {
-                    selection = row.id
+                    selection = row
                     presentEditor = true
                 }
                 Divider()
@@ -551,7 +547,7 @@ fileprivate extension ManageView.Workbench {
                 presentContextMenu = false
             }
             .onChange(of: presentEditor) { _, isPresented in
-                guard !isPresented, selection == row.id else { return }
+                guard !isPresented, selection == row else { return }
                 // When the popover is dismissed (e.g. Esc), restore keyboard focus
                 // so arrow-key navigation continues to work.
                 focused.wrappedValue = nil
@@ -567,7 +563,7 @@ fileprivate extension ManageView.Workbench {
                 }
             }
             .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
-                if selection == row.id {
+                if selection == row {
                     focused.wrappedValue = nil
                     DispatchQueue.main.async {
                         focused.wrappedValue = row.id
@@ -620,7 +616,7 @@ fileprivate extension ManageView.Workbench {
         }
         
         private var backgroundColor: Color {
-            if selection == row.id {
+            if selection == row {
                 if dragTarget != nil {
                     return Color(nsColor: .unemphasizedSelectedContentBackgroundColor).opacity(0.8)
                 }
@@ -631,14 +627,14 @@ fileprivate extension ManageView.Workbench {
         }
         
         private var contextBorderColor1: Color {
-            if selection == row.id {
+            if selection == row {
                 return Color.clear
             }
             return Color.accentColor
         }
         
         private var contextBorderColor2: Color {
-            if selection == row.id {
+            if selection == row {
                 return Color.white
             }
             return Color.accentColor

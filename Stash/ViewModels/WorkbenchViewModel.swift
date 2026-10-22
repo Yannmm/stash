@@ -268,7 +268,7 @@ extension WorkbenchViewModel {
 }
 
 extension WorkbenchViewModel {
-    struct Row: LeveledIdentifiable {
+    struct Row: LeveledIdentifiable, Equatable {
         let id: UUID
         let icon: Icon
         let title: String
@@ -283,6 +283,10 @@ extension WorkbenchViewModel {
         let entryType: EntryType
         
         var level: Int { trail.count }
+        
+        static func == (lhs: Row, rhs: Row) -> Bool {
+            lhs.id == rhs.id
+        }
     }
 }
 
