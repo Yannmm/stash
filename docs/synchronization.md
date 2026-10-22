@@ -164,7 +164,19 @@ lane.enqueue(droppable: true) { … }  // poll tick: skipped if another droppabl
 
 `Synchronizer.description` combines the active provider's readiness description with the latest error
 (`_error`). Errors come from `save`, `load`, `reconcile`, provider rotation, and the provider's
-`strayError` (poll / monitor failures). The error is cleared when the approach changes.
+`strayError` (poll / monitor failures). The error is cleared when the user retries, when the approach changes,
+or when a poll tick / remote change reconciles successfully (sync has recovered). A failing tick keeps it,
+so persistent errors stay visible with the retry link; a network change alone does not clear it.
+
+### Retry
+
+When a remote approach has an error or a failed readiness, the description ends with a `retry://sync`
+link, which calls `Synchronizer.retry()`. Retry clears `_error` and runs `pause()` + `prepare()` on the
+current remote provider. This re-checks readiness, restarts polling with its backoff reset, and once ready
+triggers a reconcile through the readiness path. Because reconcile is state-based, this one action
+recovers a failed push (including a `save` push), pull, compare, rotation, readiness check or poll. It does
+not help with a failed local write in `save` (the next edit saves again) or with corrupt data in `load`.
+If `pause`/`prepare` throws, the error is shown under the `retry <approach>` context.
 
 ## Known limitations
 

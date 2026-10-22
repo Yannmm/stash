@@ -621,6 +621,119 @@ struct SyncErrorTests {
     }
 }
 
+// MARK: - Retry
+
+@Suite("Manual retry")
+struct RetryTests {
+
+    @Test func errorOffersRetryLink() async {
+        let h = SyncHarness()
+        h.local.seed(makeSidecar(20), "local")
+        h.remote.sendError.value = FakeError(message: "offline")
+        h.remote.tick(nil)
+        #expect(await eventually { h.hasError(containing: "offline") })
+        #expect(h.hasError(containing: "Retry"))
+    }
+
+    @Test func noRetryLinkWithoutError() async {
+        let h = SyncHarness(ready: true)
+        await h.settle(.milliseconds(800))
+        #expect(!h.hasError(containing: "Retry"))
+    }
+
+    @Test func retryRestartsProviderAndPushes() async {
+        let h = SyncHarness()
+        let l = makeSidecar(20)
+        h.local.seed(l, "local")
+        h.remote.sendError.value = FakeError(message: "offline")
+        h.remote.tick(nil)
+        #expect(await eventually { h.hasError(containing: "offline") })
+
+        h.remote.sendError.value = nil
+        h.remote.readyOnPrepare.value = true
+        h.sync.retry()
+        #expect(await eventually { h.remote.storedSidecar.value == l })
+        let ops = h.log.all
+        #expect(ops.lastIndex(of: "dropbox.pause")! < ops.lastIndex(of: "dropbox.prepare")!)
+        #expect(await eventually { h.descriptions.value.last.map { !$0.contains("offline") } ?? false })
+    }
+
+    @Test func retryRecoversFromReadinessFailure() async {
+        let h = SyncHarness()
+        let l = makeSidecar(20)
+        h.local.seed(l, "local")
+        h.remote.setNotReady(FakeError(message: "unreachable"))
+        #expect(await eventually { h.hasError(containing: "unreachable") })
+        #expect(h.hasError(containing: "Retry"))
+
+        h.remote.readyOnPrepare.value = true
+        h.sync.retry()
+        #expect(await eventually { h.remote.storedSidecar.value == l })
+    }
+
+    @Test func retryClearsStrayError() async {
+        let h = SyncHarness()
+        h.remote.strayError("dropbox poll", FakeError(message: "timeout"))
+        #expect(await eventually { h.hasError(containing: "timeout") })
+
+        h.sync.retry()
+        #expect(await eventually { h.descriptions.value.last.map { !$0.contains("timeout") } ?? false })
+    }
+
+    @Test func retryFailureSurfacesError() async {
+        let h = SyncHarness()
+        h.remote.prepareError.value = FakeError(message: "still down")
+        h.sync.retry()
+        #expect(await eventually { h.hasError(containing: "retry dropbox") })
+        #expect(h.hasError(containing: "still down"))
+    }
+
+    @Test func healthyTickClearsStrayError() async {
+        let h = SyncHarness()
+        h.remote.strayError("dropbox poll", FakeError(message: "timeout"))
+        #expect(await eventually { h.hasError(containing: "timeout") })
+
+        h.remote.tick(nil)
+        #expect(await eventually { h.descriptions.value.last.map { !$0.contains("timeout") } ?? false })
+    }
+
+    @Test func healthyTickClearsRecoveredPushError() async {
+        let h = SyncHarness()
+        let l = makeSidecar(20)
+        h.local.seed(l, "local")
+        h.remote.sendError.value = FakeError(message: "offline")
+        h.remote.tick(nil)
+        #expect(await eventually { h.hasError(containing: "offline") })
+
+        h.remote.sendError.value = nil
+        h.remote.tick(nil)
+        #expect(await eventually { h.remote.storedSidecar.value == l })
+        #expect(await eventually { h.descriptions.value.last.map { !$0.contains("offline") } ?? false })
+    }
+
+    @Test func failingTickKeepsError() async {
+        let h = SyncHarness()
+        h.local.seed(makeSidecar(20), "local")
+        h.remote.sendError.value = FakeError(message: "quota exceeded")
+        h.remote.tick(nil)
+        #expect(await eventually { h.hasError(containing: "quota exceeded") })
+        let n = h.descriptions.value.count
+
+        h.remote.tick(nil)
+        #expect(await eventually { h.log.all.filter { $0 == "dropbox.sendFailed" }.count == 2 })
+        await h.settle()
+        // Never cleared in between, so no flicker
+        #expect(h.descriptions.value.dropFirst(n - 1).allSatisfy { $0.contains("quota exceeded") })
+    }
+
+    @Test func retryOnLocalIsNoop() async {
+        let h = SyncHarness(approach: .local)
+        h.sync.retry()
+        await h.settle()
+        #expect(!h.log.all.contains("dropbox.pause"))
+    }
+}
+
 // MARK: - Two devices
 
 @Suite("Two devices sharing a remote")

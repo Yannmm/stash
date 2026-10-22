@@ -99,7 +99,9 @@ struct SettingsView: View {
                     if let desc = viewModel.synchronizerDescription {
                         Text(desc)
                             .environment(\.openURL, OpenURLAction { url in
-                                if (url.absoluteString.contains("logout")) {
+                                if url.scheme == "retry" {
+                                    viewModel.retrySync()
+                                } else if (url.absoluteString.contains("logout")) {
                                     alert = .logout(viewModel.synchronizerApproach.description, {
                                         //                                    viewModel.availability.action(url.absoluteString)
                                         print("action here")

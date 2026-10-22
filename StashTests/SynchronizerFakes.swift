@@ -106,6 +106,9 @@ final class FakeRemote: Synchronizer.RemoteProvider, @unchecked Sendable {
     let sidecarError = Locked<Error?>(nil)
     let documentError = Locked<Error?>(nil)
     let sendError = Locked<Error?>(nil)
+    let prepareError = Locked<Error?>(nil)
+    /// When set, `prepare()` re-emits readiness like real providers re-checking auth.
+    let readyOnPrepare = Locked<Bool?>(nil)
     var documentGate: Gate?
 
     private let _readiness: CurrentValueSubject<Result<any Synchronizer.ProviderReadiness, Error>, Never>
@@ -130,6 +133,20 @@ final class FakeRemote: Synchronizer.RemoteProvider, @unchecked Sendable {
     func tick(_ sidecar: Sidecar?) { _onArrive.send(sidecar) }
 
     func setReady(_ flag: Bool) { _readiness.send(.success(FakeReadiness(ready: flag))) }
+
+    func setNotReady(_ error: Error) { _readiness.send(.failure(error)) }
+
+    func strayError(_ context: String, _ error: Error) { _strayError.send((context, error)) }
+
+    func prepare() async throws {
+        log.record("\(name).prepare")
+        if let e = prepareError.value { throw e }
+        if let flag = readyOnPrepare.value { setReady(flag) }
+    }
+
+    func pause() async throws {
+        log.record("\(name).pause")
+    }
 
     func seed(_ sidecar: Sidecar?, _ document: String?) {
         storedSidecar.value = sidecar

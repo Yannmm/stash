@@ -7,6 +7,7 @@
 
 import Foundation
 import Combine
+import SwiftUI
 
 /// Keeps the local document in sync with the selected remote provider.
 ///
@@ -149,6 +150,7 @@ class Synchronizer {
         
         
         _approach
+            .removeDuplicates()
             .map { [weak self] option -> AnyPublisher<(any RemoteProvider, Sidecar?), Never> in
                 guard let p = self?.remoteProviders[option] else {
                     return Empty().eraseToAnyPublisher()
@@ -160,7 +162,10 @@ class Synchronizer {
                 guard let self else { return }
                 // Drop ticks while a reconcile is pending, the next tick retries
                 self.lane.enqueue(droppable: true) {
-                    await self.reconcile(provider: provider, remote: remoteSidecar)
+                    // A healthy tick means sync has recovered, so drop the stale error
+                    if await self.reconcile(provider: provider, remote: remoteSidecar), self._error.value != nil {
+                        self._error.send(nil)
+                    }
                 }
             }
             .store(in: &cancellables)
@@ -175,11 +180,13 @@ class Synchronizer {
         Publishers.CombineLatest(_readiness, _error)
             .map { t2 in
                 var attr = AttributedString()
+                var failed = t2.1 != nil
                 if let result = t2.0 {
                     switch result {
                     case .success(let status):
                         attr += status.describe()
                     case .failure(let error):
+                        failed = true
                         var eAttr = AttributedString(error.localizedDescription)
                         eAttr.foregroundColor = .secondary
                         attr += AttributedString("🚫 \(self._approach.value.description) is not ready due to error: ") + eAttr
@@ -190,6 +197,12 @@ class Synchronizer {
                     eAttr += AttributedString(error.1.localizedDescription)
                     eAttr.foregroundColor = .secondary
                     attr += eAttr
+                }
+                if failed, self.remote != nil {
+                    var rAttr = AttributedString(" Retry")
+                    rAttr.foregroundColor = Color(nsColor: .linkColor)
+                    rAttr.link = URL(string: "retry://sync")
+                    attr += rAttr
                 }
                 if attr.characters.count > 0 {
                     return attr
@@ -227,6 +240,20 @@ class Synchronizer {
         }
     }
     
+    /// Restarts the current remote provider: re-checks readiness, which triggers a fresh reconcile when ready.
+    func retry() {
+        guard let r = remote else { return }
+        _error.send(nil)
+        Task {
+            do {
+                try await r.pause()
+                try await r.prepare()
+            } catch {
+                _error.send(("retry \(_approach.value.rawValue)", error))
+            }
+        }
+    }
+    
     func load() async -> String? {
         do {
             guard let document = try await _localDocument() else {
@@ -245,7 +272,9 @@ class Synchronizer {
     // MARK: - Private
     
     /// Reconciles local with `remoteSidecar` of `provider` by timestamp, last writer wins.
-    private func reconcile(provider: any RemoteProvider, remote remoteSidecar: Sidecar?) async {
+    /// Returns false if it failed, the error is already reported.
+    @discardableResult
+    private func reconcile(provider: any RemoteProvider, remote remoteSidecar: Sidecar?) async -> Bool {
         let name = _approach.value.rawValue
         
         func _push(sidecar: Sidecar) async throws {
@@ -287,8 +316,10 @@ class Synchronizer {
                     try await _pull(sidecar: r)
                 }
             }
+            return true
         } catch {
             _error.send(("reconcile", error))
+            return false
         }
     }
     

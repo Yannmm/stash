@@ -71,6 +71,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             },
             onApproachChange: { approach in
                 synchronizer.setApproach(approach)
+            },
+            onRetrySync: {
+                synchronizer.retry()
             })
         
         synchronizer.description.sink { attr in

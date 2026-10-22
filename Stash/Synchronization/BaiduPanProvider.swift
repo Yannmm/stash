@@ -118,7 +118,6 @@ extension Synchronizer {
                 NetworkMonitor.shared.onChange.sink { [weak self] in
                     Task {
                         await self?.checkAuth()
-                        self?._strayError.send(nil)
                     }
                 }
                 .store(in: &cancellables)
