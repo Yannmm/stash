@@ -26,54 +26,40 @@ fileprivate extension Synchronizer.BaiduPanProvider {
 extension Synchronizer {
     final class BaiduPanProvider: RemoteProvider, Polling {
         
-        private let _onArrive = PassthroughSubject<Sidecar, Never>()
+        var readiness: AnyPublisher<Result<any ProviderReadiness, Error>, Never> { _authentication.eraseToReadinessPublisher() }
         
-        var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
+        private let _authentication = CurrentValueSubject<Result<AuthStatus, Error>, Never>(.success(.initializing("Baidu Pan")))
         
-        func setOnArrive(_ sidecar: Sidecar) { _onArrive.send(sidecar) }
+        var strayError: AnyPublisher<(String, Error)?, Never> { _strayError.eraseToAnyPublisher() }
+                
+        private let _strayError = PassthroughSubject<(String, Error)?, Never>()
         
-        var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
+        private let _onArrive = PassthroughSubject<Sidecar?, Never>()
         
-        private let _availability = CurrentValueSubject<Availability, Never>(.no(InitialPendingState(name: "BaiduPan")))
+        var onArrive: AnyPublisher<Sidecar?, Never> { _onArrive.eraseToAnyPublisher() }
+        
+        func setOnArrive(_ sidecar: Sidecar?) { _onArrive.send(sidecar) }
         
         private var _state: String?
-        
-        var polanchor: UUID?
         
         var poltask: Task<Void, Never>?
         
         private var _refreshTask: Task<Token, Error>?
         
-        private var cancellables = Set<AnyCancellable>()
+        private var accountName: String?
         
-        init() {
-            NotificationCenter.default.publisher(for: .onUrlEvent)
-                .compactMap { $0.object as? URL }
-                .filter { $0.host == "oauth" && $0.pathComponents.contains("baidupan") }
-                .sink { [weak self] url in
-                    Task { await self?.handleOAuthCallback(url: url) }
-                }
-                .store(in: &cancellables)
-        }
+        private var cancellables = Set<AnyCancellable>()
         
         // MARK: - Protocol
         
         func prepare() async throws {
-            await checkAvailability()
+            observe(true)
+            await checkAuth()
         }
         
-        private func checkAvailability() async {
-            if let token = Keychain.load() {
-                let name = await getAccountName(accessToken: token.accessToken)
-                _availability.send(.yes(AuthStatus.ready(name, { [weak self] _ in
-                    self?.logout()
-                })))
-                startpol()
-            } else {
-                _availability.send(.no(AuthStatus.anonymous({ [weak self] _ in
-                    self?.authenticate()
-                })))
-            }
+        func pause() async throws {
+            observe(false)
+            pausepol()
         }
         
         func sidecar() async throws -> Sidecar {
@@ -94,7 +80,48 @@ extension Synchronizer {
                 try await self.upload(path: Constant.documentPath, data: document, accessToken: token)
                 try await self.upload(path: Constant.sidecarPath, data: try JSONEncoder().encode(sidecar), accessToken: token)
             }
-            polanchor = sidecar.uid
+        }
+        
+        func onPollError(_ error: Error) {
+            _strayError.send(("baidupan poll", error))
+        }
+        
+        // MARK: - Helpers
+        
+        private func checkAuth() async {
+            do {
+                if let token = Keychain.load() {
+                    let name = try await _getAccount(accessToken: token.accessToken)
+                    _authentication.send(.success(AuthStatus.ready(name, { [weak self] _ in self?.logout() })))
+                    startpol()
+                } else {
+                    _authentication.send(.success(AuthStatus.anonymous({ [weak self] _ in self?.authenticate() })))
+                }
+            } catch {
+                _authentication.send(.failure(error))
+            }
+        }
+        
+        private func observe(_ flag: Bool) {
+            cancellables.forEach({ $0.cancel() })
+            cancellables.removeAll()
+            if flag {
+                // Observe
+                NotificationCenter.default.publisher(for: .onUrlEvent)
+                    .compactMap { $0.object as? URL }
+                    .filter { $0.host == "oauth" && $0.pathComponents.contains("baidupan") }
+                    .sink { [weak self] url in
+                        self?.handleAuth(url: url)
+                    }
+                    .store(in: &cancellables)
+                
+                NetworkMonitor.shared.onChange.sink { [weak self] in
+                    Task {
+                        await self?.checkAuth()
+                    }
+                }
+                .store(in: &cancellables)
+            }
         }
         
         // MARK: - OAuth
@@ -113,32 +140,27 @@ extension Synchronizer {
             NSWorkspace.shared.open(components.url!)
         }
         
-        private func handleOAuthCallback(url: URL) async {
+        private func handleAuth(url: URL) {
             guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
                   let code = components.queryItems?.first(where: { $0.name == "code" })?.value,
                   let state = components.queryItems?.first(where: { $0.name == "state" })?.value,
                   state == _state else {
-                _availability.send(.no(AuthStatus.error(SomeError.authFailed, { [weak self] _ in
-                    self?.authenticate()
-                })))
+                _authentication.send(.failure(SyncError.malformedCallbackUrl(url)))
                 return
             }
             _state = nil
             
-            do {
-                let token = try await exchangeCode(code)
-                try Keychain.save(token)
-                let name = await getAccountName(accessToken: token.accessToken)
-                _availability.send(.yes(AuthStatus.ready(name, { [weak self] _ in
-                    self?.logout()
-                })))
-                startpol()
-            } catch {
-                _availability.send(.no(AuthStatus.error(error, { [weak self] _ in
-                    self?.authenticate()
-                })))
+            Task { [weak self] in
+                guard let this = self else { return }
+                do {
+                    let token = try await this.exchangeCode(code)
+                    try Keychain.save(token)
+                    await this.checkAuth()
+                    await NSApp.activate(ignoringOtherApps: true)
+                } catch {
+                    this._authentication.send(.failure(error))
+                }
             }
-            await NSApp.activate()
         }
         
         private func exchangeCode(_ code: String) async throws -> Token {
@@ -155,7 +177,7 @@ extension Synchronizer {
             let (data, _) = try await URLSession.shared.data(for: request)
             let resp = try JSONDecoder().decode(TokenResponse.self, from: data)
             guard let access = resp.access_token, let refresh = resp.refresh_token else {
-                throw SomeError.tokenExchangeFailed(resp.error_description ?? "Exchange token failed")
+                throw SyncError.tokenExchangeFailure(resp.error_description)
             }
             return Token(accessToken: access, refreshToken: refresh)
         }
@@ -164,10 +186,7 @@ extension Synchronizer {
         
         private func getAccessToken() async throws -> String {
             guard let token = Keychain.load() else {
-                _availability.send(.no(AuthStatus.anonymous({ [weak self] _ in
-                    self?.authenticate()
-                })))
-                throw SomeError.unauthenticated
+                throw SyncError.unauthenticated
             }
             return token.accessToken
         }
@@ -178,7 +197,7 @@ extension Synchronizer {
             }
             let task = Task<Token, Error> {
                 defer { _refreshTask = nil }
-                guard let current = Keychain.load() else { throw SomeError.unauthenticated }
+                guard let current = Keychain.load() else { throw SyncError.unauthenticated }
                 var components = URLComponents(string: Constant.tokenUrl)!
                 components.queryItems = [
                     URLQueryItem(name: "grant_type", value: "refresh_token"),
@@ -191,7 +210,7 @@ extension Synchronizer {
                 let (data, _) = try await URLSession.shared.data(for: request)
                 let resp = try JSONDecoder().decode(TokenResponse.self, from: data)
                 guard let access = resp.access_token, let refresh = resp.refresh_token else {
-                    throw SomeError.tokenExchangeFailed(resp.error_description ?? "unknown")
+                    throw SyncError.tokenExchangeFailure(resp.error_description)
                 }
                 let newToken = Token(accessToken: access, refreshToken: refresh)
                 try Keychain.save(newToken)
@@ -206,7 +225,7 @@ extension Synchronizer {
             let token = try await getAccessToken()
             do {
                 return try await work(token)
-            } catch SomeError.tokenExpired {
+            } catch SyncError.tokenExpired {
                 let refreshed = try await refreshAccessToken()
                 return try await work(refreshed.accessToken)
             }
@@ -214,8 +233,8 @@ extension Synchronizer {
         
         private func _checkErrno(_ errno: Int?) throws {
             guard let errno, errno != 0 else { return }
-            if errno == 111 || errno == -6 { throw SomeError.tokenExpired }
-            throw SomeError.api("API error: errno=\(errno)")
+            if errno == 111 || errno == -6 { throw SyncError.tokenExpired }
+            throw SyncError.api("API error: errno=\(errno)")
         }
         
         // MARK: - File Operations
@@ -232,7 +251,7 @@ extension Synchronizer {
             let (metaData, _) = try await URLSession.shared.data(from: components.url!)
             let meta = try JSONDecoder().decode(FileMetasResponse.self, from: metaData)
             try _checkErrno(meta.errno)
-            guard let dlink = meta.list?.first?.dlink else { throw SomeError.fileNotFound(path) }
+            guard let dlink = meta.list?.first?.dlink else { throw SyncError.fileNotFound(path) }
             
             // Step 2: download using dlink
             var dlURL = URLComponents(string: dlink)!
@@ -241,7 +260,7 @@ extension Synchronizer {
             request.setValue("pan.baidu.com", forHTTPHeaderField: "User-Agent")
             let (data, response) = try await URLSession.shared.data(for: request)
             if let http = response as? HTTPURLResponse, http.statusCode != 200 {
-                throw SomeError.api("Download failed: \(http.statusCode)")
+                throw SyncError.api("Download failed: \(http.statusCode)")
             }
             return data
         }
@@ -258,7 +277,7 @@ extension Synchronizer {
             try _checkErrno(resp.errno)
             let fileName = (path as NSString).lastPathComponent
             guard let file = resp.list?.first(where: { $0.server_filename == fileName }) else {
-                throw SomeError.fileNotFound(path)
+                throw SyncError.fileNotFound(path)
             }
             return file.fs_id
         }
@@ -311,7 +330,7 @@ extension Synchronizer {
                 let statusCode = (preResponse as? HTTPURLResponse)?.statusCode ?? -1
                 let responseBody = String(data: preData, encoding: .utf8) ?? ""
                 
-                throw SomeError.api(
+                throw SyncError.api(
                     "Precreate HTTP error: \(statusCode), \(responseBody)"
                 )
             }
@@ -324,7 +343,7 @@ extension Synchronizer {
             try _checkErrno(preResp.errno)
             
             guard let uploadId = preResp.uploadid else {
-                throw SomeError.api(
+                throw SyncError.api(
                     "Precreate failed: \(String(data: preData, encoding: .utf8) ?? "")"
                 )
             }
@@ -345,7 +364,7 @@ extension Synchronizer {
             ]
             
             guard let uploadURL = uploadComponents.url else {
-                throw SomeError.api("Failed to construct upload URL")
+                throw SyncError.api("Failed to construct upload URL")
             }
             
             let boundary = "Boundary-\(UUID().uuidString)"
@@ -390,7 +409,7 @@ extension Synchronizer {
                 let statusCode = (uploadResponse as? HTTPURLResponse)?.statusCode ?? -1
                 let responseBody = String(data: uploadData, encoding: .utf8) ?? ""
                 
-                throw SomeError.api(
+                throw SyncError.api(
                     "Upload slice HTTP error: \(statusCode), \(responseBody)"
                 )
             }
@@ -442,7 +461,7 @@ extension Synchronizer {
                 let statusCode = (createResponse as? HTTPURLResponse)?.statusCode ?? -1
                 let responseBody = String(data: createData, encoding: .utf8) ?? ""
                 
-                throw SomeError.api(
+                throw SyncError.api(
                     "Create HTTP error: \(statusCode), \(responseBody)"
                 )
             }
@@ -455,75 +474,19 @@ extension Synchronizer {
             try _checkErrno(createResp.errno)
         }
         
-        //        private func upload(path: String, data: Data, accessToken: String) async throws {
-        //            // Step 1: precreate
-        //            let blockList = "[\"\(data.md5Hex)\"]"
-        //            var preBody = URLComponents()
-        //            preBody.queryItems = [
-        //                URLQueryItem(name: "path", value: path),
-        //                URLQueryItem(name: "size", value: "\(data.count)"),
-        //                URLQueryItem(name: "isdir", value: "0"),
-        //                URLQueryItem(name: "autoinit", value: "1"),
-        //                URLQueryItem(name: "block_list", value: blockList),
-        //            ]
-        //
-        //            var preReq = URLRequest(url: URL(string: "https://pan.baidu.com/rest/2.0/xpan/file?method=precreate&access_token=\(accessToken)")!)
-        //            preReq.httpMethod = "POST"
-        //            preReq.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        //            preReq.httpBody = preBody.query?.data(using: .utf8)
-        //            let (preData, _) = try await URLSession.shared.data(for: preReq)
-        //            let preResp = try JSONDecoder().decode(PrecreateResponse.self, from: preData)
-        //            try _checkErrno(preResp.errno)
-        //            guard let uploadId = preResp.uploadid else {
-        //                throw SomeError.api("Precreate failed: \(String(data: preData, encoding: .utf8) ?? "")")
-        //            }
-        //
-        //            // Step 2: upload single slice
-        //            let boundary = UUID().uuidString
-        //            var uploadReq = URLRequest(url: URL(string: "https://d.pcs.baidu.com/rest/2.0/pcs/superfile2?method=upload&access_token=\(accessToken)&type=tmpfile&path=\(path.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed)!)&uploadid=\(uploadId)&partseq=0")!)
-        //            uploadReq.httpMethod = "POST"
-        //            uploadReq.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
-        //            var body = Data()
-        //            body.append("--\(boundary)\r\nContent-Disposition: form-data; name=\"file\"; filename=\"chunk\"\r\nContent-Type: application/octet-stream\r\n\r\n".data(using: .utf8)!)
-        //            body.append(data)
-        //            body.append("\r\n--\(boundary)--\r\n".data(using: .utf8)!)
-        //            uploadReq.httpBody = body
-        //            let (_, uploadResp) = try await URLSession.shared.data(for: uploadReq)
-        //            if let http = uploadResp as? HTTPURLResponse, http.statusCode != 200 {
-        //                throw SomeError.api("Upload slice failed: \(http.statusCode)")
-        //            }
-        //
-        //            // Step 3: create (combine)
-        //            var createBody = URLComponents()
-        //            createBody.queryItems = [
-        //                URLQueryItem(name: "path", value: path),
-        //                URLQueryItem(name: "size", value: "\(data.count)"),
-        //                URLQueryItem(name: "isdir", value: "0"),
-        //                URLQueryItem(name: "uploadid", value: uploadId),
-        //                URLQueryItem(name: "block_list", value: blockList),
-        //            ]
-        //            var createReq = URLRequest(url: URL(string: "https://pan.baidu.com/rest/2.0/xpan/file?method=create&access_token=\(accessToken)")!)
-        //            createReq.httpMethod = "POST"
-        //            createReq.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        //            createReq.httpBody = createBody.query?.data(using: .utf8)
-        //            let (createData, _) = try await URLSession.shared.data(for: createReq)
-        //            let createResp = try JSONDecoder().decode(CreateResponse.self, from: createData)
-        //            try _checkErrno(createResp.errno)
-        //        }
-        
         // MARK: - Helpers
         
-        private func getAccountName(accessToken: String) async -> String? {
+        private func _getAccount(accessToken: String) async throws -> String? {
             var components = URLComponents(string: "https://pan.baidu.com/rest/2.0/xpan/nas")!
             components.queryItems = [
                 URLQueryItem(name: "method", value: "uinfo"),
                 URLQueryItem(name: "access_token", value: accessToken),
             ]
-            guard let url = components.url,
-                  let (data, _) = try? await URLSession.shared.data(from: url),
-                  let resp = try? JSONDecoder().decode(UserInfoResponse.self, from: data) else {
+            guard let url = components.url else {
                 return nil
             }
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let resp = try JSONDecoder().decode(UserInfoResponse.self, from: data)
             let name1 = resp.netdisk_name ?? ""
             let name2 = resp.baidu_name
             return name1.isEmpty ? name2 : name1
@@ -532,7 +495,7 @@ extension Synchronizer {
         func logout() {
             Keychain.delete()
             pausepol()
-            Task { await checkAvailability() }
+            Task { await checkAuth() }
         }
         
         deinit {
@@ -588,36 +551,36 @@ extension Synchronizer.BaiduPanProvider {
 
 // MARK: - Errors
 
-extension Synchronizer.BaiduPanProvider {
-    enum SomeError: Error, CustomStringConvertible {
-        case fileNotFound(String)
-        case unauthenticated
-        case authFailed
-        case tokenExpired
-        case tokenExchangeFailed(String)
-        case api(Error)
-        
-        var description: String {
-            switch self {
-            case .api(let error):
-                return error.localizedDescription
-                
-            case .unauthenticated:
-                return "Unauthenticated"
-                
-            case .tokenExpired:
-                return "Token expired"
-                
-            case .fileNotFound(let path):
-                return "File not found: \(path)"
-            case .authFailed:
-                return "Auth failed, please try again."
-            case .tokenExchangeFailed(let msg):
-                return msg
-            }
-        }
-    }
-}
+//extension Synchronizer.BaiduPanProvider {
+//    enum SomeError: Error, CustomStringConvertible {
+//        case fileNotFound(String)
+//        case unauthenticated
+//        case authFailed
+//        case tokenExpired
+//        case tokenExchangeFailed(String)
+//        case api(Error)
+//        
+//        var description: String {
+//            switch self {
+//            case .api(let error):
+//                return error.localizedDescription
+//                
+//            case .unauthenticated:
+//                return "Unauthenticated"
+//                
+//            case .tokenExpired:
+//                return "Token expired"
+//                
+//            case .fileNotFound(let path):
+//                return "File not found: \(path)"
+//            case .authFailed:
+//                return "Auth failed, please try again."
+//            case .tokenExchangeFailed(let msg):
+//                return msg
+//            }
+//        }
+//    }
+//}
 
 // MARK: - Data MD5
 

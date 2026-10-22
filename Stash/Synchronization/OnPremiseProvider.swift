@@ -3,13 +3,9 @@ import Combine
 
 extension Synchronizer {
     final class OnPremiseProvider: LocalProvider {
-        private let _onArrive = PassthroughSubject<Sidecar, Never>()
-        
         var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
         
-        var availability: AnyPublisher<Availability, Never> { Just(.yes(message)).eraseToAnyPublisher() }
-        
-        func getAvailability() async -> Availability { .yes(message) }
+        private let _onArrive = PassthroughSubject<Sidecar, Never>()
         
         private let directory: URL
         
@@ -17,24 +13,16 @@ extension Synchronizer {
             let fmgr = FileManager.default
             let support = fmgr.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
             directory = support.appendingPathComponent("Stash", isDirectory: true)
-            do {
-                if !fmgr.fileExists(atPath: directory.path) {
-                    try fmgr.createDirectory(at: directory, withIntermediateDirectories: true)
-                }
-            } catch {
-                ErrorTracker.shared.add(error)
+        }
+                
+        // MARK: - Protocol conformance
+        
+        func prepare() async throws {
+            let fmgr = FileManager.default
+            if !fmgr.fileExists(atPath: directory.path) {
+                try fmgr.createDirectory(at: directory, withIntermediateDirectories: true)
             }
         }
-        
-        private var documentURL: URL {
-            directory.appendingPathComponent(FileName.document)
-        }
-        
-        private var sidecarUrl: URL {
-            directory.appendingPathComponent(FileName.sidecar)
-        }
-        
-        // MARK: - Protocol conformance
         
         func sidecar() async throws -> Sidecar {
             try _sidecar()
@@ -51,17 +39,26 @@ extension Synchronizer {
             _onArrive.send(sidecar)
         }
         
-        // MARK: - Non-protocol
         @discardableResult
         func write(html: String) throws -> Sidecar {
             guard let data1 = html.data(using: .utf8) else {
-                throw SomeError.corruptData(html)
+                throw SyncError.malformedHtml(html)
             }
             try data1.write(to: documentURL, options: .atomic)
             let sidecar = Sidecar.stamp()
             let data2 = try JSONEncoder().encode(sidecar)
             try data2.write(to: sidecarUrl, options: .atomic)
             return sidecar
+        }
+        
+        // MARK: - Helper
+        
+        private var documentURL: URL {
+            directory.appendingPathComponent(FileName.document)
+        }
+        
+        private var sidecarUrl: URL {
+            directory.appendingPathComponent(FileName.sidecar)
         }
         
         private func _sidecar() throws -> Sidecar {
@@ -72,7 +69,7 @@ extension Synchronizer {
                 where error.domain == NSCocoaErrorDomain &&
                         (error.code == NSFileNoSuchFileError ||
                          error.code == NSFileReadNoSuchFileError) {
-                throw SomeError.fileNotFound(sidecarUrl)
+                throw SyncError.fileNotFound(sidecarUrl.absoluteString)
             } catch {
                 throw error
             }
@@ -84,23 +81,10 @@ extension Synchronizer {
             } catch let error as NSError
                 where error.domain == NSCocoaErrorDomain &&
                       error.code == NSFileNoSuchFileError {
-                throw SomeError.fileNotFound(sidecarUrl)
+                throw SyncError.fileNotFound(sidecarUrl.absoluteString)
             } catch {
                 throw error
             }
         }
-        
-        private var message: AttributedString {
-            var attr = AttributedString("Select other approach to synchronize across devices.")
-            attr.foregroundColor = .secondary
-            return attr
-        }
-    }
-}
-
-extension Synchronizer.OnPremiseProvider {
-    enum SomeError: Error {
-        case fileNotFound(URL)
-        case corruptData(String)
     }
 }

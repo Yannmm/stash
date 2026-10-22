@@ -20,76 +20,110 @@ fileprivate extension Synchronizer.DropboxProvider {
 
 extension Synchronizer {
     final class DropboxProvider: RemoteProvider, Polling {
-        private let _onArrive = PassthroughSubject<Sidecar, Never>()
         
-        var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
+        var readiness: AnyPublisher<Result<any ProviderReadiness, Error>, Never> { _authentication.eraseToReadinessPublisher() }
         
-        func setOnArrive(_ sidecar: Sidecar) { _onArrive.send(sidecar) }
+        private let _authentication = CurrentValueSubject<Result<AuthStatus, Error>, Never>(.success(.initializing("Dropbox")))
         
-        private var cancellables = Set<AnyCancellable>()
+        var strayError: AnyPublisher<(String, Error)?, Never> { _strayError.eraseToAnyPublisher() }
         
-        var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
+        private let _strayError = PassthroughSubject<(String, Error)?, Never>()
         
-        private let _availability = CurrentValueSubject<Availability, Never>(.no(InitialPendingState(name: "Dropbox")))
+        var onArrive: AnyPublisher<Sidecar?, Never> { _onArrive.eraseToAnyPublisher() }
+        
+        func setOnArrive(_ sidecar: Sidecar?) { _onArrive.send(sidecar) }
+        
+        private let _onArrive = PassthroughSubject<Sidecar?, Never>()
         
         private var _sdkInitialized = false
         
-        var polanchor: UUID?
-        
         var poltask: Task<Void, Never>?
         
-        init() {
-            NotificationCenter.default.publisher(for: .onUrlEvent)
-                .compactMap { $0.object as? URL }
-                .filter { $0.scheme?.starts(with: "db-") == true }
-                .sink { [weak self] url in
-                    self?.handleRedirectURL(url)
-                }
-                .store(in: &cancellables)
-        }
+        private var accountName: String?
+        
+        private var cancellables = Set<AnyCancellable>()
         
         // MARK: - Protocol
-        private func checkAvailability() async {
-            var a: Availability!
-            if signedIn {
-                let name = await getAccount()
-                a = .yes(AuthStatus.ready(name, { [weak self] _ in self?.logout() }))
-                startpol()
-            } else {
-                a = .no(AuthStatus.anonymous({ [weak self] _ in
-                    self?.authenticate()
-                }))
+        
+        func prepare() async throws {
+            observe(true)
+            if !_sdkInitialized {
+                _sdkInitialized = true
+                DropboxClientsManager.setupWithAppKeyDesktop("y6ijm2p3vqr7kt8")
             }
-            _availability.send(a)
+            // Re-check on every prepare so polling restarts after pause
+            await checkAuth()
+        }
+        
+        func pause() async throws {
+            observe(false)
+            pausepol()
         }
         
         func sidecar() async throws -> Sidecar {
-            let data = try await download(client: try getClient(), path: Constant.sidecarPath)
+            let data = try await download(path: Constant.sidecarPath)
             return try JSONDecoder().decode(Sidecar.self, from: data)
         }
         
         func document() async throws -> Data {
-            return try await download(client: try getClient(), path: Constant.documentPath)
+            return try await download(path: Constant.documentPath)
         }
         
         func send(document: Data, sidecar: Sidecar) async throws {
-            let client = try getClient()
             // Upload document
-            try await upload(client: client, path: Constant.documentPath, data: document)
+            try await upload(path: Constant.documentPath, data: document)
             // Upload sidecar and update cached hash
-            try await upload(client: client, path: Constant.sidecarPath, data: try JSONEncoder().encode(sidecar))
-            polanchor = sidecar.uid
+            try await upload(path: Constant.sidecarPath, data: try JSONEncoder().encode(sidecar))
         }
         
-        func prepare() async throws {
-            guard !_sdkInitialized else { return }
-            _sdkInitialized = true
-            DropboxClientsManager.setupWithAppKeyDesktop("y6ijm2p3vqr7kt8")
-            await checkAvailability()
+        func onPollError(_ error: Error) {
+            _strayError.send(("dropbox poll", error))
         }
         
-        private func download(client: DropboxClient, path: String) async throws -> Data {
-            try await withCheckedThrowingContinuation { continuation in
+        // MARK: - Helpers
+        
+        private func checkAuth() async {
+            do {
+                if let client = DropboxClientsManager.authorizedClient {
+                    let name = try await _getAccount(client)
+                    _authentication.send(.success(AuthStatus.ready(name, { [weak self] _ in self?.logout() })))
+                    startpol()
+                } else {
+                    _authentication.send(.success(AuthStatus.anonymous({ [weak self] _ in self?.authenticate() })))
+                }
+            } catch {
+                _authentication.send(.failure(error))
+            }
+        }
+        
+        private func observe(_ flag: Bool) {
+            cancellables.forEach({ $0.cancel() })
+            cancellables.removeAll()
+            if flag {
+                // Observe
+                NotificationCenter.default.publisher(for: .onUrlEvent)
+                    .compactMap { $0.object as? URL }
+                    .filter { $0.scheme?.starts(with: "db-") == true }
+                    .sink { [weak self] url in
+                        self?.handleAuth(url)
+                    }
+                    .store(in: &cancellables)
+                
+                NetworkMonitor.shared.onChange.sink { [weak self] in
+                    Task {
+                        await self?.checkAuth()
+                    }
+                }
+                .store(in: &cancellables)
+            }
+        }
+        
+        private func download(path: String) async throws -> Data {
+            guard let client = DropboxClientsManager.authorizedClient else {
+                throw SyncError.unauthenticated
+            }
+            
+            return try await withCheckedThrowingContinuation { continuation in
                 let request = client.files.download(path: path)
                 request.response { [weak self] response, error in
                     _ = request
@@ -104,25 +138,21 @@ extension Synchronizer {
                                       return false
                                   }
                               }) {
-                        continuation.resume(with: .failure(someError))
+                        continuation.resume(throwing: someError)
                     } else {
-                        continuation.resume(with: .failure(SomeError.api("Unknown download error")))
+                        continuation.resume(throwing: SyncError.unexpected("Something unexpected happended while downloading file at \"\(path)\"."))
                     }
                 }
             }
         }
         
-        private func getClient() throws -> DropboxClient {
-            guard let client = DropboxClientsManager.authorizedClient else {
-                _availability.send(.no(AuthStatus.anonymous({ [weak self] _ in self?.authenticate() })))
-                throw SomeError.unauthenticated
-            }
-            return client
-        }
-        
         @discardableResult
-        private func upload(client: DropboxClient, path: String, data: Data) async throws -> Files.FileMetadata {
-            try await withCheckedThrowingContinuation { continuation in
+        private func upload(path: String, data: Data) async throws -> Files.FileMetadata {
+            guard let client = DropboxClientsManager.authorizedClient else {
+                throw SyncError.unauthenticated
+            }
+            
+            return try await withCheckedThrowingContinuation { continuation in
                 let request = client.files.upload(path: path, mode: .overwrite, input: data)
                 request.response { [weak self] metadata, error in
                     _ = request
@@ -130,105 +160,47 @@ extension Synchronizer {
                         continuation.resume(returning: metadata)
                     } else if let error,
                               let someError = self?.handleError(error, path: path, isFileNotFound: nil) {
-                        continuation.resume(with: .failure(someError))
+                        continuation.resume(throwing: someError)
                     } else {
-                        continuation.resume(with: .failure(SomeError.api("Unknown upload error")))
+                        continuation.resume(throwing: SyncError.unexpected("Something unexpected happended while uploading file to \"\(path)\"."))
                     }
                 }
             }
         }
         
-        // MARK: - OAuth
-        
-        private func handleRedirectURL(_ url: URL) {
-            let oauthCompletion: DropboxOAuthCompletion = { [weak self] in
-                if let authResult = $0 {
-                    switch authResult {
-                    case .success:
-                        self?.startpol()
-                        Task {
-                            let name = await self?.getAccount()
-                            self?._availability.send(.yes(AuthStatus.ready(name, { [weak self] _ in self?.logout() })))
-                        }
-                    case .cancel:
-                        self?._availability.send(.no(AuthStatus.anonymous({ [weak self] _ in
-                            self?.authenticate()
-                        })))
-                    case .error(let error, _):
-                        self?._availability.send(.no(AuthStatus.error(error, { [weak self] _ in
-                            self?.authenticate()
-                        })))
-                    }
-                }
+        private func _getAccount(_ client: DropboxClient) async throws -> String {
+            if let name = accountName {
+                return name
             }
-            DropboxClientsManager.handleRedirectURL(url, includeBackgroundClient: false, completion: oauthCompletion)
-            NSApp.activate(ignoringOtherApps: true)
-        }
-        
-        // MARK: - Helpers
-        
-        var signedIn: Bool {
-            DropboxClientsManager.authorizedClient != nil
-        }
-        
-        func getAccount() async -> String? {
-            guard let client = DropboxClientsManager.authorizedClient else { return nil }
-            return await withCheckedContinuation { continuation in
+            let result = try await withCheckedThrowingContinuation { continuation in
                 let request = client.users.getCurrentAccount()
-                request.response { [weak self] account, error in
-                    _ = request
+                request.response { [weak self, request] account, error in
+                    _ = request // Keep the request alive until its response arrives.
                     if let account {
                         continuation.resume(returning: account.name.displayName)
-                    } else if let error,
-                              let _ = self?.handleError(error, path: nil, isFileNotFound: nil) {
-                        continuation.resume(returning: nil)
+                    } else if let error, let someError = self?.handleError(
+                        error,
+                        path: nil,
+                        isFileNotFound: nil
+                    ) {
+                        continuation.resume(throwing: someError)
                     } else {
-                        continuation.resume(returning: nil)
+                        continuation.resume(throwing: SyncError.unexpected("Something unexpected happened while getting Dropbox user account."))
                     }
                 }
             }
-        }
-        
-        func authenticate() {
-            let scope = ScopeRequest(
-                scopeType: .user,
-                scopes: ["account_info.read", "files.content.read", "files.content.write", "files.metadata.read"],
-                includeGrantedScopes: false
-            )
-            DropboxClientsManager.authorizeFromControllerV2(
-                sharedApplication: NSApplication.shared,
-                controller: nil,
-                loadingStatusDelegate: nil,
-                openURL: {(url: URL) -> Void in NSWorkspace.shared.open(url)},
-                scopeRequest: scope
-            )
-        }
-        
-        func logout() {
-            DropboxClientsManager.unlinkClients()
-            pausepol()
-            Task {
-                await checkAvailability()
-            }
-        }
-        
-        func poll() async {
-            do {
-                let sidecar = try await sidecar()
-                guard let a = polanchor, sidecar.uid != a else { return }
-                polanchor = sidecar.uid
-                setOnArrive(sidecar)
-            } catch {
-                print("[DropboxProvider] poll failed: \(error)")
-            }
+            
+            accountName = result
+            
+            return result
         }
         
         private func handleError<T>(
             _ error: CallError<T>,
             path: String?,
             isFileNotFound: ((T) -> Bool)?
-        ) -> SomeError {
-            let someError: SomeError
+        ) -> SyncError {
+            let someError: SyncError
             
             switch error {
             case .authError, .accessError:
@@ -250,45 +222,55 @@ extension Synchronizer {
             default:
                 someError = .api(error)
             }
-            
-            if case .tokenExpired = someError {
-                logout()
-            } else {
-                _availability.send(.no(AuthStatus.error(error, { [weak self] _ in
-                    self?.authenticate()
-                })))
-            }
-            
             return someError
+        }
+        
+        private func authenticate() {
+            let scope = ScopeRequest(
+                scopeType: .user,
+                scopes: ["account_info.read", "files.content.read", "files.content.write", "files.metadata.read"],
+                includeGrantedScopes: false
+            )
+            DropboxClientsManager.authorizeFromControllerV2(
+                sharedApplication: NSApplication.shared,
+                controller: nil,
+                loadingStatusDelegate: nil,
+                openURL: {(url: URL) -> Void in NSWorkspace.shared.open(url)},
+                scopeRequest: scope
+            )
+        }
+        
+        private func logout() {
+            accountName = nil
+            DropboxClientsManager.unlinkClients()
+            pausepol()
+            Task {
+                await checkAuth()
+            }
+        }
+        
+        private func handleAuth(_ url: URL) {
+            let oauthCompletion: DropboxOAuthCompletion = { [weak self] in
+                if let authResult = $0 {
+                    switch authResult {
+                    case .success:
+                        Task {
+                            await self?.checkAuth()
+                        }
+                    case .cancel:
+                        self?._authentication.send(.success(.anonymous({ _ in self?.authenticate() })))
+                    case .error(let error, _):
+                        self?._authentication.send(.failure(error))
+                    }
+                }
+            }
+            let flag = DropboxClientsManager.handleRedirectURL(url, includeBackgroundClient: false, completion: oauthCompletion)
+            guard flag else { return }
+            NSApp.activate(ignoringOtherApps: true)
         }
         
         deinit {
             pausepol()
-        }
-    }
-}
-
-extension Synchronizer.DropboxProvider {
-    enum SomeError: Error, CustomStringConvertible {
-        case api(Error)
-        case unauthenticated
-        case tokenExpired
-        case fileNotFound(String)
-        
-        var description: String {
-            switch self {
-            case .api(let error):
-                return error.localizedDescription
-                
-            case .unauthenticated:
-                return "Unauthenticated"
-                
-            case .tokenExpired:
-                return "Token expired"
-                
-            case .fileNotFound(let path):
-                return "File not found: \(path)"
-            }
         }
     }
 }

@@ -11,24 +11,30 @@ extension Synchronizer {
         private let fileURL: URL
         private let cap = 100
         private let queue = DispatchQueue(label: "com.stash.sync-history")
-        private(set) var entries: [Entry] = []
+        private var _entries: [Entry] = []
 
-        init() {
-            let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
-            let dir = support.appendingPathComponent("Stash", isDirectory: true)
-            if !FileManager.default.fileExists(atPath: dir.path) {
-                try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        var entries: [Entry] { queue.sync { _entries } }
+
+        init(fileURL: URL? = nil) {
+            if let fileURL {
+                self.fileURL = fileURL
+            } else {
+                let support = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+                let dir = support.appendingPathComponent("Stash", isDirectory: true)
+                if !FileManager.default.fileExists(atPath: dir.path) {
+                    try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+                }
+                self.fileURL = dir.appendingPathComponent("sync_history.json")
             }
-            fileURL = dir.appendingPathComponent("sync_history.json")
             queue.sync { load() }
         }
 
         func log(action: String, sidecar: Sidecar) {
             queue.sync {
                 let entry = Entry(timestamp: sidecar.timestamp, device: sidecar.device, action: action)
-                entries.append(entry)
-                if entries.count > cap {
-                    entries = Array(entries.suffix(cap))
+                _entries.append(entry)
+                if _entries.count > cap {
+                    _entries = Array(_entries.suffix(cap))
                 }
                 save()
             }
@@ -36,11 +42,11 @@ extension Synchronizer {
 
         private func load() {
             guard let data = try? Data(contentsOf: fileURL) else { return }
-            entries = (try? JSONDecoder().decode([Entry].self, from: data)) ?? []
+            _entries = (try? JSONDecoder().decode([Entry].self, from: data)) ?? []
         }
 
         private func save() {
-            guard let data = try? JSONEncoder().encode(entries) else { return }
+            guard let data = try? JSONEncoder().encode(_entries) else { return }
             try? data.write(to: fileURL, options: .atomic)
         }
     }

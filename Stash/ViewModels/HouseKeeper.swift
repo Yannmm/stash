@@ -129,7 +129,7 @@ extension Housekeeper {
     
     private func _load() throws {
         Task {
-            guard let html = try await synchronizer.load() else { return }
+            guard let html = await synchronizer.load() else { return }
             let dominator = Dominator()
             let data = try dominator.decompose(html)
             

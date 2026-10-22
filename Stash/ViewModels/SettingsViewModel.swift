@@ -26,7 +26,7 @@ class SettingsViewModel: ObservableObject {
     @Published var newReleaseNotes: String?
     @Published var error: Error?
     @Published var synchronizerApproach: Synchronizer.Option
-    @Published var availability: Synchronizer.Availability!
+    @Published var synchronizerDescription: AttributedString?
 
     private var cancellables = Set<AnyCancellable>()
     private let appHotKeyManager = HotKeyManager(action: .menu)
@@ -36,6 +36,7 @@ class SettingsViewModel: ObservableObject {
     private let onImport: (URL, String.FileType, Bool) throws -> Void
     private let onExport: (URL, String?) throws -> URL
     private let onApproachChange: (Synchronizer.Option) -> Void
+    private let onRetrySync: () -> Void
     
     var empty: Bool { false }
     
@@ -63,17 +64,23 @@ class SettingsViewModel: ObservableObject {
         self.importFromFile = filePath
     }
     
+    func retrySync() {
+        onRetrySync()
+    }
+    
     init(
         provider: Synchronizer.Option,
         onReset: @escaping () throws -> Void,
         onImport: @escaping (URL, String.FileType, Bool) throws -> Void,
         onExport: @escaping (URL, String?) throws -> URL,
-        onApproachChange: @escaping (Synchronizer.Option) -> Void
+        onApproachChange: @escaping (Synchronizer.Option) -> Void,
+        onRetrySync: @escaping () -> Void
     ) {
         self.onReset = onReset
         self.onImport = onImport
         self.onExport = onExport
         self.onApproachChange = onApproachChange
+        self.onRetrySync = onRetrySync
         
         collapseHistory = Pref.value(for: Pref.Key.collapseHistory) ?? false
         launchOnLogin = RocketLauncher.shared.enabled
