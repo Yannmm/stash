@@ -187,6 +187,7 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
         guard let entry = entries.findBy(id: id) else { return }
         do {
             try housekeeper.delete(entry: entry)
+            wrapper.selection = nil
         } catch {
             self.error = error
         }
