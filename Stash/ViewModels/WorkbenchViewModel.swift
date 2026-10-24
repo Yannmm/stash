@@ -11,13 +11,8 @@ import SwiftUI
 import AppKit
 
 class WorkbenchViewModel: ObservableObject, CascadeJudge {
-    @Published var search = "" {
-        didSet {
-            if search.count > 0 {
-                hierarchy = .descendant
-            }
-        }
-    }
+    @Published var search = ""
+
     @Published var hierarchy: Hierarchy = .descendant
     @Published private(set) var rows: [Row] = []
     @Published var hashtagFilter: String? {
@@ -85,19 +80,21 @@ class WorkbenchViewModel: ObservableObject, CascadeJudge {
             Publishers.CombineLatest3($search.map({ $0.trim() }).removeDuplicates(), $hashtagFilter, $overrides)
         )
         .map { [unowned self] a, b, c, d in
+            let among = b.first(where: { $0.id == a })?.children(among: b) ?? b
+            
             let query = d.0
             let hashtag = d.1
             let active = query.count > 0 ? [UUID: Bool]() : d.2
             let excluding: Set<UUID>
             switch c {
             case .child:
-                let allGroupIds = Set(b.compactMap { $0 as? Group }.map(\.id))
+                let allGroupIds = Set(among.compactMap { $0 as? Group }.map(\.id))
                 let expanded = Set(active.filter { $0.value }.map(\.key))
                 excluding = allGroupIds.subtracting(expanded)
             case .descendant:
                 excluding = Set(active.filter { !$0.value }.map(\.key))
             }
-            let result = self.heirs(b, a, excluding)
+            let result = self.heirs(among, a, excluding)
                 .map {
                     let tags = $0.hashtags ?? []
                     if let htf = hashtag,
