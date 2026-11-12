@@ -90,26 +90,23 @@ struct SettingsView: View {
                         ForEach([
                             Synchronizer.Option.local,
                             Synchronizer.Option.dropbox,
-                            //                            Synchronizer.Option.baidupan
+                            Synchronizer.Option.baidupan
                         ]) { approach in
-                            Text(viewModel.synchronizerApproach.description)
+                            Text(approach.description)
                                 .tag(approach)
                         }
                     }
                     if let desc = viewModel.synchronizerDescription {
                         Text(desc)
                             .environment(\.openURL, OpenURLAction { url in
-                                if url.scheme == "retry" {
-                                    viewModel.retrySync()
-                                } else if (url.absoluteString.contains("logout")) {
+                                guard let link = Synchronizer.Link(url: url) else { return .systemAction }
+                                if link == .logout {
                                     alert = .logout(viewModel.synchronizerApproach.description, {
-                                        //                                    viewModel.availability.action(url.absoluteString)
-                                        print("action here")
+                                        viewModel.onTapsynchronizerDescriptionLink(.logout)
                                     })
                                 } else {
-                                    //                                viewModel.availability.action(url.absoluteString)
+                                    viewModel.onTapsynchronizerDescriptionLink(link)
                                 }
-                                
                                 return .handled
                             })
                     }

@@ -56,6 +56,7 @@ matching document to be in place.
 | `LocalProvider` | `Provider.swift` | Adds `write(html:)` (local edit, stamps a new sidecar) and `copy(document:sidecar:)` (apply a pull). `onArrive` fires after a pull so the UI reloads. |
 | `RemoteProvider` | `Provider.swift` | Adds `send(document:sidecar:)` (push), `readiness`, `strayError`, and `onArrive: Sidecar?` (observed remote state). |
 | `OnPremiseProvider` | `OnPremiseProvider.swift` | The only `LocalProvider`. Atomic file writes in Application Support. |
+| `OAuthProvider` | `OAuthProvider.swift` | Base class for Dropbox and Baidu Pan: auth readiness, OAuth redirect and network observation, polling lifecycle, sidecar/document paths. Subclasses only implement auth and raw `download`/`upload`. |
 | `Polling` | `Polling.swift` | Mixin for remotes without push notifications (Dropbox, Baidu Pan). |
 | `Lane` | `Lane.swift` | Serial async queue so sync operations never interleave. |
 | `History` | `SyncHistory.swift` | Append-only audit log (last 100 entries) at `sync_history.json`. |
@@ -168,10 +169,18 @@ lane.enqueue(droppable: true) { … }  // poll tick: skipped if another droppabl
 or when a poll tick / remote change reconciles successfully (sync has recovered). A failing tick keeps it,
 so persistent errors stay visible with the retry link; a network change alone does not clear it.
 
+### Description links
+
+Links in the description are `Synchronizer.Link` values (`stash-sync://signin|logout|retry`). The settings
+view parses a clicked URL into a `Link` and hands it to `Synchronizer.perform(_:)` (logout asks for
+confirmation first). `retry` goes to `retry()`; `signin` / `logout` go to the latest readiness's
+`action(_:)`, where `AuthStatus` runs the closure its provider attached (`authenticate()` / `logout()`) only
+if the link matches the current state, so a link rendered before a state change does nothing.
+
 ### Retry
 
-When a remote approach has an error or a failed readiness, the description ends with a `retry://sync`
-link, which calls `Synchronizer.retry()`. Retry clears `_error` and runs `pause()` + `prepare()` on the
+When a remote approach has an error or a failed readiness, the description ends with a `retry` link, which
+calls `Synchronizer.retry()`. Retry clears `_error` and runs `pause()` + `prepare()` on the
 current remote provider. This re-checks readiness, restarts polling with its backoff reset, and once ready
 triggers a reconcile through the readiness path. Because reconcile is state-based, this one action
 recovers a failed push (including a `save` push), pull, compare, rotation, readiness check or poll. It does

@@ -66,8 +66,10 @@ extension Synchronizer {
 
 extension Synchronizer {
     enum AuthStatus: ProviderReadiness {
-        case anonymous((String) -> Void)
-        case ready(String?, (String) -> Void)
+        /// Carries the sign-in action
+        case anonymous(() -> Void)
+        /// Carries the account name and the logout action
+        case ready(String?, () -> Void)
         case initializing(String)
         
         var ready: Bool {
@@ -91,7 +93,7 @@ extension Synchronizer.AuthStatus: Synchronizer.Descriptor {
             attr.foregroundColor = .secondary
             if let range = attr.range(of: "sign in") {
                 attr[range].foregroundColor = Color(nsColor: .linkColor)
-                attr[range].link = URL(string: "signin://abc")
+                attr[range].link = Synchronizer.Link.signin.url
             }
             return attr
         case .ready(let name, _):
@@ -106,11 +108,11 @@ extension Synchronizer.AuthStatus: Synchronizer.Descriptor {
             
             if let n = name, let range = attr.range(of: n) {
                 attr[range].foregroundColor = Color(nsColor: .linkColor)
-                attr[range].link = URL(string: "logout://abc")
+                attr[range].link = Synchronizer.Link.logout.url
             }
             if let range = attr.range(of: "logout") {
                 attr[range].foregroundColor = Color(nsColor: .systemRed)
-                attr[range].link = URL(string: "logout://abc")
+                attr[range].link = Synchronizer.Link.logout.url
             }
             
             return attr
@@ -124,14 +126,14 @@ extension Synchronizer.AuthStatus: Synchronizer.Descriptor {
         }
     }
     
-    func action(_ phrase: String) {
-        switch self {
-        case .anonymous(let action):
-            action(phrase)
-        case .initializing(_):
-            break // do nothing since it's pending
-        case .ready(_, let action):
-            action(phrase)
+    func action(_ link: Synchronizer.Link) {
+        switch (self, link) {
+        case (.anonymous(let signin), .signin):
+            signin()
+        case (.ready(_, let logout), .logout):
+            logout()
+        default:
+            break // stale link, e.g. the state changed after it was rendered
         }
     }
 }

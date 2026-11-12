@@ -25,6 +25,9 @@ class Synchronizer {
     
     private let _readiness = PassthroughSubject<Result<ProviderReadiness, Error>?, Never>()
     
+    /// Readiness behind the current description, its links act on it
+    private var readiness: (any ProviderReadiness)?
+    
     private let _error = CurrentValueSubject<(String, Error)?, Never>(nil)
     
     var description: AnyPublisher<AttributedString?, Never> { _description.eraseToAnyPublisher() }
@@ -101,6 +104,7 @@ class Synchronizer {
             .switchToLatest()
             .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .sink { x in
+                self.readiness = try? x?.get()
                 self._readiness.send(x)
             }
             .store(in: &cancellables)
@@ -193,7 +197,7 @@ class Synchronizer {
                     }
                 }
                 if let error = t2.1 {
-                    var eAttr = AttributedString("\n\n⚠️ An erro happened while \(error.0):\n")
+                    var eAttr = AttributedString("\n\n⚠️ An erro happened while \"\(error.0)\":\n")
                     eAttr += AttributedString(error.1.localizedDescription)
                     eAttr.foregroundColor = .secondary
                     attr += eAttr
@@ -201,7 +205,7 @@ class Synchronizer {
                 if failed, self.remote != nil {
                     var rAttr = AttributedString(" Retry")
                     rAttr.foregroundColor = Color(nsColor: .linkColor)
-                    rAttr.link = URL(string: "retry://sync")
+                    rAttr.link = Link.retry.url
                     attr += rAttr
                 }
                 if attr.characters.count > 0 {
@@ -237,6 +241,16 @@ class Synchronizer {
             } catch {
                 _error.send((#function, error))
             }
+        }
+    }
+    
+    /// Performs a link clicked in `description`.
+    func perform(_ link: Link) {
+        switch link {
+        case .retry:
+            retry()
+        case .signin, .logout:
+            readiness?.action(link)
         }
     }
     

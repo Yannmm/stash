@@ -6,9 +6,7 @@
 //
 
 import Foundation
-import Combine
 import AppKit
-import SwiftUI
 
 fileprivate extension Synchronizer.BaiduPanProvider {
     enum Constant {
@@ -18,165 +16,164 @@ fileprivate extension Synchronizer.BaiduPanProvider {
         static let authorizeUrl = "https://openapi.baidu.com/oauth/2.0/authorize"
         static let tokenUrl = "https://openapi.baidu.com/oauth/2.0/token"
         static let basePath = "/apps/Nustash"
-        static let sidecarPath: String = "\(basePath)/\(Synchronizer.FileName.sidecar)"
-        static let documentPath: String = "\(basePath)/\(Synchronizer.FileName.document)"
     }
 }
 
 extension Synchronizer {
-    final class BaiduPanProvider: RemoteProvider, Polling {
-        
-        var readiness: AnyPublisher<Result<any ProviderReadiness, Error>, Never> { _authentication.eraseToReadinessPublisher() }
-        
-        private let _authentication = CurrentValueSubject<Result<AuthStatus, Error>, Never>(.success(.initializing("Baidu Pan")))
-        
-        var strayError: AnyPublisher<(String, Error)?, Never> { _strayError.eraseToAnyPublisher() }
-                
-        private let _strayError = PassthroughSubject<(String, Error)?, Never>()
-        
-        private let _onArrive = PassthroughSubject<Sidecar?, Never>()
-        
-        var onArrive: AnyPublisher<Sidecar?, Never> { _onArrive.eraseToAnyPublisher() }
-        
-        func setOnArrive(_ sidecar: Sidecar?) { _onArrive.send(sidecar) }
+    final class BaiduPanProvider: OAuthProvider {
         
         private var _state: String?
         
-        var poltask: Task<Void, Never>?
-        
         private var _refreshTask: Task<Token, Error>?
         
-        private var accountName: String?
-        
-        private var cancellables = Set<AnyCancellable>()
-        
-        // MARK: - Protocol
-        
-        func prepare() async throws {
-            observe(true)
-            await checkAuth()
+        init() {
+            super.init(name: "Baidu Pan", directory: Constant.basePath)
         }
         
-        func pause() async throws {
-            observe(false)
-            pausepol()
+        // MARK: - Overrides
+        
+        override var isAuthorized: Bool { Keychain.load() != nil }
+        
+        override func isRedirect(_ url: URL) -> Bool {
+            url.host == "oauth" && url.pathComponents.contains("baidupan")
         }
         
-        func sidecar() async throws -> Sidecar {
+        override func fetchAccountName() async throws -> String? {
             try await ensure { token in
-                let data = try await self.download(path: Constant.sidecarPath, accessToken: token)
-                return try JSONDecoder().decode(Sidecar.self, from: data)
+                let resp: UserInfoResponse = try await self.fetch(
+                    "https://pan.baidu.com/rest/2.0/xpan/nas",
+                    query: ["method": "uinfo", "access_token": token]
+                )
+                let netdiskName = resp.netdisk_name ?? ""
+                return netdiskName.isEmpty ? resp.baidu_name : netdiskName
             }
         }
         
-        func document() async throws -> Data {
+        override func download(path: String) async throws -> Data {
             try await ensure { token in
-                return try await self.download(path: Constant.documentPath, accessToken: token)
-            }
-        }
-        
-        func send(document: Data, sidecar: Sidecar) async throws {
-            try await ensure { token in
-                try await self.upload(path: Constant.documentPath, data: document, accessToken: token)
-                try await self.upload(path: Constant.sidecarPath, data: try JSONEncoder().encode(sidecar), accessToken: token)
-            }
-        }
-        
-        func onPollError(_ error: Error) {
-            _strayError.send(("baidupan poll", error))
-        }
-        
-        // MARK: - Helpers
-        
-        private func checkAuth() async {
-            do {
-                if let token = Keychain.load() {
-                    let name = try await _getAccount(accessToken: token.accessToken)
-                    _authentication.send(.success(AuthStatus.ready(name, { [weak self] _ in self?.logout() })))
-                    startpol()
-                } else {
-                    _authentication.send(.success(AuthStatus.anonymous({ [weak self] _ in self?.authenticate() })))
+                // Step 1: get download link via filemetas
+                let fsid = try await self.getFileId(path: path, accessToken: token)
+                let meta: FileMetasResponse = try await self.fetch(
+                    "https://pan.baidu.com/rest/2.0/xpan/multimedia",
+                    query: ["method": "filemetas", "access_token": token, "fsids": "[\(fsid)]", "dlink": "1"]
+                )
+                guard let dlink = meta.list?.first?.dlink, var components = URLComponents(string: dlink) else {
+                    throw SyncError.fileNotFound(path)
                 }
-            } catch {
-                _authentication.send(.failure(error))
-            }
-        }
-        
-        private func observe(_ flag: Bool) {
-            cancellables.forEach({ $0.cancel() })
-            cancellables.removeAll()
-            if flag {
-                // Observe
-                NotificationCenter.default.publisher(for: .onUrlEvent)
-                    .compactMap { $0.object as? URL }
-                    .filter { $0.host == "oauth" && $0.pathComponents.contains("baidupan") }
-                    .sink { [weak self] url in
-                        self?.handleAuth(url: url)
-                    }
-                    .store(in: &cancellables)
                 
-                NetworkMonitor.shared.onChange.sink { [weak self] in
-                    // Restart polling so a backed-off loop and its stale error don't outlive the network change
-                    self?.pausepol()
-                    Task {
-                        await self?.checkAuth()
-                    }
-                }
-                .store(in: &cancellables)
+                // Step 2: download using dlink
+                components.queryItems = (components.queryItems ?? []) + [URLQueryItem(name: "access_token", value: token)]
+                var request = URLRequest(url: try components.validUrl())
+                request.setValue("pan.baidu.com", forHTTPHeaderField: "User-Agent")
+                return try await self.perform(request, step: "Download")
             }
+        }
+        
+        override func upload(path: String, data: Data) async throws {
+            try await ensure { token in
+                // Baidu uses MD5 hashes in the block list.
+                let blockList = "[\"\(data.md5Hex)\"]"
+                let fileUrl = "https://pan.baidu.com/rest/2.0/xpan/file"
+                
+                // Step 1: Precreate, rtype 3 = overwrite existing file
+                let pre: PrecreateResponse = try await self.fetch(
+                    fileUrl,
+                    query: ["method": "precreate", "access_token": token],
+                    form: ["path": path, "size": "\(data.count)", "isdir": "0", "autoinit": "1", "block_list": blockList, "rtype": "3"]
+                )
+                guard let uploadId = pre.uploadid else {
+                    throw SyncError.api("Precreate failed: no uploadid")
+                }
+                
+                // Step 2: Upload the single slice
+                var components = URLComponents(string: "https://d.pcs.baidu.com/rest/2.0/pcs/superfile2")!
+                components.setQuery(["method": "upload", "access_token": token, "type": "tmpfile", "path": path, "uploadid": uploadId, "partseq": "0"])
+                let boundary = "Boundary-\(UUID().uuidString)"
+                var request = URLRequest(url: try components.validUrl())
+                request.httpMethod = "POST"
+                request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
+                var body = Data()
+                body.append(Data("--\(boundary)\r\n".utf8))
+                body.append(Data("Content-Disposition: form-data; name=\"file\"; filename=\"chunk\"\r\n".utf8))
+                body.append(Data("Content-Type: application/octet-stream\r\n\r\n".utf8))
+                body.append(data)
+                body.append(Data("\r\n--\(boundary)--\r\n".utf8))
+                request.httpBody = body
+                let sliceData = try await self.perform(request, step: "Upload slice")
+                // superfile2 normally returns JSON containing errno.
+                if let slice = try? JSONDecoder().decode(ErrnoResponse.self, from: sliceData) {
+                    try Self.checkErrno(slice.errno)
+                }
+                
+                // Step 3: Create / finalize
+                let _: ErrnoResponse = try await self.fetch(
+                    fileUrl,
+                    query: ["method": "create", "access_token": token],
+                    form: ["path": path, "size": "\(data.count)", "isdir": "0", "uploadid": uploadId, "block_list": blockList, "rtype": "3"]
+                )
+            }
+        }
+        
+        override func unlink() {
+            Keychain.delete()
         }
         
         // MARK: - OAuth
         
-        func authenticate() {
+        override func authenticate() {
             let state = UUID().uuidString
             _state = state
             var components = URLComponents(string: Constant.authorizeUrl)!
-            components.queryItems = [
-                URLQueryItem(name: "response_type", value: "code"),
-                URLQueryItem(name: "client_id", value: Constant.clientId),
-                URLQueryItem(name: "redirect_uri", value: Constant.redirectUri),
-                URLQueryItem(name: "scope", value: "basic,netdisk"),
-                URLQueryItem(name: "state", value: state),
-            ]
+            components.setQuery([
+                "response_type": "code",
+                "client_id": Constant.clientId,
+                "redirect_uri": Constant.redirectUri,
+                "scope": "basic,netdisk",
+                "state": state,
+            ])
             NSWorkspace.shared.open(components.url!)
         }
         
-        private func handleAuth(url: URL) {
-            guard let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-                  let code = components.queryItems?.first(where: { $0.name == "code" })?.value,
-                  let state = components.queryItems?.first(where: { $0.name == "state" })?.value,
-                  state == _state else {
-                _authentication.send(.failure(SyncError.malformedCallbackUrl(url)))
+        override func handleRedirect(_ url: URL) {
+            let items = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            func value(_ name: String) -> String? { items.first(where: { $0.name == name })?.value }
+            
+            guard let state = value("state"), state == _state else {
+                authFailed(SyncError.malformedCallbackUrl(url))
                 return
             }
             _state = nil
+            NSApp.activate(ignoringOtherApps: true)
+            
+            // User denied the authorization, same as Dropbox's cancel
+            guard let code = value("code") else {
+                if value("error") != nil {
+                    signedOut()
+                } else {
+                    authFailed(SyncError.malformedCallbackUrl(url))
+                }
+                return
+            }
             
             Task { [weak self] in
-                guard let this = self else { return }
+                guard let self else { return }
                 do {
-                    let token = try await this.exchangeCode(code)
-                    try Keychain.save(token)
-                    await this.checkAuth()
-                    await NSApp.activate(ignoringOtherApps: true)
+                    try Keychain.save(try await self.requestToken([
+                        "grant_type": "authorization_code",
+                        "code": code,
+                        "redirect_uri": Constant.redirectUri,
+                    ]))
+                    await self.checkAuth()
                 } catch {
-                    this._authentication.send(.failure(error))
+                    self.authFailed(error)
                 }
             }
         }
         
-        private func exchangeCode(_ code: String) async throws -> Token {
+        private func requestToken(_ query: [String: String]) async throws -> Token {
             var components = URLComponents(string: Constant.tokenUrl)!
-            components.queryItems = [
-                URLQueryItem(name: "grant_type", value: "authorization_code"),
-                URLQueryItem(name: "code", value: code),
-                URLQueryItem(name: "client_id", value: Constant.clientId),
-                URLQueryItem(name: "client_secret", value: Constant.clientSecret),
-                URLQueryItem(name: "redirect_uri", value: Constant.redirectUri),
-            ]
-            var request = URLRequest(url: components.url!)
-            request.httpMethod = "GET"
-            let (data, _) = try await URLSession.shared.data(for: request)
+            components.setQuery(query.merging(["client_id": Constant.clientId, "client_secret": Constant.clientSecret]) { a, _ in a })
+            let (data, _) = try await URLSession.shared.data(from: try components.validUrl())
             let resp = try JSONDecoder().decode(TokenResponse.self, from: data)
             guard let access = resp.access_token, let refresh = resp.refresh_token else {
                 throw SyncError.tokenExchangeFailure(resp.error_description)
@@ -186,97 +183,49 @@ extension Synchronizer {
         
         // MARK: - Token Refresh
         
-        private func getAccessToken() async throws -> String {
-            guard let token = Keychain.load() else {
-                throw SyncError.unauthenticated
-            }
-            return token.accessToken
-        }
-        
+        /// Coalesces concurrent refreshes into one request.
         private func refreshAccessToken() async throws -> Token {
             if let existing = _refreshTask {
                 return try await existing.value
             }
             let task = Task<Token, Error> {
-                defer { _refreshTask = nil }
                 guard let current = Keychain.load() else { throw SyncError.unauthenticated }
-                var components = URLComponents(string: Constant.tokenUrl)!
-                components.queryItems = [
-                    URLQueryItem(name: "grant_type", value: "refresh_token"),
-                    URLQueryItem(name: "refresh_token", value: current.refreshToken),
-                    URLQueryItem(name: "client_id", value: Constant.clientId),
-                    URLQueryItem(name: "client_secret", value: Constant.clientSecret),
-                ]
-                var request = URLRequest(url: components.url!)
-                request.httpMethod = "GET"
-                let (data, _) = try await URLSession.shared.data(for: request)
-                let resp = try JSONDecoder().decode(TokenResponse.self, from: data)
-                guard let access = resp.access_token, let refresh = resp.refresh_token else {
-                    throw SyncError.tokenExchangeFailure(resp.error_description)
-                }
-                let newToken = Token(accessToken: access, refreshToken: refresh)
-                try Keychain.save(newToken)
-                return newToken
+                let token = try await requestToken(["grant_type": "refresh_token", "refresh_token": current.refreshToken])
+                try Keychain.save(token)
+                return token
             }
             _refreshTask = task
+            // Cleared here rather than inside the task, which may finish before it's assigned
+            defer { _refreshTask = nil }
             return try await task.value
         }
         
         /// Executes a request; on 111 (token expired) refreshes and retries once.
         private func ensure<T>(_ work: @escaping (String) async throws -> T) async throws -> T {
-            let token = try await getAccessToken()
+            guard let token = Keychain.load() else {
+                throw SyncError.unauthenticated
+            }
             do {
-                return try await work(token)
+                return try await work(token.accessToken)
             } catch SyncError.tokenExpired {
                 let refreshed = try await refreshAccessToken()
                 return try await work(refreshed.accessToken)
             }
         }
         
-        private func _checkErrno(_ errno: Int?) throws {
-            guard let errno, errno != 0 else { return }
-            if errno == 111 || errno == -6 { throw SyncError.tokenExpired }
-            throw SyncError.api("API error: errno=\(errno)")
-        }
-        
-        // MARK: - File Operations
-        
-        private func download(path: String, accessToken: String) async throws -> Data {
-            // Step 1: get download link via filemetas
-            var components = URLComponents(string: "https://pan.baidu.com/rest/2.0/xpan/multimedia")!
-            components.queryItems = [
-                URLQueryItem(name: "method", value: "filemetas"),
-                URLQueryItem(name: "access_token", value: accessToken),
-                URLQueryItem(name: "fsids", value: "[\(try await getFileId(path: path, accessToken: accessToken))]"),
-                URLQueryItem(name: "dlink", value: "1"),
-            ]
-            let (metaData, _) = try await URLSession.shared.data(from: components.url!)
-            let meta = try JSONDecoder().decode(FileMetasResponse.self, from: metaData)
-            try _checkErrno(meta.errno)
-            guard let dlink = meta.list?.first?.dlink else { throw SyncError.fileNotFound(path) }
-            
-            // Step 2: download using dlink
-            var dlURL = URLComponents(string: dlink)!
-            dlURL.queryItems = (dlURL.queryItems ?? []) + [URLQueryItem(name: "access_token", value: accessToken)]
-            var request = URLRequest(url: dlURL.url!)
-            request.setValue("pan.baidu.com", forHTTPHeaderField: "User-Agent")
-            let (data, response) = try await URLSession.shared.data(for: request)
-            if let http = response as? HTTPURLResponse, http.statusCode != 200 {
-                throw SyncError.api("Download failed: \(http.statusCode)")
-            }
-            return data
-        }
+        // MARK: - Helpers
         
         private func getFileId(path: String, accessToken: String) async throws -> Int64 {
-            var components = URLComponents(string: "https://pan.baidu.com/rest/2.0/xpan/file")!
-            components.queryItems = [
-                URLQueryItem(name: "method", value: "list"),
-                URLQueryItem(name: "access_token", value: accessToken),
-                URLQueryItem(name: "dir", value: Constant.basePath),
-            ]
-            let (data, _) = try await URLSession.shared.data(from: components.url!)
-            let resp = try JSONDecoder().decode(FileListResponse.self, from: data)
-            try _checkErrno(resp.errno)
+            let resp: FileListResponse
+            do {
+                resp = try await fetch(
+                    "https://pan.baidu.com/rest/2.0/xpan/file",
+                    query: ["method": "list", "access_token": accessToken, "dir": Constant.basePath]
+                )
+            } catch Errno.notFound {
+                // The app folder doesn't exist until the first upload
+                throw SyncError.fileNotFound(path)
+            }
             let fileName = (path as NSString).lastPathComponent
             guard let file = resp.list?.first(where: { $0.server_filename == fileName }) else {
                 throw SyncError.fileNotFound(path)
@@ -284,229 +233,56 @@ extension Synchronizer {
             return file.fs_id
         }
         
-        private func upload(
-            path: String,
-            data: Data,
-            accessToken: String
-        ) async throws {
-            let baseURL = "https://pan.baidu.com/rest/2.0/xpan/file"
-            
-            // Baidu uses MD5 hashes in the block list.
-            let blockList = "[\"\(data.md5Hex)\"]"
-            
-            // MARK: - Step 1: Precreate
-            
-            var preComponents = URLComponents(string: baseURL)!
-            preComponents.queryItems = [
-                URLQueryItem(name: "method", value: "precreate"),
-                URLQueryItem(name: "access_token", value: accessToken)
-            ]
-            
-            var preBody = URLComponents()
-            preBody.queryItems = [
-                URLQueryItem(name: "path", value: path),
-                URLQueryItem(name: "size", value: "\(data.count)"),
-                URLQueryItem(name: "isdir", value: "0"),
-                URLQueryItem(name: "autoinit", value: "1"),
-                URLQueryItem(name: "block_list", value: blockList),
-                
-                // 3 = overwrite existing file
-                URLQueryItem(name: "rtype", value: "3")
-            ]
-            
-            var preRequest = URLRequest(url: preComponents.url!)
-            preRequest.httpMethod = "POST"
-            preRequest.setValue(
-                "application/x-www-form-urlencoded",
-                forHTTPHeaderField: "Content-Type"
-            )
-            preRequest.httpBody = preBody.percentEncodedQuery?
-                .data(using: .utf8)
-            
-            let (preData, preResponse) = try await URLSession.shared.data(
-                for: preRequest
-            )
-            
-            guard let preHTTPResponse = preResponse as? HTTPURLResponse,
-                  (200..<300).contains(preHTTPResponse.statusCode) else {
-                let statusCode = (preResponse as? HTTPURLResponse)?.statusCode ?? -1
-                let responseBody = String(data: preData, encoding: .utf8) ?? ""
-                
-                throw SyncError.api(
-                    "Precreate HTTP error: \(statusCode), \(responseBody)"
-                )
+        /// Sends a GET (or a form POST if `form` is given) and decodes the JSON response, throwing on non-zero errno.
+        private func fetch<T: Decodable & BaiduResponse>(
+            _ url: String,
+            query: [String: String],
+            form: [String: String]? = nil
+        ) async throws -> T {
+            var components = URLComponents(string: url)!
+            components.setQuery(query)
+            var request = URLRequest(url: try components.validUrl())
+            if let form {
+                var body = URLComponents()
+                body.setQuery(form)
+                request.httpMethod = "POST"
+                request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+                request.httpBody = body.percentEncodedQuery?.data(using: .utf8)
             }
-            
-            let preResp = try JSONDecoder().decode(
-                PrecreateResponse.self,
-                from: preData
-            )
-            
-            try _checkErrno(preResp.errno)
-            
-            guard let uploadId = preResp.uploadid else {
-                throw SyncError.api(
-                    "Precreate failed: \(String(data: preData, encoding: .utf8) ?? "")"
-                )
-            }
-            
-            // MARK: - Step 2: Upload slice
-            
-            var uploadComponents = URLComponents(
-                string: "https://d.pcs.baidu.com/rest/2.0/pcs/superfile2"
-            )!
-            
-            uploadComponents.queryItems = [
-                URLQueryItem(name: "method", value: "upload"),
-                URLQueryItem(name: "access_token", value: accessToken),
-                URLQueryItem(name: "type", value: "tmpfile"),
-                URLQueryItem(name: "path", value: path),
-                URLQueryItem(name: "uploadid", value: uploadId),
-                URLQueryItem(name: "partseq", value: "0")
-            ]
-            
-            guard let uploadURL = uploadComponents.url else {
-                throw SyncError.api("Failed to construct upload URL")
-            }
-            
-            let boundary = "Boundary-\(UUID().uuidString)"
-            
-            var uploadRequest = URLRequest(url: uploadURL)
-            uploadRequest.httpMethod = "POST"
-            uploadRequest.setValue(
-                "multipart/form-data; boundary=\(boundary)",
-                forHTTPHeaderField: "Content-Type"
-            )
-            
-            var body = Data()
-            
-            body.append(
-                "--\(boundary)\r\n".data(using: .utf8)!
-            )
-            
-            body.append(
-                "Content-Disposition: form-data; name=\"file\"; filename=\"chunk\"\r\n"
-                    .data(using: .utf8)!
-            )
-            
-            body.append(
-                "Content-Type: application/octet-stream\r\n\r\n"
-                    .data(using: .utf8)!
-            )
-            
-            body.append(data)
-            
-            body.append(
-                "\r\n--\(boundary)--\r\n".data(using: .utf8)!
-            )
-            
-            uploadRequest.httpBody = body
-            
-            let (uploadData, uploadResponse) = try await URLSession.shared.data(
-                for: uploadRequest
-            )
-            
-            guard let uploadHTTPResponse = uploadResponse as? HTTPURLResponse,
-                  (200..<300).contains(uploadHTTPResponse.statusCode) else {
-                let statusCode = (uploadResponse as? HTTPURLResponse)?.statusCode ?? -1
-                let responseBody = String(data: uploadData, encoding: .utf8) ?? ""
-                
-                throw SyncError.api(
-                    "Upload slice HTTP error: \(statusCode), \(responseBody)"
-                )
-            }
-            
-            // superfile2 normally returns JSON containing errno.
-            if !uploadData.isEmpty,
-               let uploadJSON = try? JSONSerialization.jsonObject(
-                with: uploadData
-               ) as? [String: Any],
-               let errno = uploadJSON["errno"] as? Int {
-                try _checkErrno(errno)
-            }
-            
-            // MARK: - Step 3: Create / finalize
-            
-            var createComponents = URLComponents(string: baseURL)!
-            createComponents.queryItems = [
-                URLQueryItem(name: "method", value: "create"),
-                URLQueryItem(name: "access_token", value: accessToken)
-            ]
-            
-            var createBody = URLComponents()
-            createBody.queryItems = [
-                URLQueryItem(name: "path", value: path),
-                URLQueryItem(name: "size", value: "\(data.count)"),
-                URLQueryItem(name: "isdir", value: "0"),
-                URLQueryItem(name: "uploadid", value: uploadId),
-                URLQueryItem(name: "block_list", value: blockList),
-                
-                // 3 = overwrite existing file
-                URLQueryItem(name: "rtype", value: "3")
-            ]
-            
-            var createRequest = URLRequest(url: createComponents.url!)
-            createRequest.httpMethod = "POST"
-            createRequest.setValue(
-                "application/x-www-form-urlencoded",
-                forHTTPHeaderField: "Content-Type"
-            )
-            createRequest.httpBody = createBody.percentEncodedQuery?
-                .data(using: .utf8)
-            
-            let (createData, createResponse) = try await URLSession.shared.data(
-                for: createRequest
-            )
-            
-            guard let createHTTPResponse = createResponse as? HTTPURLResponse,
-                  (200..<300).contains(createHTTPResponse.statusCode) else {
-                let statusCode = (createResponse as? HTTPURLResponse)?.statusCode ?? -1
-                let responseBody = String(data: createData, encoding: .utf8) ?? ""
-                
-                throw SyncError.api(
-                    "Create HTTP error: \(statusCode), \(responseBody)"
-                )
-            }
-            
-            let createResp = try JSONDecoder().decode(
-                CreateResponse.self,
-                from: createData
-            )
-            
-            try _checkErrno(createResp.errno)
+            let data = try await perform(request, step: query["method"] ?? url)
+            let resp = try JSONDecoder().decode(T.self, from: data)
+            try Self.checkErrno(resp.errno)
+            return resp
         }
         
-        // MARK: - Helpers
-        
-        private func _getAccount(accessToken: String) async throws -> String? {
-            var components = URLComponents(string: "https://pan.baidu.com/rest/2.0/xpan/nas")!
-            components.queryItems = [
-                URLQueryItem(name: "method", value: "uinfo"),
-                URLQueryItem(name: "access_token", value: accessToken),
-            ]
-            guard let url = components.url else {
-                return nil
+        /// Sends `request`, throwing on a non-2xx status.
+        private func perform(_ request: URLRequest, step: String) async throws -> Data {
+            let (data, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
+                // Baidu reports some errors (e.g. expired token) with a 4xx status and an errno body
+                if let resp = try? JSONDecoder().decode(ErrnoResponse.self, from: data) {
+                    try Self.checkErrno(resp.errno)
+                }
+                let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
+                throw SyncError.api("\(step) HTTP error: \(statusCode), \(String(data: data, encoding: .utf8) ?? "")")
             }
-            let (data, _) = try await URLSession.shared.data(from: url)
-            let resp = try JSONDecoder().decode(UserInfoResponse.self, from: data)
-            let name1 = resp.netdisk_name ?? ""
-            let name2 = resp.baidu_name
-            return name1.isEmpty ? name2 : name1
+            return data
         }
         
-        func logout() {
-            Keychain.delete()
-            pausepol()
-            Task { await checkAuth() }
-        }
-        
-        deinit {
-            pausepol()
+        private static func checkErrno(_ errno: Int?) throws {
+            guard let errno, errno != 0 else { return }
+            if errno == 111 || errno == -6 { throw SyncError.tokenExpired }
+            if errno == -9 { throw Errno.notFound }
+            throw SyncError.api("API error: errno=\(errno)")
         }
     }
 }
 
 // MARK: - API Response Models
+
+private protocol BaiduResponse {
+    var errno: Int? { get }
+}
 
 extension Synchronizer.BaiduPanProvider {
     private struct TokenResponse: Decodable {
@@ -517,12 +293,18 @@ extension Synchronizer.BaiduPanProvider {
         let error_description: String?
     }
     
-    private struct UserInfoResponse: Decodable {
+    private enum Errno: Error {
+        /// -9, file or directory doesn't exist
+        case notFound
+    }
+    
+    private struct UserInfoResponse: Decodable, BaiduResponse {
+        let errno: Int?
         let baidu_name: String?
         let netdisk_name: String?
     }
     
-    private struct FileListResponse: Decodable {
+    private struct FileListResponse: Decodable, BaiduResponse {
         let errno: Int?
         let list: [FileItem]?
     }
@@ -532,7 +314,7 @@ extension Synchronizer.BaiduPanProvider {
         let server_filename: String
     }
     
-    private struct FileMetasResponse: Decodable {
+    private struct FileMetasResponse: Decodable, BaiduResponse {
         let errno: Int?
         let list: [FileMeta]?
     }
@@ -541,48 +323,28 @@ extension Synchronizer.BaiduPanProvider {
         let dlink: String?
     }
     
-    private struct PrecreateResponse: Decodable {
+    private struct PrecreateResponse: Decodable, BaiduResponse {
         let uploadid: String?
         let errno: Int?
     }
     
-    private struct CreateResponse: Decodable {
+    private struct ErrnoResponse: Decodable, BaiduResponse {
         let errno: Int?
     }
 }
 
-// MARK: - Errors
+// MARK: - URLComponents
 
-//extension Synchronizer.BaiduPanProvider {
-//    enum SomeError: Error, CustomStringConvertible {
-//        case fileNotFound(String)
-//        case unauthenticated
-//        case authFailed
-//        case tokenExpired
-//        case tokenExchangeFailed(String)
-//        case api(Error)
-//        
-//        var description: String {
-//            switch self {
-//            case .api(let error):
-//                return error.localizedDescription
-//                
-//            case .unauthenticated:
-//                return "Unauthenticated"
-//                
-//            case .tokenExpired:
-//                return "Token expired"
-//                
-//            case .fileNotFound(let path):
-//                return "File not found: \(path)"
-//            case .authFailed:
-//                return "Auth failed, please try again."
-//            case .tokenExchangeFailed(let msg):
-//                return msg
-//            }
-//        }
-//    }
-//}
+fileprivate extension URLComponents {
+    mutating func setQuery(_ query: [String: String]) {
+        queryItems = query.sorted { $0.key < $1.key }.map { URLQueryItem(name: $0.key, value: $0.value) }
+    }
+    
+    func validUrl() throws -> URL {
+        guard let url else { throw Synchronizer.SyncError.unexpected("Malformed URL: \(self)") }
+        return url
+    }
+}
 
 // MARK: - Data MD5
 

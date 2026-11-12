@@ -47,7 +47,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let remoteProviders: [Synchronizer.Option: any Synchronizer.RemoteProvider] = [
             .dropbox: Synchronizer.DropboxProvider(),
 //            .icloud: Synchronizer.AiCloudProvider(),
-//            .baidupan: Synchronizer.BaiduPanProvider(),
+            .baidupan: Synchronizer.BaiduPanProvider(),
         ]
         let synchronizer = Synchronizer(
             approach: savedApproach,
@@ -72,8 +72,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             onApproachChange: { approach in
                 synchronizer.setApproach(approach)
             },
-            onRetrySync: {
-                synchronizer.retry()
+            onTapsynchronizerDescriptionLink: { link in
+                synchronizer.perform(link)
             })
         
         synchronizer.description.sink { attr in

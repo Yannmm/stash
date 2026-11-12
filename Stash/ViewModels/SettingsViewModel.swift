@@ -36,7 +36,7 @@ class SettingsViewModel: ObservableObject {
     private let onImport: (URL, String.FileType, Bool) throws -> Void
     private let onExport: (URL, String?) throws -> URL
     private let onApproachChange: (Synchronizer.Option) -> Void
-    private let onRetrySync: () -> Void
+    let onTapsynchronizerDescriptionLink: (Synchronizer.Link) -> Void
     
     var empty: Bool { false }
     
@@ -64,23 +64,19 @@ class SettingsViewModel: ObservableObject {
         self.importFromFile = filePath
     }
     
-    func retrySync() {
-        onRetrySync()
-    }
-    
     init(
         provider: Synchronizer.Option,
         onReset: @escaping () throws -> Void,
         onImport: @escaping (URL, String.FileType, Bool) throws -> Void,
         onExport: @escaping (URL, String?) throws -> URL,
         onApproachChange: @escaping (Synchronizer.Option) -> Void,
-        onRetrySync: @escaping () -> Void
+        onTapsynchronizerDescriptionLink: @escaping (Synchronizer.Link) -> Void
     ) {
         self.onReset = onReset
         self.onImport = onImport
         self.onExport = onExport
         self.onApproachChange = onApproachChange
-        self.onRetrySync = onRetrySync
+        self.onTapsynchronizerDescriptionLink = onTapsynchronizerDescriptionLink
         
         collapseHistory = Pref.value(for: Pref.Key.collapseHistory) ?? false
         launchOnLogin = RocketLauncher.shared.enabled

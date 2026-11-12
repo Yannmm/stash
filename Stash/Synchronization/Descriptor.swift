@@ -10,7 +10,24 @@ import Foundation
 extension Synchronizer {
     protocol Descriptor {
         func describe() -> AttributedString
-        func action(_ phrase: String)
+        /// Handles a `Link` embedded in `describe()`, ignored if it doesn't apply to this state.
+        func action(_ link: Link)
+    }
+    
+    /// Actions embedded as links in a description, routed back through `Synchronizer.perform(_:)`.
+    enum Link: String {
+        case signin
+        case logout
+        case retry
+        
+        private static let scheme = "stash-sync"
+        
+        var url: URL { URL(string: "\(Self.scheme)://\(rawValue)")! }
+        
+        init?(url: URL) {
+            guard url.scheme == Self.scheme, let host = url.host, let link = Link(rawValue: host) else { return nil }
+            self = link
+        }
     }
     
     struct InitialPendingState: Descriptor {
@@ -27,7 +44,7 @@ extension Synchronizer {
 }
 
 extension Synchronizer.Descriptor {
-    func action(_ phrase: String) {
+    func action(_ link: Synchronizer.Link) {
         // noop
     }
 }
