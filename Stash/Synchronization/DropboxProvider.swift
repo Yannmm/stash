@@ -110,6 +110,8 @@ extension Synchronizer {
                     .store(in: &cancellables)
                 
                 NetworkMonitor.shared.onChange.sink { [weak self] in
+                    // Restart polling so a backed-off loop and its stale error don't outlive the network change
+                    self?.pausepol()
                     Task {
                         await self?.checkAuth()
                     }

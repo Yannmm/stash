@@ -46,7 +46,10 @@ extension Synchronizer {
             }
             try data1.write(to: documentURL, options: .atomic)
             let sidecar = Sidecar.stamp()
-            let data2 = try JSONEncoder().encode(sidecar)
+            
+            let encoder = JSONEncoder()
+            encoder.dateEncodingStrategy = .secondsSince1970
+            let data2 = try encoder.encode(sidecar)
             try data2.write(to: sidecarUrl, options: .atomic)
             return sidecar
         }

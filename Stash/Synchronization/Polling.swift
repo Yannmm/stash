@@ -40,6 +40,8 @@ extension Synchronizer.Polling {
                     try await self.poll()
                     failures = 0
                 } catch {
+                    // A poll cancelled mid-flight (e.g. by a network change restart) shouldn't report its error
+                    if Task.isCancelled { return }
                     failures += 1
                     onPollError(error)
                 }

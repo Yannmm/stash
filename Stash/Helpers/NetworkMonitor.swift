@@ -19,7 +19,12 @@ final class NetworkMonitor {
     private var previousStatus: NWPath.Status?
     private var previousInterfaces: Set<String> = []
     
-    var onChange: AnyPublisher<Void, Never> { _onChange.eraseToAnyPublisher() }
+    /// Coalesces bursts of path updates (e.g. toggling a proxy/VPN) and delivers on main.
+    var onChange: AnyPublisher<Void, Never> {
+        _onChange
+            .debounce(for: .seconds(1), scheduler: DispatchQueue.main)
+            .eraseToAnyPublisher()
+    }
     
     private let _onChange = PassthroughSubject<Void, Never>()
 
