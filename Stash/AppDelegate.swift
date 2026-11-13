@@ -46,7 +46,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let localProvider = Synchronizer.OnPremiseProvider()
         let remoteProviders: [Synchronizer.Option: any Synchronizer.RemoteProvider] = [
             .dropbox: Synchronizer.DropboxProvider(),
-//            .icloud: Synchronizer.AiCloudProvider(),
+            //            .icloud: Synchronizer.AiCloudProvider(),
             .baidupan: Synchronizer.BaiduPanProvider(),
         ]
         let synchronizer = Synchronizer(
@@ -76,9 +76,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 synchronizer.perform(link)
             })
         
-        synchronizer.description.sink { attr in
+        synchronizer.status.sink { status in
             Task { @MainActor in
-                svm.synchronizerDescription = attr
+                svm.synchronizerStatus = status
             }
         }.store(in: &cancellables)
         
@@ -106,7 +106,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     @objc private func handleGetURLEvent(_ event: NSAppleEventDescriptor?,
-        replyEvent: NSAppleEventDescriptor?) {
+                                         replyEvent: NSAppleEventDescriptor?) {
         guard let descriptor = event?.paramDescriptor(forKeyword: AEKeyword(keyDirectObject)),
               let urlStr = descriptor.stringValue,
               let url = URL(string: urlStr) else { return }
@@ -122,13 +122,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func bind() {
-        Publishers.CombineLatest4(housekeeper.$storedEntries,
-                                  housekeeper.$recentEntries,
-                                  settingsViewModel.$collapseHistory,
-                                  NSApp.publisher(for: \.effectiveAppearance))
-        .sink { [weak self] tuple5 in
+        Publishers.CombineLatest(
+            Publishers.CombineLatest4(housekeeper.$storedEntries,
+                                      housekeeper.$recentEntries,
+                                      settingsViewModel.$collapseHistory,
+                                      NSApp.publisher(for: \.effectiveAppearance)),
+            settingsViewModel.$synchronizerStatus)
+        .sink { [weak self] tuple4, status in
             Task { @MainActor in
-                self?.statusItem?.menu = self?.generateMenu(from: tuple5.0, history: tuple5.1, collapseHistory: tuple5.2)
+                self?.statusItem?.menu = self?.generateMenu(from: tuple4.0, history: tuple4.1, collapseHistory: tuple4.2, syncStatus: status)
             }
         }
         .store(in: &cancellables)

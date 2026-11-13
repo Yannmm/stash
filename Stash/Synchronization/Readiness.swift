@@ -53,6 +53,13 @@ extension Synchronizer {
             }
         }
         
+        func summarize() -> String {
+            switch self {
+            case .yes: "Ready"
+            case .indetermined: "Not determined"
+            }
+        }
+        
         var ready: Bool {
             switch self {
             case .yes:
@@ -123,6 +130,15 @@ extension Synchronizer.AuthStatus: Synchronizer.Descriptor {
                 attr[range].foregroundColor = .primary
             }
             return attr
+        }
+    }
+    
+    func summarize() -> String {
+        switch self {
+        case .anonymous: "Not signed in"
+        case .ready(let name?, _): "Signed in as \"\(name)\""
+        case .ready(nil, _): "Signed in"
+        case .initializing: "Initializing"
         }
     }
     

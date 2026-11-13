@@ -25,14 +25,12 @@ class Synchronizer {
     
     private let _readiness = PassthroughSubject<Result<ProviderReadiness, Error>?, Never>()
     
-    /// Readiness behind the current description, its links act on it
-    private var readiness: (any ProviderReadiness)?
-    
     private let _error = CurrentValueSubject<(String, Error)?, Never>(nil)
     
-    var description: AnyPublisher<AttributedString?, Never> { _description.eraseToAnyPublisher() }
+    /// Current approach with its readiness and latest error, consumers render it their own way.
+    var status: AnyPublisher<Status, Never> { _status.compactMap { $0 }.eraseToAnyPublisher() }
     
-    private let _description = PassthroughSubject<AttributedString?, Never>()
+    private let _status = CurrentValueSubject<Status?, Never>(nil)
     
     var onChange: AnyPublisher<Void, Never> { _onChange.eraseToAnyPublisher() }
     
@@ -104,7 +102,6 @@ class Synchronizer {
             .switchToLatest()
             .debounce(for: .milliseconds(500), scheduler: RunLoop.main)
             .sink { x in
-                self.readiness = try? x?.get()
                 self._readiness.send(x)
             }
             .store(in: &cancellables)
@@ -182,40 +179,11 @@ class Synchronizer {
             .store(in: &cancellables)
         
         Publishers.CombineLatest(_readiness, _error)
-            .map { t2 in
-                var attr = AttributedString()
-                var failed = t2.1 != nil
-                if let result = t2.0 {
-                    switch result {
-                    case .success(let status):
-                        attr += status.describe()
-                    case .failure(let error):
-                        failed = true
-                        var eAttr = AttributedString(error.localizedDescription)
-                        eAttr.foregroundColor = .secondary
-                        attr += AttributedString("🚫 \(self._approach.value.description) is not ready due to error: ") + eAttr
-                    }
-                }
-                if let error = t2.1 {
-                    var eAttr = AttributedString("\n\n⚠️ An erro happened while \"\(error.0)\":\n")
-                    eAttr += AttributedString(error.1.localizedDescription)
-                    eAttr.foregroundColor = .secondary
-                    attr += eAttr
-                }
-                if failed, self.remote != nil {
-                    var rAttr = AttributedString(" Retry")
-                    rAttr.foregroundColor = Color(nsColor: .linkColor)
-                    rAttr.link = Link.retry.url
-                    attr += rAttr
-                }
-                if attr.characters.count > 0 {
-                    return attr
-                } else {
-                    return nil
-                }
+            .map { [unowned self] t2 in
+                Status(approach: self._approach.value, readiness: t2.0, error: t2.1, retryable: self.remote != nil)
             }
-            .sink { [weak self] attr in
-                self?._description.send(attr)
+            .sink { [weak self] status in
+                self?._status.send(status)
             }
             .store(in: &cancellables)
         
@@ -250,7 +218,8 @@ class Synchronizer {
         case .retry:
             retry()
         case .signin, .logout:
-            readiness?.action(link)
+            // Act on the readiness the user is looking at, a stale link is ignored by it
+            try? _status.value?.readiness?.get().action(link)
         }
     }
     
@@ -400,6 +369,22 @@ extension Synchronizer {
             case .dropbox: return "Dropbox"
             case .baidupan: return "BaiduPan"
             }
+        }
+    }
+    
+    struct Status {
+        let approach: Option
+        /// nil for approaches without readiness, e.g. local
+        let readiness: Result<any ProviderReadiness, Error>?
+        /// Context and the latest sync error
+        let error: (String, Error)?
+        /// Whether `Link.retry` applies, i.e. the approach is remote
+        let retryable: Bool
+        
+        var failed: Bool {
+            if error != nil { return true }
+            if case .failure = readiness { return true }
+            return false
         }
     }
 }

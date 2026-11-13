@@ -10,6 +10,8 @@ import Foundation
 extension Synchronizer {
     protocol Descriptor {
         func describe() -> AttributedString
+        /// One-line plain text for compact places like the status menu
+        func summarize() -> String
         /// Handles a `Link` embedded in `describe()`, ignored if it doesn't apply to this state.
         func action(_ link: Link)
     }
@@ -44,6 +46,10 @@ extension Synchronizer {
 }
 
 extension Synchronizer.Descriptor {
+    func summarize() -> String {
+        String(describe().characters)
+    }
+    
     func action(_ link: Synchronizer.Link) {
         // noop
     }
