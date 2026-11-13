@@ -58,17 +58,8 @@ extension AppDelegate {
     /// Sync approach and auth status, an error icon replaces the sync icon on failure, opens settings on tap.
     private func addSyncStatus(_ menu: NSMenu, _ status: Synchronizer.Status?) {
         guard let status else { return }
-        var title = "\(status.approach.description)"
-        switch status.readiness {
-        case .success(let readiness):
-            title += " · \(readiness.summarize())"
-        case .failure:
-            title += " · Not ready"
-        case nil:
-            break
-        }
-        let item = NSMenuItem(title: title, action: #selector(settings), keyEquivalent: "")
-        let image = NSImage(systemSymbolName: status.failed ? "xmark.icloud.fill" : "arrow.clockwise.icloud.fill",
+        let item = NSMenuItem(title: status.summary, action: #selector(settings), keyEquivalent: "")
+        let image = NSImage(systemSymbolName: status.symbol,
                             accessibilityDescription: status.failed ? "Sync error" : nil)
         image?.isTemplate = true
         item.image = image?.tint(color: status.failed ? Color(nsColor: .systemRed) : Color.theme)

@@ -200,8 +200,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
     
     private func setupWindow2() {
-        let manageView = ManageView(wrapper: GroupSelectionWrapper())
+        let manageView = ManageView(wrapper: GroupSelectionWrapper(), onOpenSettings: { [weak self] in
+            self?.settings()
+        })
             .environmentObject(housekeeper)
+            .environmentObject(settingsViewModel)
         let hostingView = NSHostingView(rootView: manageView)
         
         window2 = NSWindow(

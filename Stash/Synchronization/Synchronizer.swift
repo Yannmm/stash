@@ -386,5 +386,22 @@ extension Synchronizer {
             if case .failure = readiness { return true }
             return false
         }
+        
+        /// One-line approach and auth status, e.g. "Dropbox · Signed in as Ryan"
+        var summary: String {
+            switch readiness {
+            case .success(let readiness):
+                return "\(approach.description) · \(readiness.summarize())"
+            case .failure:
+                return "\(approach.description) · Not ready"
+            case nil:
+                return approach.description
+            }
+        }
+        
+        /// SF Symbol for the summary, an error icon on failure
+        var symbol: String {
+            failed ? "xmark.icloud.fill" : "arrow.clockwise.icloud.fill"
+        }
     }
 }
