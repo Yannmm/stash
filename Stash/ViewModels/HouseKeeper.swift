@@ -26,7 +26,7 @@ class Housekeeper: ObservableObject {
         bind()
         reload()
     }
-
+    
     private func bind() {
         synchronizer.onChange
             .receive(on: RunLoop.main)
@@ -35,11 +35,11 @@ class Housekeeper: ObservableObject {
             }
             .store(in: &cancellables)
     }
-
+    
     func reload() {
         Task.detached(priority: .utility) { [weak self] in
             do {
-                try self?._load()
+                try await self?._load()
             } catch {
                 ErrorTracker.shared.add(error)
             }
@@ -127,30 +127,28 @@ extension Housekeeper {
         }
     }
     
-    private func _load() throws {
-        Task {
-            guard let html = try await synchronizer.load() else { return }
-            let dominator = Dominator()
-            let data = try dominator.decompose(html)
-            
+    private func _load() async throws {
+        guard let html = await synchronizer.load() else { return }
+        let dominator = Dominator()
+        let data = try dominator.decompose(html)
+        
+        let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
+        
+        self.storedEntries = anyEntries.asEntries
+        
+        if let data = Pref.value(for: Pref.Key.recentEntries),
+           let keys = Pref.value(for: Pref.Key.recentKeys) {
             let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
-            
-            self.storedEntries = anyEntries.asEntries
-            
-            if let data = Pref.value(for: Pref.Key.recentEntries),
-               let keys = Pref.value(for: Pref.Key.recentKeys) {
-                let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
-                var collector = [(Bookmark, String)]()
-                for (index, entry) in anyEntries.asEntries.enumerated() {
-                    if let bookmark = entry as? Bookmark, index <= keys.count - 1 {
-                        collector.append((bookmark, keys[index]))
-                    }
+            var collector = [(Bookmark, String)]()
+            for (index, entry) in anyEntries.asEntries.enumerated() {
+                if let bookmark = entry as? Bookmark, index <= keys.count - 1 {
+                    collector.append((bookmark, keys[index]))
                 }
-                self.recentEntries = collector
             }
-            
-            try migrate3_0()
+            self.recentEntries = collector
         }
+        
+        try migrate3_0()
     }
 }
 

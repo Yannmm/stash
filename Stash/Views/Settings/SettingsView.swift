@@ -51,15 +51,6 @@ struct SettingsView: View {
         return String(path.lastPathComponent.split(separator: ".")[0])
     }
     
-    private func synchronizerApproachDescription(_ approach: Synchronizer.Option) -> String {
-        switch approach {
-        case .local: return "Local"
-        case .icloud: return "iCloud"
-        case .dropbox: return "Dropbox"
-        case .baidupan: return "BaiduPan"
-        }
-    }
-    
     var body: some View {
         Form {
             Section("General") {
@@ -101,22 +92,24 @@ struct SettingsView: View {
                             Synchronizer.Option.dropbox,
                             Synchronizer.Option.baidupan
                         ]) { approach in
-                            Text(synchronizerApproachDescription(approach))
+                            Text(approach.description)
                                 .tag(approach)
                         }
                     }
-                    Text(viewModel.availability.describe())
-                        .environment(\.openURL, OpenURLAction { url in
-                            if (url.absoluteString.contains("logout")) {
-                                alert = .logout(synchronizerApproachDescription(viewModel.synchronizerApproach), {
-                                    viewModel.availability.action(url.absoluteString)
-                                })
-                            } else {
-                                viewModel.availability.action(url.absoluteString)
-                            }
-                            
-                            return .handled
-                        })
+                    if let desc = viewModel.synchronizerDescription {
+                        Text(desc)
+                            .environment(\.openURL, OpenURLAction { url in
+                                guard let link = Synchronizer.Link(url: url) else { return .systemAction }
+                                if link == .logout {
+                                    alert = .logout(viewModel.synchronizerApproach.description, {
+                                        viewModel.onTapsynchronizerDescriptionLink(.logout)
+                                    })
+                                } else {
+                                    viewModel.onTapsynchronizerDescriptionLink(link)
+                                }
+                                return .handled
+                            })
+                    }
                 }
             }
             

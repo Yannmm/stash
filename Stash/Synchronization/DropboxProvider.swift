@@ -9,87 +9,38 @@ import Foundation
 import Combine
 import SwiftyDropbox
 import AppKit
-import SwiftUI
-
-fileprivate extension Synchronizer.DropboxProvider {
-    enum Constant {
-        static let sidecarPath = "/\(Synchronizer.FileName.sidecar)"
-        static let documentPath = "/\(Synchronizer.FileName.document)"
-    }
-}
 
 extension Synchronizer {
-    final class DropboxProvider: RemoteProvider, Polling {
-        private let _onArrive = PassthroughSubject<Sidecar, Never>()
-        
-        var onArrive: AnyPublisher<Sidecar, Never> { _onArrive.eraseToAnyPublisher() }
-        
-        func setOnArrive(_ sidecar: Sidecar) { _onArrive.send(sidecar) }
-        
-        private var cancellables = Set<AnyCancellable>()
-        
-        var availability: AnyPublisher<Availability, Never> { _availability.eraseToAnyPublisher() }
-        
-        private let _availability = CurrentValueSubject<Availability, Never>(.no(InitialPendingState(name: "Dropbox")))
+    final class DropboxProvider: OAuthProvider {
         
         private var _sdkInitialized = false
         
-        var polanchor: UUID?
-        
-        var poltask: Task<Void, Never>?
-        
         init() {
-            NotificationCenter.default.publisher(for: .onUrlEvent)
-                .compactMap { $0.object as? URL }
-                .filter { $0.scheme?.starts(with: "db-") == true }
-                .sink { [weak self] url in
-                    self?.handleRedirectURL(url)
-                }
-                .store(in: &cancellables)
+            super.init(name: "Dropbox", directory: "")
         }
         
-        // MARK: - Protocol
-        private func checkAvailability() async {
-            var a: Availability!
-            if signedIn {
-                let name = await getAccount()
-                a = .yes(AuthStatus.ready(name, { [weak self] _ in self?.logout() }))
-                startpol()
-            } else {
-                a = .no(AuthStatus.anonymous({ [weak self] _ in
-                    self?.authenticate()
-                }))
+        // MARK: - Overrides
+        
+        override var isAuthorized: Bool { DropboxClientsManager.authorizedClient != nil }
+        
+        override func prepare() async throws {
+            if !_sdkInitialized {
+                _sdkInitialized = true
+                DropboxClientsManager.setupWithAppKeyDesktop("y6ijm2p3vqr7kt8")
             }
-            _availability.send(a)
+            try await super.prepare()
         }
         
-        func sidecar() async throws -> Sidecar {
-            let data = try await download(client: try getClient(), path: Constant.sidecarPath)
-            return try JSONDecoder().decode(Sidecar.self, from: data)
+        override func isRedirect(_ url: URL) -> Bool {
+            url.scheme?.starts(with: "db-") == true
         }
         
-        func document() async throws -> Data {
-            return try await download(client: try getClient(), path: Constant.documentPath)
-        }
-        
-        func send(document: Data, sidecar: Sidecar) async throws {
-            let client = try getClient()
-            // Upload document
-            try await upload(client: client, path: Constant.documentPath, data: document)
-            // Upload sidecar and update cached hash
-            try await upload(client: client, path: Constant.sidecarPath, data: try JSONEncoder().encode(sidecar))
-            polanchor = sidecar.uid
-        }
-        
-        func prepare() async throws {
-            guard !_sdkInitialized else { return }
-            _sdkInitialized = true
-            DropboxClientsManager.setupWithAppKeyDesktop("y6ijm2p3vqr7kt8")
-            await checkAvailability()
-        }
-        
-        private func download(client: DropboxClient, path: String) async throws -> Data {
-            try await withCheckedThrowingContinuation { continuation in
+        override func download(path: String) async throws -> Data {
+            guard let client = DropboxClientsManager.authorizedClient else {
+                throw SyncError.unauthenticated
+            }
+            
+            return try await withCheckedThrowingContinuation { continuation in
                 let request = client.files.download(path: path)
                 request.response { [weak self] response, error in
                     _ = request
@@ -104,25 +55,20 @@ extension Synchronizer {
                                       return false
                                   }
                               }) {
-                        continuation.resume(with: .failure(someError))
+                        continuation.resume(throwing: someError)
                     } else {
-                        continuation.resume(with: .failure(SomeError.api("Unknown download error")))
+                        continuation.resume(throwing: SyncError.unexpected("Something unexpected happended while downloading file at \"\(path)\"."))
                     }
                 }
             }
         }
         
-        private func getClient() throws -> DropboxClient {
+        override func upload(path: String, data: Data) async throws {
             guard let client = DropboxClientsManager.authorizedClient else {
-                _availability.send(.no(AuthStatus.anonymous({ [weak self] _ in self?.authenticate() })))
-                throw SomeError.unauthenticated
+                throw SyncError.unauthenticated
             }
-            return client
-        }
-        
-        @discardableResult
-        private func upload(client: DropboxClient, path: String, data: Data) async throws -> Files.FileMetadata {
-            try await withCheckedThrowingContinuation { continuation in
+            
+            let _: Files.FileMetadata = try await withCheckedThrowingContinuation { continuation in
                 let request = client.files.upload(path: path, mode: .overwrite, input: data)
                 request.response { [weak self] metadata, error in
                     _ = request
@@ -130,96 +76,34 @@ extension Synchronizer {
                         continuation.resume(returning: metadata)
                     } else if let error,
                               let someError = self?.handleError(error, path: path, isFileNotFound: nil) {
-                        continuation.resume(with: .failure(someError))
+                        continuation.resume(throwing: someError)
                     } else {
-                        continuation.resume(with: .failure(SomeError.api("Unknown upload error")))
+                        continuation.resume(throwing: SyncError.unexpected("Something unexpected happended while uploading file to \"\(path)\"."))
                     }
                 }
             }
         }
         
-        // MARK: - OAuth
-        
-        private func handleRedirectURL(_ url: URL) {
-            let oauthCompletion: DropboxOAuthCompletion = { [weak self] in
-                if let authResult = $0 {
-                    switch authResult {
-                    case .success:
-                        self?.startpol()
-                        Task {
-                            let name = await self?.getAccount()
-                            self?._availability.send(.yes(AuthStatus.ready(name, { [weak self] _ in self?.logout() })))
-                        }
-                    case .cancel:
-                        self?._availability.send(.no(AuthStatus.anonymous({ [weak self] _ in
-                            self?.authenticate()
-                        })))
-                    case .error(let error, _):
-                        self?._availability.send(.no(AuthStatus.error(error, { [weak self] _ in
-                            self?.authenticate()
-                        })))
-                    }
-                }
+        override func fetchAccountName() async throws -> String? {
+            guard let client = DropboxClientsManager.authorizedClient else {
+                throw SyncError.unauthenticated
             }
-            DropboxClientsManager.handleRedirectURL(url, includeBackgroundClient: false, completion: oauthCompletion)
-            NSApp.activate(ignoringOtherApps: true)
-        }
-        
-        // MARK: - Helpers
-        
-        var signedIn: Bool {
-            DropboxClientsManager.authorizedClient != nil
-        }
-        
-        func getAccount() async -> String? {
-            guard let client = DropboxClientsManager.authorizedClient else { return nil }
-            return await withCheckedContinuation { continuation in
+            return try await withCheckedThrowingContinuation { continuation in
                 let request = client.users.getCurrentAccount()
-                request.response { [weak self] account, error in
-                    _ = request
+                request.response { [weak self, request] account, error in
+                    _ = request // Keep the request alive until its response arrives.
                     if let account {
                         continuation.resume(returning: account.name.displayName)
-                    } else if let error,
-                              let _ = self?.handleError(error, path: nil, isFileNotFound: nil) {
-                        continuation.resume(returning: nil)
+                    } else if let error, let someError = self?.handleError(
+                        error,
+                        path: nil,
+                        isFileNotFound: nil
+                    ) {
+                        continuation.resume(throwing: someError)
                     } else {
-                        continuation.resume(returning: nil)
+                        continuation.resume(throwing: SyncError.unexpected("Something unexpected happened while getting Dropbox user account."))
                     }
                 }
-            }
-        }
-        
-        func authenticate() {
-            let scope = ScopeRequest(
-                scopeType: .user,
-                scopes: ["account_info.read", "files.content.read", "files.content.write", "files.metadata.read"],
-                includeGrantedScopes: false
-            )
-            DropboxClientsManager.authorizeFromControllerV2(
-                sharedApplication: NSApplication.shared,
-                controller: nil,
-                loadingStatusDelegate: nil,
-                openURL: {(url: URL) -> Void in NSWorkspace.shared.open(url)},
-                scopeRequest: scope
-            )
-        }
-        
-        func logout() {
-            DropboxClientsManager.unlinkClients()
-            pausepol()
-            Task {
-                await checkAvailability()
-            }
-        }
-        
-        func poll() async {
-            do {
-                let sidecar = try await sidecar()
-                guard let a = polanchor, sidecar.uid != a else { return }
-                polanchor = sidecar.uid
-                setOnArrive(sidecar)
-            } catch {
-                print("[DropboxProvider] poll failed: \(error)")
             }
         }
         
@@ -227,8 +111,8 @@ extension Synchronizer {
             _ error: CallError<T>,
             path: String?,
             isFileNotFound: ((T) -> Bool)?
-        ) -> SomeError {
-            let someError: SomeError
+        ) -> SyncError {
+            let someError: SyncError
             
             switch error {
             case .authError, .accessError:
@@ -250,45 +134,46 @@ extension Synchronizer {
             default:
                 someError = .api(error)
             }
-            
-            if case .tokenExpired = someError {
-                logout()
-            } else {
-                _availability.send(.no(AuthStatus.error(error, { [weak self] _ in
-                    self?.authenticate()
-                })))
-            }
-            
             return someError
         }
         
-        deinit {
-            pausepol()
+        override func authenticate() {
+            let scope = ScopeRequest(
+                scopeType: .user,
+                scopes: ["account_info.read", "files.content.read", "files.content.write", "files.metadata.read"],
+                includeGrantedScopes: false
+            )
+            DropboxClientsManager.authorizeFromControllerV2(
+                sharedApplication: NSApplication.shared,
+                controller: nil,
+                loadingStatusDelegate: nil,
+                openURL: {(url: URL) -> Void in NSWorkspace.shared.open(url)},
+                scopeRequest: scope
+            )
         }
-    }
-}
-
-extension Synchronizer.DropboxProvider {
-    enum SomeError: Error, CustomStringConvertible {
-        case api(Error)
-        case unauthenticated
-        case tokenExpired
-        case fileNotFound(String)
         
-        var description: String {
-            switch self {
-            case .api(let error):
-                return error.localizedDescription
-                
-            case .unauthenticated:
-                return "Unauthenticated"
-                
-            case .tokenExpired:
-                return "Token expired"
-                
-            case .fileNotFound(let path):
-                return "File not found: \(path)"
+        override func unlink() {
+            DropboxClientsManager.unlinkClients()
+        }
+        
+        override func handleRedirect(_ url: URL) {
+            let oauthCompletion: DropboxOAuthCompletion = { [weak self] in
+                if let authResult = $0 {
+                    switch authResult {
+                    case .success:
+                        Task {
+                            await self?.checkAuth()
+                        }
+                    case .cancel:
+                        self?.signedOut()
+                    case .error(let error, _):
+                        self?.authFailed(error)
+                    }
+                }
             }
+            let flag = DropboxClientsManager.handleRedirectURL(url, includeBackgroundClient: false, completion: oauthCompletion)
+            guard flag else { return }
+            NSApp.activate(ignoringOtherApps: true)
         }
     }
 }

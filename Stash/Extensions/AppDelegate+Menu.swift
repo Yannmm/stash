@@ -12,11 +12,12 @@ import Kingfisher
 @MainActor
 extension AppDelegate {
     
-    func generateMenu(from entries: [any Entry], history: [(any Entry, String)], collapseHistory: Bool) -> NSMenu {
+    func generateMenu(from entries: [any Entry], history: [(any Entry, String)], collapseHistory: Bool, syncStatus: Synchronizer.Status?) -> NSMenu {
         let menu = NSMenu()
         addHistory(menu, history, collapseHistory)
         addEntries(menu, entries)
         addGuide(menu, entries)
+        addSyncStatus(menu, syncStatus)
         addActions(menu)
         return menu
     }
@@ -52,6 +53,19 @@ extension AppDelegate {
         }
         
         items.forEach { menu.addItem($0) }
+    }
+    
+    /// Sync approach and auth status, an error icon replaces the sync icon on failure, opens settings on tap.
+    private func addSyncStatus(_ menu: NSMenu, _ status: Synchronizer.Status?) {
+        guard let status else { return }
+        let item = NSMenuItem(title: status.summary, action: #selector(settings), keyEquivalent: "")
+        let image = NSImage(systemSymbolName: status.symbol,
+                            accessibilityDescription: status.failed ? "Sync error" : nil)
+        image?.isTemplate = true
+        item.image = image?.tint(color: status.failed ? Color(nsColor: .systemRed) : Color.theme)
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(item)
+        menu.addItem(NSMenuItem.separator())
     }
     
     private func addActions(_ menu: NSMenu) {

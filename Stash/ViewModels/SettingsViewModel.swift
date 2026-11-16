@@ -26,7 +26,7 @@ class SettingsViewModel: ObservableObject {
     @Published var newReleaseNotes: String?
     @Published var error: Error?
     @Published var synchronizerApproach: Synchronizer.Option
-    @Published var availability: Synchronizer.Availability!
+    @Published var synchronizerStatus: Synchronizer.Status?
 
     private var cancellables = Set<AnyCancellable>()
     private let appHotKeyManager = HotKeyManager(action: .menu)
@@ -36,6 +36,7 @@ class SettingsViewModel: ObservableObject {
     private let onImport: (URL, String.FileType, Bool) throws -> Void
     private let onExport: (URL, String?) throws -> URL
     private let onApproachChange: (Synchronizer.Option) -> Void
+    let onTapsynchronizerDescriptionLink: (Synchronizer.Link) -> Void
     
     var empty: Bool { false }
     
@@ -68,12 +69,14 @@ class SettingsViewModel: ObservableObject {
         onReset: @escaping () throws -> Void,
         onImport: @escaping (URL, String.FileType, Bool) throws -> Void,
         onExport: @escaping (URL, String?) throws -> URL,
-        onApproachChange: @escaping (Synchronizer.Option) -> Void
+        onApproachChange: @escaping (Synchronizer.Option) -> Void,
+        onTapsynchronizerDescriptionLink: @escaping (Synchronizer.Link) -> Void
     ) {
         self.onReset = onReset
         self.onImport = onImport
         self.onExport = onExport
         self.onApproachChange = onApproachChange
+        self.onTapsynchronizerDescriptionLink = onTapsynchronizerDescriptionLink
         
         collapseHistory = Pref.value(for: Pref.Key.collapseHistory) ?? false
         launchOnLogin = RocketLauncher.shared.enabled
@@ -198,6 +201,37 @@ class SettingsViewModel: ObservableObject {
             result += "·b\(build)"
         }
         return result + ")"
+    }
+}
+
+extension SettingsViewModel {
+    /// Full sync status with its readiness, error detail and action links.
+    var synchronizerDescription: AttributedString? {
+        guard let status = synchronizerStatus else { return nil }
+        var attr = AttributedString()
+        switch status.readiness {
+        case .success(let readiness):
+            attr += readiness.describe()
+        case .failure(let error):
+            var eAttr = AttributedString(error.localizedDescription)
+            eAttr.foregroundColor = .secondary
+            attr += AttributedString("🚫 \(status.approach.description) is not ready due to error: ") + eAttr
+        case nil:
+            break
+        }
+        if let error = status.error {
+            var eAttr = AttributedString("\n\n⚠️ An erro happened while \"\(error.0)\":\n")
+            eAttr += AttributedString(error.1.localizedDescription)
+            eAttr.foregroundColor = .secondary
+            attr += eAttr
+        }
+        if status.failed, status.retryable {
+            var rAttr = AttributedString(" Retry")
+            rAttr.foregroundColor = Color(nsColor: .linkColor)
+            rAttr.link = Synchronizer.Link.retry.url
+            attr += rAttr
+        }
+        return attr.characters.isEmpty ? nil : attr
     }
 }
 
