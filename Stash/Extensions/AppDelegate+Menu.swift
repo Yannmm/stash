@@ -19,9 +19,21 @@ extension AppDelegate {
         addGuide(menu, entries)
         addSyncStatus(menu, syncStatus)
         addActions(menu)
+        forceImageVisibility(menu)
         return menu
     }
-    
+
+    /// macOS 27+ hides menu item images by default; opt every item (recursively) back in.
+    private func forceImageVisibility(_ menu: NSMenu) {
+        guard #available(macOS 27.0, *) else { return }
+        for item in menu.items {
+            item.preferredImageVisibility = .visible
+            if let submenu = item.submenu {
+                forceImageVisibility(submenu)
+            }
+        }
+    }
+
     private func addHistory(_ menu: NSMenu, _ history: [(any Entry, String)], _ collapseHistory: Bool ) {
         if !history.isEmpty {
             if collapseHistory {
