@@ -14,6 +14,12 @@ extension ManageView {
     struct Workbench: View {
         @StateObject var viewModel: WorkbenchViewModel
         @State private var selection: WorkbenchViewModel.Row?
+        @State private var presentBookmarkEditor = false
+        @State private var presentGroupEditor = false
+        
+        private var parentId: UUID? {
+            (selection?.expandable ?? false) ? selection!.id : viewModel.wrapper.selection
+        }
         
         var body: some View {
             Sheet(selection: $selection)
@@ -25,9 +31,19 @@ extension ManageView {
                             bookmarkCount: viewModel.bookmarkCount,
                             hashtags: viewModel.hashtags,
                             hashtagFilter: $viewModel.hashtagFilter,
-                            parentId: (selection?.expandable ?? false) ? selection!.id : viewModel.wrapper.selection,
-                            onAddBookmark: {},
-                            onAddGroup: {})
+                            presentBookmarkEditor: $presentBookmarkEditor,
+                            presentGroupEditor: $presentGroupEditor)
+                }
+                .sheet(isPresented: $presentBookmarkEditor) {
+                    BookmarkEditor(viewModel: BookmarkEditorViewModel(mode: .create(parentId),
+                                                                      housekeeper: viewModel.housekeeper,
+                                                                      dominator: Dominator()))
+                    .frame(width: 400)
+                }
+                .sheet(isPresented: $presentGroupEditor) {
+                    GroupEditor(viewModel: GroupEditorViewModel(mode: .create(parentId),
+                                                                housekeeper: viewModel.housekeeper))
+                    .frame(width: 400)
                 }
                 .environmentObject(viewModel)
                 .environmentObject(viewModel.housekeeper)

@@ -25,26 +25,20 @@ struct BookmarkEditor: View {
         }
     }
     
+    // Create mode is presented as a sheet: actions go in a bottom row, macOS-style.
+    private var modal: Bool {
+        if case .create = viewModel.mode { return true }
+        return false
+    }
+    
     var body: some View {
         VStack(alignment: .leading) {
             HStack {
                 Text(title)
                     .font(.headline)
                 Spacer()
-                switch viewModel.progress {
-                case .parsable(let enabled):
-                    Button("Parse") {
-                        viewModel.parse()
-                    }
-                    .disabled(!(enabled && !viewModel.loading))
-                    .if(enabled && !viewModel.loading, content: { $0.buttonStyle(.borderedProminent) })
-                case .savable(let enabled):
-                    Button("Save") {
-                        viewModel.save()
-                        dismiss()
-                    }
-                    .disabled(!enabled)
-                    .if(enabled, content: { $0.buttonStyle(.borderedProminent) })
+                if !modal {
+                    primaryButton
                 }
             }
             VStack(spacing: 8) {
@@ -89,6 +83,17 @@ struct BookmarkEditor: View {
                 )
                 
             }
+            if modal {
+                HStack {
+                    Spacer()
+                    Button("Cancel", role: .cancel) {
+                        dismiss()
+                    }
+                    .keyboardShortcut(.cancelAction)
+                    primaryButton
+                }
+                .padding(.top, 8)
+            }
         }
         .padding()
         .background(Color(nsColor: .windowBackgroundColor))
@@ -124,6 +129,25 @@ struct BookmarkEditor: View {
                 titleDisabled = false
                 hashtagDisabled = false
             }
+        }
+    }
+    
+    @ViewBuilder
+    private var primaryButton: some View {
+        switch viewModel.progress {
+        case .parsable(let enabled):
+            Button("Parse") {
+                viewModel.parse()
+            }
+            .disabled(!(enabled && !viewModel.loading))
+            .if(enabled && !viewModel.loading, content: { $0.buttonStyle(.borderedProminent) })
+        case .savable(let enabled):
+            Button("Save") {
+                viewModel.save()
+                dismiss()
+            }
+            .disabled(!enabled)
+            .if(enabled, content: { $0.buttonStyle(.borderedProminent) })
         }
     }
 }
