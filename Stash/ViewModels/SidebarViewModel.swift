@@ -14,6 +14,10 @@ class SidebarViewModel: ObservableObject, CascadeJudge {
     @Published private(set) var rows: [Row] = []
     @Published private(set) var rootRow: Row!
     @Published var error: Error?
+    /// True when every group that has subgroups is expanded.
+    @Published private(set) var allExpanded = false
+    /// True when at least one group has subgroups, i.e. there is something to expand.
+    @Published private(set) var canToggleAll = false
     
     var entries: [any Entry] { housekeeper.storedEntries }
     
@@ -36,6 +40,21 @@ class SidebarViewModel: ObservableObject, CascadeJudge {
         } else {
             expansions.insert(id)
         }
+    }
+    
+    /// Collapses all groups when all are expanded, otherwise expands every group (including nested ones).
+    func toggleAll() {
+        if allExpanded {
+            expansions = []
+        } else {
+            expansions = expandableGroupIds(allEntries)
+        }
+    }
+    
+    /// Ids of groups that have at least one child group, matching the disclosure rule in `visibleGroups`.
+    private func expandableGroupIds(_ entries: [any Entry]) -> Set<UUID> {
+        let parentIds = entries.compactMap { ($0 as? Group)?.parentId }
+        return Set(parentIds)
     }
     
     func delete(_ id: UUID) {
@@ -73,6 +92,17 @@ class SidebarViewModel: ObservableObject, CascadeJudge {
                 self.visibleGroups(a, b, c)
             }
             .sink(receiveValue: { [weak self] in self?.rows = $0 })
+            .store(in: &_cancellables)
+        
+        Publishers.CombineLatest(housekeeper.$storedEntries, $expansions)
+            .map { [unowned self] entries, expansions in
+                let ids = self.expandableGroupIds(entries)
+                return (!ids.isEmpty && ids.isSubset(of: expansions), !ids.isEmpty)
+            }
+            .sink(receiveValue: { [weak self] in
+                self?.allExpanded = $0.0
+                self?.canToggleAll = $0.1
+            })
             .store(in: &_cancellables)
         
         Publishers.CombineLatest(housekeeper.$storedEntries, wrapper.$selection)

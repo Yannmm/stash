@@ -40,6 +40,22 @@ extension ManageView {
             .safeAreaInset(edge: .bottom, spacing: 0) {
                 StatusBar(onTap: onOpenSettings)
             }
+            .toolbar {
+                ToolbarItem(placement: .automatic) {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            viewModel.toggleAll()
+                        }
+                    } label: {
+                        Label(viewModel.allExpanded ? "Collapse All" : "Expand All",
+                              systemImage: viewModel.allExpanded
+                                  ? "rectangle.compress.vertical"
+                                  : "rectangle.expand.vertical")
+                    }
+                    .help(viewModel.allExpanded ? "Collapse All Groups" : "Expand All Groups")
+                    .disabled(!viewModel.canToggleAll)
+                }
+            }
             .environmentObject(viewModel)
             .alert("Error", isPresented: Binding(
                 get: { viewModel.error != nil },
