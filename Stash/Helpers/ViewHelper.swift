@@ -14,10 +14,12 @@ enum ViewHelper {
         if let i = icon {
             switch (i) {
             case .system(let name):
+                // Size SF Symbols via font, not `.resizable()`: resizing fits each
+                // symbol's own bounding box, so variants like `cube.box` and
+                // `cube.box.fill` end up at different sizes and visibly jump when swapped.
                 Image(systemName: name)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: side, height: side)
+                    .font(.system(size: side))
+                    .frame(width: side, height: side, alignment: .center)
                     .foregroundStyle(Color.theme)
             case .favicon(let url):
                 KFImage.url(url)
