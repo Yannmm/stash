@@ -25,18 +25,21 @@ struct GroupEditor: View {
         }
     }
     
+    // Create mode is presented as a sheet: actions go in a bottom row, macOS-style.
+    private var modal: Bool {
+        if case .create = viewModel.mode { return true }
+        return false
+    }
+    
     var body: some View {
         VStack(alignment: .leading) {
             HStack {
                 Text(title)
                     .font(.headline)
                 Spacer()
-                Button("Save") {
-                    viewModel.save()
-                    dismiss()
+                if !modal {
+                    primaryButton
                 }
-                .disabled(!viewModel.savable)
-                .if(viewModel.savable, content: { $0.buttonStyle(.borderedProminent) })
             }
             VStack(spacing: 8) {
                 TitleField(title: $viewModel.title,
@@ -62,6 +65,17 @@ struct GroupEditor: View {
                     }
                 )
                 
+            }
+            if modal {
+                HStack {
+                    Spacer()
+                    Button("Cancel", role: .cancel) {
+                        dismiss()
+                    }
+                    .keyboardShortcut(.cancelAction)
+                    primaryButton
+                }
+                .padding(.top, 8)
             }
         }
         .padding()
@@ -89,5 +103,14 @@ struct GroupEditor: View {
                 hashtagDisabled = false
             }
         }
+    }
+    
+    private var primaryButton: some View {
+        Button("Save") {
+            viewModel.save()
+            dismiss()
+        }
+        .disabled(!viewModel.savable)
+        .if(viewModel.savable, content: { $0.buttonStyle(.borderedProminent) })
     }
 }

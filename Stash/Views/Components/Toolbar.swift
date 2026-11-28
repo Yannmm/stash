@@ -15,14 +15,12 @@ extension ManageView.Workbench {
         let bookmarkCount: Int
         let hashtags: [String]
         @Binding var hashtagFilter: String?
-        let parentId: UUID?
-        let onAddBookmark: () -> Void
-        let onAddGroup: () -> Void
         
-        @State private var presentBookmarkEditor = false
-        @State private var presentGroupEditor = false
+        // Editors are presented as sheets by the owner, not as popovers anchored to the toolbar item:
+        // focusing a text field inside a toolbar popover re-enters SwiftUI's toolbar update and hangs the main thread.
+        @Binding var presentBookmarkEditor: Bool
+        @Binding var presentGroupEditor: Bool
         @Environment(\.dismissSearch) private var dismissSearch
-        @EnvironmentObject var housekeeper: Housekeeper
         
         var body: some ToolbarContent {
             if #available(macOS 26.0, *) {
@@ -58,7 +56,6 @@ extension ManageView.Workbench {
                 Menu {
                     Button {
                         presentBookmarkEditor = true
-                        onAddBookmark()
                     } label: {
                         Label("Add Bookmark", systemImage: "link.badge.plus")
                     }
@@ -66,7 +63,6 @@ extension ManageView.Workbench {
                     
                     Button {
                         presentGroupEditor = true
-                        onAddGroup()
                     } label: {
                         Label("Add Group", systemImage: "folder.badge.plus")
                     }
@@ -75,27 +71,16 @@ extension ManageView.Workbench {
                     Label("Add", systemImage: "plus.rectangle.on.rectangle")
                 }
                 .help("Add Item")
-                .popover(isPresented: $presentBookmarkEditor, arrowEdge: .top) {
-                    BookmarkEditor(viewModel: BookmarkEditorViewModel(mode: .create(parentId),
-                                                                      housekeeper: housekeeper,
-                                                                      dominator: Dominator()))
-                    .frame(width: 400)
-                }
-                .popover(isPresented: $presentGroupEditor, arrowEdge: .top) {
-                    GroupEditor(viewModel: GroupEditorViewModel(mode: .create(parentId),
-                                                                housekeeper: housekeeper))
-                    .frame(width: 400)
-                }
                 .onChange(of: presentBookmarkEditor) { _, isPresented in
                     if !isPresented {
-                        // Keep the toolbar search UI collapsed after popover closes.
+                        // Keep the toolbar search UI collapsed after the editor closes.
                         dismissSearch()
                         _clearFirstResponder()
                     }
                 }
                 .onChange(of: presentGroupEditor) { _, isPresented in
                     if !isPresented {
-                        // Keep the toolbar search UI collapsed after popover closes.
+                        // Keep the toolbar search UI collapsed after the editor closes.
                         dismissSearch()
                         _clearFirstResponder()
                     }
