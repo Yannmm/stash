@@ -91,8 +91,9 @@ class Housekeeper: ObservableObject {
         b.parentId = nil
         guard recentEntries.firstIndex(where: { $0.0.id == b.id }) == nil else { return }
         var copy = recentEntries
-        if (copy.count + 1) > leftyKeystrokes.count {
-            copy = Array(copy[0...(leftyKeystrokes.count - 1)])
+        if copy.count >= leftyKeystrokes.count {
+            // Drop the oldest so its keystroke frees up for the new one.
+            copy = Array(copy.prefix(leftyKeystrokes.count - 1))
         }
         let existings = Array(copy.map({ $0.1 }))
         let rest = leftyKeystrokes.filter { !existings.contains($0) }
@@ -109,14 +110,13 @@ extension Housekeeper {
         let html = try toNetscapeBookmarkFile()
         synchronizer.save(document: html)
         
-        // In case for import
-        let recents = storedEntries.map({ e in
-            if let r = recentEntries.first(where: { $0.0.id == e.id }), let b = e as? Bookmark {
-                return (b, r.1)
-            } else {
-                return Optional<(Bookmark, String)>.none
-            }
-        }).compactMap({ $0 })
+        // Keep recents in visit order, drop ones no longer stored, refresh them with the
+        // latest stored data, and detach from parent so the menu lists them at top level.
+        let recents: [(Bookmark, String)] = recentEntries.compactMap { r in
+            guard var b = storedEntries.first(where: { $0.id == r.0.id }) as? Bookmark else { return nil }
+            b.parentId = nil
+            return (b, r.1)
+        }
         
         let data2 = try JSONEncoder().encode(recents.map({ $0.0 }).asAnyEntries)
         Pref.save(for: Pref.Key.recentEntries, value: data2)
@@ -141,7 +141,9 @@ extension Housekeeper {
             let anyEntries = try JSONDecoder().decode([AnyEntry].self, from: data)
             var collector = [(Bookmark, String)]()
             for (index, entry) in anyEntries.asEntries.enumerated() {
-                if let bookmark = entry as? Bookmark, index <= keys.count - 1 {
+                if var bookmark = entry as? Bookmark, index <= keys.count - 1 {
+                    // Older builds persisted recents with their parentId.
+                    bookmark.parentId = nil
                     collector.append((bookmark, keys[index]))
                 }
             }
